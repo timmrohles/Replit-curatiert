@@ -379,7 +379,7 @@ export async function registerRoutes(
 
   app.post('/api/admin/auth/verify', async (req: Request, res: Response) => {
     try {
-      const { token } = req.body;
+      const token = (req.headers['x-admin-token'] as string) || req.body?.token || null;
       const isValid = await verifyAdminToken(token);
       return res.json({ ok: true, data: { valid: isValid } });
     } catch (error) {

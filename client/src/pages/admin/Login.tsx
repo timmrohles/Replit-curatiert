@@ -19,6 +19,21 @@ export function AdminLogin() {
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
+        const existingToken = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
+        if (existingToken) {
+          const verifyRes = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.verify}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Token': existingToken },
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.ok && verifyData.data?.valid) {
+            navigate('/sys-mgmt-xK9/content-manager');
+            return;
+          }
+          localStorage.removeItem('admin_token');
+          localStorage.removeItem('admin_neon_token');
+        }
+
         const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.status}`);
         const data = await response.json();
         setMode(data.initialized ? 'login' : 'setup');
