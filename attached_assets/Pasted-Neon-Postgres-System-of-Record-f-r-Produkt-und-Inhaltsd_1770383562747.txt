@@ -1,0 +1,114 @@
+Neon Postgres: „System of Record“ für Produkt- und Inhaltsdaten
+
+Neon ist eure primäre, dauerhafte Datenbank für alles, was kernfachlich ist und sauber relational modelliert werden muss – inkl. Constraints, Joins, Historisierung, Konsistenz.
+
+Typische Neon-Workloads bei euch:
+
+Bücher & ONIX-normalisierte Entitäten
+
+books, authors, publishers
+
+ONIX-Taxonomie/Tags + Relationen (Many-to-Many)
+
+Auszeichnungen/Preise
+
+awards, award_editions, award_categories
+
+Relationen Buch↔Preis, Autor↔Preis
+
+Kurationen & Storefronts
+
+curators, storefronts, lists, list_items
+
+Ownership, Reihenfolge, Status (draft/published)
+
+Affiliate/Commerce-Layer (internes Tracking)
+
+Klick-Events, Attribution, Provisionsberechnung (je nach Design ggf. in Event/Fact-Tabellen + Aggregationen)
+
+Angebote/Offers (Preis/Verfügbarkeit aus Feeds)
+
+normalisierte offers + dedupe Regeln
+
+Alles, was starke Datenintegrität braucht
+
+eindeutige Constraints (z. B. ISBN13 unique)
+
+referentielle Integrität
+
+transaktionale Updates
+
+Warum Neon?
+
+beste Kontrolle über Postgres als „Hauptdatenbank“
+
+sehr gut für komplexe Relationen, Datenqualität, Constraints, SQL-first
+
+ideal als „single source of truth“ für Inhalte
+
+Supabase: „App-Plattform“ für Auth, Edge-APIs, Realtime, Storage (nicht primär für eure Kerndaten)
+
+Supabase nutzt ihr weniger als „die Datenbank“, sondern als Batterie-included Application Backend, v. a. für:
+
+1) Auth & User Management
+
+Login (Email/Magic Link/OAuth)
+
+Sessions/JWT
+
+Rollen / Permissions (z. B. Admin, Curator, Editor)
+
+ggf. Row Level Security – aber eher auf Supabase-eigenen Tabellen, nicht als Hauptmodell
+
+2) Edge Functions / Serverless API Layer
+
+euer /functions/v1/api/... Setup (z. B. Navigation, Sections, etc.)
+
+Gateway-APIs fürs Frontend
+
+kleinere Business-Logik, Aggregationen, „View Models“
+
+Integrationen (Webhooks, Third-party APIs)
+
+Wichtig: Supabase Functions sind bei euch die „Compute-Schicht“, nicht der Ort, wo die kanonischen Daten zwingend liegen müssen.
+
+3) Storage
+
+Bilder/Assets (Cover-Caching, Curator-Avatare, Banner-Grafiken, ggf. Podcast-Thumbnails)
+
+Uploads aus dem Admin/Creator-Bereich
+
+4) Realtime / Queues (optional)
+
+Realtime-Subscriptions für Editor/Backoffice (wenn ihr das wollt)
+
+einfache Job-Orchestrierung per DB-Trigger/Queues (wenn ihr Supabase dafür nutzen möchtet)
+
+alternativ: eigener Worker/Cron außerhalb
+
+5) Admin- & „Make“-Workflow Nähe
+
+Figma Make / Preview / Publish hängt bei euch praktisch an Supabase-Deployment/Hosting/Functions-Flow
+
+daher ist Supabase oft der „Delivery-Kanal“ für das Webapp-Backend
+
+Faustregel, die bei euch passt
+
+Neon = Daten-Wahrheit.
+Supabase = App-Infrastruktur (Auth/Compute/Storage/Delivery).
+
+Konkrete Trennlinie nach Feature
+
+ONIX/VLB Import, Normalisierung, Taxonomie, Preise/Awards, Offers → Neon
+
+User-Accounts, Rollen, Login, Session, Admin UI Zugänge → Supabase Auth
+
+Frontend-API Endpoints (Navigation/Sections/Storefront-Ausgabe), Webhooks, Integrationen → Supabase Edge Functions
+
+Uploads (Medien, Bilder, Assets) → Supabase Storage
+
+Tracking/Attribution:
+
+Roh-Events optional in Supabase (schnell, billig, serverless)
+
+kanonische Aggregation/Abrechnung & „Buchhaltung“ eher in Neon
