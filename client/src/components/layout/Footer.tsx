@@ -263,10 +263,10 @@ export function Footer() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => navigate('/dashboard/sections')}
+                    onClick={() => navigate('/old-homepage')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Sections
+                    Alte Startseite
                   </button>
                 </li>
                 <li>
