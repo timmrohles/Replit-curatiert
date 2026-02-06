@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
-import { useTheme } from "../utils/ThemeContext";
+import { useTheme } from "../../utils/ThemeContext";
 
 export interface Review {
   id: string;

@@ -1,8 +1,8 @@
 import { X } from "lucide-react";
-import { Button } from "./ui/button";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { Button } from "../ui/button";
+import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { memo, useMemo } from "react";
-import { Text } from "./ui";
+import { Text } from "../ui";
 import { type FrontendEntityType } from "./FavoritesContext";  // ✅ Import type
 
 interface FavoriteCardProps {

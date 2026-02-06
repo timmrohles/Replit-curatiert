@@ -1,4 +1,4 @@
-import querverlagLogo from "figma:asset/d01817481afdab02c7098f64c557add4e12cab5a.png";
+const querverlagLogo = '/placeholder-logo.png';
 
 interface Supporter {
   name: string;

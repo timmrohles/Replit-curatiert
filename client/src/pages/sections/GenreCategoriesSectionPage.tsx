@@ -15,7 +15,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Podcast, BookOpen } from 'lucide-react';
-import { GenreCategoriesSection } from '../../components/GenreCategoriesSection';
+import { GenreCategoriesSection } from '../../components/tags/GenreCategoriesSection';
 
 export default function GenreCategoriesSectionPage() {
   return (

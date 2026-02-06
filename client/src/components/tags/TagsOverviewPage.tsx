@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSafeNavigate } from '../utils/routing';
-import { getAllONIXTags, ONIXTag, ONIXTagType } from '../utils/api';
+import { useSafeNavigate } from '../../utils/routing';
+import { getAllONIXTags, ONIXTag, ONIXTagType } from '../../utils/api';
 import { Helmet } from 'react-helmet';
 import { Tag as TagIcon, TrendingUp, Award, Sparkles, MapPin, Globe, Users } from 'lucide-react';
 

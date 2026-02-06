@@ -19,7 +19,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Save, X, Search, Tag as TagIcon, Archive, RefreshCw, Filter, AlertCircle, Edit2, Lock, Database, EyeOff, Trash2, RotateCcw } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { getErrorMessage, logError } from '../../utils/errorHelpers';
 import { FEATURE_FLAGS } from '../../utils/featureFlags';
 import { API_BASE_URL } from '../../config/apiClient';

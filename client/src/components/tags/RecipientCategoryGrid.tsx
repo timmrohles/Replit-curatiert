@@ -1,6 +1,6 @@
 import { Target } from 'lucide-react';
 import { motion } from 'motion/react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 // Recipient categories
 export const recipientCategories = [

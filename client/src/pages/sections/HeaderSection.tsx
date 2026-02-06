@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
-import { Header } from '../../components/Header';
+import { Header } from '../../components/layout/Header';
 import { SectionDetailHeader } from '../../components/sections/SectionDetailHeader';
 
 export default function HeaderSectionPage() {

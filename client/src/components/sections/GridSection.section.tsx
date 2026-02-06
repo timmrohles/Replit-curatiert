@@ -3,7 +3,7 @@
 // Grid view (3-4 columns)
 // ============================================================================
 
-import { BookCard } from '../BookCard';
+import { BookCard } from '../book/BookCard';
 import { GridSectionProps } from './GridSection.schema';
 
 export function GridSection({ section, books, className = '' }: GridSectionProps) {

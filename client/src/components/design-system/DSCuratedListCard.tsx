@@ -1,8 +1,8 @@
 import React, { memo, useRef, useState } from 'react';
 import { Heart, ChevronLeft, ChevronRight, ChevronDown, Globe } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { useFavorites } from '../FavoritesContext';
-import { CoRatiertLogo } from '../CoRatiertLogo';
+import { useFavorites } from '../favorites/FavoritesContext';
+import { CoRatiertLogo } from '../common/CoRatiertLogo';
 import { Text } from '../ui/typography';
 
 interface DSCuratedListCardProps {

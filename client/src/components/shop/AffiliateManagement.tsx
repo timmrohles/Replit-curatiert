@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 
 interface AffiliatePartner {
   id: string;

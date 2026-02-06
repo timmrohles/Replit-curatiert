@@ -1,5 +1,5 @@
 import { Heart, ShieldCheck } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { Badge } from "../ui/badge";
 
 interface SupportSectionProps {
   creatorName?: string;

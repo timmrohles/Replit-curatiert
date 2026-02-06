@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useCallback, useEffect } from "react";
-import { logger } from '../utils/logger';
+import { logger } from '../../utils/logger';
 
 // ============================================================================
 // ENTITY TYPE MAPPING & NORMALISIERUNG
@@ -408,10 +408,21 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 // HOOK
 // ============================================================================
 
+const defaultFavoritesContext: FavoritesContextType = {
+  favorites: [],
+  addFavorite: () => {},
+  removeFavorite: () => {},
+  isFavorite: () => false,
+  toggleFavorite: async () => {},
+  getFavoriteCount: () => 0,
+  favoriteCount: 0,
+  isLoading: false,
+};
+
 export function useFavorites() {
   const context = useContext(FavoritesContext);
   if (context === undefined) {
-    throw new Error("useFavorites must be used within a FavoritesProvider");
+    return defaultFavoritesContext;
   }
   return context;
 }

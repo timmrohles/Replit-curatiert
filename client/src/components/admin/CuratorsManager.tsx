@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, Edit2, Search, Upload, X, Check, Star, Users, BookOpen } from 'lucide-react';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { API_BASE_URL } from '../../config/apiClient';
 
 interface Curator {

@@ -1,8 +1,8 @@
 import { useParams } from 'react-router-dom';
-import { useSafeNavigate } from '../utils/routing';
-import { Button } from './ui/button';
+import { useSafeNavigate } from '../../utils/routing';
+import { Button } from '../ui/button';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 interface BookData {
   id: string | number;

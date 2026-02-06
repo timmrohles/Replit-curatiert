@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Heart, Share2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { CoRatiertLogo } from '../common/CoRatiertLogo';
 import { OptimizedImage } from '../common/OptimizedImage';
-import { Button } from './ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { LikeButton } from '../favorites/LikeButton';
 import { SerieBadgeComponent } from '../common/SerieBadge';
 import { useFavorites } from '../favorites/FavoritesContext';
 import { useCart } from '../shop/CartContext';
-import { getBookUrl } from '../utils/bookUrlHelper';
+import { getBookUrl } from '../../utils/bookUrlHelper';
 
 interface Book {
   id: string;

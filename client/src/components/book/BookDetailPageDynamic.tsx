@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useSafeNavigate } from "../utils/routing";
+import { useSafeNavigate } from "../../utils/routing";
 import { Share2, ShoppingCart, ArrowLeft, ExternalLink, Award, Sparkles, BookOpen } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { Button } from "../ui/button";
@@ -13,12 +13,12 @@ import { SerieBadgeComponent } from "../common/SerieBadge";
 import { getBookImageMetadata } from "../../utils/onixImageMetadata";
 import { Heading, Text } from "../ui/typography";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
-import { DSButton } from "./design-system/DSButton";
+import { DSButton } from "../design-system/DSButton";
 
 // ✅ SAFE ROUTING: Import new utilities
-import { getValidatedParam } from "../utils/routing";
-import { LoadingState, ErrorState, NotFoundState } from "../utils/pageState";
-import { fetchWithTimeout } from "../utils/safeApi";
+import { getValidatedParam } from "../../utils/routing";
+import { LoadingState, ErrorState, NotFoundState } from "../../utils/pageState";
+import { fetchWithTimeout } from "../../utils/safeApi";
 
 /**
  * Dynamic Book Detail Page

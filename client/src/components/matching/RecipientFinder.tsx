@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Target, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { recipientCategories } from '../RecipientCategoryGrid';
+import { recipientCategories } from '../tags/RecipientCategoryGrid';
 
 // Books with curator reviews for each category
 export const booksByCategory: Record<string, any[]> = {

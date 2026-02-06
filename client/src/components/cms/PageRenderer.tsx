@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { PageSection, PageResolveSuccess } from "../types/page-resolve";
-import { UniversalSectionRenderer } from "./sections/UniversalSectionRenderer";
+import { UniversalSectionRenderer } from "../sections/UniversalSectionRenderer";
 
 interface PageRendererProps {
   data: PageResolveSuccess;

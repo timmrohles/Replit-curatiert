@@ -5,7 +5,7 @@
  */
 
 import { ChevronDown } from "lucide-react";
-import { Heading } from "./ui/typography";
+import { Heading } from "../ui/typography";
 
 interface AccordionButtonProps {
   title: string;

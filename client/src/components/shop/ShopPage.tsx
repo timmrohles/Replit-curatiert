@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { SlidersHorizontal, X, Search } from 'lucide-react';
 import { BookCard } from '../book/BookCard';
 import { DSButton } from '../design-system/DSButton';

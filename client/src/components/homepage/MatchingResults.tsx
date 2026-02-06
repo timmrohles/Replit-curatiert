@@ -1,7 +1,7 @@
 import { Heart, ArrowRight, CheckCircle2, ShoppingCart } from "lucide-react";
 import { useSafeNavigate } from "../../utils/routing";
-import { useFavorites } from "../FavoritesContext";
-import { useCart } from "../CartContext";
+import { useFavorites } from "../favorites/FavoritesContext";
+import { useCart } from "../shop/CartContext";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { motion } from "motion/react";
 

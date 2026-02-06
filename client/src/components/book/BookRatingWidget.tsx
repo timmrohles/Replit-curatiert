@@ -7,8 +7,8 @@ import {
   type BookWorldForRating,
   type RatingScale,
   type BookRating
-} from '../utils/api';
-import { ScaleSelector } from './ScaleSelector';
+} from '../../utils/api';
+import { ScaleSelector } from '../common/ScaleSelector';
 import { CarouselContainer } from '../carousel/CarouselContainer';
 
 interface BookRatingWidgetProps {

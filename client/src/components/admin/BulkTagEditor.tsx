@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Check, X, Tag, Trash2, Plus } from 'lucide-react';
 import { getAllONIXTags, getBooks, ONIXTag, Book } from '../../utils/api';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 const API_BASE_URL = '/api';
 

@@ -7,8 +7,8 @@
 
 import { useEffect, useState } from 'react';
 import { TrendingUp } from 'lucide-react';
-import { getBookAggregateRatings, type BookWorldForRating, type AggregateRatings } from '../utils/api';
-import { aggregateToTextBullets } from '../utils/rating-labels';
+import { getBookAggregateRatings, type BookWorldForRating, type AggregateRatings } from '../../utils/api';
+import { aggregateToTextBullets } from '../../utils/rating-labels';
 
 interface BookReaderAssessmentProps {
   bookId: string;

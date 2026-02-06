@@ -1,6 +1,6 @@
 import { Heart } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { useFavorites, type FrontendEntityType } from "./FavoritesContext";
 
 interface LikeButtonProps {

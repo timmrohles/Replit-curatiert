@@ -6,17 +6,17 @@
  */
 
 import { useState, useEffect } from 'react';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { Header } from '../layout/Header';
 import { Footer } from '../layout/Footer';
 import { InfoBar } from '../layout/InfoBar';
 import { BottomBanner } from '../layout/BottomBanner';
-import { SectionRenderer } from './sections/SectionRenderer';
-import { SEOHead } from './seo/SEOHead';
-import { BreadcrumbSchema, WebPageSchema } from './seo/StructuredData';
+import { SectionRenderer } from '../sections/SectionRenderer';
+import { SEOHead } from '../seo/SEOHead';
+import { BreadcrumbSchema, WebPageSchema } from '../seo/StructuredData';
 import { DynamicPageContentRenderer } from './DynamicPageContentRenderer';
 import { PageNavigationBadge } from './PageNavigationBadge';
-import type { Section as SectionType, Book as BookType } from './sections/SectionRenderer';
+import type { Section as SectionType, Book as BookType } from '../sections/SectionRenderer';
 
 interface Page {
   id: string;
@@ -56,7 +56,7 @@ export function CMSHomepage() {
 
         // ✅ Load the "Startseite" page from CMS using root path `/`
         const pageResponse = await fetch(
-          `/api/api/pages/resolve?path=/&includeDraft=false`,
+          `/api/pages/resolve?path=/&includeDraft=false`,
           {
             headers: {
             },

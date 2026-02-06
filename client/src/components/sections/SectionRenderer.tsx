@@ -16,11 +16,11 @@
  */
 
 import React from 'react';
-import { HeroSection } from './HeroSection';
-import { CreatorCarouselSection } from './CreatorCarouselSection';
-import { HorizontalRowSection } from './HorizontalRowSection';
-import { GridSection } from './GridSection';
-import { FeaturedSection } from './FeaturedSection';
+import { HeroSection } from './HeroSection.section';
+import { CreatorCarouselSection } from './CreatorCarouselSection.section';
+import { HorizontalRowSection } from './HorizontalRowSection.section';
+import { GridSection } from './GridSection.section';
+import { FeaturedSection } from './FeaturedSection.section';
 
 export interface Book {
   id: string;

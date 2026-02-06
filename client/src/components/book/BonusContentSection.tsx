@@ -1,6 +1,6 @@
 import { Lock, Unlock, MessageCircle, Users, Calendar, Download, Mail, ChevronDown, BookOpen } from 'lucide-react';
 import { useState } from 'react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 // Minimal Storefront interface (only fields used in this component)
 interface StorefrontEvent {

@@ -1,8 +1,8 @@
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { Calendar, MapPin, User, Filter, X, ArrowUpDown } from "lucide-react";
 import { useState } from "react";
-import { DSTag } from "./design-system/DSTag";
+import { DSTag } from "../design-system/DSTag";
 
 interface EventFiltersProps {
   selectedCurator: string;

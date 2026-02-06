@@ -8,7 +8,7 @@ import React, { useState, useRef } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
 import { ScrollSection } from '../../components/sections/ScrollSection.section';
 import { SectionDetailHeader } from '../../components/sections/SectionDetailHeader';
-import { BookCard } from '../../components/BookCard';
+import { BookCard } from '../../components/book/BookCard';
 
 const mockBooks = Array.from({ length: 12 }, (_, i) => ({
   id: `${i + 1}`,

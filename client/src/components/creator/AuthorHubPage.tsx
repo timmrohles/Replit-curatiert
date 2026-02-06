@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { Heart, ExternalLink, ChevronDown, Instagram, Twitter, Facebook } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Breadcrumb } from '../layout/Breadcrumb';
-import { Container, Section, Heading, Text } from './ui';
+import { Container, Section, Heading, Text } from '../ui';
 import { BookCarouselItem, type BookCarouselItemData } from '../book/BookCarouselItem';
 import { CarouselContainer } from '../carousel/CarouselContainer';
 import { CreatorEventsSection } from './CreatorEventsSection';
 import { LikeButton } from '../favorites/LikeButton';
 import { useFavorites } from '../favorites/FavoritesContext';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { isRealPublisher } from '../utils/publisherUtils';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { isRealPublisher } from '../../utils/publisherUtils';
 
 interface AuthorBook {
   id: string;

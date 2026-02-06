@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { Tags, ArrowRight, Quote, Share2 } from 'lucide-react';
-import { useTheme } from '../utils/ThemeContext';
-import { Button } from './ui/button';
-import { Heading, Text } from './ui/typography';
-import { getBookUrl } from '../utils/bookUrlHelper';
-import { getAllONIXTags, ONIXTag } from '../utils/api';
-import { ONIX_TAG_COLORS, ONIX_TAG_ICONS } from '../utils/tag-colors';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { useTheme } from '../../utils/ThemeContext';
+import { Button } from '../ui/button';
+import { Heading, Text } from '../ui/typography';
+import { getBookUrl } from '../../utils/bookUrlHelper';
+import { getAllONIXTags, ONIXTag } from '../../utils/api';
+import { ONIX_TAG_COLORS, ONIX_TAG_ICONS } from '../../utils/tag-colors';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { LikeButton } from '../favorites/LikeButton';
 
 export interface EditorialBookCardData {

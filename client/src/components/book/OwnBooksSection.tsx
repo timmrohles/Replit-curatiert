@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useSafeNavigate } from "../utils/routing";
-import mauriceAvatar from "figma:asset/b2fa68f812ab798c5b422fbfedb4357358b1fa0d.png";
+import { useSafeNavigate } from "../../utils/routing";
+const mauriceAvatar = '/placeholder-avatar.png';
 import { LikeButton } from "../favorites/LikeButton";
 import {
   Dialog,
@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "./ui/dialog";
+} from "../ui/dialog";
 
 interface OwnBook {
   id: string | number;

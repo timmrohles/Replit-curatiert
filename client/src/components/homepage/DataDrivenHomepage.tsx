@@ -4,10 +4,10 @@
 
 import { useState, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
-import { Header } from "../Header";
-import { Footer } from "../Footer";
-import { InfoBar } from "../InfoBar";
-import { PageRenderer } from "../PageRenderer";
+import { Header } from "../layout/Header";
+import { Footer } from "../layout/Footer";
+import { InfoBar } from "../layout/InfoBar";
+import { PageRenderer } from "../cms/PageRenderer";
 import { PageResolveResponse } from "../../types/page-resolve";
 import { resolvePage } from "../../utils/page-resolve-service";
 

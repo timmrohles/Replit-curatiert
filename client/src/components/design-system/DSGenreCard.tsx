@@ -1,4 +1,4 @@
-import { LikeButton } from '../LikeButton';
+import { LikeButton } from '../favorites/LikeButton';
 
 interface DSGenreCardProps {
   label: string;

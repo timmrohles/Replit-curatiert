@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { Search, Heart, ChevronDown } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Breadcrumb } from '../layout/Breadcrumb';
@@ -10,7 +10,7 @@ import { LikeButton } from '../favorites/LikeButton';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { isRealPublisher } from '../../utils/publisherUtils';
 import { useFavorites } from '../favorites/FavoritesContext';
-import { getPublisherLogoUrl, getPublisherLogoSchemaOrg, type PublisherLogoData } from '../utils/publisherLogoUtils';
+import { getPublisherLogoUrl, getPublisherLogoSchemaOrg, type PublisherLogoData } from '../../utils/publisherLogoUtils';
 
 interface PublisherBook {
   id: string;

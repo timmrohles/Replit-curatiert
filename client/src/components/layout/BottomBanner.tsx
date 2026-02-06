@@ -16,7 +16,7 @@ export function BottomBanner() {
     const fetchBannerConfig = async () => {
       try {
         const response = await fetch(
-          `/api/api/site-config/banner?position=bottom`,
+          `/api/site-config/banner?position=bottom`,
           {
             headers: {
             },

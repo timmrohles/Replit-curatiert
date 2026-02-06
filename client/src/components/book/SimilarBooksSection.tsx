@@ -1,9 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Book as APIBook, ONIXTag, getAllBooks, getAllONIXTags } from '../utils/api';
+import { Book as APIBook, ONIXTag, getAllBooks, getAllONIXTags } from '../../utils/api';
 import { BookCard } from './BookCard';
 import { CarouselContainer } from '../carousel/CarouselContainer';
-import { Heading, Text } from './ui/typography';
-import { Button } from './ui/button';
+import { Heading, Text } from '../ui/typography';
+import { Button } from '../ui/button';
 
 interface SimilarBooksSectionProps {
   currentBook: APIBook;

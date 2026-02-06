@@ -4,7 +4,7 @@
 
 import { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { BookCard } from '../BookCard';
+import { BookCard } from '../book/BookCard';
 import { BookCarouselProps } from './BookCarousel.schema';
 
 export function BookCarousel({ books }: BookCarouselProps) {

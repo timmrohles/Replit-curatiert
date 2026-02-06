@@ -4,7 +4,7 @@
 
 import React, { useState } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
-import { Footer } from '../../components/Footer';
+import { Footer } from '../../components/layout/Footer';
 import { SectionDetailHeader } from '../../components/sections/SectionDetailHeader';
 
 export default function FooterPage() {

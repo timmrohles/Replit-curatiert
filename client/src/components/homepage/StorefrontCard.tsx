@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Heart } from 'lucide-react';
-import { useFavorites } from '../FavoritesContext';
+import { useFavorites } from '../favorites/FavoritesContext';
 
 interface StorefrontCardProps {
   id: string | number;

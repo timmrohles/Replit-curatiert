@@ -1,5 +1,5 @@
 import { ChevronRight } from "lucide-react";
-import { useSafeNavigate } from "../utils/routing";
+import { useSafeNavigate } from "../../utils/routing";
 
 interface BreadcrumbItem {
   label: string;

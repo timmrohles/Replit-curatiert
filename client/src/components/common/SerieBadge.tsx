@@ -1,8 +1,8 @@
 import { memo } from 'react';
 import { motion } from 'motion/react';
-import { useSafeNavigate } from '../utils/routing';
-import { getSeriesBadge, getBadgeStyle } from '../utils/serieBadge';
-import { ONIXTag } from '../utils/api';
+import { useSafeNavigate } from '../../utils/routing';
+import { getSeriesBadge, getBadgeStyle } from '../../utils/serieBadge';
+import { ONIXTag } from '../../utils/api';
 
 interface SerieBadgeProps {
   onixTags?: ONIXTag[];

@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { SectionHeader } from './homepage/SectionHeader';
-import { Heading } from './ui/typography';
+import { SectionHeader } from '../homepage/SectionHeader';
+import { Heading } from '../ui/typography';
 
 interface MediaBook {
   id: number;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save, Trash2, Star, Clock, ChevronDown } from 'lucide-react';
-import { getSavedCombinations, saveTagCombination, deleteSavedCombination, markCombinationAsUsed, SavedTagCombination } from '../utils/savedTagCombinations';
-import { ONIXTag } from '../utils/api';
+import { getSavedCombinations, saveTagCombination, deleteSavedCombination, markCombinationAsUsed, SavedTagCombination } from '../../utils/savedTagCombinations';
+import { ONIXTag } from '../../utils/api';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface SavedTagCombinationsProps {

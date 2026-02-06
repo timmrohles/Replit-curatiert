@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { BookCard } from '../BookCard';
+import { BookCard } from '../book/BookCard';
 import { Book } from '../../types/homepage';
 
 interface BookCarouselProps {

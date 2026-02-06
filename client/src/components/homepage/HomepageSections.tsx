@@ -1,10 +1,10 @@
 import { useSafeNavigate } from '../../utils/routing';
 import { BookCarousel } from './BookCarousel';
-import { CreatorCarousel } from '../CreatorCarousel';
+import { CreatorCarousel } from '../creator/CreatorCarousel';
 import { CuratedListCard } from './CuratedListCard';
 import { StorefrontCard } from './StorefrontCard';
 import { SupportersSection } from './SupportersSection';
-import { EventCard } from '../EventCard';
+import { EventCard } from '../events/EventCard';
 import { TopicTag } from './TopicTag';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { scrollCarousel, SCROLL_AMOUNTS } from '../../utils/carousel-helpers';
@@ -12,7 +12,7 @@ import { Section, Container, Heading, Text } from '../ui'; // ✅ FIXED: UISecti
 import { Book, Event, Storefront, DiverseList, Topic, CarouselRefs } from '../../types/homepage';
 import { ScrollSection } from './ScrollSection';
 import { SectionHeader } from './SectionHeader';
-import { GenreCategoriesSection } from '../GenreCategoriesSection';
+import { GenreCategoriesSection } from '../tags/GenreCategoriesSection';
 // ❌ REMOVED: HowItWorksSection - Component does not exist
 
 /**

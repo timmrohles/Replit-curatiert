@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { useSafeNavigate } from '../utils/routing';
-import { DSCarousel } from './design-system/DSCarousel';
-import { DSGenreCard } from './design-system/DSGenreCard';
+import { useSafeNavigate } from '../../utils/routing';
+import { DSCarousel } from '../design-system/DSCarousel';
+import { DSGenreCard } from '../design-system/DSGenreCard';
 
 const API_BASE = '/api';
 

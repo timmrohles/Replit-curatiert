@@ -1,5 +1,5 @@
 import { EventCard } from "./EventCard";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { Calendar, ArrowRight } from "lucide-react";
 
 interface Event {

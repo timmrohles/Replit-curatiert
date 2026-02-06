@@ -6,7 +6,7 @@
 
 import React, { useState } from 'react';
 import { Monitor, Smartphone } from 'lucide-react';
-import { SupportersSection } from '../../components/sections/SupportersSection';
+import { SupportersSection } from '../../components/sections/SupportersSection.section';
 import { SectionDetailHeader } from '../../components/sections/SectionDetailHeader';
 
 export default function SupportersSectionPage() {

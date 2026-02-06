@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ONIXTag, getAllONIXTags } from '../utils/api';
+import { ONIXTag, getAllONIXTags } from '../../utils/api';
 
 interface BookONIXTagsProps {
   onixTagIds: string[];

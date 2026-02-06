@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSafeNavigate } from "../utils/routing";
+import { useSafeNavigate } from "../../utils/routing";
 import { Search, Store, MapPin, ExternalLink } from "lucide-react";
 import { Breadcrumb } from "../layout/Breadcrumb";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
@@ -7,7 +7,7 @@ import { Container } from "../ui/container";
 import { Section } from "../ui/section";
 import { Heading, Text } from "../ui/typography";
 import { Helmet } from "react-helmet-async";
-import { DSButton } from "./design-system/DSButton";
+import { DSButton } from "../design-system/DSButton";
 
 interface Bookstore {
   id: string;

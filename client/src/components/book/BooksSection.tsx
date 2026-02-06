@@ -1,7 +1,7 @@
-import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { CreatorCarousel } from "./CreatorCarousel";
+import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
+import { ImageWithFallback } from "../figma/ImageWithFallback";
+import { CreatorCarousel } from "../creator/CreatorCarousel";
 import { OwnBooksSection } from "./OwnBooksSection";
 
 interface Book {

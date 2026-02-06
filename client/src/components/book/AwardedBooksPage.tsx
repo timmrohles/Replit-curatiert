@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { useSafeNavigate } from "../utils/routing";
+import { useSafeNavigate } from "../../utils/routing";
 import { Breadcrumb } from "../layout/Breadcrumb";
 import { BookCard } from "./BookCard";
 import { OptimizedImage } from "../common/OptimizedImage";
 import { Award, Star, Sparkles } from "lucide-react";
-import { getBookUrl } from "../utils/bookUrlHelper";
+import { getBookUrl } from "../../utils/bookUrlHelper";
 
 // Mock Data für das Gewinnerbuch
 const winnerBook = {

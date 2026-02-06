@@ -1,9 +1,9 @@
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Share2, ShoppingCart, ArrowRight, Heart, ChevronDown } from 'lucide-react';
-import { LikeButton } from '../LikeButton';
+import { LikeButton } from '../favorites/LikeButton';
 import { Button } from '../ui/button';
 import { useState } from 'react';
-import { useFavorites } from '../FavoritesContext';
+import { useFavorites } from '../favorites/FavoritesContext';
 
 interface Review {
   id: string;

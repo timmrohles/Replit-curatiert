@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useSafeNavigate } from "../utils/routing";
-import { Input } from "./ui/input";
+import { useSafeNavigate } from "../../utils/routing";
+import { Input } from "../ui/input";
 import { MegaMenu } from "./MegaMenu";
 import { FavoritesPanel } from "../favorites/FavoritesPanel";
 import { useFavorites } from "../favorites/FavoritesContext";
 import { ThemeToggle } from "../common/ThemeToggle";
-import { useTheme } from "../utils/ThemeContext";
+import { useTheme } from "../../utils/ThemeContext";
 import { Moon, Sun, Search, Heart, Menu, X, ChevronDown, ShoppingCart, User, Sliders } from "lucide-react";
-import { useNavigationV2, FALLBACK_NAVIGATION_V2 } from "../utils/useNavigation"; // ✅ Clean import (no V2 suffix)
-import { logger } from "../utils/logger"; // ✅ Add logger for debugging
+import { useNavigationV2, FALLBACK_NAVIGATION_V2 } from "../../utils/useNavigation"; // ✅ Clean import (no V2 suffix)
+import { logger } from "../../utils/logger"; // ✅ Add logger for debugging
 
 interface HeaderProps {
   isHomePage?: boolean;

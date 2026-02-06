@@ -15,7 +15,7 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, MapPin, Clock } from 'lucide-react';
-import { EventCard } from '../../components/EventCard';
+import { EventCard } from '../../components/events/EventCard';
 import { SectionHeader } from '../../components/homepage/SectionHeader';
 
 interface MockEvent {

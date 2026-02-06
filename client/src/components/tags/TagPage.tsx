@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { ArrowLeft, BookOpen, Tag as TagIcon, Sparkles } from 'lucide-react';
-import { getAllBooks, getAllONIXTags, ONIXTag, Book } from '../utils/api';
+import { getAllBooks, getAllONIXTags, ONIXTag, Book } from '../../utils/api';
 import { BookCard } from '../book/BookCard';
 import { Breadcrumb } from '../layout/Breadcrumb';
 import { Helmet } from 'react-helmet';
-import { getRelatedTags, TagRecommendation } from '../utils/tagRecommendations';
+import { getRelatedTags, TagRecommendation } from '../../utils/tagRecommendations';
 
 // ✅ SAFE ROUTING: Import utilities
-import { getValidatedParam } from '../utils/routing';
-import { LoadingState, NotFoundState, EmptyState } from '../utils/pageState';
+import { getValidatedParam } from '../../utils/routing';
+import { LoadingState, NotFoundState, EmptyState } from '../../utils/pageState';
 
 /**
  * Dynamic Tag Landing Page

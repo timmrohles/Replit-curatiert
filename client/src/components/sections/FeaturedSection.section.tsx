@@ -3,7 +3,7 @@
 // Editorial Highlight mit Image + Books
 // ============================================================================
 
-import { BookCard } from '../BookCard';
+import { BookCard } from '../book/BookCard';
 import { FeaturedSectionProps } from './FeaturedSection.schema';
 
 export function FeaturedSection({ section, books, className = '' }: FeaturedSectionProps) {

@@ -3,7 +3,7 @@ import { MapPin, Video, Calendar, Clock, ChevronDown, ExternalLink } from "lucid
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { Text } from "../ui/typography";
 import { LikeButton } from "../favorites/LikeButton";
-import { DSButton } from "./design-system/DSButton";
+import { DSButton } from "../design-system/DSButton";
 
 // ONIX 3.0 Event Type Codes (Code List 231)
 type ONIXEventType = "01" | "02" | "03" | "04";

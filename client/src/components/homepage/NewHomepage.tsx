@@ -1,18 +1,18 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { Header } from '../Header';
-import { Footer } from '../Footer';
-import { InfoBar } from '../InfoBar';
-import { BottomBanner } from '../BottomBanner';
-import { CuratedBookSection } from '../CuratedBookSection';
-import { CategoryCardsGrid } from '../CategoryCardsGrid';
-import { RecipientCategoryGridWithBooks } from '../RecipientCategoryGridWithBooks';
+import { Header } from '../layout/Header';
+import { Footer } from '../layout/Footer';
+import { InfoBar } from '../layout/InfoBar';
+import { BottomBanner } from '../layout/BottomBanner';
+import { CuratedBookSection } from '../book/CuratedBookSection';
+import { CategoryCardsGrid } from '../tags/CategoryCardsGrid';
+import { RecipientCategoryGridWithBooks } from '../tags/RecipientCategoryGridWithBooks';
 // ❌ REMOVED: LatestReviewsSection - Component doesn't exist
 import { HomepageSections } from './HomepageSections';
 import { RefactoredHeroSection } from '../sections/RefactoredHeroSection.section';
 import { Container } from '../ui/container';
 import { Heading } from '../ui/typography';
 import { Section } from '../ui/section'; // ✅ FIXED: UISection → Section
-import { SectionErrorBoundary } from '../SectionErrorBoundary'; // ✅ NEW: Granular error handling
+import { SectionErrorBoundary } from '../common/SectionErrorBoundary'; // ✅ NEW: Granular error handling
 import { Book, Event, RawEvent, Storefront, DiverseList, Topic, EventType } from '../../types/homepage';
 
 // Constants

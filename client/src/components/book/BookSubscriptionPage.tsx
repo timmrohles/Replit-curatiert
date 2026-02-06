@@ -7,11 +7,11 @@ import {
   DSGenreCard, 
   DSCarousel
 } from './design-system';
-import genreImage1 from "figma:asset/61bbb87e38bad97ad8f3a23ee5ec5cc38385e32c.png";
-import genreImage2 from "figma:asset/b8aae869cb4a90a0db0f9cd87cbfeba65e8fef2a.png";
-import genreImage3 from "figma:asset/c22dddca2e51ca85267e3d03cefbea029e0aa9dc.png";
-import genreImage4 from "figma:asset/d7a58b8cea7f8a893c30fb3871e4d20eb9dcc11a.png";
-import genreImage5 from "figma:asset/f53c8bccd61b5f97e5e0e9e8ac6a70e0e3ec58f8.png";
+const genreImage1 = '/placeholder-genre.png';
+const genreImage2 = '/placeholder-genre.png';
+const genreImage3 = '/placeholder-genre.png';
+const genreImage4 = '/placeholder-genre.png';
+const genreImage5 = '/placeholder-genre.png';
 
 // Mock curator data with subscription themes
 const curatorThemes = [

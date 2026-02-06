@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { BookCard } from '../book/BookCard';
-import { BookCarousel } from './homepage/BookCarousel';
+import { BookCarousel } from '../homepage/BookCarousel';
 import { Sparkles, Award, Users, Calendar } from 'lucide-react';
 import { DynamicPageContentRenderer } from './DynamicPageContentRenderer';
-import { SEOHead } from './seo/SEOHead';
-import { BreadcrumbSchema, WebPageSchema } from './seo/StructuredData';
-import { getBookUrl } from '../utils/bookUrlHelper';
-import { SectionRenderer } from './sections/SectionRenderer';
-import type { Section as SectionType, Book as BookType } from './sections/SectionRenderer';
+import { SEOHead } from '../seo/SEOHead';
+import { BreadcrumbSchema, WebPageSchema } from '../seo/StructuredData';
+import { getBookUrl } from '../../utils/bookUrlHelper';
+import { SectionRenderer } from '../sections/SectionRenderer';
+import type { Section as SectionType, Book as BookType } from '../sections/SectionRenderer';
 import { PageNavigationBadge } from './PageNavigationBadge';
 import { Header } from '../layout/Header';
 import { Footer } from '../layout/Footer';
@@ -135,7 +135,7 @@ export function DynamicPage() {
         // ✅ NEW: Use Page Resolve API (only published pages)
         const path = `/${slug}`;
         const pageResponse = await fetch(
-          `/api/api/pages/resolve?path=${encodeURIComponent(path)}&includeDraft=false`,
+          `/api/pages/resolve?path=${encodeURIComponent(path)}&includeDraft=false`,
           {
             headers: {
             },

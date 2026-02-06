@@ -1,6 +1,6 @@
 import { Trophy, Medal, Award as AwardIcon } from "lucide-react";
 import { useState } from "react";
-import { Text } from "./ui/typography";
+import { Text } from "../ui/typography";
 
 // ==================================================================
 // TYPES

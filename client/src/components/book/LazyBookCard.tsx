@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, memo } from 'react';
 import { BookCard } from './BookCard';
-import { Book } from '../utils/api';
+import { Book } from '../../utils/api';
 
 interface LazyBookCardProps {
   cover?: string;

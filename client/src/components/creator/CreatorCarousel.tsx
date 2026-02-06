@@ -1,11 +1,11 @@
 import React, { useState, useEffect, memo, useRef, useMemo } from 'react';
-import { BookCarouselItem, BookCarouselItemData } from "./BookCarouselItem";
-import { EditorialBookCard, EditorialBookCardData } from "./EditorialBookCard";
-import { CarouselContainer } from "./CarouselContainer";
+import { BookCarouselItem, BookCarouselItemData } from "../book/BookCarouselItem";
+import { EditorialBookCard, EditorialBookCardData } from "../book/EditorialBookCard";
+import { CarouselContainer } from "../carousel/CarouselContainer";
 import { CreatorHeader } from "./CreatorHeader";
-import { Text } from "./ui/typography";
-import { BRAND_COLORS, TURQUOISE_VARIANTS } from '../utils/tag-colors';
-import { getAllONIXTags, ONIXTag } from '../utils/api';
+import { Text } from "../ui/typography";
+import { BRAND_COLORS, TURQUOISE_VARIANTS } from '../../utils/tag-colors';
+import { getAllONIXTags, ONIXTag } from '../../utils/api';
 
 // Helper function to calculate luminance and determine text color
 function getContrastTextColor(backgroundColor: string): string {

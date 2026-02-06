@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BookCard } from '../book/BookCard';
-import { calculateBookMatch, getAllBooks, Book } from '../utils/api';
-import { useTheme } from '../utils/ThemeContext';
+import { calculateBookMatch, getAllBooks, Book } from '../../utils/api';
+import { useTheme } from '../../utils/ThemeContext';
 
 /**
  * Demo-Sektion für Match-Badges

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Save, Edit2, Trash2, Award as AwardIcon, Upload, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
 import { Award, AwardType, getAllAwards, saveAward, deleteAward, uploadAwardLogo, clearAwardsCache, getAllONIXTags, ONIXTag } from '../../utils/api';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 // Helper: Get icon for award type
 function getAwardTypeIcon(type: AwardType): string {

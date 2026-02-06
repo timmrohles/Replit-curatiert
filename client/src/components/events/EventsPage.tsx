@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
-import { useSafeNavigate } from "../utils/routing";
-import { Container } from "./ui/container";
-import { Section } from "./ui/section";
-import { Heading, Text } from "./ui/typography";
+import { useSafeNavigate } from "../../utils/routing";
+import { Container } from "../ui/container";
+import { Section } from "../ui/section";
+import { Heading, Text } from "../ui/typography";
 import { EventCard } from "./EventCard";
 import { Calendar, MapPin, Video } from "lucide-react";
 import { Helmet } from "react-helmet-async";

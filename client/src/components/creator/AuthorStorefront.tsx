@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { Header } from '../layout/Header';
 import { InfoBar } from '../layout/InfoBar';
 import { Footer } from '../layout/Footer';
 import { CreatorHeader } from './CreatorHeader';
-import { ContentTabs } from './ContentTabs';
+import { ContentTabs } from '../common/ContentTabs';
 import { BookCard } from '../book/BookCard';
 import { CreatorEventsSection } from './CreatorEventsSection';
 import { GenreCarouselSection } from '../carousel/GenreCarouselSection';
 import { DSSectionHeader, DSCarousel, DSGenreCard } from './design-system';
 import { Loader2 } from 'lucide-react';
 import { EventCard } from '../events/EventCard';
-import { Container } from './ui/container';
-import { Section } from './ui/section';
-import { Heading, Text } from './ui/typography';
+import { Container } from '../ui/container';
+import { Section } from '../ui/section';
+import { Heading, Text } from '../ui/typography';
 
 // Import Author-specific modules
 import {

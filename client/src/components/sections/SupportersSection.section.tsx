@@ -2,7 +2,7 @@
 // Supporters Section - Frontend Render Component
 // ============================================================================
 
-import querverlagLogo from "figma:asset/d01817481afdab02c7098f64c557add4e12cab5a.png";
+const querverlagLogo = '/placeholder-logo.png';
 import { SupportersSectionProps, Supporter } from './SupportersSection.schema';
 
 export function SupportersSection({ supporters: propSupporters }: SupportersSectionProps = {}) {

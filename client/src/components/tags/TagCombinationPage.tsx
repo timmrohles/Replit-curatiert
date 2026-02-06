@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSafeNavigate } from '../utils/routing';
-import { getAllONIXTags, getAllBooks, ONIXTag, Book } from '../utils/api';
+import { useSafeNavigate } from '../../utils/routing';
+import { getAllONIXTags, getAllBooks, ONIXTag, Book } from '../../utils/api';
 import { Helmet } from 'react-helmet';
 import { X } from 'lucide-react';
 import { BookCard } from '../book/BookCard';

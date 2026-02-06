@@ -24,7 +24,7 @@ import {
   Sparkles, Database
 } from 'lucide-react';
 import { API_BASE_URL } from '../../config/apiClient';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 import { FEATURE_FLAGS } from '../../utils/featureFlags';
 import { getErrorMessage, logError } from '../../utils/errorHelpers';
 

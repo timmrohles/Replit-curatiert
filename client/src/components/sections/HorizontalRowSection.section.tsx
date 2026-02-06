@@ -3,7 +3,7 @@
 // Compact horizontal book row
 // ============================================================================
 
-import { HorizontalBookRow } from '../HorizontalBookRow';
+import { HorizontalBookRow } from '../carousel/HorizontalBookRow';
 import { HorizontalRowSectionProps } from './HorizontalRowSection.schema';
 
 export function HorizontalRowSection({ section, books, className = '' }: HorizontalRowSectionProps) {

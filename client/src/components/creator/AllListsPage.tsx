@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from "react";
-import { useSafeNavigate } from "../utils/routing";
-import { Container } from "./ui/container";
-import { Section } from "./ui/section";
-import { Heading, Text } from "./ui/typography";
-import { DSCuratedListCard } from "./design-system/DSCuratedListCard";
+import { useSafeNavigate } from "../../utils/routing";
+import { Container } from "../ui/container";
+import { Section } from "../ui/section";
+import { Heading, Text } from "../ui/typography";
+import { DSCuratedListCard } from "../design-system/DSCuratedListCard";
 import { Search, SlidersHorizontal, List } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { Header } from "../layout/Header";

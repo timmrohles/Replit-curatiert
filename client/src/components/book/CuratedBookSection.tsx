@@ -1,4 +1,4 @@
-import { CreatorCarousel } from './CreatorCarousel';
+import { CreatorCarousel } from '../creator/CreatorCarousel';
 
 /**
  * 📚 CuratedBookSection - Single Source of Truth

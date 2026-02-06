@@ -1,4 +1,4 @@
-import { CuratorMatchmaking } from './homepage/CuratorMatchmaking';
+import { CuratorMatchmaking } from '../homepage/CuratorMatchmaking';
 import { useState } from 'react';
 import { MoodSelector } from './matching/MoodSelector';
 import { DailyRecommendations } from './matching/DailyRecommendations';

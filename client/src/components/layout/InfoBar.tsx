@@ -16,7 +16,7 @@ export function InfoBar() {
     const fetchBannerConfig = async () => {
       try {
         const response = await fetch(
-          `/api/api/site-config/banner`,
+          `/api/site-config/banner`,
           {
             headers: {
             },

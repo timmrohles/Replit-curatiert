@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { useSafeNavigate } from '../utils/routing';
-import { getAllONIXTags, getAllBooks, ONIXTag, Book, ONIXTagType } from '../utils/api';
+import { useSafeNavigate } from '../../utils/routing';
+import { getAllONIXTags, getAllBooks, ONIXTag, Book, ONIXTagType } from '../../utils/api';
 import { Helmet } from 'react-helmet';
 import { ArrowLeft, Tag as TagIcon } from 'lucide-react';
 import { Breadcrumb } from '../layout/Breadcrumb';

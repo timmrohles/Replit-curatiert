@@ -5,7 +5,7 @@ import { useSafeNavigate } from '../../utils/routing';
 import { useFavorites } from '../favorites/FavoritesContext';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { LikeButton } from '../favorites/LikeButton';
-import { Heading, Text } from './ui/typography';
+import { Heading, Text } from '../ui/typography';
 import { Globe } from 'lucide-react';
 
 interface CreatorHeaderProps {

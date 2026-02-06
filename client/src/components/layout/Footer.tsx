@@ -1,7 +1,7 @@
 import React from 'react';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { CoRatiertLogo } from '../common/CoRatiertLogo';
-import { Text } from './ui/typography';
+import { Text } from '../ui/typography';
 import { Facebook, Twitter, Instagram, Youtube, Settings } from 'lucide-react';
 
 export function Footer() {

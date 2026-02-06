@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { ChevronDown, ChevronRight, X } from 'lucide-react';
-import { ONIXTag, getAllONIXTags } from '../utils/api';
+import { ONIXTag, getAllONIXTags } from '../../utils/api';
 
 interface ONIXTagFilterProps {
   selectedTagIds: string[];

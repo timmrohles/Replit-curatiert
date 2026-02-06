@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useSafeNavigate } from "../utils/routing";
+import { useSafeNavigate } from "../../utils/routing";
 import { Search, Heart } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { Breadcrumb } from "../layout/Breadcrumb";

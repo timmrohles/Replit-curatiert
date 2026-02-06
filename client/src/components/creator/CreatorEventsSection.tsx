@@ -1,6 +1,6 @@
 import { Calendar, MapPin, ExternalLink } from 'lucide-react';
-import { DSButton } from './design-system/DSButton';
-import { useSafeNavigate } from '../utils/routing';
+import { DSButton } from '../design-system/DSButton';
+import { useSafeNavigate } from '../../utils/routing';
 
 interface Event {
   id: string;

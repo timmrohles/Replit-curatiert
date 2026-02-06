@@ -1,9 +1,9 @@
 import { X, Trash2 } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import { FavoriteCard } from "./FavoriteCard";
 import { useState } from "react";
 import { useFavorites } from "./FavoritesContext";
-import { Heading, Text } from "./ui";
+import { Heading, Text } from "../ui";
 
 interface FavoritesPanelProps {
   isOpen: boolean;

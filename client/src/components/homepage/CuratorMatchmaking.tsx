@@ -3,8 +3,8 @@ import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { Heart, ArrowRight, CheckCircle2, ChevronRight, Check, Sparkles, ShoppingCart, Zap, Target, Microscope, Clock, X, ThumbsUp, ThumbsDown, Shuffle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useSafeNavigate } from "../../utils/routing";
-import { useFavorites } from "../FavoritesContext";
-import { useCart } from "../CartContext";
+import { useFavorites } from "../favorites/FavoritesContext";
+import { useCart } from "../shop/CartContext";
 import { MatchingResults } from "./MatchingResults";
 
 // Sample book data with tags for matching

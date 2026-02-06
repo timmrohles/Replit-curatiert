@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useSafeNavigate } from '../utils/routing';
+import { useSafeNavigate } from '../../utils/routing';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Search } from 'lucide-react';
 import { HorizontalBookRow } from '../carousel/HorizontalBookRow';
 import { getAllONIXTags, getBooks, ONIXTag, Book as APIBook } from '../../utils/api';
 import { SavedTagCombinations } from './SavedTagCombinations';
-import { trackTagClick, trackTagSearch, trackTagCombination } from '../utils/tagAnalytics';
+import { trackTagClick, trackTagSearch, trackTagCombination } from '../../utils/tagAnalytics';
 
 // Adapter: Convert API Book to HorizontalBookRow Book format
 interface Book {

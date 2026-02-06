@@ -36,7 +36,7 @@ export function PageNavigationBadge({ pageId }: Props) {
         
         // ✅ DIRECT API: Fetch menu items linked to this page
         const response = await fetch(
-          `/api/api/navigation/items`,
+          `/api/navigation/items`,
           {
             headers: {
             },

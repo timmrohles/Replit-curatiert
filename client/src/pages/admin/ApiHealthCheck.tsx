@@ -10,8 +10,8 @@
  */
 
 import { useState } from 'react';
-import { Header } from '../../components/Header';
-import { Footer } from '../../components/Footer';
+import { Header } from '../../components/layout/Header';
+import { Footer } from '../../components/layout/Footer';
 import { CheckCircle2, XCircle, Loader2, Play, AlertTriangle } from 'lucide-react';
 import { API_ENDPOINTS, apiFetch, API_BASE_URL } from '../../config/apiClient';
 
