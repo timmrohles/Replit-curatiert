@@ -115,8 +115,7 @@ function getApiBase(): string {
 
 function getAdminHeaders(): HeadersInit {
   const token = getAdminToken();
-    return {
-    'Authorization': `Bearer ${anonKey}`,
+  return {
     'Content-Type': 'application/json',
     'X-Admin-Token': token || '',
   };
@@ -951,10 +950,10 @@ export function AdminNavigationV2() {
       setLoading(true);
       setError(null);
 
-      console.log('🔄 Fetching navigation from:', `${getApiBase()}/v2/navigation/items`);
+      console.log('🔄 Fetching navigation from:', `${getApiBase()}/navigation/admin/items`);
       console.log('📋 Admin Token:', getAdminToken() ? '✅ Present' : '❌ Missing');
 
-      const response = await fetch(`${getApiBase()}/v2/navigation/items`, {
+      const response = await fetch(`${getApiBase()}/navigation/admin/items`, {
         headers: getAdminHeaders(),
       });
 
@@ -1136,7 +1135,7 @@ export function AdminNavigationV2() {
 
       console.log('🔄 Updating navigation item with payload:', payload);
 
-      const response = await fetch(`${getApiBase()}/v2/navigation/items`, {
+      const response = await fetch(`${getApiBase()}/navigation/admin/items`, {
         method: 'POST',
         headers: getAdminHeaders(),
         body: JSON.stringify(payload),
@@ -1172,7 +1171,7 @@ export function AdminNavigationV2() {
     }
 
     try {
-      const response = await fetch(`${getApiBase()}/v2/navigation/items/${id}`, {
+      const response = await fetch(`${getApiBase()}/navigation/admin/items/${id}`, {
         method: 'DELETE',
         headers: getAdminHeaders(),
       });
@@ -1235,7 +1234,7 @@ export function AdminNavigationV2() {
         isLabelValid: !!trimmedLabel && trimmedLabel.length > 0
       });
 
-      const url = `${getApiBase()}/v2/navigation/items`;
+      const url = `${getApiBase()}/navigation/admin/items`;
       addDebugLog('📡 Sending POST request', { url });
 
       const response = await fetch(url, {
@@ -1285,10 +1284,11 @@ export function AdminNavigationV2() {
 
   const moveItem = async (itemId: number, newOrder: number, newParentId: number | null) => {
     try {
-      const response = await fetch(`${getApiBase()}/v2/navigation/items/${itemId}/move`, {
-        method: 'PUT',
+      const response = await fetch(`${getApiBase()}/navigation/admin/items`, {
+        method: 'POST',
         headers: getAdminHeaders(),
         body: JSON.stringify({
+          id: itemId,
           display_order: newOrder,
           parent_id: newParentId
         }),
@@ -1312,7 +1312,7 @@ export function AdminNavigationV2() {
     setDebugLog([]); // Clear previous logs
     
     try {
-      const url = `${getApiBase()}/v2/navigation/items`;
+      const url = `${getApiBase()}/navigation/admin/items`;
       addDebugLog('📡 GET request', { url });
       
       const response = await fetch(url, {
@@ -1356,7 +1356,7 @@ export function AdminNavigationV2() {
       
       addDebugLog('📤 Sending test payload', testPayload);
       
-      const createResponse = await fetch(`${getApiBase()}/v2/navigation/items`, {
+      const createResponse = await fetch(`${getApiBase()}/navigation/admin/items`, {
         method: 'POST',
         headers: getAdminHeaders(),
         body: JSON.stringify(testPayload),
