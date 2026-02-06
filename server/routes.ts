@@ -2,6 +2,7 @@ import type { Express, Request, Response } from "express";
 import { type Server } from "http";
 import { queryDB, testConnection } from "./db";
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 const log = {
   info: (...args: unknown[]) => console.log('[INFO]', ...args),
