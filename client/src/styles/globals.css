@@ -65,6 +65,8 @@
     --header-icon-shadow: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.15));
     --nav-bg: var(--color-charcoal);
     --nav-text: #ffffff;
+    --nav-hover-bg: rgba(255, 255, 255, 0.15);
+    --nav-border: rgba(255, 255, 255, 0.1);
     --search-bg: #ffffff;
     --search-text: var(--color-charcoal);
     --search-icon: var(--color-charcoal);
@@ -746,15 +748,17 @@
   --header-bg: #2a2a2a;
   --header-icon: #F5F5F0;
   --header-icon-shadow: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.4));
-  --nav-bg: #ffffff;  /* ✅ WEISS - hebt sich vom schwarzen Hintergrund ab */
-  --nav-text: #2a2a2a;  /* ✅ SCHWARZ - kontrast auf weißem Nav */
+  --nav-bg: var(--color-charcoal);
+  --nav-text: #ffffff;
+  --nav-hover-bg: rgba(255, 255, 255, 0.15);
+  --nav-border: rgba(255, 255, 255, 0.1);
   --search-bg: #ffffff;
   --search-text: #2a2a2a;
   --search-icon: #2a2a2a;
   --search-border: #e5e5e5;
-  --megamenu-bg: #ffffff;
-  --megamenu-text: #2a2a2a;
-  --megamenu-border: rgba(0, 0, 0, 0.1);
+  --megamenu-bg: var(--color-charcoal);
+  --megamenu-text: #ffffff;
+  --megamenu-border: rgba(255, 255, 255, 0.1);
   
   /* Breadcrumb System */
   --breadcrumb-text: #F5F5F0;

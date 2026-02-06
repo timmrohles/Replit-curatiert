@@ -43,6 +43,14 @@
   --chart-3: 165 75% 28%;
   --chart-4: 280 70% 35%;
   --chart-5: 340 80% 38%;
+  --color-charcoal: #2a2a2a;
+  --nav-bg: #2a2a2a;
+  --nav-text: #ffffff;
+  --nav-hover-bg: rgba(255, 255, 255, 0.15);
+  --nav-border: rgba(255, 255, 255, 0.1);
+  --megamenu-bg: #2a2a2a;
+  --megamenu-text: #ffffff;
+  --megamenu-border: rgba(255, 255, 255, 0.1);
   --font-sans: Open Sans, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
@@ -135,6 +143,14 @@
   --shadow-lg: 0px 2px 0px 0px hsl(0 0% 100% / 0.00), 0px 4px 6px -1px hsl(0 0% 100% / 0.00);
   --shadow-xl: 0px 2px 0px 0px hsl(0 0% 100% / 0.00), 0px 8px 10px -1px hsl(0 0% 100% / 0.00);
   --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 100% / 0.00);
+  --color-charcoal: #2a2a2a;
+  --nav-bg: #2a2a2a;
+  --nav-text: #ffffff;
+  --nav-hover-bg: rgba(255, 255, 255, 0.15);
+  --nav-border: rgba(255, 255, 255, 0.1);
+  --megamenu-bg: #2a2a2a;
+  --megamenu-text: #ffffff;
+  --megamenu-border: rgba(255, 255, 255, 0.1);
 
 /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
