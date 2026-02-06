@@ -58,7 +58,19 @@ All routes prefixed with `/api/`:
 - `NEON_DATABASE_URL` - Neon PostgreSQL connection string (secret)
 - `SESSION_SECRET` - Session secret (secret)
 
+## Design System
+- **Headline Font**: Fjalla One (self-hosted WOFF2, DSGVO-konform) - all h1-h6, uppercase, letter-spacing 0.02em
+- **Body Font**: Inter (self-hosted WOFF2, weights 400/500/600/700) - all body text, buttons, links
+- **Font files**: `client/src/public/fonts/` (no Google Fonts, fully self-hosted)
+- **Tailwind**: `font-sans` = Inter (default), `font-headline` = Fjalla One
+- **Brand Colors**: Blue Cerulean #247ba0, Coral #f25f5c, Gold #ffe066, Teal #70c1b3, Saffron #f4a261, Charcoal #2a2a2a, Beige #f7f4ef
+- **Typography**: Fluid responsive sizes using CSS clamp() for h1-h6
+- **CSS Variables**: --font-sans, --font-headline, --color-blue-cerulean, --color-coral-vibrant, etc.
+
 ## Recent Changes (2026-02-06)
+- Self-hosted fonts (Fjalla One + Inter) installed, Google Fonts completely removed (DSGVO)
+- Design system CSS variables added: brand colors, font families, fluid typography
+- Admin navigation panel fixed: corrected API URLs, removed Supabase anonKey remnant
 - Migrated backend from Hono/Deno (Supabase Edge Functions) to Express.js
 - Replaced all Supabase URL construction with local `/api` endpoints
 - Fixed 54+ files importing from supabase/info

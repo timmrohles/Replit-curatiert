@@ -1,9 +1,6 @@
 @import "tailwindcss";
 @import "../public/fonts/fonts.css";
 
-/* ⚠️ FALLBACK: Google Fonts bis self-hosted Fonts verfügbar sind */
-@import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Inter:wght@400;500;600;700&display=swap');
-
 /* * 1. DESIGN SYSTEM THEME (Tailwind v4.1 Syntax)
  * Markenfarben und Basis-Variablen
  */
