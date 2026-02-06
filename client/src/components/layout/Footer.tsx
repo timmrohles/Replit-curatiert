@@ -263,6 +263,14 @@ export function Footer() {
                 </li>
                 <li>
                   <button 
+                    onClick={() => navigate('/dashboard/sections')}
+                    className="text-gray-400 transition-colors hover:text-white text-left"
+                  >
+                    Sections
+                  </button>
+                </li>
+                <li>
+                  <button 
                     onClick={() => navigate('/backend-health')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
