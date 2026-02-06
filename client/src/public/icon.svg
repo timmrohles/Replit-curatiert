@@ -1,0 +1,49 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Gradient (coratiert Markenfarben) -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f25f5c;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ffe066;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#70c1b3;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded Rectangle Background -->
+  <rect width="512" height="512" rx="80" fill="url(#bgGradient)"/>
+  
+  <!-- Stylized Book Icon -->
+  <g transform="translate(256, 256)">
+    <!-- Book Cover -->
+    <rect x="-120" y="-140" width="240" height="280" rx="12" fill="#FFFFFF" opacity="0.95"/>
+    
+    <!-- Book Spine Shadow -->
+    <rect x="-120" y="-140" width="20" height="280" rx="12" fill="#000000" opacity="0.1"/>
+    
+    <!-- Book Pages -->
+    <rect x="-100" y="-125" width="200" height="250" fill="#F5F5F0"/>
+    
+    <!-- Decorative Lines (Text) -->
+    <rect x="-80" y="-90" width="120" height="8" rx="4" fill="#3A3A3A" opacity="0.6"/>
+    <rect x="-80" y="-65" width="160" height="6" rx="3" fill="#3A3A3A" opacity="0.4"/>
+    <rect x="-80" y="-45" width="140" height="6" rx="3" fill="#3A3A3A" opacity="0.4"/>
+    
+    <!-- Heart Icon (coratiert Theme) -->
+    <path d="M 0 -10 C -8 -18, -20 -18, -26 -10 C -32 -2, -32 10, -20 22 L 0 42 L 20 22 C 32 10, 32 -2, 26 -10 C 20 -18, 8 -18, 0 -10 Z" 
+          fill="#f25f5c" 
+          transform="translate(0, 20) scale(1.2)"/>
+    
+    <!-- Bookmark -->
+    <path d="M 90 -140 L 90 100 L 70 80 L 50 100 L 50 -140 Z" 
+          fill="#247ba0" 
+          opacity="0.8"/>
+  </g>
+  
+  <!-- 'c' Monogram (coratiert) -->
+  <text x="256" y="450" 
+        font-family="'Fjalla One', Arial, sans-serif" 
+        font-size="120" 
+        font-weight="bold" 
+        fill="#FFFFFF" 
+        text-anchor="middle"
+        opacity="0.9">c</text>
+</svg>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - coratiert</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to right, #e4afcb 0%, #b8cbb8 0%, #b8cbb8 0%, #e2c58b 30%, #c2ce9c 64%, #7edbdc 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      padding: 48px 32px;
+      max-width: 500px;
+      margin: 16px;
+    }
+    h1 {
+      font-family: 'Fjalla One', sans-serif;
+      font-size: 2rem;
+      color: #3A3A3A;
+      margin: 0 0 16px 0;
+    }
+    p {
+      color: #666;
+      font-size: 1.125rem;
+      line-height: 1.6;
+      margin: 0 0 24px 0;
+    }
+    .icon {
+      font-size: 4rem;
+      margin-bottom: 24px;
+    }
+    button {
+      background: #f25f5c;
+      color: #ffffff;
+      border: none;
+      padding: 12px 32px;
+      border-radius: 999px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📚</div>
+    <h1>Offline</h1>
+    <p>
+      Du bist aktuell offline. Bitte überprüfe deine Internetverbindung und versuche es erneut.
+    </p>
+    <button onclick="window.location.reload()">
+      Erneut versuchen
+    </button>
+  </div>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<!-- PLACEHOLDER: In production, convert /public/icon.svg to PNG -->
+<!-- Use: https://www.pwabuilder.com/imageGenerator -->
+<!-- Or: imagemagick: convert icon.svg -resize 512x512 icon-512.png -->
+<!-- Or: Figma/Photopea export -->
+
+<!-- For now, the browser will use icon.svg as fallback -->
+<!-- This file exists to satisfy manifest.json schema -->

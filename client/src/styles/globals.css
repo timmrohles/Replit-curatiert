@@ -1,0 +1,775 @@
+@import "tailwindcss";
+@import "../public/fonts/fonts.css";
+
+/* ⚠️ FALLBACK: Google Fonts bis self-hosted Fonts verfügbar sind */
+@import url('https://fonts.googleapis.com/css2?family=Fjalla+One&family=Inter:wght@400;500;600;700&display=swap');
+
+/* * 1. DESIGN SYSTEM THEME (Tailwind v4.1 Syntax)
+ * Markenfarben und Basis-Variablen
+ */
+@theme {
+  --font-family-headline: 'Fjalla One', sans-serif;
+  --font-family-sans: 'Inter', sans-serif;
+  
+  /* ✅ Tailwind Font Family Utilities */
+  --font-headline: 'Fjalla One', sans-serif;
+  --font-sans: 'Inter', sans-serif;
+  
+  --color-coral: #f25f5c;
+  --color-gold: #ffe066;
+  --color-blue: #247ba0;
+  --color-teal: #70c1b3;
+  --color-saffron: #f4a261;
+  --color-charcoal: #2a2a2a;
+  --color-beige: #f7f4ef;
+  
+  /* Brand colors - compatibility aliases */
+  --cerulean: #247ba0;
+  --vibrant-coral: #f25f5c;
+  --royal-gold: #ffe066;
+  --tropical-teal: #70c1b3;
+  --saffron: #f4a261;
+  --charcoal: #2a2a2a;
+  
+  --color-background: #f7f4ef;
+  --color-surface: #ffffff;
+  --color-foreground: #2a2a2a;
+  --color-foreground-muted: #6b7280;
+  --color-interactive: #2a2a2a;
+  --color-interactive-contrast: #ffffff;
+  --color-border: #e5e5e5;
+
+  --radius-md: 0.575rem;
+  --radius-lg: 0.625rem;
+  
+  /* Buchcover Schatten - nach rechts unten */
+  --shadow-book-cover: 4px 4px 8px rgba(0, 0, 0, 0.2);
+  --shadow-book-cover-dark: 4px 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* * 2. DARK MODE SYSTEM
+ */
+@layer base {
+  /* 🎯 CORE COLORS - Light Mode */
+  :root {
+    --color-background: #f7f4ef;
+    --color-surface: #ffffff;
+    --color-foreground: #2a2a2a;
+    --color-foreground-muted: #6b7280;
+    --color-interactive: #2a2a2a;
+    --color-interactive-contrast: #ffffff;
+    
+    /* Header System */
+    --header-bg: #f7f4ef;
+    --header-icon: var(--color-charcoal);
+    --header-icon-shadow: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.15));
+    --nav-bg: var(--color-charcoal);
+    --nav-text: #ffffff;
+    --search-bg: #ffffff;
+    --search-text: var(--color-charcoal);
+    --search-icon: var(--color-charcoal);
+    --search-border: #e5e5e5;
+    --megamenu-bg: var(--color-charcoal);
+    --megamenu-text: #ffffff;
+    --megamenu-border: rgba(255, 255, 255, 0.1);
+    
+    /* Breadcrumb System */
+    --breadcrumb-text: #2a2a2a;
+    --breadcrumb-text-muted: #6b7280;
+    --breadcrumb-separator: #9ca3af;
+    --breadcrumb-link: #2a2a2a;
+    --breadcrumb-link-hover: var(--color-blue);
+    
+    /* Button System - Produktdetailseite */
+    --button-product-bg: #247ba0;
+    --button-product-border: #ffffff;
+    --button-product-text: #ffffff;
+    
+    /* Primary Button System - DSButton */
+    --button-primary-bg: var(--color-blue);
+    --button-primary-text: #ffffff;
+    
+    /* Carousel Button System - SCHWARZE Buttons im Light Mode */
+    --carousel-button-bg: #000000;
+    --carousel-button-border: #ffffff;
+    --carousel-button-icon: #ffffff;
+  }
+}
+
+/* * 3. FLUID TYPOGRAPHY & RESET
+ */
+@layer base {
+  :root {
+    --fluid-h1: clamp(1.875rem, 1.45rem + 1.8vw, 3rem);
+    --fluid-h2: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);  /* 📈 GRÖSSER: 28px-36px (war 24px-30px) */
+    --fluid-h3: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);  /* 📉 KLEINER: 20px-24px (war 22px-28px) */
+    --fluid-h4: clamp(1.125rem, 1.05rem + 0.3vw, 1.375rem);  /* 📉 KLEINER: 18px-22px (war 20px-26px) */
+    --fluid-h5: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+    --fluid-h6: clamp(0.875rem, 0.825rem + 0.2vw, 1rem);
+    --fluid-body: clamp(1rem, 0.95rem + 0.2vw, 1.125rem);
+    --fluid-body-small: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+    --fluid-body-xs: clamp(0.75rem, 0.725rem + 0.1vw, 0.8125rem);
+    --fluid-price-label: clamp(0.875rem, 0.7rem + 0.65vw, 1.125rem);  /* 📱 Mobil small (14px), 💻 Desktop base (18px) */
+    
+    --content-text-body: 1.5rem;
+  }
+
+  /* RESET: :where() entzieht den Tags die Macht, Tailwind gewinnt immer */
+  :where(h1, h2, h3, h4, h5, h6, p, span, a, div) {
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    color: inherit;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-family-sans);
+    font-size: var(--fluid-body);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-family-headline);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+}
+
+/* * 5. UTILITIES & PROTECTION
+ */
+@layer utilities {
+  /* Die content-area isoliert Blog-Inhalte */
+  .content-area p:not([class*="text-"]) {
+    font-size: var(--content-text-body);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ENTFERNT - War Gift für flexibles Design-System! */
+  /* .content-area [class*="!text-"] { font-size: inherit !important; } */
+
+  .btn-coral, .tag-coral {
+    background-color: var(--color-coral) !important;
+    color: #FFFFFF !important;
+  }
+
+  /* 🎯 KURATORNAME - Eigene Klasse für Creator Namen */
+  .kuratorname {
+    font-family: var(--font-family-headline);
+    font-size: var(--fluid-h4);  /* 20px-26px - größer als h5/h6 */
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    font-weight: 400;  /* ✅ Fjalla One hat nur weight 400 */
+  }
+
+  /* 📘 SERIES LINK - Blaue Links für Buchreihen-Badges */
+  .series-link {
+    color: var(--color-blue);
+    transition: opacity 0.2s ease;
+  }
+
+  .series-link:hover {
+    opacity: 0.7;
+  }
+
+  /* 🎨 PASTEL GRADIENT - Für Produktdetailseite */
+  .bg-gradient-pastel {
+    background: linear-gradient(to right, #e4afcb 0%, #b8cbb8 0%, #b8cbb8 0%, #e2c58b 30%, #c2ce9c 64%, #7edbdc 100%);
+  }
+
+  /* 🎨 HERO BLUE - Für Hero-Sektionen mit blauem Hintergrund */
+  .bg-hero-blue {
+    background-color: var(--color-blue);
+  }
+
+  /* 🍞 BREADCRUMB ON BLUE - Weiße Breadcrumbs auf blauem Hintergrund */
+  .breadcrumb-on-blue {
+    --breadcrumb-text: #ffffff;
+    --breadcrumb-text-muted: #ffffff;
+    --breadcrumb-separator: #ffffff;
+    --breadcrumb-link: #ffffff;
+    --breadcrumb-link-hover: var(--color-gold);
+  }
+
+  /* 👤 AUTHOR CARD - Schwarze Texte auch im Dark Mode */
+  .author-card-name {
+    color: #2a2a2a !important;
+  }
+
+  .author-card-bio {
+    color: #3a3a3a !important;
+  }
+
+  .dark .author-card-name {
+    color: #2a2a2a !important;
+  }
+
+  .dark .author-card-bio {
+    color: #3a3a3a !important;
+  }
+
+  /* 🏷️ TAG BUTTON SYSTEM - Coral Tags mit Herz-Icon */
+  .tag-button {
+    padding: 0.75rem 0.75rem;
+    background-color: var(--color-coral);
+    color: #ffffff;
+    font-family: var(--font-family-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .tag-button:hover {
+    border-color: var(--color-blue);
+  }
+
+  .tag-button:focus-visible {
+    outline: 2px solid var(--color-blue);
+    outline-offset: 2px;
+  }
+
+  /* Active State entfernt - Follow-Status wird über gefülltes Herz-Icon angezeigt */
+
+  .tag-button-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.625rem;
+    gap: 0.375rem;
+  }
+
+  /* 🔍 SEARCH INPUT - Autoren-Suche */
+  .search-input {
+    width: 100%;
+    padding-left: 3rem;
+    padding-right: 1rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    border: 2px solid var(--color-charcoal);
+    border-radius: 0.5rem;
+    font-family: var(--font-family-sans);
+    transition: border-color 0.2s ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--color-blue);
+  }
+
+  .dark .search-input {
+    border-color: var(--color-foreground);
+    background-color: var(--color-surface);
+    color: var(--color-foreground);
+  }
+
+  /* 👤 AUTHOR CARD SYSTEM */
+  .author-card {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .author-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .author-card:focus-visible {
+    outline: 3px solid var(--color-blue);
+    outline-offset: 2px;
+  }
+
+  .dark .author-card {
+    background-color: #ffffff;
+  }
+
+  /* 📊 AUTHOR STATS - Overlay Text */
+  .author-stats {
+    font-family: var(--font-family-headline);
+    color: #ffffff;
+    font-size: 0.75rem;
+  }
+
+  /* 📰 PUBLISHER CARD SYSTEM - Analog zu Author Cards */
+  .publisher-card {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .publisher-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+
+  .publisher-card:focus-visible {
+    outline: 3px solid var(--color-blue);
+    outline-offset: 2px;
+  }
+
+  .dark .publisher-card {
+    background-color: #ffffff;
+  }
+
+  .publisher-card-name {
+    color: #2a2a2a !important;
+  }
+
+  .publisher-card-description {
+    color: #3a3a3a !important;
+  }
+
+  .dark .publisher-card-name {
+    color: #2a2a2a !important;
+  }
+
+  .dark .publisher-card-description {
+    color: #3a3a3a !important;
+  }
+
+  /* 🔘 SORT CHIP SYSTEM - Sortier-Buttons für Carousels */
+  .sort-chip {
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  /* Inactive State - Light Mode */
+  .sort-chip {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .sort-chip:hover {
+    border-color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Active State - Both Modes */
+  .sort-chip[aria-pressed="true"] {
+    background-color: #247ba0;
+    color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Inactive State - Dark Mode */
+  .dark .sort-chip:not([aria-pressed="true"]) {
+    background-color: #ffffff;
+    color: #247ba0;
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .sort-chip:not([aria-pressed="true"]):hover {
+    border-color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Active State - Dark Mode */
+  .dark .sort-chip[aria-pressed="true"] {
+    background-color: #247ba0;
+    color: #ffffff;
+  }
+
+  /* 🔘 FILTER CHIP CORAL - Format Filter mit Coral */
+  .filter-chip-coral {
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  /* Inactive State - Light Mode */
+  .filter-chip-coral {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .filter-chip-coral:hover {
+    border-color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Active State - Both Modes */
+  .filter-chip-coral[aria-pressed="true"] {
+    background-color: #f25f5c;
+    color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Inactive State - Dark Mode */
+  .dark .filter-chip-coral:not([aria-pressed="true"]) {
+    background-color: #ffffff;
+    color: #247ba0;
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .filter-chip-coral:not([aria-pressed="true"]):hover {
+    border-color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Active State - Dark Mode */
+  .dark .filter-chip-coral[aria-pressed="true"] {
+    background-color: #f25f5c;
+    color: #ffffff;
+  }
+
+  /* 🔘 FILTER CHIP SAFFRON - Language Filter mit Saffron */
+  .filter-chip-saffron {
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  /* Inactive State - Light Mode */
+  .filter-chip-saffron {
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .filter-chip-saffron:hover {
+    border-color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Active State - Both Modes */
+  .filter-chip-saffron[aria-pressed="true"] {
+    background-color: #f4a261;
+    color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Inactive State - Dark Mode */
+  .dark .filter-chip-saffron:not([aria-pressed="true"]) {
+    background-color: #ffffff;
+    color: #247ba0;
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .dark .filter-chip-saffron:not([aria-pressed="true"]):hover {
+    border-color: rgba(0, 0, 0, 0.3);
+  }
+
+  /* Active State - Dark Mode */
+  .dark .filter-chip-saffron[aria-pressed="true"] {
+    background-color: #f4a261;
+    color: #ffffff;
+  }
+
+  /* 🔗 LINK BUTTON SYSTEM - Einheitliche externe Links mit Icons */
+  .btn-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--color-blue);
+    font-family: var(--font-family-sans);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .btn-link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+  }
+
+  .btn-link:focus-visible {
+    outline: 2px solid var(--color-blue);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  /* Icon sizing - standardized */
+  .btn-link svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+  }
+
+  /* 🔽 EXPAND BUTTON - "Mehr lesen" Buttons */
+  .expand-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    font-weight: 400;
+    color: var(--color-blue);
+    transition: all 0.2s ease;
+  }
+
+  .expand-btn:hover {
+    color: var(--color-blue);
+    opacity: 0.8;
+  }
+
+  .expand-btn:focus-visible {
+    outline: 2px solid var(--color-blue);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  /* 💬 PRESS QUOTES - Pressestimmen Styling */
+  .press-quote {
+    padding: 1.25rem;
+    border-left: 3px solid var(--color-blue);
+    border-radius: 0.5rem;
+    transition: transform 0.2s ease;
+  }
+
+  .press-quote:hover {
+    transform: translateX(4px);
+  }
+
+  .press-quote-text {
+    font-style: italic;
+    color: var(--color-foreground);
+    margin-bottom: 0.75rem;
+  }
+
+  .press-quote-source {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-blue);
+    text-align: right;
+  }
+
+  .press-quotes-container {
+    position: relative;
+  }
+
+  .press-quotes-container.collapsed {
+    max-height: 250px;
+    overflow: hidden;
+  }
+
+  .press-quotes-fade {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: linear-gradient(to bottom, transparent, var(--color-background));
+    pointer-events: none;
+  }
+  
+  .press-quotes-expand-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* 📖 TEXT FADE OUT - Eingeklappte Textbereiche */
+  .fade-out-text-light {
+    position: relative;
+    max-height: 6rem; /* ca. 4 Zeilen */
+    overflow: hidden;
+  }
+
+  .fade-out-text-light::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3rem;
+    background: linear-gradient(to bottom, transparent, var(--color-background));
+    pointer-events: none;
+  }
+
+  .fade-out-text-dark {
+    position: relative;
+    max-height: 6rem; /* ca. 4 Zeilen */
+    overflow: hidden;
+  }
+
+  .fade-out-text-dark::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3rem;
+    background: linear-gradient(to bottom, transparent, #1a1a1a);
+    pointer-events: none;
+  }
+
+  .press-quotes-expand-btn:hover {
+    opacity: 0.8;
+  }
+
+  .press-quotes-expand-btn:focus-visible {
+    outline: 2px solid var(--color-blue);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  /* ✨ TRANSLATOR HIGHLIGHT - Übersetzer-Hervorhebung */
+  .translator-highlight {
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-teal) 100%);
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .translator-highlight-text {
+    color: var(--color-charcoal);
+    font-weight: 500;
+  }
+
+  .dark .translator-highlight-text {
+    color: var(--color-charcoal);
+  }
+
+  /* 📚 BOOK COVER GALLERY */
+  .book-container-3d {
+    perspective: 1000px;
+    perspective-origin: center;
+  }
+
+  .book-cover-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+  }
+
+  .book-cover-thumb {
+    width: 80px;
+    aspect-ratio: 2/3;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: var(--shadow-book-cover);
+    border: 2px solid transparent;
+  }
+
+  .dark .book-cover-thumb {
+    box-shadow: var(--shadow-book-cover-dark);
+  }
+
+  .book-cover-thumb:hover {
+    transform: scale(1.05);
+    border-color: var(--color-teal);
+  }
+
+  .book-cover-thumb:focus-visible {
+    border-color: var(--color-blue);
+    outline: none;
+  }
+
+  /* 📚 BOOK CAROUSEL SYSTEM */
+  .book-carousel-grid {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: visible;
+  }
+
+  @media (max-width: 768px) {
+    .book-carousel-grid {
+      gap: 1rem;
+    }
+  }
+
+  /* 🚫 SCROLLBAR HIDE - Versteckt Scrollbars bei overflow-x-auto */
+  .scrollbar-hide {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  /* 🔗 BREADCRUMB LINKS - Schwarz/Weiß mit Blau beim Hover */
+  .breadcrumb-link {
+    color: var(--breadcrumb-link);
+  }
+
+  .breadcrumb-link:hover {
+    color: var(--breadcrumb-link-hover);
+  }
+
+  /* ❤️ LIKE BUTTON BOUNCE ANIMATION */
+  @keyframes heartBounce {
+    0%, 100% {
+      transform: scale(1);
+    }
+    25% {
+      transform: scale(1.2);
+    }
+    50% {
+      transform: scale(0.95);
+    }
+    75% {
+      transform: scale(1.05);
+    }
+  }
+
+  .heart-bounce {
+    animation: heartBounce 0.4s cubic-bezier(0.36, 0, 0.66, -0.56);
+  }
+}
+
+/* ================================================================
+ * 🎯 DARK MODE OVERRIDES - AUSSERHALB @layer für höchste Priorität!
+ * Muss NACH allen @layer Blöcken kommen, damit Portal-Elemente
+ * (MegaMenu, Modals, etc.) die Variablen korrekt erben.
+ * ================================================================ */
+:root.dark {
+  --color-background: #2a2a2a;
+  --color-surface: #2a2a2a;
+  --color-foreground: #F5F5F0;
+  --color-foreground-muted: #aaaaaa;
+  --color-interactive: #F5F5F0;
+  --color-interactive-contrast: #2a2a2a;
+  
+  /* Header System */
+  --header-bg: #2a2a2a;
+  --header-icon: #F5F5F0;
+  --header-icon-shadow: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.4));
+  --nav-bg: #ffffff;  /* ✅ WEISS - hebt sich vom schwarzen Hintergrund ab */
+  --nav-text: #2a2a2a;  /* ✅ SCHWARZ - kontrast auf weißem Nav */
+  --search-bg: #ffffff;
+  --search-text: #2a2a2a;
+  --search-icon: #2a2a2a;
+  --search-border: #e5e5e5;
+  --megamenu-bg: #ffffff;
+  --megamenu-text: #2a2a2a;
+  --megamenu-border: rgba(0, 0, 0, 0.1);
+  
+  /* Breadcrumb System */
+  --breadcrumb-text: #F5F5F0;
+  --breadcrumb-text-muted: #F5F5F0;
+  --breadcrumb-separator: #F5F5F0;
+  --breadcrumb-link: #F5F5F0;
+  --breadcrumb-link-hover: var(--color-blue);
+  
+  /* Button System - Produktdetailseite */
+  --button-product-bg: #247ba0;
+  --button-product-border: #ffffff;
+  --button-product-text: #ffffff;
+  
+  /* Carousel Button System - HELLE Buttons im Dark Mode */
+  --carousel-button-bg: #f5f5f5;
+  --carousel-button-border: #000000;
+  --carousel-button-icon: #000000;
+}
