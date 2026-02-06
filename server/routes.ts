@@ -147,6 +147,30 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS admin_credentials (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(100) NOT NULL DEFAULT 'admin',
+        password_hash VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS admin_sessions (
+        id SERIAL PRIMARY KEY,
+        token VARCHAR(255) UNIQUE NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    log.info('Admin auth tables verified');
+  } catch (err) {
+    log.warn('Could not verify admin auth tables:', err);
+  }
+
   // ==================================================================
   // HEALTH CHECK
   // ==================================================================
@@ -265,35 +289,81 @@ export async function registerRoutes(
   });
 
   // ==================================================================
-  // ADMIN AUTH
+  // ADMIN AUTH (bcrypt + DB-stored credentials)
   // ==================================================================
+
+  app.get('/api/admin/auth/status', async (_req: Request, res: Response) => {
+    try {
+      const result = await queryDB(`SELECT COUNT(*) as count FROM admin_credentials`);
+      const rows = (result?.rows ?? result) as any[];
+      const hasCredentials = rows.length > 0 && parseInt(rows[0].count) > 0;
+      return res.json({ success: true, initialized: hasCredentials });
+    } catch {
+      return res.json({ success: true, initialized: false });
+    }
+  });
+
+  app.post('/api/admin/auth/setup', async (req: Request, res: Response) => {
+    try {
+      const existing = await queryDB(`SELECT COUNT(*) as count FROM admin_credentials`);
+      const existingRows = (existing?.rows ?? existing) as any[];
+      if (existingRows.length > 0 && parseInt(existingRows[0].count) > 0) {
+        return res.status(403).json({ success: false, error: 'Admin-Passwort ist bereits eingerichtet. Nutze die Passwort-Aendern-Funktion.' });
+      }
+
+      const { password, setup_key } = req.body;
+      const expectedKey = process.env.SESSION_SECRET;
+      if (!expectedKey || setup_key !== expectedKey) {
+        return res.status(401).json({ success: false, error: 'Ungueltiger Setup-Schluessel' });
+      }
+
+      if (!password || password.length < 8) {
+        return res.status(400).json({ success: false, error: 'Passwort muss mindestens 8 Zeichen lang sein' });
+      }
+
+      const hash = await bcrypt.hash(password, 12);
+      await queryDB(
+        `INSERT INTO admin_credentials (username, password_hash, created_at, updated_at)
+         VALUES ('admin', $1, NOW(), NOW())`,
+        [hash]
+      );
+
+      return res.json({ success: true, message: 'Admin-Passwort wurde erfolgreich eingerichtet' });
+    } catch (error) {
+      log.error('Setup error:', error);
+      return res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
   app.post('/api/admin/auth/login', async (req: Request, res: Response) => {
     try {
       const { password } = req.body;
-      const adminPassword = process.env.ADMIN_PASSWORD;
 
-      if (!adminPassword) {
-        return res.status(500).json({ success: false, error: 'Server configuration error' });
+      if (!password) {
+        return res.status(400).json({ success: false, error: 'Passwort ist erforderlich' });
       }
 
-      if (password !== adminPassword) {
+      const result = await queryDB(`SELECT password_hash FROM admin_credentials WHERE username = 'admin' LIMIT 1`);
+      const rows = (result?.rows ?? result) as any[];
+
+      if (!rows || rows.length === 0) {
+        return res.status(503).json({ success: false, error: 'Admin-Zugang noch nicht eingerichtet', needsSetup: true });
+      }
+
+      const isValid = await bcrypt.compare(password, rows[0].password_hash);
+      if (!isValid) {
         return res.status(401).json({ success: false, error: 'Ungueltiges Passwort' });
       }
 
       const token = crypto.randomUUID();
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-      try {
-        await queryDB(
-          `INSERT INTO admin_sessions (token, expires_at, created_at, updated_at)
-           VALUES ($1, $2, NOW(), NOW())
-           ON CONFLICT (token) DO UPDATE SET expires_at = $2, updated_at = NOW()`,
-          [token, expiresAt]
-        );
-      } catch (dbError) {
-        log.error('Failed to save token to DB:', dbError);
-        return res.status(500).json({ success: false, error: 'Failed to save session: ' + String(dbError) });
-      }
+      await queryDB(
+        `INSERT INTO admin_sessions (token, expires_at, created_at, updated_at)
+         VALUES ($1, $2, NOW(), NOW())
+         ON CONFLICT (token) DO UPDATE SET expires_at = $2, updated_at = NOW()`,
+        [token, expiresAt]
+      );
 
       return res.json({
         success: true,
@@ -319,14 +389,41 @@ export async function registerRoutes(
 
   app.post('/api/admin/change-password', async (req: Request, res: Response) => {
     try {
-      const { current_password } = req.body;
-      const adminPassword = process.env.ADMIN_PASSWORD;
-
-      if (current_password !== adminPassword) {
-        return res.status(401).json({ ok: false, error: { message: 'Current password is incorrect' } });
+      const token = (req.headers['x-admin-token'] as string) ?? "";
+      const isAuthed = await verifyAdminToken(token);
+      if (!isAuthed) {
+        return res.status(401).json({ ok: false, error: { message: 'Nicht autorisiert' } });
       }
 
-      return res.json({ ok: true, data: { message: 'Password requires environment variable update' } });
+      const { current_password, new_password } = req.body;
+
+      if (!current_password || !new_password) {
+        return res.status(400).json({ ok: false, error: { message: 'Altes und neues Passwort sind erforderlich' } });
+      }
+
+      if (new_password.length < 8) {
+        return res.status(400).json({ ok: false, error: { message: 'Neues Passwort muss mindestens 8 Zeichen lang sein' } });
+      }
+
+      const result = await queryDB(`SELECT password_hash FROM admin_credentials WHERE username = 'admin' LIMIT 1`);
+      const rows = (result?.rows ?? result) as any[];
+
+      if (!rows || rows.length === 0) {
+        return res.status(404).json({ ok: false, error: { message: 'Keine Admin-Zugangsdaten gefunden' } });
+      }
+
+      const isValid = await bcrypt.compare(current_password, rows[0].password_hash);
+      if (!isValid) {
+        return res.status(401).json({ ok: false, error: { message: 'Aktuelles Passwort ist falsch' } });
+      }
+
+      const newHash = await bcrypt.hash(new_password, 12);
+      await queryDB(
+        `UPDATE admin_credentials SET password_hash = $1, updated_at = NOW() WHERE username = 'admin'`,
+        [newHash]
+      );
+
+      return res.json({ ok: true, data: { message: 'Passwort wurde erfolgreich geaendert' } });
     } catch (error) {
       return res.status(500).json({ ok: false, error: { message: String(error) } });
     }

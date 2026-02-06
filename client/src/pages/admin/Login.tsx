@@ -1,47 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { adminLogin } from '../../utils/api';
-import { Lock, AlertCircle, Info } from 'lucide-react';
+import { Lock, Shield, Eye, EyeOff } from 'lucide-react';
 import { API_BASE_URL, API_ENDPOINTS } from '../../config/apiClient';
-/**
- * Admin Login Page
- * Passwortschutz für den Admin-Bereich
- * 🔒 SECURITY: Rate-Limited, Obfuskated Route, Session Timeout
- */
+
+type AuthMode = 'loading' | 'login' | 'setup';
 
 export function AdminLogin() {
+  const [mode, setMode] = useState<AuthMode>('loading');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [setupKey, setSetupKey] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [passwordHint, setPasswordHint] = useState<string>('');
-  const [serverStatus, setServerStatus] = useState<'unknown' | 'online' | 'offline'>('unknown');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useSafeNavigate();
 
-  // Check server status on mount
   useEffect(() => {
-    const checkServer = async () => {
+    const checkAuthStatus = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.health}`, {
-          headers: {
-          }
-        });
-        if (response.ok) {
-          setServerStatus('online');
-          console.log('✅ Server is online');
-        } else {
-          setServerStatus('offline');
-          console.error('❌ Server returned error:', response.status);
-        }
-      } catch (err) {
-        setServerStatus('offline');
-        console.error('❌ Server is offline:', err);
+        const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.status}`);
+        const data = await response.json();
+        setMode(data.initialized ? 'login' : 'setup');
+      } catch {
+        setMode('login');
       }
     };
-    checkServer();
+    checkAuthStatus();
   }, []);
 
-  const handleDebugLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!password) {
       setError('Bitte gib ein Passwort ein');
       return;
@@ -50,358 +39,268 @@ export function AdminLogin() {
     try {
       setLoading(true);
       setError('');
-      setDebugInfo(null);
 
-      console.log('🔍 [DEBUG] Starting debug login...');
-      console.log('🔍 [DEBUG] Password length:', password.length);
-      console.log('🔍 [DEBUG] Password first 3 chars:', password.substring(0, 3));
-
-      // ✅ USE API_BASE_URL + API_ENDPOINTS
       const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.login}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
 
-      console.log('🔍 [DEBUG] Response status:', response.status);
-      console.log('🔍 [DEBUG] Response headers:', Object.fromEntries(response.headers.entries()));
-      
-      // 🔧 FIX: Get raw text first to debug JSON errors
-      const responseText = await response.text();
-      console.log('🔍 [DEBUG] Raw response text:', responseText.substring(0, 500));
-
-      let result;
-      try {
-        result = JSON.parse(responseText);
-        console.log('🔍 [DEBUG] Parsed JSON:', result);
-      } catch (parseError) {
-        console.error('❌ [DEBUG] JSON parse error:', parseError);
-        setDebugInfo({
-          status: response.status,
-          error: 'JSON Parse Error',
-          rawResponse: responseText.substring(0, 200),
-          parseError: String(parseError)
-        });
-        setError(`❌ Server returned invalid JSON! Response: ${responseText.substring(0, 100)}`);
-        return;
-      }
-
-      setDebugInfo({
-        status: response.status,
-        result: result,
-        passwordLength: password.length,
-        passwordStart: password.substring(0, 3)
-      });
-
-      if (result.success && result.token) {
-        setError('✅ Login würde funktionieren! Token erhalten: ' + result.token.substring(0, 20) + '...');
-      } else {
-        setError(`❌ Login fehlgeschlagen: ${result.error || result.message || 'Unbekannter Fehler'}`);
-      }
-    } catch (err) {
-      console.error('🔍 [DEBUG] Error:', err);
-      setDebugInfo({ error: String(err) });
-      setError('Fehler: ' + String(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFixDatabase = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      setDebugInfo(null);
-
-      console.log('🔧 [FIX] Calling fix-table endpoint...');
-
-      const response = await fetch(`/api/admin/auth/neon/fix-table`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log('🔧 [FIX] Response status:', response.status);
       const result = await response.json();
-      console.log('🔧 [FIX] Response data:', result);
 
-      setDebugInfo({
-        status: response.status,
-        result: result
-      });
-
-      if (result.ok) {
-        setError(`✅ ${result.data.message}`);
-      } else {
-        setError(`❌ Fix fehlgeschlagen: ${result.error?.message || 'Unbekannter Fehler'}`);
-      }
-    } catch (err) {
-      console.error('🔧 [FIX] Error:', err);
-      setDebugInfo({ error: String(err) });
-      setError('Fehler: ' + String(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!password) {
-      setError('Bitte gib ein Passwort ein');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError('');
-      setDebugInfo(null);
-
-      const loginUrl = `${API_BASE_URL}${API_ENDPOINTS.auth.login}`;
-      console.log('🔐 [LOGIN] Starting login...');
-      console.log('🔐 [LOGIN] URL:', loginUrl);
-      console.log('🔐 [LOGIN] Password length:', password.length);
-      console.log('🔐 [LOGIN] Password first 3 chars:', password.substring(0, 3));
-
-      const response = await fetch(loginUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ password }),
-      });
-
-      console.log('🔐 [LOGIN] Response status:', response.status);
-      console.log('🔐 [LOGIN] Response headers:', Object.fromEntries(response.headers.entries()));
-      
-      const responseText = await response.text();
-      console.log('🔐 [LOGIN] Response text:', responseText);
-      
-      let result;
-      try {
-        result = JSON.parse(responseText);
-        console.log('🔐 [LOGIN] Response data:', result);
-      } catch (parseError) {
-        console.error('❌ [LOGIN] JSON parse error:', parseError);
-        setError(`Server returned invalid JSON: ${responseText.substring(0, 100)}`);
+      if (result.needsSetup) {
+        setMode('setup');
+        setError('');
         return;
       }
 
       if (result.success && result.token) {
-        // Store token in localStorage
         localStorage.setItem('admin_neon_token', result.token);
-        localStorage.setItem('admin_token', result.token); // Legacy fallback
+        localStorage.setItem('admin_token', result.token);
         localStorage.setItem('admin_last_activity', String(Date.now()));
-        
-        console.log('✅ [LOGIN] Token stored:', result.token.substring(0, 20) + '...');
-        console.log('✅ [LOGIN] Redirecting to Content Manager...');
-        
-        // 🔧 FIX: Delayed navigation to avoid React Error #306 (Suspense + lazy loading)
-        // Wait for next tick so navigation happens asynchronously
         setTimeout(() => {
           navigate('/sys-mgmt-xK9/content-manager');
         }, 0);
       } else {
-        console.error('❌ [LOGIN] Login failed:', result.error);
-        setError(result.error || result.message || 'Login fehlgeschlagen');
+        setError(result.error || 'Login fehlgeschlagen');
       }
     } catch (err) {
-      console.error('❌ [LOGIN] Error:', err);
-      setError('Fehler: ' + String(err));
+      setError('Verbindungsfehler: ' + String(err));
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchPasswordHint = async () => {
+  const handleSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!setupKey) {
+      setError('Setup-Schluessel ist erforderlich');
+      return;
+    }
+    if (!password || password.length < 8) {
+      setError('Passwort muss mindestens 8 Zeichen lang sein');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwoerter stimmen nicht ueberein');
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/admin/auth/neon/debug-password`, {
-        method: 'GET',
-        headers: {
-        }
+      setLoading(true);
+
+      const response = await fetch(`${API_BASE_URL}${API_ENDPOINTS.auth.setup}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, setup_key: setupKey }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.ok && data.data) {
-          setPasswordHint(data.data.instruction || data.data.message);
-        } else {
-          setPasswordHint('Konnte Passworthinweis nicht abrufen.');
-        }
+      const result = await response.json();
+
+      if (result.success) {
+        setSuccess('Admin-Passwort wurde eingerichtet! Du kannst dich jetzt anmelden.');
+        setPassword('');
+        setConfirmPassword('');
+        setSetupKey('');
+        setTimeout(() => {
+          setMode('login');
+          setSuccess('');
+        }, 2000);
       } else {
-        console.error('❌ Failed to fetch password hint:', response.statusText);
-        setPasswordHint('Konnte den Passworthinweis nicht abrufen.');
+        setError(result.error || 'Setup fehlgeschlagen');
       }
     } catch (err) {
-      console.error('❌ Error fetching password hint:', err);
-      setPasswordHint('Ein Fehler ist aufgetreten: ' + String(err));
+      setError('Verbindungsfehler: ' + String(err));
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (mode === 'loading') {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+      >
+        <div className="text-white text-lg">Laden...</div>
+      </div>
+    );
+  }
+
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'linear-gradient(to right, #e4afcb 0%, #b8cbb8 0%, #b8cbb8 0%, #e2c58b 30%, #c2ce9c 64%, #7edbdc 100%)' }}
+      style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+      data-testid="admin-login-page"
     >
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-xl shadow-2xl p-8">
-          {/* Header */}
+        <div className="bg-white rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-8">
-            <div 
+            <div
               className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-              style={{ backgroundColor: '#f25f5c' }}
+              style={{ backgroundColor: mode === 'setup' ? '#7c3aed' : '#f25f5c' }}
             >
-              <Lock className="w-8 h-8 text-white" />
+              {mode === 'setup' ? (
+                <Shield className="w-8 h-8 text-white" />
+              ) : (
+                <Lock className="w-8 h-8 text-white" />
+              )}
             </div>
-            <h1 
-              className="text-3xl mb-2" 
-              style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}
+            <h1
+              className="text-3xl mb-2"
+              style={{ fontFamily: 'Fjalla One', color: '#1a1a2e' }}
+              data-testid="text-login-title"
             >
-              Admin Login
+              {mode === 'setup' ? 'Admin einrichten' : 'Admin Login'}
             </h1>
-            <p style={{ color: '#666666' }}>
-              Bitte gib das Admin-Passwort ein
+            <p className="text-gray-500 text-sm">
+              {mode === 'setup'
+                ? 'Erstelle dein Admin-Passwort fuer den Zugang'
+                : 'coratiert.de Content Management'}
             </p>
           </div>
 
-          {/* Error Message */}
           {error && (
-            <div 
-              className="mb-6 p-4 rounded-lg"
-              style={{ backgroundColor: '#fee2e2', border: '1px solid #f87171' }}
+            <div
+              className="mb-6 p-3 rounded-lg bg-red-50 border border-red-200"
+              data-testid="text-error-message"
             >
-              <div className="flex items-center gap-3">
-                <AlertCircle className="w-5 h-5" style={{ color: '#dc2626' }} />
-                <p style={{ color: '#dc2626' }}><strong>{error}</strong></p>
-              </div>
+              <p className="text-red-600 text-sm font-medium">{error}</p>
             </div>
           )}
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit}>
-            <div className="mb-6">
-              <label 
-                htmlFor="password" 
-                className="block mb-2"
-                style={{ color: '#3A3A3A' }}
-              >
-                Passwort
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Passwort eingeben"
-                className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2"
-                style={{ 
-                  borderColor: '#E5E7EB',
-                  focusRingColor: '#f25f5c'
-                }}
-                disabled={loading}
-                autoFocus
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || !password}
-              className="w-full py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ 
-                backgroundColor: '#f25f5c',
-                color: '#FFFFFF',
-                fontFamily: 'Fjalla One',
-                fontSize: '1.125rem'
-              }}
+          {success && (
+            <div
+              className="mb-6 p-3 rounded-lg bg-green-50 border border-green-200"
+              data-testid="text-success-message"
             >
-              {loading ? 'Anmelden...' : 'Anmelden'}
-            </button>
-          </form>
-
-          {/* Security Reminder */}
-          <div className="mt-8 pt-6 border-t" style={{ borderColor: '#E5E7EB' }}>
-            <div className="p-3 rounded-lg" style={{ backgroundColor: '#fff3cd', border: '1px solid #f4a261' }}>
-              <p className="text-sm text-center font-medium" style={{ color: '#856404' }}>
-                ⚠️ Ändere dein Passwort sofort nach dem ersten Login!
-              </p>
-              <p className="text-xs text-center mt-1" style={{ color: '#856404' }}>
-                Gehe zu: Content Manager → Einstellungen
-              </p>
-            </div>
-          </div>
-
-          {/* Password Hint */}
-          {passwordHint && (
-            <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: '#ecf7ff', border: '1px solid #60a5fa' }}>
-              <div className="flex items-center gap-3">
-                <Info className="w-5 h-5" style={{ color: '#1d4ed8' }} />
-                <p style={{ color: '#1d4ed8' }}><strong>Passworthinweis:</strong> {passwordHint}</p>
-              </div>
+              <p className="text-green-600 text-sm font-medium">{success}</p>
             </div>
           )}
 
-          {/* Show Password Hint Button */}
-          {!passwordHint && (
-            <div className="mt-4 text-center">
+          {mode === 'setup' ? (
+            <form onSubmit={handleSetup}>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="setup-key" className="block text-sm font-medium text-gray-700 mb-1">
+                    Setup-Schluessel
+                  </label>
+                  <input
+                    id="setup-key"
+                    type="password"
+                    value={setupKey}
+                    onChange={(e) => setSetupKey(e.target.value)}
+                    placeholder="Setup-Schluessel eingeben"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    disabled={loading}
+                    data-testid="input-setup-key"
+                  />
+                  <p className="text-xs text-gray-400 mt-1">SESSION_SECRET aus den Umgebungsvariablen</p>
+                </div>
+
+                <div>
+                  <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Neues Admin-Passwort
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="new-password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Mindestens 8 Zeichen"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm pr-12"
+                      disabled={loading}
+                      data-testid="input-new-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      data-testid="button-toggle-password"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Passwort bestaetigen
+                  </label>
+                  <input
+                    id="confirm-password"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Passwort wiederholen"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                    disabled={loading}
+                    data-testid="input-confirm-password"
+                  />
+                </div>
+              </div>
+
               <button
-                onClick={fetchPasswordHint}
-                className="text-sm underline"
-                style={{ color: '#247ba0' }}
+                type="submit"
+                disabled={loading || !password || !confirmPassword || !setupKey}
+                className="w-full mt-6 py-3 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: '#7c3aed', fontFamily: 'Fjalla One', fontSize: '1.1rem' }}
+                data-testid="button-setup-submit"
               >
-                Passworthinweis anzeigen
+                {loading ? 'Wird eingerichtet...' : 'Passwort einrichten'}
               </button>
-            </div>
-          )}
-
-          {/* Debug Login Button */}
-          <div className="mt-4 text-center">
-            <button
-              onClick={handleDebugLogin}
-              className="text-sm underline"
-              style={{ color: '#247ba0' }}
-            >
-              Debug Login
-            </button>
-          </div>
-
-          {/* Fix Database Button */}
-          <div className="mt-4 text-center">
-            <button
-              onClick={handleFixDatabase}
-              className="text-sm underline"
-              style={{ color: '#247ba0' }}
-            >
-              Datenbank reparieren
-            </button>
-          </div>
-
-          {/* Debug Info */}
-          {debugInfo && (
-            <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: '#ecf7ff', border: '1px solid #60a5fa' }}>
-              <div className="flex items-center gap-3">
-                <Info className="w-5 h-5" style={{ color: '#1d4ed8' }} />
-                <p style={{ color: '#1d4ed8' }}>
-                  <strong>Debug Info:</strong> 
-                  Status: {debugInfo.status}, 
-                  Result: {JSON.stringify(debugInfo.result)}, 
-                  Password Length: {debugInfo.passwordLength}, 
-                  Password Start: {debugInfo.passwordStart}
-                </p>
+            </form>
+          ) : (
+            <form onSubmit={handleLogin}>
+              <div className="mb-6">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Passwort
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Admin-Passwort eingeben"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent text-sm pr-12"
+                    disabled={loading}
+                    autoFocus
+                    data-testid="input-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    data-testid="button-toggle-password"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
-            </div>
+
+              <button
+                type="submit"
+                disabled={loading || !password}
+                className="w-full py-3 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ backgroundColor: '#f25f5c', fontFamily: 'Fjalla One', fontSize: '1.1rem' }}
+                data-testid="button-login-submit"
+              >
+                {loading ? 'Anmelden...' : 'Anmelden'}
+              </button>
+            </form>
           )}
 
-          {/* Back to Home */}
-          <div className="mt-6 text-center">
+          <div className="mt-8 text-center">
             <button
               onClick={() => navigate('/')}
-              className="text-sm underline"
-              style={{ color: '#247ba0' }}
+              className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+              data-testid="link-back-home"
             >
-              Zurück zur Website
+              Zurueck zur Website
             </button>
           </div>
         </div>

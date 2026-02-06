@@ -48,6 +48,8 @@ export const API_ENDPOINTS = {
     verify: '/admin/auth/verify',
     logout: '/admin/logout',
     changePassword: '/admin/change-password',
+    status: '/admin/auth/status',
+    setup: '/admin/auth/setup',
   },
   navigation: {
     public: '/navigation',
