@@ -179,17 +179,7 @@ export function MegaMenu({ title, categories, columns = 2, onItemClick, onTitleC
     >
       <button 
         onClick={handleButtonClick}
-        className="px-3 md:px-4 lg:px-5 py-1.5 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
-        style={{ 
-          color: 'var(--nav-text)',
-          backgroundColor: 'transparent'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--nav-hover-bg)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'transparent';
-        }}
+        className="nav-item px-3 md:px-4 lg:px-5 py-1.5 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -224,22 +214,13 @@ export function MegaMenu({ title, categories, columns = 2, onItemClick, onTitleC
             >
               {/* Das eigentliche Dropdown */}
               <div
-                className="mein-mega-menue-container rounded-xl shadow-2xl p-4 md:p-6 animate-in fade-in slide-in-from-top-2 duration-200 whitespace-nowrap"
-                style={{
-                  backgroundColor: 'var(--megamenu-bg)',
-                  border: '1px solid var(--megamenu-border, rgba(0, 0, 0, 0.1))'
-                }}
-                ref={(el) => {
-                  // ✅ Dark Mode CSS variables are working correctly
-                  // Debug code removed - use browser DevTools if needed
-                }}
+                className="megamenu-dropdown mein-mega-menue-container rounded-xl shadow-2xl p-4 md:p-6 animate-in fade-in slide-in-from-top-2 duration-200 whitespace-nowrap"
               >
                 {/* Übergeordnete Kategorie als klickbares Element */}
                 {onTitleClick && (
                   <button
                     onClick={handleCategoryClick}
-                    className="mb-3 md:mb-4 pb-2 md:pb-3 border-b-2 text-left w-full hover:translate-x-1 transition-all text-sm md:text-base"
-                    style={{ color: 'var(--megamenu-text)', fontWeight: '600', borderColor: 'var(--megamenu-border, rgba(0, 0, 0, 0.2))' }}
+                    className="megamenu-title mb-3 md:mb-4 pb-2 md:pb-3 border-b-2 text-left w-full hover:translate-x-1 transition-all text-sm md:text-base font-semibold"
                   >
                     {title} – Alle anzeigen →
                   </button>
@@ -249,7 +230,7 @@ export function MegaMenu({ title, categories, columns = 2, onItemClick, onTitleC
                   {(Array.isArray(categories) ? categories : []).map((category, idx) => (
                     <div key={idx}>
                       {category.title && (
-                        <h4 className="mb-1.5 md:mb-2 pb-1 md:pb-1.5 border-b text-xs md:text-sm" style={{ color: 'var(--megamenu-text)', fontWeight: '600', borderColor: 'var(--megamenu-border, rgba(0, 0, 0, 0.2))' }}>
+                        <h4 className="megamenu-heading mb-1.5 md:mb-2 pb-1 md:pb-1.5 border-b text-xs md:text-sm font-semibold">
                           {category.title}
                         </h4>
                       )}
@@ -258,8 +239,7 @@ export function MegaMenu({ title, categories, columns = 2, onItemClick, onTitleC
                           <li key={itemIdx}>
                             <button
                               onClick={() => handleItemClick(item)}
-                              className="text-[11px] md:text-xs hover:translate-x-1 transition-all inline-block text-left w-full"
-                              style={{ color: 'var(--megamenu-text)', fontWeight: '600' }}
+                              className="megamenu-item text-[11px] md:text-xs hover:translate-x-1 transition-all inline-block text-left w-full font-semibold"
                             >
                               {item}
                             </button>
@@ -294,68 +274,42 @@ export function MegaMenu({ title, categories, columns = 2, onItemClick, onTitleC
                   onClick={handleBackdropClick}
                 >
                   <div 
-                    className="rounded-2xl shadow-2xl w-full max-w-lg max-h-[70vh] overflow-y-auto"
+                    className="megamenu-dropdown rounded-2xl shadow-2xl w-full max-w-lg max-h-[70vh] overflow-y-auto"
                     onClick={(e) => e.stopPropagation()}
-                    style={{ 
-                      backgroundColor: 'var(--megamenu-bg)',
-                      WebkitOverflowScrolling: 'touch',
-                      overscrollBehavior: 'contain'
-                    }}
                   >
-                    {/* Header mit Close Button */}
-                    <div className="sticky top-0 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10" style={{ backgroundColor: 'var(--megamenu-bg)', borderBottom: '1px solid var(--megamenu-border)' }}>
-                      <h3 className="text-lg" style={{ fontFamily: 'Fjalla One', color: 'var(--megamenu-text)' }}>
+                    <div className="megamenu-dropdown sticky top-0 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10 border-b border-[var(--megamenu-border)]">
+                      <h3 className="megamenu-item text-lg font-[Fjalla_One]">
                         {title}
                       </h3>
                       <button
                         onClick={handleBackdropClick}
-                        className="w-8 h-8 flex items-center justify-center rounded-full transition-colors"
-                        style={{ 
-                          color: 'var(--megamenu-text)',
-                          backgroundColor: 'transparent'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        className="megamenu-item nav-item w-8 h-8 flex items-center justify-center rounded-full transition-colors"
                         aria-label="Menü schließen"
                       >
-                        <span className="text-2xl" style={{ color: 'var(--megamenu-text)' }}>×</span>
+                        <span className="text-2xl">×</span>
                       </button>
                     </div>
 
-                    {/* Content */}
                     <div className="px-6 py-4">
-                      {/* Übergeordnete Kategorie "Alle anzeigen" Button */}
                       {onTitleClick && (
                         <button
                           onClick={handleCategoryClick}
-                          className="w-full mb-4 pb-3 text-left flex items-center justify-between group"
-                          style={{ 
-                            borderBottom: '2px solid var(--megamenu-border)'
-                          }}
+                          className="megamenu-title w-full mb-4 pb-3 text-left flex items-center justify-between group border-b-2"
                         >
-                          <span style={{ fontFamily: 'Fjalla One', color: 'var(--megamenu-text)', fontSize: '1rem' }}>
+                          <span className="megamenu-item font-[Fjalla_One] text-base">
                             Alle {title} anzeigen
                           </span>
-                          <span className="group-hover:translate-x-1 transition-transform" style={{ color: 'var(--vibrant-coral)' }}>
+                          <span className="group-hover:translate-x-1 transition-transform text-red-500">
                             →
                           </span>
                         </button>
                       )}
 
-                      {/* Kategorien und Items */}
                       <div className="space-y-6">
                         {(Array.isArray(categories) ? categories : []).map((category, catIdx) => (
                           <div key={catIdx}>
                             {category.title && (
-                              <h4 
-                                className="mb-3 pb-2" 
-                                style={{ 
-                                  fontFamily: 'Fjalla One', 
-                                  color: 'var(--megamenu-text)', 
-                                  fontSize: '0.95rem',
-                                  borderBottom: '1px solid var(--megamenu-border)'
-                                }}
-                              >
+                              <h4 className="megamenu-heading mb-3 pb-2 font-[Fjalla_One] text-[0.95rem] border-b">
                                 {category.title}
                               </h4>
                             )}
@@ -364,17 +318,7 @@ export function MegaMenu({ title, categories, columns = 2, onItemClick, onTitleC
                                 <li key={itemIdx}>
                                   <button
                                     onClick={() => handleItemClick(item)}
-                                    className="text-left w-full py-2 px-3 rounded-lg transition-colors"
-                                    style={{ 
-                                      color: 'var(--megamenu-text)',
-                                      fontSize: '0.95rem',
-                                      minHeight: '44px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      backgroundColor: 'transparent'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(0, 0, 0, 0.05)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                    className="megamenu-item nav-item text-left w-full py-2 px-3 rounded-lg transition-colors text-[0.95rem] min-h-[44px] flex items-center"
                                   >
                                     {item}
                                   </button>

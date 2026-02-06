@@ -456,10 +456,9 @@ export function Header({
         Zum Hauptinhalt springen
       </a>
       <header
-        className={`border-b border-gray-600 transition-all duration-300 ${
+        className={`header-bg border-b border-gray-600 transition-all duration-300 ${
           isSticky ? "sticky top-0 z-50 shadow-md" : ""
         }`}
-        style={{ background: 'var(--header-bg)' }}
       >
         <div className="max-w-[1440px] mx-auto px-3 md:px-6 lg:px-8">
           {/* Top Bar */}
@@ -519,17 +518,11 @@ export function Header({
               {/* Search Bar */}
               <div className="flex-1 w-full md:max-w-xl lg:max-w-2xl">
                 <div className="relative">
-                  <Search className="absolute left-3 md:left-3.5 lg:left-4 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5" style={{ color: 'var(--search-icon)' }} />
+                  <Search className="search-icon-color absolute left-3 md:left-3.5 lg:left-4 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5" />
                   <Input
                     type="search"
                     placeholder="Bücher, Formate, Kurator*innen..."
-                    className="pl-9 md:pl-11 lg:pl-12 pr-10 md:pr-12 lg:pr-14 h-10 md:h-11 rounded-lg text-sm md:text-base"
-                    style={{ 
-                      backgroundColor: 'var(--search-bg)',
-                      color: 'var(--search-text)',
-                      border: `1px solid var(--search-border)`,
-                      boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.15)' 
-                    }}
+                    className="search-bar pl-9 md:pl-11 lg:pl-12 pr-10 md:pr-12 lg:pr-14 h-10 md:h-11 rounded-lg text-sm md:text-base"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyPress={handleSearchKeyPress}
@@ -538,8 +531,7 @@ export function Header({
                   />
                   <button
                     onClick={() => setIsFilterModalOpen(true)}
-                    className="absolute right-3 md:right-3.5 lg:right-4 top-1/2 -translate-y-1/2 transition-colors"
-                    style={{ color: 'var(--search-text)' }}
+                    className="search-icon-color absolute right-3 md:right-3.5 lg:right-4 top-1/2 -translate-y-1/2 transition-colors"
                     title="Filter"
                   >
                     <Sliders className="w-4 md:w-5 h-4 md:h-5" />
@@ -621,27 +613,15 @@ export function Header({
           </div>
 
           {/* Navigation - Horizontal Scroll on Mobile & Tablet */}
-          <nav className="py-1.5 md:py-2 overflow-x-auto lg:overflow-visible scrollbar-hide -mx-3 px-3 lg:mx-0 lg:px-0 relative translate-y-3 md:translate-y-4 lg:translate-y-6 rounded-none md:rounded-2xl shadow-2xl z-[100]" style={{ backgroundColor: 'var(--nav-bg)', boxShadow: '2px 2px 4px rgba(0, 0, 0, 0.15)', scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
+          <nav className="nav-bar py-1.5 md:py-2 overflow-x-auto lg:overflow-visible scrollbar-hide -mx-3 px-3 lg:mx-0 lg:px-0 relative translate-y-3 md:translate-y-4 lg:translate-y-6 rounded-none md:rounded-2xl shadow-2xl z-[100]">
             <div className="flex items-center justify-start lg:justify-center gap-0 min-w-max lg:min-w-0">
-              {/* 🆕 Hard-coded Navigation Items */}
               {menuItems.map((menuItem) => {
-                // 🆕 If no subcategories, render as simple link button
                 if (!menuItem.subcategories || menuItem.subcategories.length === 0) {
                   return (
                     <button
                       key={menuItem.id}
                       onClick={() => navigate(menuItem.path)}
-                      className="px-3 md:px-4 lg:px-5 py-1.5 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
-                      style={{ 
-                        color: 'var(--nav-text)',
-                        backgroundColor: 'transparent'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'var(--nav-hover-bg)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                      }}
+                      className="nav-item px-3 md:px-4 lg:px-5 py-1.5 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
                     >
                       {menuItem.name}
                     </button>
@@ -668,44 +648,41 @@ export function Header({
       </header>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50" style={{ backgroundColor: 'var(--nav-bg)', borderTop: '1px solid var(--nav-border)' }}>
+      <nav className="nav-mobile md:hidden fixed bottom-0 left-0 right-0 z-50">
         <div className="flex items-center justify-around px-4 py-3">
           <button
             onClick={() => navigate('/dashboard')}
             className="rounded-xl w-14 h-14 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105"
-            style={{ backgroundColor: 'transparent' }}
             title="Dashboard"
           >
-            <User className="w-6 h-6" style={{ strokeWidth: 1.5, color: 'var(--nav-text)', filter: 'var(--header-icon-shadow)' }} />
-            <span className="text-[10px]" style={{ color: 'var(--nav-text)' }}>Profil</span>
+            <User className="nav-mobile-icon w-6 h-6" strokeWidth={1.5} />
+            <span className="nav-mobile-label text-[10px]">Profil</span>
           </button>
           <button
             onClick={() => setIsFavoritesPanelOpen(true)}
             className="rounded-xl relative w-14 h-14 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105"
-            style={{ backgroundColor: 'transparent' }}
           >
             <div className="relative">
-              <Heart className="w-6 h-6" style={{ strokeWidth: 1.5, color: 'var(--nav-text)', filter: 'var(--header-icon-shadow)' }} />
+              <Heart className="nav-mobile-icon w-6 h-6" strokeWidth={1.5} />
               {favoriteCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 text-white rounded-full text-[11px] flex items-center justify-center" style={{ backgroundColor: 'var(--color-coral)' }}>
+                <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-[11px] flex items-center justify-center">
                   {favoriteCount}
                 </span>
               )}
             </div>
-            <span className="text-[10px]" style={{ color: 'var(--nav-text)' }}>Favoriten</span>
+            <span className="nav-mobile-label text-[10px]">Favoriten</span>
           </button>
           <button
             onClick={toggleTheme}
             className="rounded-xl w-14 h-14 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105"
-            style={{ backgroundColor: 'transparent' }}
             aria-label={`Theme: ${resolvedTheme === 'dark' ? 'Dark' : 'Light'}. Klicke um zu wechseln.`}
             title={`Aktuell: ${resolvedTheme === 'dark' ? 'Dark' : 'Light'} Mode`}
           >
             {resolvedTheme === 'dark' 
-              ? <Moon className="w-6 h-6" style={{ strokeWidth: 1.5, color: 'var(--nav-text)', filter: 'var(--header-icon-shadow)' }} /> 
-              : <Sun className="w-6 h-6" style={{ strokeWidth: 1.5, color: 'var(--nav-text)', filter: 'var(--header-icon-shadow)' }} />
+              ? <Moon className="nav-mobile-icon w-6 h-6" strokeWidth={1.5} /> 
+              : <Sun className="nav-mobile-icon w-6 h-6" strokeWidth={1.5} />
             }
-            <span className="text-[10px]" style={{ color: 'var(--nav-text)' }}>{resolvedTheme === 'dark' ? 'Dunkel' : 'Hell'}</span>
+            <span className="nav-mobile-label text-[10px]">{resolvedTheme === 'dark' ? 'Dunkel' : 'Hell'}</span>
           </button>
         </div>
       </nav>
