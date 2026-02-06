@@ -46,6 +46,7 @@
   --chart-4: 280 70% 35%;
   --chart-5: 340 80% 38%;
   --color-charcoal: #2a2a2a;
+  --header-bg: #f7f4ef;
   --nav-bg: #2a2a2a;
   --nav-text: #ffffff;
   --nav-hover-bg: rgba(255, 255, 255, 0.15);
@@ -153,6 +154,7 @@
   --shadow-xl: 0px 2px 0px 0px hsl(0 0% 100% / 0.00), 0px 8px 10px -1px hsl(0 0% 100% / 0.00);
   --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 100% / 0.00);
   --color-charcoal: #2a2a2a;
+  --header-bg: #2a2a2a;
   --nav-bg: #ffffff;
   --nav-text: #2a2a2a;
   --nav-hover-bg: rgba(0, 0, 0, 0.1);
