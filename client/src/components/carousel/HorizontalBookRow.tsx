@@ -14,15 +14,17 @@ import { getBookUrl } from '../../utils/bookUrlHelper';
 
 interface Book {
   id: string;
-  cover: string;
+  cover?: string;
+  cover_url?: string;
   title: string;
-  author: string;
-  publisher: string;
-  year: string;
-  price: string;
+  author?: string;
+  publisher?: string;
+  year?: string;
+  price?: string;
   availability?: string;
   bookBand?: string;
   isbn?: string;
+  isbn13?: string;
   category?: string;
   tags?: string[];
   onixTags?: Array<{
@@ -30,8 +32,8 @@ interface Book {
     name: string;
     type?: string;
     visibilityLevel?: string;
-  }>; // ONIX Tags including Serie
-  review: {
+  }>;
+  review?: {
     curatorAvatar: string;
     curatorName: string;
     curatorFocus: string;
@@ -196,7 +198,8 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
                 className="flex-shrink-0 w-[calc(100vw-2rem)] md:w-[280px] snap-start cursor-pointer"
                 onClick={() => navigate(getBookUrl(book))}
               >
-                {/* Curator Info */}
+                {/* Curator Info - only shown when review data exists */}
+                {book.review && (
                 <div className="mb-2 md:mb-3">
                   <div className="flex items-center gap-2 md:gap-3 mb-2">
                     <div className="relative flex-shrink-0">
@@ -250,9 +253,10 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Review Content */}
-                {(book.review.reviewTitle || book.review.reviewText) && (
+                {book.review && (book.review.reviewTitle || book.review.reviewText) && (
                   <div className="mb-2 md:mb-4">
                     <div className="p-2 md:p-3 rounded aspect-[4/3] md:aspect-[3/4] overflow-hidden flex flex-col" style={{ backgroundColor: 'transparent' }}>
                       {book.review.reviewTitle && (
@@ -321,7 +325,7 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
                   <div className="aspect-[2/3] bg-transparent rounded-[1px] relative" style={{ boxShadow: '4px 4px 8px rgba(0, 0, 0, 0.2)', border: '1px solid #e5e5e5' }}>
                     <div className="absolute inset-0 overflow-hidden rounded-[1px]">
                       <OptimizedImage
-                        src={book.cover}
+                        src={book.cover || book.cover_url || ''}
                         alt={book.title}
                         className="w-full h-full rounded-[1px]"
                         style={{ objectFit: 'contain' }}
@@ -361,20 +365,26 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
                   <h3 className="mb-0.5 md:mb-1 line-clamp-2 leading-tight text-sm md:text-base text-foreground">
                     {book.title}
                   </h3>
+                  {book.author && (
                   <p className="text-[10px] md:text-xs mb-1 md:mb-2 line-clamp-1 font-semibold text-foreground">
                     {book.author}
                   </p>
+                  )}
+                  {(book.publisher || book.year) && (
                   <p className="text-[9px] md:text-xs mb-0.5 md:mb-1 text-foreground" style={{ opacity: 0.7 }}>
-                    {book.publisher}, {book.year}
+                    {[book.publisher, book.year].filter(Boolean).join(', ')}
                   </p>
+                  )}
                   {book.bookBand && (
                     <p className="text-[9px] md:text-xs mb-0.5 md:mb-1 text-left" style={{ color: '#247ba0', fontFamily: 'Fjalla One', fontWeight: 'normal' }}>
                       Band {book.bookBand}
                     </p>
                   )}
+                  {book.price && (
                   <p className="text-sm md:text-base mb-1 md:mb-2 text-right font-semibold text-foreground">
                     ab {book.price}
                   </p>
+                  )}
 
                   {/* Icon Row */}
                   <div className="flex items-center gap-1 md:gap-1.5 pt-2 md:pt-3 border-t border-foreground">
@@ -382,8 +392,8 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
                       entityId={`book-${book.id}`}
                       entityType="book"
                       entityTitle={book.title}
-                      entitySubtitle={book.author}
-                      entityImage={book.cover}
+                      entitySubtitle={book.author || ''}
+                      entityImage={book.cover || book.cover_url || ''}
                       variant="minimal"
                       size="md"
                       iconColor="var(--charcoal)"
@@ -458,8 +468,8 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
                           addItem({
                             id: book.id,
                             title: book.title,
-                            author: book.author,
-                            price: book.price,
+                            author: book.author || '',
+                            price: book.price || '',
                           });
                         }
                       }}
