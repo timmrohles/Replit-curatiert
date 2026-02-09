@@ -357,18 +357,20 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
           Items ({items.length})
         </h4>
         <div className="flex gap-2">
-          <button
-            onClick={() => {
-              setIsbnInputMode(true);
-              setIsbn13Input('');
-              setIsbnError(null);
-            }}
-            className="px-3 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
-            style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-          >
-            <BookOpen className="w-4 h-4" />
-            Buch via ISBN13
-          </button>
+          {(sectionType === 'book_carousel' || sectionType === 'book_grid' || sectionType === 'book_list_row' || sectionType === 'book_featured') && (
+            <button
+              onClick={() => {
+                setIsbnInputMode(true);
+                setIsbn13Input('');
+                setIsbnError(null);
+              }}
+              className="px-3 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
+              style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
+            >
+              <BookOpen className="w-4 h-4" />
+              Buch via ISBN13
+            </button>
+          )}
           <button
             onClick={() => setEditingItem({
               section_id: sectionId,

@@ -40,98 +40,89 @@ export interface SectionTypeDefinition {
  * Diese Liste wird sowohl im Admin UI als auch für Rendering verwendet
  */
 export const SECTION_TYPES: SectionTypeDefinition[] = [
-  // Category & Grid Sections
+  { 
+    value: 'hero', 
+    label: 'Hero-Banner', 
+    allowedZones: ['aboveFold'],
+    description: 'Gro\u00dfes Banner mit Bild und Call-to-Action'
+  },
   { 
     value: 'category_grid', 
-    label: 'Category Grid', 
+    label: 'Kategorie-Raster', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Grid of categories with images'
+    description: 'Raster mit Kategorien und Bildern'
   },
   { 
     value: 'recipient_category_grid', 
-    label: 'Recipient Category Grid', 
+    label: 'Empf\u00e4nger-Raster', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Grid of recipient categories (gifts for...)'
+    description: 'Raster mit Empf\u00e4nger-Kategorien (Geschenke f\u00fcr...)'
   },
   { 
     value: 'topic_tags_grid', 
-    label: 'Topic Tags Grid', 
+    label: 'Themen-Raster', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Grid of topic tags'
+    description: 'Raster mit Themen-Tags'
   },
-  
-  // Hero & Feature Sections
-  { 
-    value: 'hero', 
-    label: 'Hero Section', 
-    allowedZones: ['aboveFold'],
-    description: 'Large hero banner with image and CTA'
-  },
-  
-  // Creator & Carousels
   { 
     value: 'creator_carousel', 
-    label: 'Creator Carousel', 
+    label: 'Kurator:innen-Karussell', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Carousel with creator header and books'
+    description: 'Karussell mit Kurator:in und B\u00fcchern'
   },
   { 
     value: 'book_carousel', 
-    label: 'Book Carousel', 
+    label: 'Buch-Karussell', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Horizontal scrolling book carousel'
+    description: 'Horizontal scrollendes B\u00fccher-Karussell'
   },
-  
-  // Book Sections
   { 
     value: 'book_grid', 
-    label: 'Book Grid', 
+    label: 'B\u00fccher-Raster', 
     allowedZones: ['main'],
-    description: 'Grid layout of books'
+    description: 'B\u00fccher als Raster-Layout'
   },
   { 
     value: 'book_list_row', 
-    label: 'Book List Row', 
+    label: 'B\u00fccher-Zeile', 
     allowedZones: ['main'],
-    description: 'Horizontal row of books'
+    description: 'Horizontale Zeile mit B\u00fcchern'
   },
   { 
     value: 'book_featured', 
-    label: 'Book Featured', 
+    label: 'Buch-Highlight', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Featured book with large display'
+    description: 'Hervorgehobenes Buch in gro\u00dfer Darstellung'
   },
-  
-  // Content Sections
   { 
     value: 'text_block', 
-    label: 'Text Block', 
+    label: 'Textblock', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Rich text content block'
+    description: 'Textinhalt mit Formatierung'
   },
   { 
     value: 'image_gallery', 
-    label: 'Image Gallery', 
+    label: 'Bildergalerie', 
     allowedZones: ['main'],
-    description: 'Gallery of images'
+    description: 'Galerie mit mehreren Bildern'
   },
   { 
     value: 'video_gallery', 
-    label: 'Video Gallery', 
+    label: 'Videogalerie', 
     allowedZones: ['main'],
-    description: 'Gallery of videos'
+    description: 'Galerie mit mehreren Videos'
   },
   { 
     value: 'image', 
-    label: 'Single Image', 
+    label: 'Einzelbild', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Single image with optional caption'
+    description: 'Einzelnes Bild mit optionaler Beschriftung'
   },
   { 
     value: 'video', 
-    label: 'Single Video', 
+    label: 'Einzelvideo', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Single video embed'
+    description: 'Einzelnes eingebettetes Video'
   },
 ];
 

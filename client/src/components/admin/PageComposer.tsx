@@ -34,9 +34,7 @@ import {
   Copy,
   FileText,
   Video,
-  Image as ImageIcon,
-  Menu,
-  Footprints
+  Image as ImageIcon
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -108,7 +106,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set(['main']));
+  const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set(['aboveFold', 'main']));
   const [editingSection, setEditingSection] = useState<Partial<PageSection> | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   
@@ -424,10 +422,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
   // ============================================================================
 
   const zones = [
-    { key: 'header', label: 'Header', icon: Menu, isGlobal: true },
-    { key: 'aboveFold', label: 'Above Fold', icon: Layout, isGlobal: false },
-    { key: 'main', label: 'Main Content', icon: Layout, isGlobal: false },
-    { key: 'footer', label: 'Footer', icon: Footprints, isGlobal: true },
+    { key: 'aboveFold', label: 'Oberer Bereich (Above the Fold)', icon: Layout, isGlobal: false },
+    { key: 'main', label: 'Hauptinhalt', icon: Layout, isGlobal: false },
   ];
 
   const getSectionsByZone = (zone: string) => {
@@ -509,7 +505,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
             {/* ✅ NEW: Draft Preview Toggle */}
             <div className="flex items-center gap-2">
               <Label htmlFor="include-draft" className="text-sm font-normal">
-                Include Draft Sections
+                Entw\u00fcrfe anzeigen
               </Label>
               <Switch
                 id="include-draft"
@@ -563,7 +559,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                       }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Add Section
+                      Sektion hinzuf\u00fcgen
                     </Button>
                   )}
                   {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -583,7 +579,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   </div>
                 ) : zoneSections.length === 0 ? (
                   <div className="text-center py-8 text-gray-500 text-sm">
-                    Keine Sections in dieser Zone
+                    Noch keine Sektionen in diesem Bereich
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -612,7 +608,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
         <Card className="fixed inset-4 z-50 overflow-auto shadow-2xl">
           <CardHeader>
             <CardTitle>
-              {editingSection.id ? 'Edit Section' : 'Create Section'}
+              {editingSection.id ? 'Sektion bearbeiten' : 'Neue Sektion erstellen'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -636,13 +632,13 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Section Type</label>
+              <label className="text-sm font-medium mb-2 block">Sektionstyp</label>
               <Select
                 value={editingSection.type || 'category_grid'}
                 onValueChange={(value) => setEditingSection({ ...editingSection, type: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
+                  <SelectValue placeholder="Typ w\u00e4hlen" />
                 </SelectTrigger>
                 <SelectContent>
                   {getAvailableSectionTypes(editingSection.zone as string).map(type => (
@@ -666,8 +662,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                     onChange={(e) => setEditingSection({ ...editingSection, status: 'draft' })}
                     className="w-4 h-4"
                   />
-                  <span className="text-sm">Draft</span>
-                  <Badge variant="secondary">Draft</Badge>
+                  <span className="text-sm">Entwurf</span>
+                  <Badge variant="secondary">Entwurf</Badge>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -678,14 +674,14 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                     onChange={(e) => setEditingSection({ ...editingSection, status: 'published' })}
                     className="w-4 h-4"
                   />
-                  <span className="text-sm">Published</span>
-                  <Badge variant="default">Published</Badge>
+                  <span className="text-sm">Ver\u00f6ffentlicht</span>
+                  <Badge variant="default">Live</Badge>
                 </label>
               </div>
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-2 block">Visibility</label>
+              <label className="text-sm font-medium mb-2 block">Sichtbarkeit</label>
               <Select
                 value={editingSection.visibility || 'visible'}
                 onValueChange={(value) => setEditingSection({ ...editingSection, visibility: value as any })}
@@ -694,8 +690,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="visible">Visible</SelectItem>
-                  <SelectItem value="hidden">Hidden</SelectItem>
+                  <SelectItem value="visible">Sichtbar</SelectItem>
+                  <SelectItem value="hidden">Versteckt</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1404,11 +1400,11 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
 
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setEditingSection(null)}>
-                Cancel
+                Abbrechen
               </Button>
               <Button onClick={handleSaveSection}>
                 <Save className="w-4 h-4 mr-2" />
-                Save Section
+                Sektion speichern
               </Button>
             </div>
           </CardContent>
@@ -1469,20 +1465,24 @@ function SectionCard({
           <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-medium text-sm">{section.type}</span>
+              <span className="font-medium text-sm">
+                {section.config?.title || section.type}
+              </span>
+              <Badge variant="outline" className="text-xs">
+                {section.type}
+              </Badge>
               <Badge variant={section.status === 'published' ? 'default' : 'secondary'} className="text-xs">
-                {section.status}
+                {section.status === 'published' ? 'Live' : 'Entwurf'}
               </Badge>
               {section.visibility === 'hidden' && (
                 <Badge variant="outline" className="text-xs">
                   <EyeOff className="w-3 h-3 mr-1" />
-                  Hidden
+                  Versteckt
                 </Badge>
               )}
             </div>
             <div className="text-xs text-gray-500">
-              Order: {section.sort_order}
-              {section.config?.title && ` • ${section.config.title}`}
+              Reihenfolge: {section.sort_order}
             </div>
           </div>
         </div>
