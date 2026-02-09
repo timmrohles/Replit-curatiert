@@ -325,7 +325,7 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
     
     try {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/admin/section-items/${itemId}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/items/${itemId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -358,7 +358,7 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
       const currentItem = manualBooks[currentIndex];
       const targetItem = manualBooks[targetIndex];
       
-      await fetch(`${API_BASE_URL}/admin/section-items/${currentItem.id}`, {
+      await fetch(`${API_BASE_URL}/admin/items/${currentItem.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -367,7 +367,7 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
         body: JSON.stringify({ sort_order: targetItem.sort_order }),
       });
       
-      await fetch(`${API_BASE_URL}/admin/section-items/${targetItem.id}`, {
+      await fetch(`${API_BASE_URL}/admin/items/${targetItem.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -980,13 +980,14 @@ function MultiSelectCategories({ selectedIds, onChange }: { selectedIds: number[
 
   const loadCategories = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/categories`, {
+      const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
+      const response = await fetch(`${API_BASE_URL}/admin/categories`, {
         headers: {
           'Content-Type': 'application/json',
+          'X-Admin-Token': token || '',
         },
       });
       const result = await response.json();
-      // Expected: { id, name, slug, parentId }
       setCategories(result.data || []);
       setLoading(false);
     } catch (err) {

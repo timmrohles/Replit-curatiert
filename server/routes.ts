@@ -1550,6 +1550,26 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/api/admin/categories', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const result = await queryDB(
+        `SELECT id, name, slug, description, parent_id, image_url, icon,
+                display_order, status, visibility, created_at, updated_at
+         FROM categories
+         WHERE deleted_at IS NULL
+         ORDER BY display_order ASC, name ASC`,
+        []
+      );
+      return res.json({ ok: true, success: true, data: result.rows || [] });
+    } catch (error) {
+      log.error('Admin categories fetch error:', error);
+      return res.json({ ok: true, success: true, data: [] });
+    }
+  });
+
   // ==================================================================
   // TAGS
   // ==================================================================
@@ -2673,7 +2693,18 @@ export async function registerRoutes(
     if (!sectionId) return res.status(400).json({ ok: false, success: false, error: { code: 'INVALID_SECTION_ID' } });
 
     try {
-      const result = await queryDB(`SELECT id, page_section_id, sort_order, item_type, data, target_type, target_category_id, target_tag_id, status, visibility, publish_at, unpublish_at, created_at, updated_at FROM public.section_items WHERE page_section_id = $1 ORDER BY sort_order ASC`, [sectionId]);
+      const result = await queryDB(`
+        SELECT si.id, si.page_section_id, si.sort_order, si.item_type, si.data, 
+               si.target_type, si.target_category_id, si.target_tag_id, si.target_book_id,
+               si.target_page_id, si.target_template_key, si.target_params,
+               si.status, si.visibility, si.publish_at, si.unpublish_at, si.created_at, si.updated_at,
+               CASE WHEN si.target_book_id IS NOT NULL THEN
+                 json_build_object('id', b.id, 'title', b.title, 'author', b.author, 'isbn13', b.isbn13, 'cover_url', b.cover_url)
+               ELSE NULL END AS book
+        FROM public.section_items si
+        LEFT JOIN public.books b ON si.target_book_id = b.id
+        WHERE si.page_section_id = $1 
+        ORDER BY si.sort_order ASC`, [sectionId]);
       return res.json({ ok: true, success: true, data: result.rows, meta: { count: result.rows.length, sectionId } });
     } catch (error) {
       log.error(`Error fetching items for section ${sectionId}:`, error);
