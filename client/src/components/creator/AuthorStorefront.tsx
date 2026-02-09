@@ -113,7 +113,7 @@ type AuthorStorefrontState = {
   storefront: AuthorStorefrontData | null;
   loading: boolean;
   error: string;
-  activeTab: string;
+  activeTab: 'bücher' | 'rezensionen' | 'veranstaltungen' | 'bonusinhalte' | 'autor:innen';
   events: StorefrontEvent[];
 };
 
@@ -127,9 +127,10 @@ interface StorefrontEvent {
   image: string;
   isOnline: boolean;
   registrationUrl: string;
-  locationType: string;
+  locationType: 'Live' | 'Online';
   curatorName: string;
   curatorImage: string;
+  description?: string;
 }
 
 type AuthorStorefrontAction =
@@ -137,7 +138,7 @@ type AuthorStorefrontAction =
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'SET_STOREFRONT'; payload: AuthorStorefrontData }
   | { type: 'SET_EVENTS'; payload: StorefrontEvent[] }
-  | { type: 'SET_ACTIVE_TAB'; payload: string };
+  | { type: 'SET_ACTIVE_TAB'; payload: 'bücher' | 'rezensionen' | 'veranstaltungen' | 'bonusinhalte' | 'autor:innen' };
 
 const initialState: AuthorStorefrontState = {
   storefront: null,
@@ -423,7 +424,7 @@ export function AuthorStorefront({ authorId }: { authorId: string }) {
                         time={event.time}
                         location={event.location}
                         locationType={event.isOnline ? 'virtual' : 'physical'}
-                        description={event.description}
+                        description={event.description || ''}
                         eventType={eventType}
                         curatorName={storefront.name}
                         curatorImage={storefront.logoUrl}

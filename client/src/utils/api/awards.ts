@@ -19,14 +19,23 @@ const headers = {
 // TYPES
 // ==================================================================
 
+export type AwardType = 'Gewinner' | 'Shortlist' | 'Longlist' | 'Nominierung' | 'Sonderpreis';
+
 export interface Award {
-  id: number;
+  id: number | string;
   name: string;
   slug: string;
   issuer_name?: string;
   website_url?: string;
   logo_url?: string;
+  logoUrl?: string;
   description?: string;
+  type?: AwardType;
+  visible?: boolean;
+  order?: number;
+  onixTagIds?: string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AwardEdition {
@@ -215,7 +224,7 @@ export function getAwardYears(awards: BookAward[]): number[] {
   if (!awards || awards.length === 0) return [];
   
   const years = awards.map(award => award.edition_year);
-  return [...new Set(years)].sort((a, b) => b - a);
+  return Array.from(new Set(years)).sort((a, b) => b - a);
 }
 
 /**
@@ -281,4 +290,68 @@ export async function getBookAwardsCached(bookId: number | string): Promise<Book
  */
 export function clearAwardsCache(): void {
   awardsCache.clear();
+}
+
+function getAdminHeaders(): HeadersInit {
+  const token = localStorage.getItem('admin_token') || localStorage.getItem('admin_neon_token') || '';
+  return {
+    ...headers,
+    'X-Admin-Token': token,
+  };
+}
+
+export async function saveAward(award: Partial<Award>): Promise<Award | null> {
+  try {
+    const isUpdate = award.id !== undefined && award.id !== null;
+    const url = isUpdate ? `${BASE_URL}/admin/awards/${award.id}` : `${BASE_URL}/admin/awards`;
+    const method = isUpdate ? 'PUT' : 'POST';
+
+    const response = await fetch(url, {
+      method,
+      headers: getAdminHeaders(),
+      body: JSON.stringify(award),
+    });
+    const data = await response.json();
+    if (!data.ok) return null;
+    clearAwardsCache();
+    return data.data?.award || data.data;
+  } catch (error) {
+    console.error('Error saving award:', error);
+    return null;
+  }
+}
+
+export async function deleteAward(id: string | number): Promise<boolean> {
+  try {
+    const response = await fetch(`${BASE_URL}/admin/awards/${id}`, {
+      method: 'DELETE',
+      headers: getAdminHeaders(),
+    });
+    const data = await response.json();
+    if (data.ok) clearAwardsCache();
+    return data.ok;
+  } catch (error) {
+    console.error('Error deleting award:', error);
+    return false;
+  }
+}
+
+export async function uploadAwardLogo(file: File): Promise<string | null> {
+  try {
+    const formData = new FormData();
+    formData.append('logo', file);
+
+    const token = localStorage.getItem('admin_token') || localStorage.getItem('admin_neon_token') || '';
+    const response = await fetch(`${BASE_URL}/admin/awards/upload-logo`, {
+      method: 'POST',
+      headers: { 'X-Admin-Token': token },
+      body: formData,
+    });
+    const data = await response.json();
+    if (!data.ok) return null;
+    return data.data?.url || null;
+  } catch (error) {
+    console.error('Error uploading award logo:', error);
+    return null;
+  }
 }

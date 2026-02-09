@@ -143,10 +143,10 @@ export function AwardsManager() {
       (searchQuery === '' || 
         award.name.toLowerCase().includes(searchQuery.toLowerCase()))
     )
-    .sort((a, b) => a.order - b.order);
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   // Get ONIX Tags of type "Auszeichnung" for linking
-  const auszeichnungTags = onixTags.filter(tag => tag.type === 'Auszeichnung' && tag.visible);
+  const auszeichnungTags = onixTags.filter(tag => (tag as any).type === 'Auszeichnung' && (tag as any).visible !== false);
 
   return (
     <div className="space-y-6">
@@ -240,7 +240,7 @@ export function AwardsManager() {
       ) : (
         <div className="space-y-3">
           {filteredAwards.map((award) => {
-            const linkedTags = onixTags.filter(tag => award.onixTagIds.includes(tag.id));
+            const linkedTags = onixTags.filter(tag => (award.onixTagIds || []).includes(tag.id));
             
             return (
               <div
@@ -260,7 +260,7 @@ export function AwardsManager() {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{getAwardTypeIcon(award.type)}</span>
+                    <span className="text-2xl">{getAwardTypeIcon(award.type || 'Gewinner')}</span>
                     <h3 className="font-semibold" style={{ fontFamily: 'Inter', color: '#3A3A3A' }}>
                       {award.name}
                     </h3>
@@ -274,8 +274,8 @@ export function AwardsManager() {
                     <span 
                       className="px-2 py-0.5 rounded text-xs"
                       style={{ 
-                        backgroundColor: getAwardTypeColor(award.type) + '20',
-                        color: getAwardTypeColor(award.type)
+                        backgroundColor: getAwardTypeColor(award.type || 'Gewinner') + '20',
+                        color: getAwardTypeColor(award.type || 'Gewinner')
                       }}
                     >
                       {award.type}
@@ -298,7 +298,7 @@ export function AwardsManager() {
                     <Edit2 className="w-4 h-4" style={{ color: '#247ba0' }} />
                   </button>
                   <button
-                    onClick={() => handleDelete(award.id)}
+                    onClick={() => handleDelete(String(award.id))}
                     className="p-2 rounded-lg hover:bg-white/80 transition-colors"
                     title="Löschen"
                   >
@@ -423,9 +423,9 @@ export function AwardsManager() {
                           className="rounded"
                         />
                         <span className="text-sm" style={{ fontFamily: 'Inter', color: '#3A3A3A' }}>
-                          {tag.displayName}
-                          {tag.onixCode && (
-                            <span style={{ color: '#999999' }}> ({tag.onixCode})</span>
+                          {(tag as any).displayName || tag.name}
+                          {(tag as any).onixCode && (
+                            <span style={{ color: '#999999' }}> ({(tag as any).onixCode})</span>
                           )}
                         </span>
                       </label>

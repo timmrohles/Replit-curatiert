@@ -78,6 +78,10 @@ interface NavigationItem {
   deleted_at: string | null;
   deleted_by: string | null;
   
+  // Extended fields
+  clickable?: boolean;
+  scope?: string;
+
   // ✅ Client-side only (not in DB)
   children?: NavigationItem[];
 }
@@ -405,7 +409,7 @@ function DraggableNavigationItem({
               <div className="col-span-2">
                 <NavigationPageLinker
                   menuItemId={item.id}
-                  currentTargetType={item.target_type}
+                  currentTargetType={item.target_type === 'page' ? 'page' : item.target_type === 'external' ? 'url' : null}
                   currentTargetPageId={item.target_page_id}
                   currentPath={item.path}
                   onLinked={() => {

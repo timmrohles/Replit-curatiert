@@ -57,6 +57,17 @@ interface Book {
   onix_subjects?: Record<string, unknown>;
   onix_description?: string;
   
+  // Editorial Override-Felder
+  override_title?: string;
+  override_subtitle?: string;
+  override_description?: string;
+  override_cover_url?: string;
+  featured?: boolean;
+  featured_order?: number;
+  internal_notes?: string;
+  seo_title?: string;
+  seo_description?: string;
+
   // Legacy-Felder (deprecated)
   title?: string;
   author?: string;
@@ -430,13 +441,13 @@ export function AdminBooksNeon() {
   const getTagOriginBadge = (origin: string) => {
     switch (origin) {
       case 'manual':
-        return <PencilIcon className="w-3 h-3 text-gray-600" title="Manuell" />;
+        return <span data-testid="badge-tag-manual"><PencilIcon className="w-3 h-3 text-gray-600" /></span>;
       case 'import_awin':
-        return <Lock className="w-3 h-3 text-blue-600" title="AWIN-Import" />;
+        return <span data-testid="badge-tag-awin"><Lock className="w-3 h-3 text-blue-600" /></span>;
       case 'import_onix':
-        return <Database className="w-3 h-3 text-purple-600" title="ONIX-Import" />;
+        return <span data-testid="badge-tag-onix"><Database className="w-3 h-3 text-purple-600" /></span>;
       case 'derived_onix':
-        return <Sparkles className="w-3 h-3 text-purple-400" title="ONIX-abgeleitet" />;
+        return <span data-testid="badge-tag-derived"><Sparkles className="w-3 h-3 text-purple-400" /></span>;
       default:
         return null;
     }

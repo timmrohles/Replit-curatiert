@@ -15,7 +15,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Trash2, Plus, Award, Edit2, Calendar, Trophy, Medal, Save, X, Upload } from 'lucide-react';
+import { Trash2, Plus, Award, Edit2, Calendar, Trophy, Medal, Save, X, Upload, Search, ChevronDown, ChevronUp } from 'lucide-react';
 import { getErrorMessage, logError } from '../../utils/errorHelpers';
 
 // ==================================================================
@@ -315,6 +315,26 @@ class AwardsAPI {
     return data.data.recipient;
   }
 
+  async testCreateOutcome(): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/admin/awards/test`, {
+      method: 'POST',
+      headers: this.getAdminHeaders(),
+    });
+    const data = await this.safeJsonParse(response);
+    if (!data.ok) throw new Error(data.error?.message || 'Test failed');
+    return data;
+  }
+
+  async testCreateOutcomePublic(): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/awards/test-public`, {
+      method: 'POST',
+      headers: this.headers,
+    });
+    const data = await this.safeJsonParse(response);
+    if (!data.ok) throw new Error(data.error?.message || 'Public test failed');
+    return data;
+  }
+
   async removeRecipient(recipientId: number): Promise<void> {
     const response = await fetch(`${this.baseUrl}/admin/awards/recipients/${recipientId}`, {
       method: 'DELETE',
@@ -339,6 +359,7 @@ const api = new AwardsAPI();
 export function AdminAwards() {
   const [awards, setAwards] = useState<Award[]>([]);
   const [loading, setLoading] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingAward, setEditingAward] = useState<Partial<Award> | null>(null);
   const [selectedAward, setSelectedAward] = useState<Award | null>(null);

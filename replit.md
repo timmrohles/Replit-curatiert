@@ -88,6 +88,14 @@ All routes prefixed with `/api/`:
 - **CSS Utility Classes** (in index.css): text-cerulean, bg-coral, tag-pill, favorite-badge, btn-admin-login, logo-spine-*, etc.
 
 ## Recent Changes (2026-02-09)
+- Fixed all TypeScript type errors in admin components (AdminAwards, AdminBooksNeon_v2, AdminNavigationV2, AwardsManager)
+- Fixed AuthorStorefront: StorefrontEvent type, tab union types, Heading/Text props
+- Added missing React hook imports (useState, useRef, useEffect) to CreatorEventsSection
+- Extended TypographyProps with style prop, passed through Heading and Text components
+- Extended Award type with AwardType, saveAward, deleteAward, uploadAwardLogo exports in api/awards.ts
+- Added clickable/scope fields to NavigationItem interface for AdminNavigationV2
+- Added editorial override fields to AdminBooksNeon_v2 Book interface
+- Fixed lucide-react title prop compatibility (wrapped icons in span elements)
 - Replaced 3000+ inline styles with global CSS classes in core files (App.tsx, Login.tsx, Header.tsx, Footer.tsx, TopicTagsGrid)
 - Added 26+ utility classes to index.css (tag-pill, text-cerulean, bg-coral, etc.)
 - Migrated CMSHomepage and DynamicPage from legacy SectionRenderer to UniversalSectionRenderer
