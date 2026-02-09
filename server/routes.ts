@@ -1990,7 +1990,7 @@ export async function registerRoutes(
     try {
       const result = await queryDB(
         `SELECT
-          id, name, slug, description, parent_id, image_url, icon,
+          id, name, slug, parent_id,
           display_order, status, visibility, created_at, updated_at
         FROM categories
         WHERE deleted_at IS NULL
@@ -2013,7 +2013,7 @@ export async function registerRoutes(
 
     try {
       const result = await queryDB(
-        `SELECT id, name, slug, description, parent_id, image_url, icon,
+        `SELECT id, name, slug, parent_id,
                 display_order, status, visibility, created_at, updated_at
          FROM categories
          WHERE deleted_at IS NULL
@@ -3152,17 +3152,21 @@ export async function registerRoutes(
     try {
       const result = await queryDB(`
         SELECT si.id, si.page_section_id, si.sort_order, si.item_type, si.data, 
-               si.target_type, si.target_category_id, si.target_tag_id, si.target_book_id,
+               si.target_type, si.target_category_id, si.target_tag_id,
                si.target_page_id, si.target_template_key, si.target_params,
                si.status, si.visibility, si.publish_at, si.unpublish_at, si.created_at, si.updated_at,
-               CASE WHEN si.target_book_id IS NOT NULL THEN
+               CASE WHEN si.item_type = 'book' AND si.data->>'book_id' IS NOT NULL THEN
                  json_build_object('id', b.id, 'title', b.title, 'author', b.author, 'isbn13', b.isbn13, 'cover_url', b.cover_url)
                ELSE NULL END AS book
         FROM public.section_items si
-        LEFT JOIN public.books b ON si.target_book_id = b.id
+        LEFT JOIN public.books b ON si.item_type = 'book' AND si.data->>'book_id' IS NOT NULL AND (si.data->>'book_id')::bigint = b.id
         WHERE si.page_section_id = $1 
         ORDER BY si.sort_order ASC`, [sectionId]);
-      return res.json({ ok: true, success: true, data: result.rows, meta: { count: result.rows.length, sectionId } });
+      const rows = result.rows.map((row: any) => ({
+        ...row,
+        target_book_id: row.data?.book_id || null,
+      }));
+      return res.json({ ok: true, success: true, data: rows, meta: { count: rows.length, sectionId } });
     } catch (error) {
       log.error(`Error fetching items for section ${sectionId}:`, error);
       return res.json({ ok: true, success: true, data: [], meta: { count: 0, sectionId, error: String(error) } });
@@ -3195,18 +3199,23 @@ export async function registerRoutes(
         unpublish_at = null
       } = body;
 
+      const itemData = { ...data };
+      if (target_book_id && item_type === 'book') {
+        itemData.book_id = target_book_id;
+      }
+
       const result = await queryDB(
         `INSERT INTO public.section_items (
           page_section_id, sort_order, item_type, data,
-          target_type, target_category_id, target_tag_id, target_book_id,
+          target_type, target_category_id, target_tag_id,
           target_page_id, target_template_key, target_params,
           status, visibility, publish_at, unpublish_at,
           created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
         RETURNING *`,
         [
-          sectionId, sort_order, item_type, JSON.stringify(data),
-          target_type, target_category_id, target_tag_id, target_book_id,
+          sectionId, sort_order, item_type, JSON.stringify(itemData),
+          target_type, target_category_id, target_tag_id,
           target_page_id, target_template_key, target_params ? JSON.stringify(target_params) : null,
           status, visibility, publish_at, unpublish_at
         ]
