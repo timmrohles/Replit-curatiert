@@ -11,12 +11,12 @@ import { Header } from '../layout/Header';
 import { Footer } from '../layout/Footer';
 import { InfoBar } from '../layout/InfoBar';
 import { BottomBanner } from '../layout/BottomBanner';
-import { SectionRenderer } from '../sections/SectionRenderer';
+import { UniversalSectionRenderer } from '../sections/UniversalSectionRenderer';
 import { SEOHead } from '../seo/SEOHead';
 import { BreadcrumbSchema, WebPageSchema } from '../seo/StructuredData';
 import { DynamicPageContentRenderer } from './DynamicPageContentRenderer';
 import { PageNavigationBadge } from './PageNavigationBadge';
-import type { Section as SectionType, Book as BookType } from '../sections/SectionRenderer';
+import type { PageSection } from '../../types/page-resolve';
 
 interface Page {
   id: string;
@@ -43,8 +43,8 @@ interface Page {
 export function CMSHomepage() {
   const navigate = useSafeNavigate();
   const [page, setPage] = useState<Page | null>(null);
-  const [sections, setSections] = useState<SectionType[]>([]);
-  const [books, setBooks] = useState<BookType[]>([]);
+  const [sections, setSections] = useState<PageSection[]>([]);
+  const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -81,7 +81,17 @@ export function CMSHomepage() {
         }
 
         setPage(pageData.page);
-        setSections(pageData.sections || []);
+        setSections((pageData.sections || []).map((s: any): PageSection => ({
+          id: s.id ?? 0,
+          zone: s.zone ?? 'main',
+          sortOrder: s.sort_order ?? s.sortOrder ?? 0,
+          type: s.section_type ?? s.type ?? '',
+          section_type: s.section_type ?? s.type ?? '',
+          status: s.status ?? 'published',
+          visibility: s.visibility ?? 'visible',
+          config: s.config ?? {},
+          items: s.items ?? [],
+        })));
         setBooks(pageData.books || []);
 
         console.log('🏠 CMS Homepage loaded:', pageData.page);
@@ -199,7 +209,7 @@ export function CMSHomepage() {
           {sections.length > 0 ? (
             sections.map((section) => (
               <div key={section.id} className="mb-16">
-                <SectionRenderer section={section} books={books} />
+                <UniversalSectionRenderer section={section} />
               </div>
             ))
           ) : page.content ? (

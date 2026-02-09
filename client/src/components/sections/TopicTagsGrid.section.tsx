@@ -18,10 +18,7 @@ export function TopicTagsGrid({ section }: TopicTagsGridProps) {
       <div className="max-w-[1440px] mx-auto">
         {/* Überschrift */}
         {section.config.title && (
-          <h2
-            className="text-2xl md:text-3xl lg:text-4xl mb-6 md:mb-8 lg:mb-12 text-center"
-            style={{ fontFamily: "Fjalla One", color: "var(--foreground)" }}
-          >
+          <h2 className="font-headline text-2xl md:text-3xl lg:text-4xl mb-6 md:mb-8 lg:mb-12 text-center text-foreground">
             {section.config.title}
           </h2>
         )}
@@ -40,23 +37,7 @@ export function TopicTagsGrid({ section }: TopicTagsGridProps) {
               <button
                 key={item.id}
                 onClick={() => navigate(link)}
-                className="px-4 md:px-5 lg:px-6 py-2 md:py-2.5 lg:py-3 rounded-full text-sm md:text-base transition-all hover:scale-105 hover:shadow-md"
-                style={{
-                  backgroundColor: "var(--color-bg-light)",
-                  color: "var(--foreground)",
-                  border: "1px solid var(--border)",
-                  fontWeight: 600,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "var(--color-coral)";
-                  e.currentTarget.style.color = "#FFFFFF";
-                  e.currentTarget.style.borderColor = "var(--color-coral)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "var(--color-bg-light)";
-                  e.currentTarget.style.color = "var(--foreground)";
-                  e.currentTarget.style.borderColor = "var(--border)";
-                }}
+                className="tag-pill px-4 md:px-5 lg:px-6 py-2 md:py-2.5 lg:py-3 rounded-full text-sm md:text-base hover:scale-105 hover:shadow-md"
               >
                 {label}
               </button>

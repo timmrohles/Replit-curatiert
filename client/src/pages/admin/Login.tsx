@@ -136,8 +136,7 @@ export function AdminLogin() {
   if (mode === 'loading') {
     return (
       <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+        className="min-h-screen flex items-center justify-center bg-admin-gradient"
       >
         <div className="text-white text-lg">Laden...</div>
       </div>
@@ -146,16 +145,14 @@ export function AdminLogin() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+      className="min-h-screen flex items-center justify-center px-4 bg-admin-gradient"
       data-testid="admin-login-page"
     >
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <div className="text-center mb-8">
             <div
-              className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
-              style={{ backgroundColor: mode === 'setup' ? '#7c3aed' : '#f25f5c' }}
+              className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center ${mode === 'setup' ? 'bg-admin-setup' : 'bg-coral'}`}
             >
               {mode === 'setup' ? (
                 <Shield className="w-8 h-8 text-white" />
@@ -164,8 +161,7 @@ export function AdminLogin() {
               )}
             </div>
             <h1
-              className="text-3xl mb-2"
-              style={{ fontFamily: 'Fjalla One', color: '#1a1a2e' }}
+              className="text-3xl mb-2 font-headline text-[#1a1a2e]"
               data-testid="text-login-title"
             >
               {mode === 'setup' ? 'Admin einrichten' : 'Admin Login'}
@@ -261,8 +257,7 @@ export function AdminLogin() {
               <button
                 type="submit"
                 disabled={loading || !password || !confirmPassword || !setupKey}
-                className="w-full mt-6 py-3 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#7c3aed', fontFamily: 'Fjalla One', fontSize: '1.1rem' }}
+                className="w-full mt-6 py-3 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed btn-admin-setup"
                 data-testid="button-setup-submit"
               >
                 {loading ? 'Wird eingerichtet...' : 'Passwort einrichten'}
@@ -300,8 +295,7 @@ export function AdminLogin() {
               <button
                 type="submit"
                 disabled={loading || !password}
-                className="w-full py-3 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ backgroundColor: '#f25f5c', fontFamily: 'Fjalla One', fontSize: '1.1rem' }}
+                className="w-full py-3 rounded-lg text-white font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed btn-admin-login"
                 data-testid="button-login-submit"
               >
                 {loading ? 'Anmelden...' : 'Anmelden'}

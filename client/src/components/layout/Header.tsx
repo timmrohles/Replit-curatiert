@@ -267,17 +267,23 @@ export function Header({
       
       // Transform V2 to legacy format
       // NOTE: V2 uses 'label' and 'href', legacy uses 'name' and 'path'
-      const transformed: NavMenuItem[] = navDataV2.items.map((item, index) => ({
-        id: `${item.slug}-${index}`, // ✅ Make keys unique by adding index
-        name: item.label || item.name || item.slug, // ✅ Use 'label' from V2 API
-        path: item.href || item.path || '/', // ✅ Use 'href' from V2 API
-        subcategories: item.children.length > 0 ? [
-          {
-            title: 'Unterkategorien',
-            items: item.children.map(child => child.label || child.name || child.slug)
-          }
-        ] : []
-      }));
+      const transformed: NavMenuItem[] = navDataV2.items.map((item, index) => {
+        const raw = item as any;
+        return {
+          id: `${item.slug}-${index}`,
+          name: raw.label || item.name || item.slug,
+          path: raw.href || item.path || '/',
+          subcategories: item.children.length > 0 ? [
+            {
+              title: 'Unterkategorien',
+              items: item.children.map(child => {
+                const rawChild = child as any;
+                return rawChild.label || child.name || child.slug;
+              })
+            }
+          ] : []
+        };
+      });
       
       // Validate V2 items have required fields
       const missingNames = transformed.filter((item: NavMenuItem) => !item.name);
@@ -472,44 +478,20 @@ export function Header({
                 >
                   <div className="flex flex-col gap-0.5 mb-0.5">
                     {/* Subtitle line above logo */}
-                    <p className="text-[12px] md:text-[13px] lg:text-[15px] origin-left" style={{ fontFamily: 'Inter', color: 'var(--cerulean)', transform: 'scaleX(0.93)', fontWeight: '600', textShadow: '2px 2px 4px rgba(0, 0, 0, 0.15)' }}>
+                    <p className="text-[12px] md:text-[13px] lg:text-[15px] origin-left font-sans text-cerulean scale-x-93 font-semibold text-shadow-subtle">
                       Ausgezeichnete Bücher
                     </p>
                     {/* Lowercase logo */}
                     <span 
-                      className="text-4xl md:text-5xl flex items-center"
-                      style={{ 
-                        letterSpacing: '0.02em', 
-                        fontWeight: 'bold', 
-                        fontFamily: 'Fjalla One',
-                        textShadow: (textColor && textColor !== 'var(--color-white)') ? 'none' : '2px 2px 4px rgba(0, 0, 0, 0.15)'
-                      }}
+                      className="text-4xl md:text-5xl flex items-center font-headline font-bold tracking-[0.02em] text-shadow-subtle"
                     >
-                      <span style={{ color: 'var(--color-coral)' }}>co</span>
+                      <span className="text-coral">co</span>
                       <span className="mx-[2px] flex items-center gap-[1px]">
-                        <span style={{ 
-                          width: '2px', 
-                          height: '1.2em', 
-                          backgroundColor: 'var(--charcoal)', 
-                          display: 'inline-block', 
-                          transform: 'rotate(20deg) translateY(-0.04em)' 
-                        }}></span>
-                        <span style={{ 
-                          width: '5px', 
-                          height: '1.05em', 
-                          backgroundColor: '#dfc58d', 
-                          display: 'inline-block', 
-                          transform: 'rotate(20deg)' 
-                        }}></span>
-                        <span style={{ 
-                          width: '2px', 
-                          height: '1.2em', 
-                          backgroundColor: 'var(--charcoal)', 
-                          display: 'inline-block', 
-                          transform: 'rotate(20deg) translateY(0.04em)' 
-                        }}></span>
+                        <span className="logo-spine-outer logo-spine-rotate-up"></span>
+                        <span className="logo-spine-inner logo-spine-rotate"></span>
+                        <span className="logo-spine-outer logo-spine-rotate-down"></span>
                       </span>
-                      <span style={{ color: 'var(--cerulean)' }}>ratiert</span>
+                      <span className="text-cerulean">ratiert</span>
                     </span>
                   </div>
                 </button>
@@ -540,8 +522,7 @@ export function Header({
                   {/* Suggestions Dropdown */}
                   {showSuggestions && suggestions.length > 0 && (
                     <div 
-                      className="absolute top-full left-0 right-0 mt-1 md:mt-2 rounded-lg shadow-xl overflow-hidden z-50"
-                      style={{ backgroundColor: 'white', border: '1px solid #E5E7EB' }}
+                      className="absolute top-full left-0 right-0 mt-1 md:mt-2 rounded-lg shadow-xl overflow-hidden z-50 bg-white border border-gray-200"
                     >
                       {suggestions.map((suggestion, index) => (
                         <button
@@ -554,11 +535,7 @@ export function Header({
                             {suggestion.text}
                           </span>
                           <span 
-                            className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full"
-                            style={{ 
-                              backgroundColor: 'var(--color-bg-light)',
-                              color: 'var(--color-gray-500)'
-                            }}
+                            className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full suggestion-badge"
                           >
                             {suggestion.type}
                           </span>
@@ -595,13 +572,7 @@ export function Header({
                     <Heart className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-background" style={{ strokeWidth: 1.5 }} />
                     {favoriteCount > 0 && (
                       <span 
-                        className="absolute -top-1 -right-1 md:-top-2 md:-right-2 flex items-center justify-center min-w-[18px] h-[18px] md:min-w-[22px] md:h-[22px] rounded-full text-[10px] md:text-xs px-1"
-                        style={{
-                          backgroundColor: 'var(--color-coral)',
-                          color: '#FFFFFF',
-                          fontWeight: 700,
-                          fontFamily: 'Inter'
-                        }}
+                        className="absolute -top-1 -right-1 md:-top-2 md:-right-2 flex items-center justify-center min-w-[18px] h-[18px] md:min-w-[22px] md:h-[22px] rounded-full text-[10px] md:text-xs px-1 favorite-badge"
                       >
                         {favoriteCount}
                       </span>
@@ -697,7 +668,7 @@ export function Header({
         <div className="fixed inset-0 z-50" onClick={() => setIsFilterModalOpen(false)}>
           <div className="absolute top-20 right-4 md:right-8 bg-white rounded-2xl shadow-2xl max-w-md w-full md:w-80 p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl text-gray-900" style={{ fontFamily: 'Fjalla One' }}>Filter</h2>
+              <h2 className="text-xl text-gray-900 font-headline">Filter</h2>
               <button
                 onClick={() => setIsFilterModalOpen(false)}
                 className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -744,10 +715,8 @@ export function Header({
               <div className="pt-4">
                 <button
                   onClick={() => setIsFilterModalOpen(false)}
-                  className="w-full text-white py-3 rounded-lg transition-colors"
+                  className="w-full text-white py-3 rounded-lg transition-colors hover:opacity-90"
                   style={{ backgroundColor: 'var(--creator-accent)' }}
-                  onMouseEnter={(e) => e.currentTarget.style.opacity = '0.9'}
-                  onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
                 >
                   Anwenden
                 </button>

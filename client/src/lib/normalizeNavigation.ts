@@ -112,6 +112,15 @@ export function normalizeNavigationV2(data: any): NavigationDataV2 {
 }
 
 /**
+ * Ensure href/path starts with /
+ */
+function normalizeHref(href: string | null): string | null {
+  if (!href) return null;
+  if (href.startsWith('/') || href.startsWith('http')) return href;
+  return `/${href}`;
+}
+
+/**
  * ✅ Normalize single Navigation Item (recursive)
  */
 export function normalizeNavigationItem(item: any): NavigationItem {
@@ -131,7 +140,7 @@ export function normalizeNavigationItem(item: any): NavigationItem {
     id: typeof item.id === 'number' ? item.id : 0,
     name: item.name || item.label || 'Untitled',
     slug: item.slug || '',
-    path: item.path || item.href || null,
+    path: normalizeHref(item.path || item.href || null),
     icon: item.icon || null,
     
     // ✅ Default values for P0 fields
@@ -205,7 +214,7 @@ export function normalizeCategoryCard(card: any): CategoryCard {
     title: card.title || 'Untitled',
     description: card.description || null,
     image_url: card.image_url || null,
-    link_url: card.link_url || '/',
+    link_url: normalizeHref(card.link_url) || '/',
     display_order: typeof card.display_order === 'number' ? card.display_order : 0,
   };
 }

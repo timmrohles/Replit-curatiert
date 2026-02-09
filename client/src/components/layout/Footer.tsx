@@ -13,7 +13,7 @@ export function Footer() {
       <div 
         className="py-4 px-6 text-center border-t border-b bg-surface-elevated border-[var(--color-border)]"
       >
-        <Text variant="sm" className="max-w-4xl mx-auto text-content-muted">
+        <Text variant="small" className="max-w-4xl mx-auto text-content-muted">
           <strong>Hinweis zu Affiliate-Links:</strong> Bei Käufen über unsere Links erhalten wir eine Provision. Für dich entstehen keine Mehrkosten. 
           Die Provision hilft uns, diese Plattform zu betreiben und weiterhin kuratierte Buchempfehlungen anzubieten.
         </Text>
@@ -35,8 +35,7 @@ export function Footer() {
                     <Text 
                       as="p"
                       variant="xs"
-                      className="origin-left text-[#247ba0]"
-                      style={{ transform: 'scaleX(0.93)' }}
+                      className="origin-left text-[#247ba0] scale-x-93"
                     >
                       Ausgezeichnete Bücher
                     </Text>

@@ -315,6 +315,34 @@
  */
 @layer utilities {
 
+  .text-cerulean { color: var(--color-blue-cerulean); }
+  .text-coral { color: var(--color-coral-vibrant); }
+  .text-gold { color: var(--color-gold-royal); }
+  .text-teal { color: var(--color-teal-tropical); }
+  .text-saffron { color: var(--color-saffron); }
+  .bg-cerulean { background-color: var(--color-blue-cerulean); }
+  .bg-coral { background-color: var(--color-coral-vibrant); }
+  .bg-gold { background-color: var(--color-gold-royal); }
+  .bg-teal { background-color: var(--color-teal-tropical); }
+  .bg-saffron { background-color: var(--color-saffron); }
+  .bg-charcoal { background-color: var(--color-charcoal); }
+  .bg-beige { background-color: var(--color-beige); }
+  .bg-admin-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+  .bg-admin-setup { background-color: #7c3aed; }
+  .scale-x-93 { transform: scaleX(0.93); }
+  .text-shadow-subtle { text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15); }
+  .logo-spine-outer { width: 2px; height: 1.2em; background-color: var(--color-charcoal); display: inline-block; }
+  .logo-spine-inner { width: 5px; height: 1.05em; background-color: #dfc58d; display: inline-block; }
+  .logo-spine-rotate { transform: rotate(20deg); }
+  .logo-spine-rotate-up { transform: rotate(20deg) translateY(-0.04em); }
+  .logo-spine-rotate-down { transform: rotate(20deg) translateY(0.04em); }
+  .suggestion-badge { background-color: var(--color-bg-light); color: var(--color-gray-500); }
+  .btn-admin-login { background-color: var(--color-coral-vibrant); font-family: var(--font-headline); font-size: 1.1rem; }
+  .btn-admin-setup { background-color: #7c3aed; font-family: var(--font-headline); font-size: 1.1rem; }
+  .favorite-badge { background-color: var(--color-coral-vibrant); color: #FFFFFF; font-weight: 700; font-family: var(--font-sans); }
+  .tag-pill { background-color: var(--color-bg-light, #f7f4ef); color: var(--foreground); border: 1px solid hsl(var(--border)); font-weight: 600; transition: all 0.2s ease; }
+  .tag-pill:hover { background-color: var(--color-coral-vibrant, #f25f5c); color: #FFFFFF; border-color: var(--color-coral-vibrant, #f25f5c); }
+
   /* Hide ugly search cancel button in Chrome until we can style it properly */
   input[type="search"]::-webkit-search-cancel-button {
     @apply hidden;

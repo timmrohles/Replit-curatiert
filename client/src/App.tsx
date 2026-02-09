@@ -89,14 +89,7 @@ const queryClient = new QueryClient({
 
 // Simple Loading Component
 const LoadingFallback = () => (
-  <div style={{
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    fontSize: '18px',
-    color: '#666'
-  }}>
+  <div className="flex items-center justify-center min-h-screen text-lg text-muted-foreground">
     Lädt...
   </div>
 );
@@ -198,6 +191,7 @@ function App() {
                     
                     {/* Dynamic Page - MUST be before fallback */}
                     <Route path="/:slug" element={<Suspense fallback={<LoadingFallback />}><DynamicPage /></Suspense>} />
+                    <Route path="/:slug/:subslug" element={<Suspense fallback={<LoadingFallback />}><DynamicPage /></Suspense>} />
                     
                     {/* Fallback */}
                     <Route path="*" element={<Suspense fallback={<LoadingFallback />}><Homepage /></Suspense>} />

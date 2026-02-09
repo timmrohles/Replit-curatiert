@@ -8,12 +8,12 @@ import { DynamicPageContentRenderer } from './DynamicPageContentRenderer';
 import { SEOHead } from '../seo/SEOHead';
 import { BreadcrumbSchema, WebPageSchema } from '../seo/StructuredData';
 import { getBookUrl } from '../../utils/bookUrlHelper';
-import { SectionRenderer } from '../sections/SectionRenderer';
-import type { Section as SectionType, Book as BookType } from '../sections/SectionRenderer';
+import { UniversalSectionRenderer } from '../sections/UniversalSectionRenderer';
 import { PageNavigationBadge } from './PageNavigationBadge';
 import { Header } from '../layout/Header';
 import { Footer } from '../layout/Footer';
 import { InfoBar } from '../layout/InfoBar';
+import type { PageSection } from '../../types/page-resolve';
 
 // Reserved routes that should NOT be handled by DynamicPage
 const RESERVED_ROUTES = [
@@ -103,28 +103,21 @@ interface Book {
 }
 
 export function DynamicPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug, subslug } = useParams<{ slug: string; subslug?: string }>();
   const navigate = useSafeNavigate();
   const [page, setPage] = useState<Page | null>(null);
-  const [sections, setSections] = useState<SectionType[]>([]);
-  const [books, setBooks] = useState<BookType[]>([]);
+  const [sections, setSections] = useState<PageSection[]>([]);
+  const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 🐛 DEBUG: Log DynamicPage mount
-  useEffect(() => {
-    console.log('⚠️ DynamicPage mounted with slug:', slug);
-  }, []);
+  const fullSlug = subslug ? `${slug}/${subslug}` : slug;
 
   useEffect(() => {
     const fetchPage = async () => {
       if (!slug) return;
 
-      console.log('DynamicPage: Attempting to load slug:', slug);
-
-      // Check if this is a reserved route that should not be handled by DynamicPage
-      if (RESERVED_ROUTES.includes(slug)) {
-        console.log('DynamicPage: Slug is reserved, ignoring:', slug);
+      if (RESERVED_ROUTES.includes(slug || '')) {
         return;
       }
 
@@ -132,8 +125,7 @@ export function DynamicPage() {
         setLoading(true);
         setError(null);
 
-        // ✅ NEW: Use Page Resolve API (only published pages)
-        const path = `/${slug}`;
+        const path = `/${fullSlug}`;
         const pageResponse = await fetch(
           `/api/pages/resolve?path=${encodeURIComponent(path)}&includeDraft=false`,
           {
@@ -159,7 +151,17 @@ export function DynamicPage() {
         }
 
         setPage(pageData.page);
-        setSections(pageData.sections || []);
+        setSections((pageData.sections || []).map((s: any): PageSection => ({
+          id: s.id ?? 0,
+          zone: s.zone ?? 'main',
+          sortOrder: s.sort_order ?? s.sortOrder ?? 0,
+          type: s.section_type ?? s.type ?? '',
+          section_type: s.section_type ?? s.type ?? '',
+          status: s.status ?? 'published',
+          visibility: s.visibility ?? 'visible',
+          config: s.config ?? {},
+          items: s.items ?? [],
+        })));
         setBooks(pageData.books || []);
         
         console.log('📄 DynamicPage loaded:', pageData.page);
@@ -175,7 +177,7 @@ export function DynamicPage() {
     };
 
     fetchPage();
-  }, [slug]);
+  }, [slug, subslug, fullSlug]);
 
   if (loading) {
     return (
@@ -288,7 +290,7 @@ export function DynamicPage() {
           {sections.length > 0 ? (
             sections.map((section) => (
               <div key={section.id} className="mb-16">
-                <SectionRenderer section={section} books={books} />
+                <UniversalSectionRenderer section={section} />
               </div>
             ))
           ) : page.content ? (

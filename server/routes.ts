@@ -93,7 +93,7 @@ async function tryAuditLog(action: string, entityType: string, entityId: string 
 }
 
 async function requireAdminGuard(req: Request, res: Response): Promise<boolean> {
-  const token = (req.headers['x-admin-token'] as string) ?? "";
+  const token = (req.headers['x-admin-token'] as string) || req.body?.token || "";
 
   if (!token) {
     res.status(401).json({ ok: false, error: { code: "MISSING_ADMIN_TOKEN" } });
@@ -110,8 +110,10 @@ async function requireAdminGuard(req: Request, res: Response): Promise<boolean> 
   return true;
 }
 
-function parseIdParam(raw: string): number | null {
-  const id = Number(raw);
+function parseIdParam(raw: string | string[] | undefined): number | null {
+  const val = Array.isArray(raw) ? raw[0] : raw;
+  if (!val) return null;
+  const id = Number(val);
   if (!Number.isInteger(id) || id <= 0) return null;
   return id;
 }
@@ -1443,7 +1445,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get('/api/admin/modules/requests', async (_req: Request, res: Response) => {
+  app.get('/api/admin/modules/requests', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const result = await queryDB(
         "SELECT * FROM module_requests WHERE status = 'pending' ORDER BY created_at DESC",
@@ -1457,6 +1461,8 @@ export async function registerRoutes(
   });
 
   app.post('/api/admin/modules/approve', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const { userId, moduleKey, approvedBy, notes } = req.body;
 
@@ -1482,6 +1488,8 @@ export async function registerRoutes(
   });
 
   app.post('/api/admin/modules/reject', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const { userId, moduleKey, rejectedBy, reason } = req.body;
 
@@ -1501,6 +1509,8 @@ export async function registerRoutes(
   });
 
   app.delete('/api/admin/modules/:userId/:moduleKey', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const userId = req.params.userId;
       const moduleKey = req.params.moduleKey;
@@ -1688,7 +1698,9 @@ export async function registerRoutes(
   // ==================================================================
   // AFFILIATES
   // ==================================================================
-  app.get('/api/admin/affiliates', async (_req: Request, res: Response) => {
+  app.get('/api/admin/affiliates', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const result = await queryDB(
         `SELECT
@@ -1707,6 +1719,8 @@ export async function registerRoutes(
   });
 
   app.post('/api/admin/affiliates', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const body = req.body;
       const {
@@ -1774,6 +1788,8 @@ export async function registerRoutes(
   });
 
   app.delete('/api/admin/affiliates/:id', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const id = req.params.id;
       const result = await queryDB('DELETE FROM affiliates WHERE id = $1 RETURNING id', [id]);
@@ -1803,7 +1819,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get('/api/admin/book-affiliates', async (_req: Request, res: Response) => {
+  app.get('/api/admin/book-affiliates', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const result = await queryDB(
         `SELECT
@@ -1828,6 +1846,8 @@ export async function registerRoutes(
   });
 
   app.post('/api/admin/book-affiliates', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const { book_id, affiliate_id, merchant_product_id, external_id, link_override, display_order, is_active } = req.body;
 
@@ -1863,6 +1883,8 @@ export async function registerRoutes(
   });
 
   app.put('/api/admin/book-affiliates/:id', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const id = req.params.id;
       const { merchant_product_id, external_id, link_override, display_order, is_active } = req.body;
@@ -1903,6 +1925,8 @@ export async function registerRoutes(
   });
 
   app.delete('/api/admin/book-affiliates/:id', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
     try {
       const id = req.params.id;
       const result = await queryDB('DELETE FROM book_affiliates WHERE id = $1 RETURNING id', [id]);
@@ -3027,7 +3051,7 @@ export async function registerRoutes(
           status || 'published',
           position || 'top',
           display_order !== undefined ? parseInt(display_order) : 0,
-          parseInt(id)
+          parseInt(String(id))
         ]
       );
 
@@ -3057,7 +3081,7 @@ export async function registerRoutes(
       const id = req.params.id;
       const result = await queryDB(
         `DELETE FROM site_banners WHERE id = $1 RETURNING *`,
-        [parseInt(id)]
+        [parseInt(String(id))]
       );
 
       if (result.rows.length === 0) {

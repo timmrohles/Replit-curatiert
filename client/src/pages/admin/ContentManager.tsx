@@ -258,22 +258,17 @@ export function ContentManager() {
       return;
     }
 
-    const curatorData: Curator = {
+    const curatorData: any = {
       id: editingCurator.id || `curator-${Date.now()}`,
       name: editingCurator.name,
-      avatar: editingCurator.avatar || '',
+      avatar_url: editingCurator.avatar_url || editingCurator.avatar || '',
       bio: editingCurator.bio || '',
       focus: editingCurator.focus || '',
-      tags: editingCurator.tags || [],
-      socialMedia: editingCurator.socialMedia || {},
       visible: editingCurator.visible ?? true,
       display_order: editingCurator.display_order ?? 0,
-      status: editingCurator.status || 'draft',
-      visibility: editingCurator.visibility || 'visible',
-      publish_at: editingCurator.publish_at || null,
-      unpublish_at: editingCurator.unpublish_at || null,
-      createdAt: editingCurator.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      follower_count: editingCurator.follower_count ?? 0,
+      curation_count: editingCurator.curation_count ?? 0,
+      book_count: editingCurator.book_count ?? 0,
     };
 
     const result = await saveCurator(curatorData);
@@ -506,7 +501,7 @@ export function ContentManager() {
     try {
       // Save all items in parallel
       await Promise.all(
-        reorderedItems.map(item => moveSection(item.id, item.order))
+        reorderedItems.map(item => saveSection({ ...item, displayOrder: item.order }))
       );
       
       console.log('✅ Reihenfolge gespeichert!');
@@ -781,7 +776,7 @@ export function ContentManager() {
           {/* Category Cards Tab */}
           {activeTab === 'category-cards' && (
             <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Karten...</div>}>
-              <CategoryCardsManager pages={pages} />
+              <CategoryCardsManager pages={pages as any} />
             </Suspense>
           )}
 
