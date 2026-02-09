@@ -697,7 +697,7 @@ export function CuratorMatchmaking() {
     // Add recipient tags
     if (preferences.recipient) {
       const recipientOption = recipientOptions.find((r) => r.id === preferences.recipient);
-      if (recipientOption) allTags.push(...recipientOption.tags);
+      if (recipientOption && 'tags' in recipientOption) allTags.push(...(recipientOption as any).tags);
     }
 
     // Add age tags

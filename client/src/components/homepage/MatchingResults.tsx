@@ -62,11 +62,10 @@ export function MatchingResults({
   const handleAddToCart = (book: Book) => {
     addToCart({
       id: book.id,
-      type: 'book',
       title: book.title,
-      subtitle: book.author,
+      author: book.author,
       price: book.price,
-      image: book.cover,
+      coverImage: book.cover,
     });
   };
 
@@ -405,7 +404,7 @@ export function MatchingResults({
                           e.stopPropagation();
                           toggleFavorite({
                             id: match.curator.id,
-                            type: 'curator',
+                            type: 'creator',
                             title: match.curator.name,
                             subtitle: match.curator.theme,
                             image: match.curator.avatar,

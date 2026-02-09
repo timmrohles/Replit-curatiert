@@ -312,7 +312,7 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
                   {book.onixTags && (
                     <div className="mb-2 flex justify-start">
                       <SerieBadgeComponent 
-                        onixTags={book.onixTags} 
+                        onixTags={book.onixTags as any} 
                         context="cover"
                       />
                     </div>
@@ -459,10 +459,7 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
                             id: book.id,
                             title: book.title,
                             author: book.author,
-                            cover: book.cover,
                             price: book.price,
-                            publisher: book.publisher,
-                            year: book.year
                           });
                         }
                       }}

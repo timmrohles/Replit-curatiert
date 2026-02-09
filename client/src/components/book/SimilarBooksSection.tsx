@@ -223,7 +223,7 @@ export function SimilarBooksSection({ currentBook, maxSuggestions = 8 }: Similar
                   .slice(0, 3) // Use top 3 tags
                   .map(id => allTags.find(t => t.id === id))
                   .filter(Boolean)
-                  .map(tag => tag!.slug || tag!.displayName.toLowerCase().replace(/\s+/g, '-'));
+                  .map(tag => (tag as ONIXTag).slug || ((tag as ONIXTag).displayName || '').toLowerCase().replace(/\s+/g, '-'));
                 
                 if (tagSlugs.length > 0) {
                   window.location.href = `/tags/${tagSlugs.join('+')}`;

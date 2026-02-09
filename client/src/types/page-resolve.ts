@@ -20,6 +20,8 @@ export interface SectionItem {
   itemType: string;
   data: Record<string, any>;
   target: ItemTarget;
+  page_section_id?: number;
+  [key: string]: any;
 }
 
 /**
@@ -29,12 +31,14 @@ export interface PageSection {
   id: number;
   zone: "header" | "above_fold" | "main" | "footer";
   sortOrder: number;
-  type: string; // Alias for section_type (for backward compatibility)
-  section_type: string; // Database column name
+  type: string;
+  section_type: string;
   status?: 'draft' | 'published';
   visibility?: 'visible' | 'hidden';
   config: Record<string, any>;
   items: SectionItem[];
+  page_id?: number;
+  [key: string]: any;
 }
 
 /**

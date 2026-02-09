@@ -80,7 +80,7 @@ export function CreatorCarouselSection({ section, books, className = '' }: Creat
 
         {/* Books Carousel */}
         {books.length > 0 ? (
-          <BookCarousel books={books} />
+          <BookCarousel books={books as any} />
         ) : (
           <div 
             className="text-center py-12 border-2 border-dashed rounded-lg"

@@ -318,7 +318,7 @@ export function ModularUserDashboard() {
     ];
 
     if (activeSection !== 'home' && currentItem) {
-      items.push({ label: currentItem.label });
+      items.push({ label: currentItem.label, href: '#' });
     }
 
     return items;

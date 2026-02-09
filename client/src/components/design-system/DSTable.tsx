@@ -45,7 +45,7 @@ export function DSTable({
       setSelectedIds([]);
       onSelectionChange?.([]);
     } else {
-      const allIds = data.map((row) => row.id);
+      const allIds = data.map((row) => row.id as string);
       setSelectedIds(allIds);
       onSelectionChange?.(allIds);
     }
@@ -123,7 +123,7 @@ export function DSTable({
           <tbody>
             {data.map((row, index) => (
               <tr
-                key={row.id || index}
+                key={(row.id as string) || index}
                 className={`border-b border-[var(--ds-border-subtle)] last:border-b-0 ${
                   index % 2 === 1 ? 'bg-[var(--ds-neutral-200)]/50' : 'bg-white'
                 } ${onRowClick ? 'cursor-pointer hover:bg-[var(--ds-hover-overlay)]' : ''}`}
@@ -133,8 +133,8 @@ export function DSTable({
                   <td className="px-4 py-3">
                     <input
                       type="checkbox"
-                      checked={selectedIds.includes(row.id)}
-                      onChange={() => handleSelectRow(row.id)}
+                      checked={selectedIds.includes(row.id as string)}
+                      onChange={() => handleSelectRow(row.id as string)}
                       onClick={(e) => e.stopPropagation()}
                       className="w-4 h-4 rounded border-[var(--ds-border-strong)]"
                     />
@@ -142,7 +142,7 @@ export function DSTable({
                 )}
                 {columns.map((column) => (
                   <td key={column.key} className="px-4 py-3 text-sm text-[var(--ds-text-primary)]">
-                    {row[column.key]}
+                    {row[column.key] as React.ReactNode}
                   </td>
                 ))}
                 <td className="px-4 py-3">

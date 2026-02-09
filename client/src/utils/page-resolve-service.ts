@@ -55,6 +55,7 @@ export function getMockPageResolve(path: string): PageResolveResponse {
             zone: "main",
             sortOrder: 1,
             type: "category_grid",
+            section_type: "category_grid",
             config: {
               title: "Was möchtest du lesen?",
             },
@@ -165,6 +166,7 @@ export function getMockPageResolve(path: string): PageResolveResponse {
             zone: "main",
             sortOrder: 2,
             type: "recipient_category_grid",
+            section_type: "recipient_category_grid",
             config: {
               title: "Für wen suchst du ein Buch?",
             },
@@ -281,6 +283,7 @@ export function getMockPageResolve(path: string): PageResolveResponse {
             zone: "main",
             sortOrder: 3,
             type: "topic_tags_grid",
+            section_type: "topic_tags_grid",
             config: {
               title: "Themenschwerpunkte",
             },

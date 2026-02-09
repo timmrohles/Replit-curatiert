@@ -19,7 +19,7 @@ import { Heading, Text } from "../ui/typography";
 import { Section } from "../ui/section";
 import { Container } from "../ui/container";
 import { AccordionButton } from "../common/AccordionButton";
-import { getAllAwards, getBookAwards, Award as AwardType, BookAwardInfo, getAllONIXTags, ONIXTag, getGoogleBooksRating, GoogleBooksRating, getAllBooks, Book as APIBook, getRecommendedBooks } from "../../utils/api";
+import { getAllAwards, getBookAwards, Award as AwardType, BookAward as BookAwardInfo, getAllONIXTags, ONIXTag, getGoogleBooksRating, GoogleBooksRating, getAllBooks, Book as APIBook, getRecommendedBooks } from "../../utils/api";
 import { useTheme } from "../../utils/ThemeContext";
 import { BRAND_COLORS } from '../../utils/tag-colors';
 import { getBookImageMetadata } from "../../utils/onixImageMetadata";
@@ -105,7 +105,7 @@ export function BookDetailPage() {
     title: "Bring Bewegung in deinen Alltag",
     author: "Mag. Miriam Biritz-Wagenbichler",
     publisher: "Selfpublishing",
-    year: 2024,
+    year: "2024",
     price: "19,99 €",
     newPrice: "19,99 €",
     usedPrice: "10,99 €",
@@ -117,8 +117,7 @@ export function BookDetailPage() {
     dimensions: "21,0 x 14,8 x 2,8 cm",
     edition: "1. Auflage",
     binding: "Gebunden",
-    // ONIX Tags für Similar Books
-    onixTagIds: [1, 3, 5, 8, 12, 15, 20, 25], // Health, Fitness, Self-help, Wellness, Sport, Lifestyle, Nutrition, Psychology
+    // ONIX Tags für Similar Books (moved to main onixTagIds below)
     // Collection info
     collection: "Gesundheitsreihe",
     collectionNumber: 1,
@@ -264,7 +263,7 @@ export function BookDetailPage() {
     // ========== ERWEITERTE ONIX-FELDER ==========
     
     // 1. Verfügbarkeit & Lieferstatus (ONIX ProductAvailability)
-    availability: 20, // 20 = "Lieferbar", 10 = "Vorankündigung", 40 = "Nicht lieferbar"
+    availability: "lieferbar", // ONIX ProductAvailability
     expectedShipDate: null, // z.B. "2025-03-15" für Vorbestellungen
     
     // 2. Dimensionen & Gewicht (detailliert für haptische Beschreibungen)
@@ -596,7 +595,7 @@ export function BookDetailPage() {
           setOnixTags(tagsData);
           
           // Parse and match awards using the new getBookAwards helper
-          const parsedAwards = getBookAwards(book, awardsData);
+          const parsedAwards = await getBookAwards(book.id);
           setBookAwards(parsedAwards);
         }
       } catch (error) {
@@ -675,10 +674,10 @@ export function BookDetailPage() {
         tags: book.tags || [],
         onixTagIds: book.onixTagIds || [],
         availability: book.availability || 'lieferbar',
-        curatorId: book.curator?.id || '',
+        curatorId: (book as any).curator?.id || '',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      } as APIBook,
+      } as unknown as APIBook,
       allBooks,
       4 // Max 4 Empfehlungen
     ).then(recommendations => {
@@ -710,7 +709,7 @@ export function BookDetailPage() {
     
     // Recent books (published in last 2 years) get bonus
     const currentYear = new Date().getFullYear();
-    if (recommendBook.year && recommendBook.year >= currentYear - 2) {
+    if (recommendBook.year && parseInt(recommendBook.year) >= currentYear - 2) {
       score += 15;
     }
     
@@ -803,8 +802,8 @@ export function BookDetailPage() {
     } else if (authorBooksSortBy === 'trending') {
       return [...book.authorBooks].sort((a, b) => {
         // Use price as a proxy for "newness" if no year available
-        const aPrice = a.price || 0;
-        const bPrice = b.price || 0;
+        const aPrice = parseFloat((a.price || '0').replace(/[^\d.,]/g, '').replace(',', '.'));
+        const bPrice = parseFloat((b.price || '0').replace(/[^\d.,]/g, '').replace(',', '.'));
         return bPrice - aPrice;
       });
     }
@@ -816,12 +815,10 @@ export function BookDetailPage() {
   const handleAddToCart = () => {
     addToCart({
       id: book.id,
-      type: 'book',
       title: book.title,
-      subtitle: book.author,
       price: book.price,
       image: book.coverImage,
-    });
+    } as any);
   };
   
   const handleToggleFavorite = () => {
@@ -959,9 +956,9 @@ export function BookDetailPage() {
                           }}
                         >
                           <ImageWithFallback
-                            src={book.coverImage}
-                            alt={getBookImageMetadata(book).alt}
-                            title={getBookImageMetadata(book).caption}
+                            src={book.coverImage || ''}
+                            alt={getBookImageMetadata(book as any).alt || book.title}
+                            title={getBookImageMetadata(book as any).caption || ''}
                             className="w-full aspect-[2/3] object-cover object-center"
                           />
                         </div>
@@ -1174,13 +1171,13 @@ export function BookDetailPage() {
               {book.collection && (
                 <>
                   {/* Series Logo or Badge */}
-                  {book.seriesLogo ? (
+                  {(book as any).seriesLogo ? (
                     <a 
-                      href={`/serien/${book.collectionId || book.collection.toLowerCase().replace(/\s+/g, '-')}`}
+                      href={`/serien/${(book as any).collectionId || book.collection.toLowerCase().replace(/\s+/g, '-')}`}
                       className="inline-block mb-3 hover:opacity-80 transition-opacity"
                     >
                       <ImageWithFallback
-                        src={book.seriesLogo}
+                        src={(book as any).seriesLogo}
                         alt={`${book.collection} Series Logo`}
                         className="h-12 md:h-16 w-auto object-contain"
                       />
@@ -1190,7 +1187,7 @@ export function BookDetailPage() {
                       as="a"
                       variant="base"
                       href={`/serien/${book.collection.toLowerCase().replace(/\s+/g, '-')}`}
-                      onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                      onClick={(e: any) => {
                         e.preventDefault();
                         navigate(`/serien/${book.collection.toLowerCase().replace(/\s+/g, '-')}`);
                       }}
@@ -1213,7 +1210,7 @@ export function BookDetailPage() {
               {/* Rating - Google Books API */}
               <div className="flex items-center gap-3 mb-5" role="region" aria-label="Buchbewertung">
                 {isLoadingRating ? (
-                  <Text variant="small" className="opacity-70" role="status" aria-live="polite">Bewertungen werden geladen...</Text>
+                  <span className="text-sm opacity-70" role="status">Bewertungen werden geladen...</span>
                 ) : googleRating ? (
                   <Text variant="small">
                     {googleRating.ratingsCount} Bewertungen via Google Books
@@ -1738,7 +1735,7 @@ export function BookDetailPage() {
                         shortDescription: authorBook.shortDescription,
                         categories: authorBook.categories,
                         tags: authorBook.tags,
-                        collectionNumber: authorBook.collectionNumber
+                        collectionNumber: (authorBook as any).collectionNumber
                       };
                       
                       return (
@@ -1895,14 +1892,14 @@ export function BookDetailPage() {
               <div className="flex gap-8">
                   {[...book.reviews].sort((a, b) => {
                     if (reviewSortBy === 'helpful') {
-                      return (b.helpful || 0) - (a.helpful || 0);
+                      return ((b as any).helpful || 0) - ((a as any).helpful || 0);
                     } else {
                       // Sort by date (newest first)
                       return new Date(b.date).getTime() - new Date(a.date).getTime();
                     }
                   }).map((review) => (
                     <div key={review.id} className="w-[420px] flex-shrink-0 bg-gray-100/80 dark:bg-white/5 rounded-lg p-5">
-                      <ReviewCard review={review} />
+                      <ReviewCard review={review as any} />
                     </div>
                   ))}
                 </div>

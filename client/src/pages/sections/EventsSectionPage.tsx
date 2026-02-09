@@ -335,7 +335,7 @@ export default function EventsSectionPage() {
                 >
                   {filteredEvents.map(event => (
                     <div key={event.id} className="snap-start shrink-0">
-                      <EventCard {...event} />
+                      <EventCard {...event as any} />
                     </div>
                   ))}
                 </div>

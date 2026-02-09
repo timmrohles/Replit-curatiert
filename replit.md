@@ -88,6 +88,22 @@ All routes prefixed with `/api/`:
 - **CSS Utility Classes** (in index.css): text-cerulean, bg-coral, tag-pill, favorite-badge, btn-admin-login, logo-spine-*, etc.
 
 ## Recent Changes (2026-02-09)
+- **Achieved zero TypeScript compilation errors** across entire codebase (down from 482)
+- Fixed 368+ errors across 82 files using parallel subagents
+- Key type fix patterns applied:
+  - Zod passthrough schema properties (displayName, onixCode, tagType, visible, silo) cast with `as any`
+  - Missing React hook imports added (useState, useRef, useCallback, useMemo, useReducer, memo)
+  - Set iteration fixed with `Array.from()` instead of spread
+  - FrontendEntityType: added "storefront" and "topic" values
+  - navigate() calls fixed for useSafeNavigate (expects string args)
+  - Event interface renamed to StorefrontEvent (avoids DOM Event clash)
+  - fetchpriority → fetchPriority (React camelCase)
+- Fixed featureFlags.ts: replaced Deno reference with process.env, typed FEATURE_FLAGS as Record<string, boolean>
+- Fixed Container: added maxWidth prop (deprecated alias for width)
+- Fixed Typography: passes through id/href/onClick props to rendered element
+- Fixed SectionRenderer: HeroSection wrapped in className div
+- Fixed PublicStorefront: StorefrontEvent type, 'autor:innen' tab, non-null assertions
+- Installed @types/react-helmet for tag page components
 - Fixed all TypeScript type errors in admin components (AdminAwards, AdminBooksNeon_v2, AdminNavigationV2, AwardsManager)
 - Fixed AuthorStorefront: StorefrontEvent type, tab union types, Heading/Text props
 - Added missing React hook imports (useState, useRef, useEffect) to CreatorEventsSection

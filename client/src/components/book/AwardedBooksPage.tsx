@@ -455,7 +455,7 @@ export function AwardedBooksPage() {
             {shortlistBooks.map((book) => (
               <BookCard
                 key={book.id}
-                book={book}
+                book={book as any}
                 cardBackgroundColor="transparent"
                 sectionBackgroundColor="transparent"
               />
@@ -488,7 +488,7 @@ export function AwardedBooksPage() {
             {nominatedBooks.map((book) => (
               <BookCard
                 key={book.id}
-                book={book}
+                book={book as any}
                 cardBackgroundColor="transparent"
                 sectionBackgroundColor="transparent"
               />

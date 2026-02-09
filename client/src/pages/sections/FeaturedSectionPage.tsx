@@ -110,8 +110,8 @@ export default function FeaturedSectionPage() {
             >
               <div className={viewMode === 'mobile' ? 'px-4 py-6' : 'px-8 py-8'}>
                 <FeaturedSection 
-                  section={mockSection}
-                  books={mockBooks}
+                  section={mockSection as any}
+                  books={mockBooks as any}
                 />
               </div>
             </div>

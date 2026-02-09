@@ -39,7 +39,7 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
     {
       id: "curator",
       label: "Kurator:innen",
-      count: favorites.filter((f) => f.type === "curator").length,
+      count: favorites.filter((f) => f.type === "creator").length,
     },
     {
       id: "author",

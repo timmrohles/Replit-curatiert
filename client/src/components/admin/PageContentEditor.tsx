@@ -93,7 +93,7 @@ export function PageContentEditor({ page, onUpdate }: PageContentEditorProps) {
   ) => {
     updateContent(
       contentBlocks.map((block) =>
-        block.id === id ? { ...block, content } : block
+        block.id === id ? { ...block, content } as ContentBlock : block
       )
     );
   };

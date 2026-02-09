@@ -26,7 +26,6 @@ interface DSTextProps extends HTMLAttributes<HTMLParagraphElement> {
  */
 export const DSHeading = forwardRef<HTMLHeadingElement, DSHeadingProps>(
   ({ level, as, className = '', children, ...props }, ref) => {
-    // Map Design System levels to ui/typography variants
     const variantMap = {
       h1: 'h1',
       h2: 'h2',
@@ -36,11 +35,12 @@ export const DSHeading = forwardRef<HTMLHeadingElement, DSHeadingProps>(
 
     return (
       <Heading
-        ref={ref as any}
         as={as || level}
         variant={variantMap[level]}
         className={cn('text-[var(--ds-text-primary)]', className)}
-        {...props}
+        style={props.style}
+        id={props.id}
+        onClick={props.onClick as any}
       >
         {children}
       </Heading>
@@ -60,16 +60,14 @@ DSHeading.displayName = 'DSHeading';
  */
 export const DSText = forwardRef<HTMLParagraphElement, DSTextProps>(
   ({ variant = 'body', as = 'p', color = 'primary', className = '', children, ...props }, ref) => {
-    // Map Design System variants to ui/typography variants
     const variantMap = {
-      'subtitle': 'large',      // ~18-20px
-      'body-large': 'large',    // ~18-20px
-      'body': 'default',        // ~16-18px
-      'caption': 'small',       // ~14px
-      'label': 'xs',            // ~12px (bold, uppercase)
+      'subtitle': 'large',
+      'body-large': 'large',
+      'body': 'default',
+      'caption': 'small',
+      'label': 'xs',
     } as const;
 
-    // Map Design System colors to CSS custom properties
     const colorStyles = {
       primary: 'text-[var(--ds-text-primary)]',
       secondary: 'text-[var(--ds-text-secondary)]',
@@ -79,11 +77,12 @@ export const DSText = forwardRef<HTMLParagraphElement, DSTextProps>(
 
     return (
       <Text
-        ref={ref as any}
         as={as}
         variant={variantMap[variant]}
         className={cn(colorStyles[color], className)}
-        {...props}
+        style={props.style}
+        id={props.id}
+        onClick={props.onClick as any}
       >
         {children}
       </Text>

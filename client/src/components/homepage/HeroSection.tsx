@@ -101,7 +101,7 @@ export function HeroSection({ onNavigateToCreatorDashboard }: HeroSectionProps) 
                 alt="Kuratierte Bücher"
                 className="w-full h-[350px] md:h-[500px] object-cover"
                 loading="eager"
-                fetchpriority="high"
+                fetchPriority="high"
               />
               {/* Overlay badge */}
               <div className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-6 bg-white/95 backdrop-blur-sm rounded-xl p-3 md:p-4 shadow-lg">

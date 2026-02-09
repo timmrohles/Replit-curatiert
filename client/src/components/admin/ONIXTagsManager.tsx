@@ -208,9 +208,9 @@ export function ONIXTagsManager() {
   const filteredTags = tags.filter(tag => {
     const matchesSearch = 
       tag.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tag.originalName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tag.onixCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (tag.silo && tag.silo.toLowerCase().includes(searchQuery.toLowerCase()));
+      ((tag as any).originalName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ((tag as any).onixCode || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ((tag as any).silo && (tag as any).silo.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesType = filterType === 'all' || tag.type === filterType;
     const matchesVisibility = filterVisibility === 'all' || tag.visibilityLevel === filterVisibility;
@@ -409,8 +409,8 @@ export function ONIXTagsManager() {
               <input
                 type="text"
                 placeholder="z.B. Ausgezeichnet, In den Medien"
-                value={editingTag.silo || ''}
-                onChange={(e) => setEditingTag({ ...editingTag, silo: e.target.value })}
+                value={(editingTag as any).silo || ''}
+                onChange={(e) => setEditingTag({ ...editingTag, silo: e.target.value } as any)}
                 className="w-full px-4 py-2 border rounded-lg"
                 style={{ borderColor: '#E5E7EB' }}
               />
@@ -424,8 +424,8 @@ export function ONIXTagsManager() {
               <input
                 type="text"
                 placeholder="z.B. Belletristik: Allgemeines"
-                value={editingTag.originalName || ''}
-                onChange={(e) => setEditingTag({ ...editingTag, originalName: e.target.value })}
+                value={(editingTag as any).originalName || ''}
+                onChange={(e) => setEditingTag({ ...editingTag, originalName: e.target.value } as any)}
                 className="w-full px-4 py-2 border rounded-lg"
                 style={{ borderColor: '#E5E7EB' }}
               />
@@ -502,7 +502,7 @@ export function ONIXTagsManager() {
                     key={tag.id}
                     className="p-4 border rounded-lg hover:shadow-md transition-shadow"
                     style={{ 
-                      borderColor: getTypeColor(tag.type), 
+                      borderColor: getTypeColor(tag.type as ONIXTagType), 
                       backgroundColor: '#FFFFFF',
                       opacity: tag.visible ? 1 : 0.5
                     }}
@@ -512,23 +512,23 @@ export function ONIXTagsManager() {
                         <div className="flex items-center gap-2 mb-2">
                           <div 
                             className="inline-block px-2 py-1 rounded text-xs"
-                            style={{ backgroundColor: getTypeColor(tag.type), color: '#FFFFFF' }}
+                            style={{ backgroundColor: getTypeColor(tag.type as ONIXTagType), color: '#FFFFFF' }}
                           >
-                            {tag.onixCode}
+                            {(tag as any).onixCode}
                           </div>
                           <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: '#F0F0F0', color: '#666' }}>
-                            {getTypeIcon(tag.type)} {tag.type}
+                            {getTypeIcon(tag.type as ONIXTagType)} {tag.type}
                           </span>
                         </div>
                         <h4 style={{ fontFamily: 'Fjalla One', color: '#3A3A3A', fontSize: '1.1rem' }}>
                           {tag.displayName}
                         </h4>
                         <p className="text-sm mt-1" style={{ color: '#999999' }}>
-                          {tag.originalName}
+                          {(tag as any).originalName}
                         </p>
-                        {tag.silo && (
+                        {(tag as any).silo && (
                           <p className="text-xs mt-1 px-2 py-1 inline-block rounded" style={{ backgroundColor: '#E3F2FD', color: '#1976D2' }}>
-                            {tag.silo}
+                            {(tag as any).silo}
                           </p>
                         )}
                       </div>
@@ -589,7 +589,7 @@ export function ONIXTagsManager() {
                     key={tag.id}
                     className="p-3 border rounded-lg hover:shadow-md transition-shadow"
                     style={{ 
-                      borderColor: getTypeColor(tag.type), 
+                      borderColor: getTypeColor(tag.type as ONIXTagType), 
                       backgroundColor: '#FFFFFF',
                       opacity: tag.visible ? 1 : 0.5
                     }}
@@ -600,7 +600,7 @@ export function ONIXTagsManager() {
                           {tag.displayName}
                         </h4>
                         <p className="text-xs mt-1" style={{ color: '#999999' }}>
-                          {getTypeIcon(tag.type)} {tag.type}
+                          {getTypeIcon(tag.type as ONIXTagType)} {tag.type}
                         </p>
                       </div>
                       <div className="flex gap-1 ml-2">
@@ -659,7 +659,7 @@ export function ONIXTagsManager() {
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <p className="text-xs" style={{ fontFamily: 'Fjalla One', color: '#666' }}>
-                          {tag.onixCode}
+                          {(tag as any).onixCode}
                         </p>
                         <p className="text-xs" style={{ color: '#999' }}>
                           {tag.displayName}

@@ -28,6 +28,8 @@ interface ContainerProps {
    * - full: No max-width constraint
    */
   width?: 'default' | 'narrow' | 'wide' | 'full';
+  /** @deprecated Use `width` instead */
+  maxWidth?: string;
   /**
    * Padding variant
    * - default: px-4 sm:px-6 lg:px-8

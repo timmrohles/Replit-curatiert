@@ -130,7 +130,7 @@ export function useShopFilters({ books }: UseShopFiltersProps) {
       }
 
       // Awards filter
-      if (selectedAwards.length > 0 && (!book.awards || !selectedAwards.some(award => book.awards.includes(award)))) {
+      if (selectedAwards.length > 0 && (!book.awards || !selectedAwards.some(award => book.awards!.includes(award)))) {
         return false;
       }
 

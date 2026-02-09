@@ -50,7 +50,7 @@ const mockBooks = [
   }
 ];
 
-const mockSection: Section = {
+const mockSection: any = {
   id: 'creator-carousel-demo',
   title: 'Empfehlungen unserer Kurator*innen',
   type: 'creator_carousel',
@@ -120,8 +120,8 @@ export default function CreatorCarouselSectionPage() {
             >
               <div className={viewMode === 'mobile' ? 'px-4 py-6' : 'px-8 py-8'}>
                 <CreatorCarouselSection 
-                  section={mockSection}
-                  books={mockBooks}
+                  section={mockSection as any}
+                  books={mockBooks as any}
                 />
               </div>
             </div>

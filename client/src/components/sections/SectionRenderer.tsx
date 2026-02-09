@@ -75,10 +75,9 @@ export function SectionRenderer({ section, books = [], className = '' }: Section
   switch (section.type) {
     case 'hero':
       return (
-        <HeroSection
-          section={section}
-          className={className}
-        />
+        <div className={className}>
+          <HeroSection onNavigateToCreatorDashboard={() => {}} />
+        </div>
       );
 
     case 'creator-carousel':

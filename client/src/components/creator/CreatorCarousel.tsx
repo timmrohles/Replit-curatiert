@@ -230,8 +230,8 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         filters.push({
           id: `onix-${tag.id}`,
           label: tag.displayName,
-          tooltip: `${tag.type}: ${tag.originalName || tag.displayName}`,
-          onixCode: tag.onixCode,
+          tooltip: `${tag.type}: ${(tag as any).originalName || tag.displayName}`,
+          onixCode: (tag as any).onixCode as string || '',
           type: tag.type
         });
       });

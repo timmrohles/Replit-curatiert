@@ -272,7 +272,7 @@ export default function CuratedListsSectionPage() {
                   {curatedLists.map(list => (
                     <div key={list.id} className="snap-start">
                       <CuratedListCard 
-                        {...list}
+                        {...list as any}
                         onClick={() => console.log(`Navigate to /list/${list.id}`)}
                       />
                     </div>

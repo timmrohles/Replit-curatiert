@@ -11,7 +11,7 @@
  * ==================================================================
  */
 
-export const FEATURE_FLAGS = {
+export const FEATURE_FLAGS: Record<string, boolean> = {
   /**
    * ONIX Master-Switch
    * Aktiviert ALLE ONIX-Features global
@@ -71,7 +71,7 @@ export function getFeatureFlags(): typeof FEATURE_FLAGS {
   
   const env = typeof window !== 'undefined' 
     ? (window as any).__ENV__ 
-    : Deno?.env?.get('ENVIRONMENT');
+    : (typeof process !== 'undefined' ? process.env?.ENVIRONMENT : undefined);
 
   if (env === 'production') {
     return {

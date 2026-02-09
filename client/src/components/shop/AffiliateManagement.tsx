@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
+import { ArrowLeft, Plus, Save, X, Edit2, Trash2 } from 'lucide-react';
 
 interface AffiliatePartner {
   id: string;

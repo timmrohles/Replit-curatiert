@@ -93,7 +93,7 @@ export function BulkTagEditor() {
         switch (operation) {
           case 'add':
             // Add new tags (avoid duplicates)
-            newTagIds = [...new Set([...(book.onixTagIds || []), ...selectedTagsToAdd])];
+            newTagIds = Array.from(new Set([...(book.onixTagIds || []), ...selectedTagsToAdd]));
             break;
           case 'remove':
             // Remove selected tags

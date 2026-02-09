@@ -103,7 +103,7 @@ export default function RefactoredHeroSectionPage() {
             >
               <div className={viewMode === 'mobile' ? 'px-4 py-6' : 'px-6 py-6'}>
                 <RefactoredHeroSection 
-                  creators={mockCreators}
+                  creators={mockCreators as any}
                   availableTags={availableTags}
                 />
               </div>

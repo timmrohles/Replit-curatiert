@@ -101,7 +101,7 @@ export function normalizeNavigationV2(data: any): NavigationDataV2 {
   return {
     schema_version: data.schema_version || 'nav-v2',
     content_version: typeof data.content_version === 'number' ? data.content_version : 0,
-    items: rawItems.map(item => normalizeNavigationItem(item)),
+    items: rawItems.map((item: any) => normalizeNavigationItem(item)),
     meta: {
       generated_at: data.meta?.generated_at || new Date().toISOString(),
       etag: data.meta?.etag || '',
@@ -156,10 +156,10 @@ export function normalizeNavigationItem(item: any): NavigationItem {
     column_id: item.column_id || null,
     
     // ✅ RECURSIVE: Normalize children (CRITICAL!)
-    children: rawChildren.map(child => normalizeNavigationItem(child)),
+    children: rawChildren.map((child: any) => normalizeNavigationItem(child)),
     
     // ✅ Normalize mega columns
-    mega_columns: rawMegaColumns.map(col => normalizeMegaMenuColumn(col)),
+    mega_columns: rawMegaColumns.map((col: any) => normalizeMegaMenuColumn(col)),
   };
 }
 
@@ -187,10 +187,9 @@ export function normalizeMegaMenuColumn(column: any): MegaMenuColumn {
     width_class: column.width_class || 'w-1/4',
     
     // ✅ RECURSIVE: Normalize items
-    items: rawItems.map(item => normalizeNavigationItem(item)),
+    items: rawItems.map((item: any) => normalizeNavigationItem(item)),
     
-    // ✅ Normalize cards
-    cards: rawCards.map(card => normalizeCategoryCard(card)),
+    cards: rawCards.map((card: any) => normalizeCategoryCard(card)),
   };
 }
 

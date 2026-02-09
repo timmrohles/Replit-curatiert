@@ -121,7 +121,7 @@ export function CuratorsManager() {
         tiktok_url: editingCurator.socials?.tiktok || '',
         youtube_url: editingCurator.socials?.youtube || '',
         visible: editingCurator.verified || false,
-        display_order: editingCurator.display_order || 0
+        display_order: (editingCurator as any).display_order || 0
       };
       
       console.log('📤 Sending curator payload:', JSON.stringify(backendCurator, null, 2));

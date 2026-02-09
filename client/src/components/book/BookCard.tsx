@@ -1,5 +1,5 @@
 import React, { memo, useState, useEffect, useMemo, useCallback } from 'react';
-import { useSafeNavigate } from '../../utils/routing';
+import { useSafeNavigate, buildBookUrl } from '../../utils/routing';
 import { Info, Tags, ArrowRight, Share2, ShoppingCart } from 'lucide-react';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
@@ -391,7 +391,7 @@ export const BookCard = memo(function BookCard({
               onClick={(e) => {
                 if (serieInfo.slug) {
                   e.stopPropagation();
-                  navigate(`/reihen/${serieInfo.slug}/`);
+                  safeNav(`/reihen/${serieInfo.slug}/`);
                 } else {
                   e.preventDefault();
                 }
@@ -550,7 +550,7 @@ export const BookCard = memo(function BookCard({
               variant="ghost" 
               size="icon" 
               className={`${viewMode === 'compact' ? 'h-8 w-8 md:h-9 md:w-9' : 'h-10 w-10 md:h-11 md:w-11'} ml-auto shadow-none text-foreground`}
-              onClick={() => book ? navigate(getBookUrl(book)) : navigate(`/book/${bookId}`)}
+              onClick={() => book ? safeNav(getBookUrl(book)) : safeNav(`/book/${bookId}`)}
             >
               <ArrowRight className={viewMode === 'compact' ? 'w-4 h-4' : 'w-5 h-5'} style={{ strokeWidth: 1.5 }} />
             </Button>

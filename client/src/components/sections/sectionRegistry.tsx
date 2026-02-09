@@ -156,16 +156,16 @@ export const SECTION_COMPONENTS: Record<string, React.FC<SectionComponentProps>>
   topic_tags_grid: TopicTagsGrid,
   
   // Hero & Feature Sections
-  hero: HeroSection,
+  hero: HeroSection as any,
   
   // Creator & Carousels
-  creator_carousel: CreatorCarouselSection,
-  book_carousel: HorizontalRowSection, // ✅ Book Carousel = HorizontalRowSection
+  creator_carousel: CreatorCarouselSection as any,
+  book_carousel: HorizontalRowSection as any,
   
   // Book Sections
-  book_grid: GridSection,
-  book_list_row: HorizontalRowSection,
-  book_featured: FeaturedSection,
+  book_grid: GridSection as any,
+  book_list_row: HorizontalRowSection as any,
+  book_featured: FeaturedSection as any,
   
   // Content Sections (Fallbacks for now)
   text_block: ({ section }) => (

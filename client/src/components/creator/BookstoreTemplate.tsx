@@ -68,7 +68,7 @@ export function BookstoreTemplate() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Buch nicht gefunden</h1>
-          <Button onClick={() => navigate(-1)}>
+          <Button onClick={() => navigate(String(-1))}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Zurück
           </Button>
@@ -84,7 +84,7 @@ export function BookstoreTemplate() {
         <div className="max-w-7xl mx-auto">
           <Button
             variant="ghost"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(String(-1))}
             className="text-white hover:text-white/80 p-0 h-auto"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />

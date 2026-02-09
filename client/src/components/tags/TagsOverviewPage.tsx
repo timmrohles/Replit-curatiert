@@ -28,10 +28,11 @@ export function TagsOverviewPage() {
 
   // Group tags by type
   const tagsByType = tags.reduce((acc, tag) => {
-    if (!acc[tag.type]) {
-      acc[tag.type] = [];
+    const tagType = tag.type as ONIXTagType;
+    if (!acc[tagType]) {
+      acc[tagType] = [];
     }
-    acc[tag.type].push(tag);
+    acc[tagType].push(tag);
     return acc;
   }, {} as Record<ONIXTagType, ONIXTag[]>);
 

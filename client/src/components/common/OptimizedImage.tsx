@@ -11,6 +11,7 @@ interface OptimizedImageProps {
   height?: number;
   priority?: boolean;
   fetchpriority?: 'high' | 'low' | 'auto';
+  title?: string;
   onLoad?: () => void;
   onError?: () => void;
 }
@@ -102,7 +103,7 @@ export const OptimizedImage = memo(function OptimizedImage({
         width={width}
         height={height}
         loading={priority ? 'eager' : loading}
-        fetchpriority={determinedFetchPriority as any}
+        fetchPriority={determinedFetchPriority as any}
         decoding="async"
         className={`w-full h-full object-cover rounded-[1px] transition-opacity duration-300 ${
           isLoaded ? 'opacity-100' : 'opacity-0'

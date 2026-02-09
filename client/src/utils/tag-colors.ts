@@ -3,7 +3,7 @@
  * Zentrale Definition für Genre/Tag-Farben
  */
 
-export const ONIX_TAG_COLORS = {
+export const ONIX_TAG_COLORS: Record<string, string> = {
   'Auszeichnung': '#FFD700',       // Gold
   'Medienecho': '#9C27B0',         // Purple
   'Motiv (MVB)': '#ffe066',        // Light Yellow
@@ -14,9 +14,9 @@ export const ONIX_TAG_COLORS = {
   'Zeitgeist': '#E91E63',          // Pink
   'Herkunft': '#70c1b3',           // Teal
   'default': '#70c1b3'             // Default Teal
-} as const;
+};
 
-export const ONIX_TAG_ICONS = {
+export const ONIX_TAG_ICONS: Record<string, string> = {
   'Auszeichnung': '🏆',
   'Medienecho': '📺',
   'Motiv (MVB)': '💫',
@@ -27,7 +27,7 @@ export const ONIX_TAG_ICONS = {
   'Zeitgeist': '🕰️',
   'Herkunft': '🌍',
   'default': '🏷️'
-} as const;
+};
 
 export const SOCIAL_MEDIA_COLORS = {
   linkedin: '#0077B5',

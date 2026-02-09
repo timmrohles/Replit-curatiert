@@ -37,7 +37,7 @@ export function HorizontalRowSection({ section, books, className = '' }: Horizon
 
         {/* Books Row */}
         {books.length > 0 ? (
-          <HorizontalBookRow books={books} />
+          <HorizontalBookRow books={books as any} />
         ) : (
           <div 
             className="text-center py-8 border-2 border-dashed rounded-lg"

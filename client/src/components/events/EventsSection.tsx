@@ -125,7 +125,6 @@ export function EventsSection({
             <EventCard
               key={event.id}
               id={event.id}
-              image={event.image}
               title={event.title}
               date={event.date}
               time={event.time}

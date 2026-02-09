@@ -34,14 +34,13 @@ export async function getAllCurators(): Promise<import('../apiSchemas').Curator[
     
     const result = await safeJsonParse<import('../apiSchemas').Curator[]>(response);
     
-    // ✅ VALIDATION: Validate curators array with Zod
     if (result?.data) {
-      return validateArray(CuratorSchema, result.data);
+      return validateArray(CuratorSchema, result.data as any) as any;
     }
     return [];
   } catch (error) {
     console.error('❌ Error loading curators:', error);
-    throw error; // Don't swallow errors!
+    throw error;
   }
 }
 
@@ -56,11 +55,10 @@ export async function getCurator(id: string): Promise<import('../apiSchemas').Cu
     
     // ✅ VALIDATION: Validate curator with Zod
     if (result.data) {
-      return validateData(CuratorSchema, result.data, null);
+      return validateData(CuratorSchema, result.data as any, null) as any;
     }
     return null;
   } catch (error) {
-    // Silent fallback
     return null;
   }
 }
@@ -95,7 +93,7 @@ export async function deleteCurator(id: string): Promise<boolean> {
       headers: getAdminAuthHeaders(),
     });
     const result: ApiResponse<{ id: string }> = await response.json();
-    return result.ok || false;
+    return (result as any).ok || result.success || false;
   } catch (error) {
     console.error('Error deleting curator:', error);
     return false;

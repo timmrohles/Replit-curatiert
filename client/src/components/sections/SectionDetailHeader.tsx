@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'wouter';
 import { ArrowLeft, Layout, Settings, FileCode } from 'lucide-react';
 
 interface SectionDetailHeaderProps {
@@ -30,7 +30,7 @@ export function SectionDetailHeader({
   description,
   category
 }: SectionDetailHeaderProps) {
-  const statusConfig = {
+  const statusConfig: Record<string, { bg: string; label: string; textColor?: string }> = {
     ready: { bg: '#70c1b3', label: 'Production Ready' },
     wip: { bg: '#FFE066', label: 'Work in Progress', textColor: '#2a2a2a' },
     planned: { bg: '#E5E7EB', label: 'Planned', textColor: '#2a2a2a' }

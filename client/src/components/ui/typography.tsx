@@ -20,9 +20,12 @@ import { cn } from './utils';
 interface TypographyProps {
   children: React.ReactNode;
   className?: string;
-  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div';
-  variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'base' | 'large' | 'default' | 'small' | 'xs' | 'price-label';
+  as?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'p' | 'span' | 'div' | 'li' | 'a';
+  variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'base' | 'body' | 'large' | 'default' | 'small' | 'xs' | 'price-label';
   style?: React.CSSProperties;
+  id?: string;
+  href?: string;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 /**
@@ -35,7 +38,10 @@ export const Heading = ({
   className = "", 
   as: Tag = 'h2', 
   variant,
-  style
+  style,
+  id,
+  href,
+  onClick
 }: TypographyProps) => {
   const v = variant || (Tag as string);
   const styles: Record<string, string> = {
@@ -46,7 +52,7 @@ export const Heading = ({
     h5: "!text-[length:var(--fluid-h5)] !font-headline !uppercase",
     h6: "!text-[length:var(--fluid-h6)] !font-headline !uppercase",
   };
-  return <Tag style={style} className={cn(styles[v] || styles.h2, className)}>{children}</Tag>;
+  return <Tag style={style} id={id} href={href as any} onClick={onClick as any} className={cn(styles[v] || styles.h2, className)}>{children}</Tag>;
 };
 
 /**
@@ -60,17 +66,21 @@ export const Text = React.forwardRef<HTMLElement, TypographyProps>(function Text
   className = "", 
   variant = 'default', 
   as: Tag = 'p',
-  style
+  style,
+  id,
+  href,
+  onClick
 }, ref) {
   const styles: Record<string, string> = {
     xs:      "!text-[length:var(--fluid-body-xs)] !leading-tight !font-sans !font-bold !uppercase !tracking-widest",      // ~12px (Labels)
     small:   "!text-[length:var(--fluid-body-small)] !leading-snug !font-sans",   // ~14px (Meta)
     base:    "!text-[length:var(--fluid-body)] !leading-relaxed !font-sans",         // ~16-18px (Standard)
     default: "!text-[length:var(--fluid-body)] !leading-relaxed !font-sans",         // Alias für base
+    body:    "!text-[length:var(--fluid-body)] !leading-relaxed !font-sans",         // Alias für base
     large:   "!text-[length:var(--fluid-h5)] !leading-snug !font-sans",           // ~18-20px (Hervorgehoben)
     'price-label': "!text-[length:var(--fluid-price-label)] !leading-snug !font-sans",  // 📱 Mobil 14px → 💻 Desktop 18px
   };
-  return <Tag ref={ref as any} style={style} className={cn(styles[variant] || styles.default, className)}>{children}</Tag>;
+  return <Tag ref={ref as any} style={style} id={id} href={href as any} onClick={onClick as any} className={cn(styles[variant] || styles.default, className)}>{children}</Tag>;
 });
 
 /**

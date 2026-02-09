@@ -240,7 +240,7 @@ export function AllCuratorsPage({ onGoBack }: AllCuratorsPageProps = { onGoBack:
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       if (curatorId === 'maurice-oekonomius') {
-        safeNavigate.toPath(`/storefront/${curatorId}`, { fallback: '/' });
+        safeNavigate(`/storefront/${curatorId}`);
       }
     }
   };
@@ -336,7 +336,7 @@ export function AllCuratorsPage({ onGoBack }: AllCuratorsPageProps = { onGoBack:
       {/* Breadcrumb */}
       <Breadcrumb
         items={[
-          { label: "Start", href: "/", onClick: () => safeNavigate.toPath('/') },
+          { label: "Start", href: "/", onClick: () => safeNavigate('/') },
           { label: "Alle Kurator*innen" }
         ]}
       />
@@ -449,14 +449,14 @@ export function AllCuratorsPage({ onGoBack }: AllCuratorsPageProps = { onGoBack:
                 onClick={() => {
                   // ✅ Nur zu existierenden Storefronts navigieren
                   if (curator.id === 'maurice-oekonomius') {
-                    safeNavigate.toPath(`/storefront/${curator.id}`, { fallback: '/' });
+                    safeNavigate(`/storefront/${curator.id}`);
                   }
                 }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     if (curator.id === 'maurice-oekonomius') {
-                      safeNavigate.toPath(`/storefront/${curator.id}`, { fallback: '/' });
+                      safeNavigate(`/storefront/${curator.id}`);
                     }
                   }
                 }}
@@ -489,7 +489,7 @@ export function AllCuratorsPage({ onGoBack }: AllCuratorsPageProps = { onGoBack:
                           } else {
                             addFavorite({
                               id: curator.id,
-                              type: 'curator',
+                              type: 'creator',
                               title: curator.name,
                               subtitle: curator.focus,
                               image: curator.avatar

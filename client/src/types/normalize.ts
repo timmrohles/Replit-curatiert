@@ -23,7 +23,7 @@ import { PageSection, SectionItem } from './page-resolve';
 
 const ZONE_DB_TO_UI: Record<string, PageSection['zone']> = {
   'header': 'header',
-  'above_fold': 'aboveFold',  // ✅ DB snake_case → UI camelCase
+  'above_fold': 'above_fold',  // ✅ Keep snake_case to match PageSection['zone'] type
   'main': 'main',
   'footer': 'footer',
 };
@@ -56,7 +56,7 @@ export function normalizeType(type?: string): string {
 // ==================================================================
 
 export function normalizeItem(raw: any): SectionItem {
-  return {
+  return ({
     // Core fields
     id: raw.id,
     page_section_id: raw.page_section_id ?? raw.pageSectionId,
@@ -99,7 +99,7 @@ export function normalizeItem(raw: any): SectionItem {
     category: raw.category ?? null,
     tag: raw.tag ?? null,
     page: raw.page ?? null,
-  };
+  }) as unknown as SectionItem;
 }
 
 // ==================================================================

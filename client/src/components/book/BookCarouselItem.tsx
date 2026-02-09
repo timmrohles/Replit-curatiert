@@ -31,6 +31,7 @@ export interface BookCarouselItemData {
   onixTagIds?: string[]; // NEW: ONIX Tag IDs for awards/badges
   seriesName?: string; // NEW: Name der Buchreihe für Badge
   seriesSlug?: string; // NEW: Slug der Buchreihe für Verlinkung
+  klappentext?: string; // Klappentext/Beschreibung
   
   // ============================================
   // ONIX 3.0 IMAGE METADATA (ResourceFeature - Codelist 160)

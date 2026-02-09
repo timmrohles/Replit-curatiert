@@ -1450,7 +1450,7 @@ function SectionCard({
   const drag = (node: HTMLElement | null) => node;
   const drop = (node: HTMLElement | null) => node;
 
-  drag(drop(ref) as any);
+  drag(drop(ref.current) as any);
 
   return (
     <div 

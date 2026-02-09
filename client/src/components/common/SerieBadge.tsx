@@ -33,8 +33,8 @@ export function SerieBadgeComponent({
   const badge = getSeriesBadge(onixTags);
   
   // Use direct props if provided, otherwise use ONIX data
-  const finalSeriesName = seriesName || badge?.seriesName;
-  const finalSeriesNumber = collectionNumber || badge?.seriesNumber;
+  const finalSeriesName = seriesName || badge?.serieName;
+  const finalSeriesNumber = collectionNumber || badge?.serieNumber;
   const finalSeriesSlug = seriesSlug || (finalSeriesName ? finalSeriesName.toLowerCase().replace(/\s+/g, '-') : '');
   
   if (!finalSeriesName) return null;

@@ -87,8 +87,8 @@ export default function GridSectionPage() {
             >
               <div className={viewMode === 'mobile' ? 'px-4 py-6' : 'px-8 py-8'}>
                 <GridSection 
-                  section={mockSection}
-                  books={mockBooks}
+                  section={mockSection as any}
+                  books={mockBooks as any}
                 />
               </div>
             </div>

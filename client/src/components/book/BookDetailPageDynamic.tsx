@@ -183,7 +183,7 @@ export function BookDetailPageDynamic() {
     return (
       <div className="min-h-screen bg-gradient-pastel">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <Button onClick={() => navigate(-1)} variant="ghost">
+          <Button onClick={() => window.history.back()} variant="ghost">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Zurück
           </Button>
@@ -199,7 +199,7 @@ export function BookDetailPageDynamic() {
     return (
       <div className="min-h-screen bg-gradient-pastel">
         <div className="max-w-7xl mx-auto px-4 py-8">
-          <Button onClick={() => navigate(-1)} variant="ghost">
+          <Button onClick={() => window.history.back()} variant="ghost">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Zurück
           </Button>
@@ -293,11 +293,11 @@ export function BookDetailPageDynamic() {
               
               <div className="aspect-[2/3] max-w-md mx-auto" style={{ boxShadow: '4px 4px 8px rgba(0, 0, 0, 0.2)', border: '1px solid #e5e5e5' }}>
                 <ImageWithFallback
-                  src={book.coverUrl}
-                  alt={getBookImageMetadata(book).alt}
+                  src={book.coverUrl || ''}
+                  alt={getBookImageMetadata(book as any).alt || book.title}
                   className="w-full h-full rounded-[1px]"
                   style={{ objectFit: 'contain' }}
-                  title={getBookImageMetadata(book).caption}
+                  title={getBookImageMetadata(book as any).caption || ''}
                 />
               </div>
             </div>
@@ -479,7 +479,7 @@ export function BookDetailPageDynamic() {
                   <Button
                     variant="outline"
                     className="flex-1"
-                    onClick={handleShare}
+                    onClick={() => setShareDialogOpen(true)}
                     style={{ backgroundColor: '#FFFFFF', borderColor: '#f25f5c', color: '#f25f5c' }}
                   >
                     <Share2 className="w-4 h-4 mr-2" />

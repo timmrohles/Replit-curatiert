@@ -172,7 +172,7 @@ export function TagHubPage() {
   }
 
   const typeDisplayName = getTypeDisplayName(type);
-  const typeColor = getTypeColor(tags[0]?.type);
+  const typeColor = getTypeColor(tags[0]?.type as ONIXTagType | undefined);
 
   return (
     <>
@@ -232,7 +232,7 @@ export function TagHubPage() {
                       className="p-3 rounded-lg text-2xl flex-shrink-0"
                       style={{ backgroundColor: `${tagColor}20` }}
                     >
-                      {getTagEmoji(tag.type)}
+                      {getTagEmoji(tag.type as ONIXTagType)}
                     </div>
 
                     {/* Tag Info */}

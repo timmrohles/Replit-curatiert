@@ -1,6 +1,7 @@
 // ============================================================================
-// Hero Section - Exports
+// Hero Section - Exports (re-exports from parent)
 // ============================================================================
 
-export { HeroSectionComponent } from './HeroSection.section';
-export type { HeroSectionProps, HeroSectionConfig } from './HeroSection.schema';
+export { HeroSection as HeroSectionComponent } from '../HeroSection.section';
+export type { HeroSectionProps } from '../HeroSection.schema';
+export type { HeroSectionConfig } from './HeroSection.schema';

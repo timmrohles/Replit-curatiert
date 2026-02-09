@@ -1,4 +1,4 @@
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 import { Book, ONIXTag } from '../../utils/api';
 
 interface BookSchemaProps {
@@ -25,12 +25,13 @@ export function BookSchema({ book, tags = [] }: BookSchemaProps) {
   const languages = tags
     .filter(tag => tag.type === 'Herkunft')
     .map(tag => {
-      if (tag.onixCode.includes('eng')) return 'en';
-      if (tag.onixCode.includes('fra')) return 'fr';
-      if (tag.onixCode.includes('spa')) return 'es';
-      if (tag.onixCode.includes('ita')) return 'it';
-      if (tag.onixCode.includes('swe')) return 'sv';
-      if (tag.onixCode.includes('nor')) return 'no';
+      const code = tag.onixCode || '';
+      if (code.includes('eng')) return 'en';
+      if (code.includes('fra')) return 'fr';
+      if (code.includes('spa')) return 'es';
+      if (code.includes('ita')) return 'it';
+      if (code.includes('swe')) return 'sv';
+      if (code.includes('nor')) return 'no';
       return 'de';
     });
 

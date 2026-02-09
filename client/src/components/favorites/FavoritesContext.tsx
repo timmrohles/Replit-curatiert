@@ -17,7 +17,9 @@ export type FrontendEntityType =
   | "category" 
   | "tag" 
   | "series" 
-  | "genre";       // UI: "Genre" (wird als tag gespeichert)
+  | "genre"        // UI: "Genre" (wird als tag gespeichert)
+  | "storefront"
+  | "topic";
 
 /**
  * Backend Entity Types (Database-facing)
@@ -46,6 +48,8 @@ const ENTITY_TYPE_MAP: Record<FrontendEntityType, BackendEntityType> = {
   tag: "tag",
   series: "series",
   genre: "tag",         // ✅ Genre ist ein Tag (z.B. "Genre: Fantasy")
+  storefront: "user",   // ✅ Storefront = User/Creator
+  topic: "tag",         // ✅ Topic = Tag
 };
 
 /**

@@ -148,7 +148,6 @@ export function CategoryCardsGrid({ location }: CategoryCardsGridProps) {
     <DSCarousel
       itemWidth={176}
       gap={12}
-      arrowSize="medium"
       arrowBg="rgba(0, 0, 0, 0.5)"
     >
       {visibleCards.map((card) => (

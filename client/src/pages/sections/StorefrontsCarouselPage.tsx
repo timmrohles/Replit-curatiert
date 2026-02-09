@@ -252,7 +252,7 @@ export default function StorefrontsCarouselPage() {
                   {storefronts.map(storefront => (
                     <div key={storefront.id} className="snap-start">
                       <StorefrontCard 
-                        {...storefront}
+                        {...storefront as any}
                         onNavigate={() => console.log(`Navigate to /creator/${storefront.id}`)}
                       />
                     </div>

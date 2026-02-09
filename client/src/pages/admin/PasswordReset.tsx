@@ -144,7 +144,6 @@ export function PasswordReset() {
                     className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2"
                     style={{ 
                       borderColor: '#E5E7EB',
-                      focusRingColor: '#f25f5c'
                     }}
                     disabled={loading}
                     autoFocus

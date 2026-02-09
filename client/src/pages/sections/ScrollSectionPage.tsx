@@ -89,7 +89,7 @@ export default function ScrollSectionPage() {
             <div ref={carouselRef} className="flex gap-4 pb-4">
               {mockBooks.map((book) => (
                 <div key={book.id} className="flex-shrink-0 w-48">
-                  <BookCard book={book} />
+                  <BookCard book={book as any} />
                 </div>
               ))}
             </div>

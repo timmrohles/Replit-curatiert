@@ -73,8 +73,7 @@ export function RefactoredHeroSection({
 
             <Text 
               variant="body" 
-              color="muted" 
-              className="mb-6 max-w-lg font-bold"
+              className="mb-6 max-w-lg font-bold text-muted-foreground"
             >
               coratiert, die Community-Buchhandlung, in der Kurator*innen und Expert*innen 
               ihre Lieblingswerke vorstellen. Entdecke Bücher abseits vom Mainstream, 
@@ -88,10 +87,10 @@ export function RefactoredHeroSection({
             {filteredCreators.length === 0 ? (
               // Empty State
               <div className="text-center py-12">
-                <Heading as="h2" variant="h3" align="center" className="mb-2">
+                <Heading as="h2" variant="h3" className="mb-2 text-center">
                   Keine Kurator*innen für diese Kombination gefunden.
                 </Heading>
-                <Text variant="small" color="muted" align="center">
+                <Text variant="small" className="text-muted-foreground text-center">
                   Versuche andere Tags oder entferne einige Filter.
                 </Text>
               </div>
@@ -112,8 +111,8 @@ export function RefactoredHeroSection({
                       <div
                         key={creator.id}
                         onClick={() => {
-                          if (index === activeCreatorIndex && creator.storefrontId) {
-                            onNavigateToStorefront?.(creator.storefrontId);
+                          if (index === activeCreatorIndex && (creator as any).storefrontId) {
+                            onNavigateToStorefront?.((creator as any).storefrontId);
                           } else {
                             setActiveCreatorIndex(index);
                           }
@@ -137,7 +136,7 @@ export function RefactoredHeroSection({
                         {/* Creator Card */}
                         <div className="w-full aspect-[3/4] rounded-2xl overflow-hidden border-4 border-white dark:border-gray-700">
                           <img
-                            src={creator.image}
+                            src={(creator as any).image || creator.photo}
                             alt={creator.name}
                             className="w-full h-full object-cover"
                           />
@@ -158,7 +157,7 @@ export function RefactoredHeroSection({
                               variant="small" 
                               className="text-white/90 mb-2"
                             >
-                              {creator.role}
+                              {(creator as any).role || creator.specialty}
                             </Text>
 
                             {/* Metrics */}
@@ -166,7 +165,7 @@ export function RefactoredHeroSection({
                               <div className="flex items-center gap-1.5">
                                 <span className="text-white text-sm">📚</span>
                                 <Text variant="xs" className="text-white/80">
-                                  {creator.booksCount || 0} Bücher
+                                  {(creator as any).booksCount || 0} Bücher
                                 </Text>
                               </div>
                               <div className="flex items-center gap-1.5">
@@ -175,7 +174,7 @@ export function RefactoredHeroSection({
                                   aria-hidden="true"
                                 />
                                 <Text variant="xs" className="text-white/80">
-                                  {creator.followersCount || 0}
+                                  {(creator as any).followersCount || 0}
                                 </Text>
                               </div>
                             </div>

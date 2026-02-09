@@ -284,7 +284,7 @@ export function PagesTabContent({
               </label>
               <select
                 value={editingPage.type || 'composed'}
-                onChange={(e) => setEditingPage({ ...editingPage, type: e.target.value })}
+                onChange={(e) => setEditingPage({ ...editingPage, type: e.target.value as "static" | "dynamic" | "composed" })}
                 className="w-full px-4 py-2 border rounded-lg"
                 style={{ borderColor: '#E5E7EB' }}
               >
@@ -422,7 +422,7 @@ export function PagesTabContent({
                 </label>
                 <input
                   type="datetime-local"
-                  value={editingPage.publish_at ? new Date(editingPage.publish_at).toISOString().slice(0, 16) : ''}
+                  value={editingPage.publish_at ? new Date(editingPage.publish_at as string).toISOString().slice(0, 16) : ''}
                   onChange={(e) => setEditingPage({ ...editingPage, publish_at: e.target.value || null })}
                   className="w-full px-4 py-2 border rounded-lg"
                   style={{ borderColor: '#E5E7EB' }}
@@ -439,7 +439,7 @@ export function PagesTabContent({
                 </label>
                 <input
                   type="datetime-local"
-                  value={editingPage.unpublish_at ? new Date(editingPage.unpublish_at).toISOString().slice(0, 16) : ''}
+                  value={editingPage.unpublish_at ? new Date(editingPage.unpublish_at as string).toISOString().slice(0, 16) : ''}
                   onChange={(e) => setEditingPage({ ...editingPage, unpublish_at: e.target.value || null })}
                   className="w-full px-4 py-2 border rounded-lg"
                   style={{ borderColor: '#E5E7EB' }}
@@ -630,7 +630,7 @@ export function PagesTabContent({
           {editingPage.id && (
             <div className="mt-8">
               <PageComposer 
-                page={editingPage as Page} 
+                page={editingPage as any} 
                 onPageUpdate={() => console.log('Page updated')} 
               />
             </div>

@@ -26,7 +26,7 @@ export function getSeriesBadge(onixTags: ONIXTag[] | undefined): SerieBadge | nu
 
   // Try to find Band (Volume) number
   const bandTag = onixTags.find(tag => tag.type === 'Band' && tag.visible);
-  const bandNumber = bandTag ? parseInt(bandTag.displayName.replace(/\D/g, ''), 10) : undefined;
+  const bandNumber = bandTag ? parseInt((bandTag as any).displayName.replace(/\D/g, ''), 10) : undefined;
 
   return {
     serieName: serieTag.displayName,

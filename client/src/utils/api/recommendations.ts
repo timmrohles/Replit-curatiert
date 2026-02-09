@@ -60,7 +60,7 @@ function calculateArraySimilarity(arr1: string[] = [], arr2: string[] = []): num
   });
   
   // Jaccard similarity
-  const union = new Set([...set1, ...set2]);
+  const union = new Set([...Array.from(set1), ...Array.from(set2)]);
   return matches / union.size;
 }
 

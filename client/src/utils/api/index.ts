@@ -49,7 +49,7 @@
 
 // Configuration & Helpers
 export * from './config';
-export * from './helpers';
+export { getBookWorld } from './helpers';
 
 // Core CRUD Operations
 export * from './curators';
@@ -70,9 +70,10 @@ export * from './external';
 // Existing Migrated Modules
 export * from './awards';
 export * from './cache';
-export * from './safe';
+export { fetchWithTimeout, validateResponseShape, safeApiCall, useAbortController } from './safe';
+export type { FetchWithTimeoutOptions } from './safe';
 export * from './storefront';
 
 // Advanced Features (Phase 3 Complete)
-export * from './recommendations';
+export { getRecommendedBooks } from './recommendations';
 export * from './ratings';

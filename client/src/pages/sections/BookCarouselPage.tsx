@@ -118,7 +118,7 @@ export default function BookCarouselPage() {
             >
               <div className={viewMode === 'mobile' ? 'px-4 py-6' : 'px-8 py-8'}>
                 <BookCarousel 
-                  books={mockBooks}
+                  books={mockBooks as any}
                 />
               </div>
             </div>

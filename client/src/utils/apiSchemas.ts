@@ -135,6 +135,12 @@ export const BookSchema = z.object({
     bookWorld: z.string().optional(),
   }).optional(),
   
+  seriesName: z.string().optional(),
+  seriesSlug: z.string().optional(),
+  description: z.string().optional(),
+  longDescription: z.string().optional(),
+  format: z.string().optional(),
+  
   createdAt: z.string(),
   updatedAt: z.string(),
 }).passthrough(); // Allow additional ONIX fields
@@ -172,6 +178,11 @@ export const ONIXTagSchema = z.object({
   color: z.string().optional(),
   slug: z.string().optional(),
   icon: z.string().optional(),
+  displayName: z.string().default(''),
+  visible: z.boolean().default(true),
+  visibilityLevel: z.string().default('filter'),
+  type: z.string().default(''),
+  onixCode: z.string().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
 }).passthrough();

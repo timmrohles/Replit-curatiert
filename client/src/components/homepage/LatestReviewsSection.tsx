@@ -199,9 +199,17 @@ export function LatestReviewsSection() {
                   {/* Action Buttons */}
                   <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
                     <LikeButton 
-                      bookId={review.id}
+                      entityId={review.id}
+                      entityType="book"
+                      entityTitle={review.bookTitle}
                       isLiked={isFavorite(review.id)}
-                      onToggle={() => toggleFavorite(review.id)}
+                      onToggle={() => toggleFavorite({
+                        id: review.id,
+                        type: 'book',
+                        title: review.bookTitle,
+                        subtitle: review.bookAuthor,
+                        image: review.bookCover,
+                      })}
                       size="sm"
                     />
                     <button 

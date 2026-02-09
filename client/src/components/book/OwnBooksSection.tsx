@@ -2,6 +2,9 @@ import { useState } from "react";
 import { useSafeNavigate } from "../../utils/routing";
 const mauriceAvatar = '/placeholder-avatar.png';
 import { LikeButton } from "../favorites/LikeButton";
+import { ImageWithFallback } from "../figma/ImageWithFallback";
+import { Button } from "../ui/button";
+import { ArrowRight, MessageCircle, Share2, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -55,7 +58,7 @@ export function OwnBooksSection({
             <div className="flex items-start gap-4 md:gap-6">
               {/* Avatar */}
               <div className="flex-shrink-0">
-                <div className="w-32 h-32 rounded-full overflow-hidden ring-2 ring-offset-2" style={{ ringColor: 'var(--cerulean)' }}>
+                <div className="w-32 h-32 rounded-full overflow-hidden ring-2 ring-offset-2" style={{ borderColor: 'var(--cerulean)' }}>
                   <ImageWithFallback
                     src={mauriceAvatar}
                     alt={creatorName}

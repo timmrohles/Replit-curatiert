@@ -288,8 +288,8 @@ export async function seedDemoData() {
 
     // Save all pages
     for (const page of pages) {
-      if (!existingPageIds.has(page.id)) {
-        await savePage(page);
+      if (!existingPageIds.has(page.id as any)) {
+        await savePage(page as any);
         console.log(`✅ Page created: ${page.name}`);
       } else {
         console.log(`✅ Page already exists: ${page.name}`);
@@ -380,11 +380,11 @@ export async function seedDemoData() {
 
     for (const item of menuItems) {
       if (!existingMenuIds.has(item.id)) {
-        await saveMenuItem(item);
+        await saveMenuItem(item as any);
         console.log(`✅ Menu item created: ${item.name}`);
       } else {
         // Update existing menu items to reflect changes
-        await saveMenuItem(item);
+        await saveMenuItem(item as any);
         console.log(`✅ Menu item updated: ${item.name}`);
       }
     }

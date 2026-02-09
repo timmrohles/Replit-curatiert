@@ -112,7 +112,7 @@ export default function RecipientCategoryGridPage() {
             >
               <div className={viewMode === 'mobile' ? 'px-4 py-6' : 'px-8 py-8'}>
                 <RecipientCategoryGrid 
-                  section={mockSection}
+                  section={mockSection as any}
                 />
               </div>
             </div>

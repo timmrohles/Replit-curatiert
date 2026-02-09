@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSafeNavigate } from '../../utils/routing';
 import { Heart, ExternalLink, ChevronDown, Instagram, Twitter, Facebook } from 'lucide-react';
@@ -458,8 +458,8 @@ export function AuthorHubPage() {
             "worksFor": author.worksFor,
             "sameAs": [
               author.website,
-              author.socialMedia?.instagram ? `https://instagram.com/${author.socialMedia.instagram}` : null,
-              author.socialMedia?.twitter ? `https://twitter.com/${author.socialMedia.twitter}` : null
+              (author as any).socialMedia?.instagram ? `https://instagram.com/${(author as any).socialMedia.instagram}` : null,
+              (author as any).socialMedia?.twitter ? `https://twitter.com/${(author as any).socialMedia.twitter}` : null
             ].filter(Boolean),
             "workExample": books.map(book => ({
               "@type": "Book",

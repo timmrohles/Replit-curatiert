@@ -73,17 +73,17 @@ const genreCategories = [
   {
     label: 'Belletristik',
     image: 'https://images.unsplash.com/photo-1698954634383-eba274a1b1c7?w=800',
-    onClick: (nav: ReturnType<typeof useNavigate>) => nav('/belletristik')
+    onClick: (nav: any) => nav('/belletristik')
   },
   {
     label: 'Romane & Erzählungen',
     image: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?w=800',
-    onClick: (nav: ReturnType<typeof useNavigate>) => nav('/romane-erzaehlungen')
+    onClick: (nav: any) => nav('/romane-erzaehlungen')
   },
   {
     label: 'Krimis & Thriller',
     image: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=800',
-    onClick: (nav: ReturnType<typeof useNavigate>) => nav('/krimis-thriller')
+    onClick: (nav: any) => nav('/krimis-thriller')
   },
   {
     label: 'Sachbuch',
@@ -488,7 +488,7 @@ export function ShopPage() {
               {filters.sortedBooks.length > 0 ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
                   {filters.sortedBooks.map(book => (
-                    <BookCard key={book.id} book={book} viewMode="compact" />
+                    <BookCard key={book.id} book={book as any} viewMode="compact" />
                   ))}
                 </div>
               ) : (

@@ -54,7 +54,8 @@ const allEvents: RawEvent[] = [
     curatorImage: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=400',
     curatorSlug: 'coratiert-redaktion',
     curatorFocus: 'Literarische Events',
-    registrationUrl: 'https://example.com/register'
+    registrationUrl: 'https://example.com/register',
+    isOnline: false
   },
   {
     id: 2,
@@ -69,7 +70,8 @@ const allEvents: RawEvent[] = [
     curatorImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
     curatorSlug: 'diversity-book-club',
     curatorFocus: 'Diverse Stimmen',
-    registrationUrl: 'https://example.com/register'
+    registrationUrl: 'https://example.com/register',
+    isOnline: true
   },
   {
     id: 3,
@@ -84,7 +86,8 @@ const allEvents: RawEvent[] = [
     curatorImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
     curatorSlug: 'schreibraum-kollektiv',
     curatorFocus: 'Kreativität & Praxis',
-    registrationUrl: 'https://example.com/register'
+    registrationUrl: 'https://example.com/register',
+    isOnline: false
   },
   {
     id: 4,
@@ -99,7 +102,8 @@ const allEvents: RawEvent[] = [
     curatorImage: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
     curatorSlug: 'oeko-literatur',
     curatorFocus: 'Nachhaltigkeit & Literatur',
-    registrationUrl: 'https://example.com/register'
+    registrationUrl: 'https://example.com/register',
+    isOnline: true
   },
   {
     id: 5,
@@ -114,7 +118,8 @@ const allEvents: RawEvent[] = [
     curatorImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400',
     curatorSlug: 'digital-bookworms',
     curatorFocus: 'Digital Community',
-    registrationUrl: 'https://example.com/register'
+    registrationUrl: 'https://example.com/register',
+    isOnline: true
   }
 ];
 
@@ -601,7 +606,7 @@ export function Homepage() {
       <main className="min-h-screen">
         {/* Hero Section */}
         <RefactoredHeroSection 
-          creators={hardcodedCreators}
+          creators={hardcodedCreators as any}
           availableTags={availableTags}
         />
 
@@ -754,7 +759,7 @@ export function Homepage() {
                 ]
               },
             ]}
-            backgroundColor="var(--creator-light-bg)"
+            backgroundColor={"var(--creator-light-bg)" as any}
             bookCardBgColor="transparent"
             sectionBackgroundColor="transparent"
             borderColor="rgba(0,0,0,0.2)"

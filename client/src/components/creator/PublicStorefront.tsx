@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useReducer, useRef, useMemo, useCallback } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
 import { BookCard } from '../book/BookCard';
 import { EventCard } from '../events/EventCard';
@@ -93,7 +93,7 @@ interface SocialMedia {
   website?: string;
 }
 
-interface Event {
+interface StorefrontEvent {
   id: string;
   storefrontSlug: string;
   title: string;
@@ -134,8 +134,8 @@ type StorefrontState = {
   storefront: Storefront | null;
   loading: boolean;
   error: string;
-  activeTab: 'bücher' | 'rezensionen' | 'veranstaltungen' | 'bonusinhalte';
-  events: Event[];
+  activeTab: 'bücher' | 'rezensionen' | 'veranstaltungen' | 'bonusinhalte' | 'autor:innen';
+  events: StorefrontEvent[];
   selectedEventType: string;
   selectedEventLocation: string;
   eventsScrollLeft: number;
@@ -145,8 +145,8 @@ type StorefrontAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'SET_STOREFRONT'; payload: Storefront }
-  | { type: 'SET_EVENTS'; payload: Event[] }
-  | { type: 'SET_ACTIVE_TAB'; payload: 'bücher' | 'rezensionen' | 'veranstaltungen' | 'bonusinhalte' }
+  | { type: 'SET_EVENTS'; payload: StorefrontEvent[] }
+  | { type: 'SET_ACTIVE_TAB'; payload: 'bücher' | 'rezensionen' | 'veranstaltungen' | 'bonusinhalte' | 'autor:innen' }
   | { type: 'SET_EVENT_TYPE'; payload: string }
   | { type: 'SET_EVENT_LOCATION'; payload: string }
   | { type: 'SET_EVENTS_SCROLL'; payload: number };
@@ -625,11 +625,11 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
                 {state.storefront.books.map((book) => (
                   <BookCard 
                     key={book.id} 
-                    book={book} 
+                    book={book as any} 
                     cardBackgroundColor="transparent"
                     textColor={textColorOnHero}
                     iconColor={textColorOnHero}
-                    sectionBackgroundColor={state.storefront.colors?.heroBackground || '#70c1b3'}
+                    sectionBackgroundColor={state.storefront!.colors?.heroBackground || '#70c1b3'}
                   />
                 ))}
               </div>
@@ -642,8 +642,8 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
           <CreatorEventsSection 
             creatorName={state.storefront.name}
             creatorImage={state.storefront.logoUrl || ''}
-            events={filteredEvents.slice(0, 4)}
-            backgroundColor={heroBackgroundColor}
+            events={filteredEvents.slice(0, 4) as any}
+            backgroundColor={heroBackgroundColor as any}
           />
         )}
 
@@ -675,7 +675,7 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
               return mappedBook;
             })}
             showCta={false}
-            backgroundColor={state.storefront.colors?.carouselBackground || '#FFFFFF'}
+            backgroundColor={(state.storefront!.colors?.carouselBackground || '#FFFFFF') as any}
           />
         )}
 
@@ -699,11 +699,11 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
             {otherBookSeries.map((series, seriesIndex) => (
               <CreatorCarousel
                 key={series.id}
-                creatorAvatar={state.storefront.logoUrl || ''}
-                creatorName={state.storefront.name}
-                creatorFocus={state.storefront.creatorFocus || ''}
-                creatorBio={state.storefront.creatorBio}
-                creatorWebsiteUrl={state.storefront.socialMedia?.website}
+                creatorAvatar={state.storefront!.logoUrl || ''}
+                creatorName={state.storefront!.name}
+                creatorFocus={state.storefront!.creatorFocus || ''}
+                creatorBio={state.storefront!.creatorBio}
+                creatorWebsiteUrl={state.storefront!.socialMedia?.website}
                 occasion={series.title}
                 curationReason={series.reason || series.description}
                 showSocials={false}
@@ -905,16 +905,16 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
                           )}
                           <div className="p-6">
                             <div className="flex items-start gap-3 mb-3">
-                              {state.storefront.logoUrl && (
+                              {state.storefront!.logoUrl && (
                                 <ImageWithFallback
-                                  src={state.storefront.logoUrl}
-                                  alt={state.storefront.name}
+                                  src={state.storefront!.logoUrl}
+                                  alt={state.storefront!.name}
                                   className="w-10 h-10 rounded-full object-cover flex-shrink-0"
                                 />
                               )}
                               <div className="min-w-0">
                                 <p className="text-sm text-[var(--charcoal)]" style={{ fontFamily: 'Fjalla One' }}>
-                                  {state.storefront.name}
+                                  {state.storefront!.name}
                                 </p>
                                 <p className="text-xs text-[var(--charcoal)]/60">
                                   {new Date(event.date).toLocaleDateString('de-DE', {

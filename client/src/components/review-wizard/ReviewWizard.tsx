@@ -236,7 +236,6 @@ export function ReviewWizard({
               updateReviewData={updateReviewData}
               bookTitle={bookTitle}
               bookAuthor={bookAuthor}
-              bookCover={bookCover}
             />
           )}
         </div>

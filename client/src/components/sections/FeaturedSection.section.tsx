@@ -59,7 +59,7 @@ export function FeaturedSection({ section, books, className = '' }: FeaturedSect
                 {books.slice(0, 3).map((book) => (
                   <BookCard 
                     key={book.id} 
-                    book={book}
+                    book={book as any}
                   />
                 ))}
               </div>

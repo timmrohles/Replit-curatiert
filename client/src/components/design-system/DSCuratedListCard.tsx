@@ -258,7 +258,7 @@ export const DSCuratedListCard = memo(function DSCuratedListCard({
               <div>
                 <Text 
                   as="p" 
-                  variant="sm"
+                  variant="small"
                   className="text-foreground/80 leading-relaxed"
                 >
                   {displayCurationReason}

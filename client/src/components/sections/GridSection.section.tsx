@@ -41,7 +41,7 @@ export function GridSection({ section, books, className = '' }: GridSectionProps
             {books.map((book) => (
               <BookCard 
                 key={book.id} 
-                book={book}
+                book={book as any}
               />
             ))}
           </div>
