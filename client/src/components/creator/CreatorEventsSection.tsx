@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { Calendar, MapPin, ExternalLink } from 'lucide-react';
 import { DSButton } from '../design-system/DSButton';
 import { useSafeNavigate } from '../../utils/routing';

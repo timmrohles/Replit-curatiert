@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useReducer } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
 import { Header } from '../layout/Header';
 import { InfoBar } from '../layout/InfoBar';
@@ -23,7 +23,7 @@ import {
   SupportMemberModule,
   NewsletterModule,
   FAQModule
-} from './storefront-modules';
+} from '../storefront-modules';
 
 // Event Type Mapping (EventsPage compatible)
 type EventTypeLabel = 
@@ -113,16 +113,31 @@ type AuthorStorefrontState = {
   storefront: AuthorStorefrontData | null;
   loading: boolean;
   error: string;
-  activeTab: 'bücher' | 'rezensionen' | 'veranstaltungen' | 'bonusinhalte';
-  events: Event[];
+  activeTab: string;
+  events: StorefrontEvent[];
 };
+
+interface StorefrontEvent {
+  id: string;
+  title: string;
+  type: string;
+  location: string;
+  date: string;
+  time: string;
+  image: string;
+  isOnline: boolean;
+  registrationUrl: string;
+  locationType: string;
+  curatorName: string;
+  curatorImage: string;
+}
 
 type AuthorStorefrontAction =
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string }
   | { type: 'SET_STOREFRONT'; payload: AuthorStorefrontData }
-  | { type: 'SET_EVENTS'; payload: Event[] }
-  | { type: 'SET_ACTIVE_TAB'; payload: 'bücher' | 'rezensionen' | 'veranstaltungen' | 'bonusinhalte' };
+  | { type: 'SET_EVENTS'; payload: StorefrontEvent[] }
+  | { type: 'SET_ACTIVE_TAB'; payload: string };
 
 const initialState: AuthorStorefrontState = {
   storefront: null,
@@ -234,13 +249,13 @@ export function AuthorStorefront({ authorId }: { authorId: string }) {
 
       {/* Creator Header */}
       <CreatorHeader
+        avatar={storefront.logoUrl || ''}
         name={storefront.name}
-        tagline={storefront.tagline}
-        description={storefront.description}
-        logoUrl={storefront.logoUrl}
-        backgroundColor={heroBackgroundColor}
-        socialMedia={storefront.socialMedia}
-        introVideo={storefront.introVideo}
+        focus={storefront.tagline || ''}
+        occasion=""
+        curationReason={storefront.description}
+        bio={storefront.authorBio}
+        sectionBackgroundColor={heroBackgroundColor}
       />
 
       {/* Main Content */}
@@ -391,7 +406,7 @@ export function AuthorStorefront({ authorId }: { authorId: string }) {
           <Section variant="default">
             <Container>
               <div className="space-y-8">
-                <Heading level={2} className="text-center md:text-left">
+                <Heading as="h2" className="text-center md:text-left">
                   Veranstaltungen von {storefront.name}
                 </Heading>
 

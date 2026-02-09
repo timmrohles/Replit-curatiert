@@ -303,7 +303,7 @@ export const CreatorHeader = memo(function CreatorHeader({
         <div className="w-full mt-4">
           <Text 
             as="div"
-            variant="body"
+            variant="base"
             style={
               shouldTruncate && !isExpanded
                 ? {

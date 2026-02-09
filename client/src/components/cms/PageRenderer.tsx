@@ -2,7 +2,7 @@
 // PageRenderer - Zentraler Dispatcher für datengetriebene Pages
 // ============================================================================
 
-import { PageSection, PageResolveSuccess } from "../types/page-resolve";
+import { PageSection, PageResolveSuccess } from "../../types/page-resolve";
 import { UniversalSectionRenderer } from "../sections/UniversalSectionRenderer";
 
 interface PageRendererProps {

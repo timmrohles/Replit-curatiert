@@ -1,10 +1,10 @@
 import { CuratorMatchmaking } from '../homepage/CuratorMatchmaking';
 import { useState } from 'react';
-import { MoodSelector } from './matching/MoodSelector';
-import { DailyRecommendations } from './matching/DailyRecommendations';
-import { TasteQuiz } from './matching/TasteQuiz';
-import { MostRecommended } from './matching/MostRecommended';
-import { RecipientFinder } from './matching/RecipientFinder';
+import { MoodSelector } from './MoodSelector';
+import { DailyRecommendations } from './DailyRecommendations';
+import { TasteQuiz } from './TasteQuiz';
+import { MostRecommended } from './MostRecommended';
+import { RecipientFinder } from './RecipientFinder';
 
 export function MatchingPage() {
   const [showMatchmaker, setShowMatchmaker] = useState(false);

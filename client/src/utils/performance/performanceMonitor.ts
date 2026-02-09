@@ -1,0 +1,1 @@
+export { perfMonitor } from '../performanceMonitor';
