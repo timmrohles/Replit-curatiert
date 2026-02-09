@@ -122,12 +122,12 @@ export const CreatorHeader = memo(function CreatorHeader({
             )}
           </div>
 
-          {/* Focus & Website - Konsequent mit <Text variant="xs"> */}
-          <div className="flex flex-wrap items-center gap-x-2 mt-1">
+          {/* Focus & Website - kompakt */}
+          <div className="flex flex-wrap items-center gap-x-2 mt-0.5">
             <Text 
               as="span"
               variant="xs" 
-              className={isAdSection ? 'text-white' : 'text-foreground'}
+              className={`!text-[0.7rem] !tracking-wide ${isAdSection ? 'text-white' : 'text-foreground/70'}`}
             >
               {focus.includes('ANZEIGE') ? (
                 <>

@@ -269,11 +269,12 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
         </div>
 
         {/* Titel & Autor UNTER dem Cover */}
-        <div className="flex flex-col gap-1 mt-2">
+        <div className="flex flex-col gap-0.5 mt-3">
           <Heading 
             as="h4" 
-            variant="h4" 
-            className="text-foreground line-clamp-2 !normal-case min-h-[4rem]"
+            variant="h3" 
+            className="text-foreground line-clamp-2 !normal-case"
+            style={{ minHeight: '2.8em', lineHeight: '1.4em' }}
           >
             {book.title}
           </Heading>
@@ -290,11 +291,11 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
         {/* Klappentext */}
         {displayDescription && (
           <>
-            <div className={`${isKlappentextExpanded ? 'mt-2' : 'h-[6.5rem] md:h-[7rem] overflow-hidden mt-2'}`}>
+            <div className={`${isKlappentextExpanded ? 'mt-2' : 'h-[5.5rem] md:h-[6rem] overflow-hidden mt-2'}`}>
               <Text 
                 as="p" 
                 variant="small" 
-                className={`leading-relaxed ${isKlappentextExpanded ? '' : 'line-clamp-6 md:line-clamp-5'}`}
+                className={`!text-[0.8rem] md:!text-[0.85rem] leading-relaxed ${isKlappentextExpanded ? '' : 'line-clamp-5 md:line-clamp-4'}`}
                 style={{ 
                   color: 'var(--color-foreground-muted)'
                 }}
@@ -319,14 +320,14 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
           </>
         )}
 
-        {/* Strich */}
+        {/* Trennlinie über Action-Icons */}
         <div 
-          className="w-full h-[1px] my-0.5"
-          style={{ backgroundColor: 'var(--color-border)' }}
+          className="w-full h-[1px] mt-3 mb-1"
+          style={{ backgroundColor: 'var(--color-charcoal, #2a2a2a)', opacity: 0.15 }}
         />
 
-        {/* Action Bar - Same as BookCarouselItem */}
-        <div className="flex items-center gap-1.5 pt-1">
+        {/* Action Bar */}
+        <div className="flex items-center gap-1.5 pt-0.5">
           <LikeButton 
             entityId={`book-${book.id}`}
             entityType="book"
