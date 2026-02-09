@@ -505,7 +505,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
             {/* ✅ NEW: Draft Preview Toggle */}
             <div className="flex items-center gap-2">
               <Label htmlFor="include-draft" className="text-sm font-normal">
-                Entw\u00fcrfe anzeigen
+                Entwürfe anzeigen
               </Label>
               <Switch
                 id="include-draft"
@@ -559,7 +559,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                       }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      Sektion hinzuf\u00fcgen
+                      Sektion hinzufügen
                     </Button>
                   )}
                   {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -638,7 +638,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                 onValueChange={(value) => setEditingSection({ ...editingSection, type: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Typ w\u00e4hlen" />
+                  <SelectValue placeholder="Typ wählen" />
                 </SelectTrigger>
                 <SelectContent>
                   {getAvailableSectionTypes(editingSection.zone as string).map(type => (
@@ -674,7 +674,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                     onChange={(e) => setEditingSection({ ...editingSection, status: 'published' })}
                     className="w-4 h-4"
                   />
-                  <span className="text-sm">Ver\u00f6ffentlicht</span>
+                  <span className="text-sm">Veröffentlicht</span>
                   <Badge variant="default">Live</Badge>
                 </label>
               </div>

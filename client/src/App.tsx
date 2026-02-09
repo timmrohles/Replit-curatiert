@@ -131,6 +131,7 @@ function App() {
                     <Route path="/curators" element={<Suspense fallback={<LoadingFallback />}><AllCuratorsPage onGoBack={() => {}} /></Suspense>} />
                     <Route path="/storefronts" element={<Suspense fallback={<LoadingFallback />}><AllListsPage onGoBack={() => {}} /></Suspense>} />
                     <Route path="/creator/:creatorId" element={<Suspense fallback={<LoadingFallback />}><CreatorStorefront /></Suspense>} />
+                    <Route path="/storefront/:creatorId" element={<Suspense fallback={<LoadingFallback />}><CreatorStorefront /></Suspense>} />
                     <Route path="/events" element={<Suspense fallback={<LoadingFallback />}><EventsPage onGoBack={() => {}} /></Suspense>} />
                     <Route path="/bücher" element={<Suspense fallback={<LoadingFallback />}><ShopPage /></Suspense>} />
                     

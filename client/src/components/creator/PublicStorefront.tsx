@@ -241,69 +241,77 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
     async function loadStorefront() {
       if (!storefrontId) return;
       
-      // ✅ Nur maurice-oekonomius laden - alle anderen IDs ablehnen
-      if (storefrontId !== 'maurice-oekonomius') {
-        if (isMounted) {
-          dispatch({ type: 'SET_ERROR', payload: 'Diese Storefront ist derzeit nicht verfügbar.' });
-          dispatch({ type: 'SET_LOADING', payload: false });
-        }
-        return;
-      }
-      
       try {
         dispatch({ type: 'SET_LOADING', payload: true });
         dispatch({ type: 'SET_ERROR', payload: '' });
 
-        logger.debug('Loading storefront:', storefrontId);
-        logger.debug('API Base:', API_BASE);
-
-        // Try to fetch from backend with longer timeout (30 seconds)
         const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-        try {
-          const response = await fetch(
-            `${API_BASE}/storefront/${storefrontId}`,
-            {
-              headers: {
-              },
-              signal: controller.signal,
-            }
-          );
+        const response = await fetch(
+          `${API_BASE}/storefronts/${storefrontId}`,
+          { signal: controller.signal }
+        );
 
-          clearTimeout(timeoutId);
-          logger.debug('Response status:', response.status);
+        clearTimeout(timeoutId);
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            logger.error('Response error:', errorText);
-            throw new Error('Storefront nicht gefunden');
-          }
+        if (!response.ok) {
+          throw new Error('Storefront nicht gefunden');
+        }
 
-          const data = await response.json();
-          logger.debug('Storefront data loaded successfully');
+        const data = await response.json();
 
-          if (data.success && data.storefront && isMounted) {
-            if (!data.storefront.isPublished) {
-              dispatch({ type: 'SET_ERROR', payload: 'Diese Storefront ist nicht veröffentlicht.' });
-              return;
-            }
-            dispatch({ type: 'SET_STOREFRONT', payload: data.storefront });
-            // PERFORMANCE: Load events from the same API response (already included by server)
-            if (data.events) {
-              dispatch({ type: 'SET_EVENTS', payload: data.events });
-            }
-          } else {
-            throw new Error('Storefront nicht gefunden');
-          }
-        } catch (fetchError) {
-          if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-            logger.error('Request timeout after 30 seconds');
-            throw new Error('Die Storefront lädt zu lange. Bitte überprüfe deine Internetverbindung oder versuche es später erneut.');
-          }
-          throw fetchError;
+        if (data.ok && data.data && isMounted) {
+          const sf = data.data;
+          const storefront: Storefront = {
+            id: sf.id,
+            name: sf.name || sf.curator?.name || '',
+            tagline: sf.tagline || '',
+            description: sf.description || sf.curator?.bio || '',
+            logoUrl: sf.logo_url || sf.curator?.avatar || '',
+            colors: {
+              primary: sf.color_scheme?.primary || '#247ba0',
+              secondary: sf.color_scheme?.secondary || '#f7f4ef',
+              background: sf.color_scheme?.background || '#f7f4ef',
+              accent: sf.color_scheme?.accent || '#70c1b3',
+              heroBackground: sf.color_scheme?.heroBackground || '#0B1F33',
+              carouselBackground: sf.color_scheme?.carouselBackground || '#f7f4ef',
+              contentBackground: sf.color_scheme?.contentBackground || '#ffffff',
+              contentText: sf.color_scheme?.contentText || '#2a2a2a',
+            },
+            books: [],
+            bookSeries: (sf.bookSeries || []).map((s: any) => ({
+              id: s.id,
+              type: s.type || 'static',
+              title: s.title || '',
+              description: s.description || '',
+              reason: s.reason || '',
+              occasion: s.occasion || '',
+              books: (s.books || []).map((b: any) => ({
+                id: b.id,
+                title: b.title || '',
+                author: b.author || '',
+                cover: b.cover || b.cover_url || '',
+                description: b.description || '',
+                price: b.price || '',
+              })),
+              sortOrder: s.sortOrder || 'popular',
+              isOwnBooks: s.isOwnBooks || false,
+            })),
+            creatorFocus: sf.curator?.focus || '',
+            creatorBio: sf.curator?.bio || '',
+            socialMedia: sf.curator?.socialMedia || sf.social_media || {},
+          };
+          dispatch({ type: 'SET_STOREFRONT', payload: storefront });
+        } else {
+          throw new Error('Storefront nicht gefunden');
         }
       } catch (err) {
-        logger.error('Error loading storefront:', err);
+        if (err instanceof Error && err.name === 'AbortError') {
+          if (isMounted) {
+            dispatch({ type: 'SET_ERROR', payload: 'Die Storefront lädt zu lange. Bitte versuche es später erneut.' });
+          }
+          return;
+        }
         if (isMounted) {
           dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Fehler beim Laden der Storefront' });
         }

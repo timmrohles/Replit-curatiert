@@ -173,6 +173,61 @@ export async function registerRoutes(
     log.warn('Could not verify admin auth tables:', err);
   }
 
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS storefronts (
+        id SERIAL PRIMARY KEY,
+        curator_id INTEGER REFERENCES curators(id) ON DELETE CASCADE,
+        slug VARCHAR(255) UNIQUE NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        tagline VARCHAR(500),
+        description TEXT,
+        logo_url TEXT,
+        hero_image_url TEXT,
+        color_scheme JSONB DEFAULT '{}',
+        social_media JSONB DEFAULT '{}',
+        is_published BOOLEAN DEFAULT false,
+        published_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        deleted_at TIMESTAMP WITH TIME ZONE
+      )
+    `);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS storefront_book_series (
+        id SERIAL PRIMARY KEY,
+        storefront_id INTEGER REFERENCES storefronts(id) ON DELETE CASCADE,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        reason TEXT,
+        occasion TEXT,
+        type VARCHAR(20) DEFAULT 'static',
+        sort_order VARCHAR(20) DEFAULT 'popular',
+        is_own_books BOOLEAN DEFAULT false,
+        filters JSONB DEFAULT '{}',
+        display_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      )
+    `);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS storefront_series_books (
+        id SERIAL PRIMARY KEY,
+        series_id INTEGER REFERENCES storefront_book_series(id) ON DELETE CASCADE,
+        book_id INTEGER NOT NULL,
+        display_order INTEGER DEFAULT 0,
+        UNIQUE(series_id, book_id)
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_storefronts_slug ON storefronts(slug)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_storefronts_curator ON storefronts(curator_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_sf_series_storefront ON storefront_book_series(storefront_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_sf_series_books_series ON storefront_series_books(series_id)`);
+    log.info('Storefront tables verified');
+  } catch (err) {
+    log.warn('Could not verify storefront tables:', err);
+  }
+
   // ==================================================================
   // HEALTH CHECK
   // ==================================================================
@@ -1373,6 +1428,408 @@ export async function registerRoutes(
       return res.json({ ok: true, data: { id } });
     } catch (error) {
       log.error('Curator delete error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // STOREFRONTS
+  // ==================================================================
+
+  function mapStorefrontRow(row: any) {
+    return {
+      id: String(row.id),
+      curator_id: String(row.curator_id),
+      slug: row.slug || '',
+      name: row.name || '',
+      tagline: row.tagline || '',
+      description: row.description || '',
+      logo_url: row.logo_url || '',
+      hero_image_url: row.hero_image_url || '',
+      color_scheme: typeof row.color_scheme === 'string' ? JSON.parse(row.color_scheme || '{}') : (row.color_scheme || {}),
+      social_media: typeof row.social_media === 'string' ? JSON.parse(row.social_media || '{}') : (row.social_media || {}),
+      is_published: row.is_published ?? false,
+      published_at: row.published_at || null,
+      created_at: row.created_at || new Date().toISOString(),
+      updated_at: row.updated_at || new Date().toISOString(),
+    };
+  }
+
+  app.get('/api/storefronts/:slug', async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      const result = await queryDB(
+        `SELECT s.*, c.name as curator_name, c.bio as curator_bio, c.avatar_url as curator_avatar,
+                c.focus as curator_focus, c.website_url, c.instagram_url, c.tiktok_url, c.youtube_url
+         FROM storefronts s
+         JOIN curators c ON s.curator_id = c.id
+         WHERE s.slug = $1 AND s.is_published = true AND s.deleted_at IS NULL AND c.deleted_at IS NULL`,
+        [slug]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Storefront nicht gefunden' });
+      }
+
+      const row = result.rows[0];
+      const storefront = mapStorefrontRow(row);
+
+      (storefront as any).curator = {
+        id: storefront.curator_id,
+        name: row.curator_name || '',
+        bio: row.curator_bio || '',
+        avatar: row.curator_avatar || '',
+        focus: row.curator_focus || '',
+        socialMedia: {
+          website: row.website_url || '',
+          instagram: row.instagram_url || '',
+          tiktok: row.tiktok_url || '',
+          youtube: row.youtube_url || '',
+        },
+      };
+
+      const seriesResult = await queryDB(
+        `SELECT * FROM storefront_book_series WHERE storefront_id = $1 ORDER BY display_order ASC`,
+        [row.id]
+      );
+
+      const seriesWithBooks = [];
+      for (const series of seriesResult.rows) {
+        const booksResult = await queryDB(
+          `SELECT b.id, b.title, b.isbn13, b.cover_url, b.description,
+                  (SELECT STRING_AGG(p.name, ', ')
+                   FROM book_persons bp JOIN persons p ON bp.person_id = p.id
+                   WHERE bp.book_id = b.id AND bp.role = 'author') as author
+           FROM storefront_series_books ssb
+           JOIN books b ON ssb.book_id = b.id
+           WHERE ssb.series_id = $1
+           ORDER BY ssb.display_order ASC`,
+          [series.id]
+        );
+
+        seriesWithBooks.push({
+          id: String(series.id),
+          type: series.type || 'static',
+          title: series.title || '',
+          description: series.description || '',
+          reason: series.reason || '',
+          occasion: series.occasion || '',
+          sortOrder: series.sort_order || 'popular',
+          isOwnBooks: series.is_own_books ?? false,
+          displayOrder: series.display_order || 0,
+          books: booksResult.rows.map((b: any) => ({
+            id: String(b.id),
+            title: b.title || '',
+            author: b.author || '',
+            cover: b.cover_url || '',
+            isbn13: b.isbn13 || '',
+            description: b.description || '',
+            price: '',
+          })),
+        });
+      }
+
+      (storefront as any).bookSeries = seriesWithBooks;
+
+      return res.json({ ok: true, data: storefront });
+    } catch (error) {
+      log.error('Public storefront fetch error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/admin/storefronts', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const result = await queryDB(
+        `SELECT s.*, c.name as curator_name
+         FROM storefronts s
+         LEFT JOIN curators c ON s.curator_id = c.id
+         WHERE s.deleted_at IS NULL
+         ORDER BY s.updated_at DESC`,
+        []
+      );
+      const storefronts = result.rows.map((row: any) => ({
+        ...mapStorefrontRow(row),
+        curator_name: row.curator_name || '',
+      }));
+      return res.json({ ok: true, data: storefronts });
+    } catch (error) {
+      log.error('Admin storefronts fetch error:', error);
+      return res.json({ ok: true, data: [] });
+    }
+  });
+
+  app.get('/api/admin/storefronts/:id', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const { id } = req.params;
+      const result = await queryDB(
+        `SELECT s.*, c.name as curator_name, c.bio as curator_bio, c.avatar_url as curator_avatar,
+                c.focus as curator_focus
+         FROM storefronts s
+         LEFT JOIN curators c ON s.curator_id = c.id
+         WHERE s.id = $1 AND s.deleted_at IS NULL`,
+        [id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Storefront nicht gefunden' });
+      }
+
+      const row = result.rows[0];
+      const storefront = {
+        ...mapStorefrontRow(row),
+        curator_name: row.curator_name || '',
+        curator_bio: row.curator_bio || '',
+        curator_avatar: row.curator_avatar || '',
+        curator_focus: row.curator_focus || '',
+      };
+
+      const seriesResult = await queryDB(
+        `SELECT * FROM storefront_book_series WHERE storefront_id = $1 ORDER BY display_order ASC`,
+        [id]
+      );
+
+      const seriesWithBooks = [];
+      for (const series of seriesResult.rows) {
+        const booksResult = await queryDB(
+          `SELECT b.id, b.title, b.isbn13, b.cover_url,
+                  (SELECT STRING_AGG(p.name, ', ')
+                   FROM book_persons bp JOIN persons p ON bp.person_id = p.id
+                   WHERE bp.book_id = b.id AND bp.role = 'author') as author
+           FROM storefront_series_books ssb
+           JOIN books b ON ssb.book_id = b.id
+           WHERE ssb.series_id = $1
+           ORDER BY ssb.display_order ASC`,
+          [series.id]
+        );
+
+        seriesWithBooks.push({
+          id: String(series.id),
+          title: series.title || '',
+          description: series.description || '',
+          reason: series.reason || '',
+          occasion: series.occasion || '',
+          type: series.type || 'static',
+          sort_order: series.sort_order || 'popular',
+          is_own_books: series.is_own_books ?? false,
+          display_order: series.display_order || 0,
+          books: booksResult.rows.map((b: any) => ({
+            id: String(b.id),
+            title: b.title || '',
+            author: b.author || '',
+            cover_url: b.cover_url || '',
+            isbn13: b.isbn13 || '',
+          })),
+        });
+      }
+
+      (storefront as any).book_series = seriesWithBooks;
+
+      return res.json({ ok: true, data: storefront });
+    } catch (error) {
+      log.error('Admin storefront fetch error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/storefronts', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const { id, curator_id, name, tagline, description, logo_url, hero_image_url,
+              color_scheme, social_media, is_published } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ ok: false, error: 'Name ist erforderlich' });
+      }
+      if (!curator_id) {
+        return res.status(400).json({ ok: false, error: 'Kurator:in ist erforderlich' });
+      }
+
+      const slug = await generateUniqueSlug('storefronts', name, id);
+
+      if (id) {
+        const result = await queryDB(
+          `UPDATE storefronts SET
+            name = $1, slug = $2, tagline = $3, description = $4,
+            logo_url = $5, hero_image_url = $6, color_scheme = $7,
+            social_media = $8, is_published = $9, curator_id = $10,
+            published_at = CASE WHEN $9 = true AND published_at IS NULL THEN NOW() ELSE published_at END,
+            updated_at = NOW()
+           WHERE id = $11 AND deleted_at IS NULL
+           RETURNING *`,
+          [
+            name.trim(), slug, tagline || '', description || '',
+            logo_url || '', hero_image_url || '',
+            JSON.stringify(color_scheme || {}), JSON.stringify(social_media || {}),
+            is_published ?? false, curator_id, id
+          ]
+        );
+        if (result.rows.length === 0) {
+          return res.status(404).json({ ok: false, error: 'Storefront nicht gefunden' });
+        }
+        return res.json({ ok: true, data: mapStorefrontRow(result.rows[0]) });
+      } else {
+        const result = await queryDB(
+          `INSERT INTO storefronts (curator_id, slug, name, tagline, description,
+            logo_url, hero_image_url, color_scheme, social_media, is_published,
+            published_at, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+            CASE WHEN $10 = true THEN NOW() ELSE NULL END, NOW(), NOW())
+           RETURNING *`,
+          [
+            curator_id, slug, name.trim(), tagline || '', description || '',
+            logo_url || '', hero_image_url || '',
+            JSON.stringify(color_scheme || {}), JSON.stringify(social_media || {}),
+            is_published ?? false
+          ]
+        );
+        return res.json({ ok: true, data: mapStorefrontRow(result.rows[0]) });
+      }
+    } catch (error) {
+      log.error('Storefront save error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/admin/storefronts/:id', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const { id } = req.params;
+      const result = await queryDB(
+        'UPDATE storefronts SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL RETURNING id',
+        [id]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Storefront nicht gefunden' });
+      }
+      return res.json({ ok: true, data: { id } });
+    } catch (error) {
+      log.error('Storefront delete error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // STOREFRONT BOOK SERIES
+  // ==================================================================
+
+  app.post('/api/admin/storefronts/:storefrontId/series', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const { storefrontId } = req.params;
+      const { id, title, description, reason, occasion, type, sort_order, is_own_books, display_order } = req.body;
+
+      if (!title || !title.trim()) {
+        return res.status(400).json({ ok: false, error: 'Titel ist erforderlich' });
+      }
+
+      if (id) {
+        const result = await queryDB(
+          `UPDATE storefront_book_series SET
+            title = $1, description = $2, reason = $3, occasion = $4,
+            type = $5, sort_order = $6, is_own_books = $7, display_order = $8,
+            updated_at = NOW()
+           WHERE id = $9 AND storefront_id = $10
+           RETURNING *`,
+          [title.trim(), description || '', reason || '', occasion || '',
+           type || 'static', sort_order || 'popular', is_own_books ?? false,
+           display_order ?? 0, id, storefrontId]
+        );
+        if (result.rows.length === 0) {
+          return res.status(404).json({ ok: false, error: 'Buchserie nicht gefunden' });
+        }
+        return res.json({ ok: true, data: result.rows[0] });
+      } else {
+        const result = await queryDB(
+          `INSERT INTO storefront_book_series (storefront_id, title, description, reason, occasion,
+            type, sort_order, is_own_books, display_order, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+           RETURNING *`,
+          [storefrontId, title.trim(), description || '', reason || '', occasion || '',
+           type || 'static', sort_order || 'popular', is_own_books ?? false, display_order ?? 0]
+        );
+        return res.json({ ok: true, data: result.rows[0] });
+      }
+    } catch (error) {
+      log.error('Series save error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/admin/storefronts/:storefrontId/series/:seriesId', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const { storefrontId, seriesId } = req.params;
+      const result = await queryDB(
+        'DELETE FROM storefront_book_series WHERE id = $1 AND storefront_id = $2 RETURNING id',
+        [seriesId, storefrontId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Buchserie nicht gefunden' });
+      }
+      return res.json({ ok: true, data: { id: seriesId } });
+    } catch (error) {
+      log.error('Series delete error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/storefronts/:storefrontId/series/:seriesId/books', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const { seriesId } = req.params;
+      const { book_id, display_order } = req.body;
+
+      if (!book_id) {
+        return res.status(400).json({ ok: false, error: 'Buch-ID ist erforderlich' });
+      }
+
+      const result = await queryDB(
+        `INSERT INTO storefront_series_books (series_id, book_id, display_order)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (series_id, book_id) DO UPDATE SET display_order = $3
+         RETURNING *`,
+        [seriesId, book_id, display_order ?? 0]
+      );
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Series book add error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/admin/storefronts/:storefrontId/series/:seriesId/books/:bookId', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const { seriesId, bookId } = req.params;
+      const result = await queryDB(
+        'DELETE FROM storefront_series_books WHERE series_id = $1 AND book_id = $2 RETURNING id',
+        [seriesId, bookId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Buch nicht in Serie gefunden' });
+      }
+      return res.json({ ok: true, data: { seriesId, bookId } });
+    } catch (error) {
+      log.error('Series book remove error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });

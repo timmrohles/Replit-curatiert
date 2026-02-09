@@ -44,7 +44,7 @@ export const SECTION_TYPES: SectionTypeDefinition[] = [
     value: 'hero', 
     label: 'Hero-Banner', 
     allowedZones: ['aboveFold'],
-    description: 'Gro\u00dfes Banner mit Bild und Call-to-Action'
+    description: 'Großes Banner mit Bild und Call-to-Action'
   },
   { 
     value: 'category_grid', 
@@ -54,9 +54,9 @@ export const SECTION_TYPES: SectionTypeDefinition[] = [
   },
   { 
     value: 'recipient_category_grid', 
-    label: 'Empf\u00e4nger-Raster', 
+    label: 'Empfänger-Raster', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Raster mit Empf\u00e4nger-Kategorien (Geschenke f\u00fcr...)'
+    description: 'Raster mit Empfänger-Kategorien (Geschenke für...)'
   },
   { 
     value: 'topic_tags_grid', 
@@ -68,31 +68,31 @@ export const SECTION_TYPES: SectionTypeDefinition[] = [
     value: 'creator_carousel', 
     label: 'Kurator:innen-Karussell', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Karussell mit Kurator:in und B\u00fcchern'
+    description: 'Karussell mit Kurator:in und Büchern'
   },
   { 
     value: 'book_carousel', 
     label: 'Buch-Karussell', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Horizontal scrollendes B\u00fccher-Karussell'
+    description: 'Horizontal scrollendes Bücher-Karussell'
   },
   { 
     value: 'book_grid', 
-    label: 'B\u00fccher-Raster', 
+    label: 'Bücher-Raster', 
     allowedZones: ['main'],
-    description: 'B\u00fccher als Raster-Layout'
+    description: 'Bücher als Raster-Layout'
   },
   { 
     value: 'book_list_row', 
-    label: 'B\u00fccher-Zeile', 
+    label: 'Bücher-Zeile', 
     allowedZones: ['main'],
-    description: 'Horizontale Zeile mit B\u00fcchern'
+    description: 'Horizontale Zeile mit Büchern'
   },
   { 
     value: 'book_featured', 
     label: 'Buch-Highlight', 
     allowedZones: ['aboveFold', 'main'],
-    description: 'Hervorgehobenes Buch in gro\u00dfer Darstellung'
+    description: 'Hervorgehobenes Buch in großer Darstellung'
   },
   { 
     value: 'text_block', 
