@@ -152,11 +152,11 @@ export const SECTION_COMPONENTS: Record<string, React.FC<SectionComponentProps>>
   
   // Creator & Carousels
   creator_carousel: CreatorCarouselSection as any,
-  book_carousel: HorizontalRowSection as any,
+  book_carousel: CreatorCarouselSection as any,
   
   // Book Sections
   book_grid: GridSection as any,
-  book_list_row: HorizontalRowSection as any,
+  book_list_row: CreatorCarouselSection as any,
   book_featured: FeaturedSection as any,
   
   // Content Sections (Fallbacks for now)

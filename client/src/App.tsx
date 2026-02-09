@@ -39,27 +39,6 @@ const DashboardLanding = React.lazy(() => import('./pages/DashboardLanding'));
 
 // Section Library Pages
 const SectionIndex = React.lazy(() => import('./pages/sections/SectionIndex'));
-const SectionInventory = React.lazy(() => import('./pages/sections/SectionInventory'));
-const HeaderSectionPage = React.lazy(() => import('./pages/sections/HeaderSection'));
-const HeroSectionPage = React.lazy(() => import('./pages/sections/HeroSectionPage'));
-const BookCarouselPage = React.lazy(() => import('./pages/sections/BookCarouselPage'));
-const FooterPage = React.lazy(() => import('./pages/sections/FooterPage'));
-const RefactoredHeroSectionPage = React.lazy(() => import('./pages/sections/RefactoredHeroSectionPage'));
-const HorizontalRowSectionPage = React.lazy(() => import('./pages/sections/HorizontalRowSectionPage'));
-const GridSectionPage = React.lazy(() => import('./pages/sections/GridSectionPage'));
-const FeaturedSectionPage = React.lazy(() => import('./pages/sections/FeaturedSectionPage'));
-const CategoryGridPage = React.lazy(() => import('./pages/sections/CategoryGridPage'));
-const TopicTagsGridPage = React.lazy(() => import('./pages/sections/TopicTagsGridPage'));
-const CreatorCarouselSectionPage = React.lazy(() => import('./pages/sections/CreatorCarouselSectionPage'));
-const RecipientCategoryGridPage = React.lazy(() => import('./pages/sections/RecipientCategoryGridPage'));
-const CuratorMatchmakingPage = React.lazy(() => import('./pages/sections/CuratorMatchmakingPage'));
-const LatestReviewsSectionPage = React.lazy(() => import('./pages/sections/LatestReviewsSectionPage'));
-const ScrollSectionPage = React.lazy(() => import('./pages/sections/ScrollSectionPage'));
-const SupportersSectionPage = React.lazy(() => import('./pages/sections/SupportersSectionPage'));
-const GenreCategoriesSectionPage = React.lazy(() => import('./pages/sections/GenreCategoriesSectionPage'));
-const StorefrontsCarouselPage = React.lazy(() => import('./pages/sections/StorefrontsCarouselPage'));
-const EventsSectionPage = React.lazy(() => import('./pages/sections/EventsSectionPage'));
-const CuratedListsSectionPage = React.lazy(() => import('./pages/sections/CuratedListsSectionPage'));
 
 // Admin Pages
 const AdminContentManager = React.lazy(() => import('./pages/admin/ContentManager').then(m => ({ default: m.ContentManager })));
@@ -146,29 +125,8 @@ function App() {
                     <Route path="/dashboard" element={<Suspense fallback={<LoadingFallback />}><DashboardLanding /></Suspense>} />
                     <Route path="/dashboard/home" element={<Suspense fallback={<LoadingFallback />}><ModularUserDashboard /></Suspense>} />
                     
-                    {/* Section Library Pages */}
+                    {/* Section Library */}
                     <Route path="/dashboard/sections" element={<Suspense fallback={<LoadingFallback />}><SectionIndex /></Suspense>} />
-                    <Route path="/dashboard/sections/inventory" element={<Suspense fallback={<LoadingFallback />}><SectionInventory /></Suspense>} />
-                    <Route path="/dashboard/sections/header" element={<Suspense fallback={<LoadingFallback />}><HeaderSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/footer" element={<Suspense fallback={<LoadingFallback />}><FooterPage /></Suspense>} />
-                    <Route path="/dashboard/sections/hero" element={<Suspense fallback={<LoadingFallback />}><HeroSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/refactored-hero" element={<Suspense fallback={<LoadingFallback />}><RefactoredHeroSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/horizontal-row" element={<Suspense fallback={<LoadingFallback />}><HorizontalRowSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/grid" element={<Suspense fallback={<LoadingFallback />}><GridSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/featured" element={<Suspense fallback={<LoadingFallback />}><FeaturedSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/creator-carousel" element={<Suspense fallback={<LoadingFallback />}><CreatorCarouselSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/scroll" element={<Suspense fallback={<LoadingFallback />}><ScrollSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/supporters" element={<Suspense fallback={<LoadingFallback />}><SupportersSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/latest-reviews" element={<Suspense fallback={<LoadingFallback />}><LatestReviewsSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/book-carousel" element={<Suspense fallback={<LoadingFallback />}><BookCarouselPage /></Suspense>} />
-                    <Route path="/dashboard/sections/category-grid" element={<Suspense fallback={<LoadingFallback />}><CategoryGridPage /></Suspense>} />
-                    <Route path="/dashboard/sections/topic-tags-grid" element={<Suspense fallback={<LoadingFallback />}><TopicTagsGridPage /></Suspense>} />
-                    <Route path="/dashboard/sections/recipient-grid" element={<Suspense fallback={<LoadingFallback />}><RecipientCategoryGridPage /></Suspense>} />
-                    <Route path="/dashboard/sections/matchmaking" element={<Suspense fallback={<LoadingFallback />}><CuratorMatchmakingPage /></Suspense>} />
-                    <Route path="/dashboard/sections/genre-categories" element={<Suspense fallback={<LoadingFallback />}><GenreCategoriesSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/storefronts-carousel" element={<Suspense fallback={<LoadingFallback />}><StorefrontsCarouselPage /></Suspense>} />
-                    <Route path="/dashboard/sections/events" element={<Suspense fallback={<LoadingFallback />}><EventsSectionPage /></Suspense>} />
-                    <Route path="/dashboard/sections/curated-lists" element={<Suspense fallback={<LoadingFallback />}><CuratedListsSectionPage /></Suspense>} />
                     
                     {/* Admin Routes */}
                     <Route path="/sys-mgmt-xK9/content-manager" element={<Suspense fallback={<LoadingFallback />}><AdminContentManager /></Suspense>} />
