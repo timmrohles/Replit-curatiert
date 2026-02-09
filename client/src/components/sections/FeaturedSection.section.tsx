@@ -6,7 +6,7 @@
 import { BookCard } from '../book/BookCard';
 import { FeaturedSectionProps } from './FeaturedSection.schema';
 
-export function FeaturedSection({ section, books, className = '' }: FeaturedSectionProps) {
+export function FeaturedSection({ section, books = [], className = '' }: FeaturedSectionProps) {
   const { content } = section;
   const description = content?.description;
   const imageUrl = content?.image_url;

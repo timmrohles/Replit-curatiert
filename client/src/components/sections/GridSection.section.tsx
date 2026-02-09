@@ -6,7 +6,7 @@
 import { BookCard } from '../book/BookCard';
 import { GridSectionProps } from './GridSection.schema';
 
-export function GridSection({ section, books, className = '' }: GridSectionProps) {
+export function GridSection({ section, books = [], className = '' }: GridSectionProps) {
   const { content } = section;
   const description = content?.description;
 

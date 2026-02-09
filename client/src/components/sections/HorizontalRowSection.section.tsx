@@ -6,7 +6,7 @@
 import { HorizontalBookRow } from '../carousel/HorizontalBookRow';
 import { HorizontalRowSectionProps } from './HorizontalRowSection.schema';
 
-export function HorizontalRowSection({ section, books, className = '' }: HorizontalRowSectionProps) {
+export function HorizontalRowSection({ section, books = [], className = '' }: HorizontalRowSectionProps) {
   const { content } = section;
   const description = content?.description;
 

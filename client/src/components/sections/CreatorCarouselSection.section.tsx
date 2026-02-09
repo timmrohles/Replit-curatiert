@@ -7,7 +7,7 @@ import { BookCarousel } from '../homepage/BookCarousel';
 import { User, Sparkles } from 'lucide-react';
 import { CreatorCarouselSectionProps } from './CreatorCarouselSection.schema';
 
-export function CreatorCarouselSection({ section, books, className = '' }: CreatorCarouselSectionProps) {
+export function CreatorCarouselSection({ section, books = [], className = '' }: CreatorCarouselSectionProps) {
   const { content, curatorType, curatorReason } = section;
   const description = content?.description;
 
