@@ -3200,9 +3200,28 @@ export async function registerRoutes(
       } = body;
 
       const itemData = { ...data };
-      if (target_book_id && item_type === 'book') {
-        itemData.book_id = target_book_id;
+      let finalTargetType = target_type;
+      let finalTargetTemplateKey = target_template_key;
+      let finalTargetCategoryId = target_category_id;
+      let finalTargetTagId = target_tag_id;
+      let finalTargetPageId = target_page_id;
+
+      if (item_type === 'book') {
+        if (target_book_id) {
+          itemData.book_id = target_book_id;
+        }
+        finalTargetType = 'template';
+        finalTargetTemplateKey = 'book';
+        finalTargetCategoryId = null;
+        finalTargetTagId = null;
+        finalTargetPageId = null;
       }
+
+      const nextSortResult = await queryDB(
+        `SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_sort FROM public.section_items WHERE page_section_id = $1`,
+        [sectionId]
+      );
+      const nextSort = nextSortResult.rows[0]?.next_sort ?? sort_order;
 
       const result = await queryDB(
         `INSERT INTO public.section_items (
@@ -3214,9 +3233,9 @@ export async function registerRoutes(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
         RETURNING *`,
         [
-          sectionId, sort_order, item_type, JSON.stringify(itemData),
-          target_type, target_category_id, target_tag_id,
-          target_page_id, target_template_key, target_params ? JSON.stringify(target_params) : null,
+          sectionId, nextSort, item_type, JSON.stringify(itemData),
+          finalTargetType, finalTargetCategoryId, finalTargetTagId,
+          finalTargetPageId, finalTargetTemplateKey, target_params ? JSON.stringify(target_params) : null,
           status, visibility, publish_at, unpublish_at
         ]
       );
