@@ -132,6 +132,7 @@ export const SECTION_TYPES: SectionTypeDefinition[] = [
 
 export interface SectionComponentProps {
   section: PageSection;
+  books?: any[];
   className?: string;
 }
 

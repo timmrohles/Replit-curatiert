@@ -7,35 +7,32 @@ import { HorizontalBookRow } from '../carousel/HorizontalBookRow';
 import { HorizontalRowSectionProps } from './HorizontalRowSection.schema';
 
 export function HorizontalRowSection({ section, books = [], className = '' }: HorizontalRowSectionProps) {
-  const { content } = section;
-  const description = content?.description;
+  const sectionAny = section as any;
+  const title = section.title || sectionAny.config?.title || '';
+  const description = section.content?.description || sectionAny.config?.description || '';
 
   return (
     <section className={`py-12 ${className}`}>
       <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="mb-6">
-          <h2 
-            className="text-2xl md:text-3xl mb-2"
-            style={{ 
-              fontFamily: 'Fjalla One',
-              color: 'var(--color-text-primary)'
-            }}
-          >
-            {section.title}
-          </h2>
-
-          {description && (
-            <p 
-              className="text-base"
-              style={{ color: 'var(--color-text-secondary)' }}
+        {title && (
+          <div className="mb-6">
+            <h2 
+              className="text-2xl md:text-3xl mb-2 font-headline uppercase"
+              style={{ color: 'var(--color-text-primary)' }}
             >
-              {description}
-            </p>
-          )}
-        </div>
+              {title}
+            </h2>
+            {description && (
+              <p 
+                className="text-base"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                {description}
+              </p>
+            )}
+          </div>
+        )}
 
-        {/* Books Row */}
         {books.length > 0 ? (
           <HorizontalBookRow books={books as any} />
         ) : (

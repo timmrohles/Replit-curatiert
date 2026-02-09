@@ -194,33 +194,58 @@ export function CMSHomepage() {
 
       {/* Main Content */}
       <main id="main-content" className="min-h-screen">
-        {/* Hero Section */}
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-4xl mx-auto text-center mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6 text-white">{page.title}</h1>
-            {page.description && (
-              <p className="text-xl text-white/80">{page.description}</p>
-            )}
+        {/* Page Title - hidden for homepage (slug "/") */}
+        {page.title && page.title !== '/' && page.slug !== '/' && (
+          <div className="container mx-auto px-4 py-12">
+            <div className="max-w-4xl mx-auto text-center mb-12">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6">{page.title}</h1>
+              {page.description && (
+                <p className="text-xl" style={{ color: 'var(--color-text-secondary)' }}>{page.description}</p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Sections */}
-        <div className="container mx-auto px-4 pb-12">
-          {sections.length > 0 ? (
-            sections.map((section) => (
-              <div key={section.id} className="mb-16">
-                <UniversalSectionRenderer section={section} />
+        {/* Sections - sorted by zone (above_fold first, then main) */}
+        <div className="pb-12">
+          {(() => {
+            const zonePriority: Record<string, number> = { above_fold: 0, main: 1 };
+            const sortedSections = [...sections].sort((a, b) => {
+              const zoneA = zonePriority[a.zone] ?? 99;
+              const zoneB = zonePriority[b.zone] ?? 99;
+              if (zoneA !== zoneB) return zoneA - zoneB;
+              return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+            });
+
+            const booksById: Record<number, any> = {};
+            books.forEach((b: any) => { booksById[b.id] = b; });
+
+            return sortedSections.length > 0 ? (
+              sortedSections.map((section) => {
+                const sectionBooks = (section.items || [])
+                  .filter((item: any) => item.book_id)
+                  .map((item: any) => booksById[item.book_id])
+                  .filter(Boolean);
+
+                return (
+                  <div key={section.id} className="mb-16">
+                    <UniversalSectionRenderer
+                      section={section}
+                      books={sectionBooks}
+                    />
+                  </div>
+                );
+              })
+            ) : page.content ? (
+              <div className="max-w-4xl mx-auto prose px-4">
+                <DynamicPageContentRenderer content={page.content} />
               </div>
-            ))
-          ) : page.content ? (
-            <div className="max-w-4xl mx-auto prose prose-invert">
-              <DynamicPageContentRenderer content={page.content} />
-            </div>
-          ) : (
-            <div className="text-center text-white/60">
-              <p>Inhalt wird bald hinzugefügt.</p>
-            </div>
-          )}
+            ) : (
+              <div className="text-center" style={{ color: 'var(--color-text-muted)' }}>
+                <p>Inhalt wird bald hinzugefügt.</p>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Navigation Badge - only visible in preview mode */}

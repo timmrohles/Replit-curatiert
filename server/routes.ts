@@ -3193,7 +3193,7 @@ export async function registerRoutes(
         target_page_id = null,
         target_template_key = null,
         target_params = null,
-        status = 'draft',
+        status = 'published',
         visibility = 'visible',
         publish_at = null,
         unpublish_at = null

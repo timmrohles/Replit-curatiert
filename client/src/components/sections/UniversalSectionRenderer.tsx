@@ -25,8 +25,9 @@ import type { PageSection } from '../../types/page-resolve';
 
 interface UniversalSectionRendererProps {
   section: PageSection;
+  books?: any[];
   className?: string;
-  debug?: boolean; // Show debug info for unknown types
+  debug?: boolean;
 }
 
 // ============================================================================
@@ -94,21 +95,19 @@ function UnknownSectionFallback({ section, debug = true }: { section: PageSectio
 
 export function UniversalSectionRenderer({ 
   section, 
+  books = [],
   className = '',
   debug = true 
 }: UniversalSectionRendererProps) {
-  // ✅ Get component from registry (support both type and section_type)
   const sectionType = section.section_type || section.type;
   const SectionComponent = getSectionComponent(sectionType);
 
-  // ✅ Handle unknown section type
   if (!SectionComponent) {
     return <UnknownSectionFallback section={section} debug={debug} />;
   }
 
-  // ✅ Render the section
   try {
-    return <SectionComponent section={section} className={className} />;
+    return <SectionComponent section={section} books={books} className={className} />;
   } catch (error) {
     const sectionType = section.section_type || section.type;
     console.error(`[UniversalSectionRenderer] Error rendering section type "${sectionType}":`, error);

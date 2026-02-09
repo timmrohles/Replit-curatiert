@@ -285,23 +285,43 @@ export function DynamicPage() {
           </div>
         </div>
 
-        {/* Sections */}
-        <div className="container mx-auto px-4 pb-12">
-          {sections.length > 0 ? (
-            sections.map((section) => (
-              <div key={section.id} className="mb-16">
-                <UniversalSectionRenderer section={section} />
+        {/* Sections - sorted by zone */}
+        <div className="pb-12">
+          {(() => {
+            const zonePriority: Record<string, number> = { above_fold: 0, main: 1 };
+            const sortedSections = [...sections].sort((a, b) => {
+              const zoneA = zonePriority[a.zone] ?? 99;
+              const zoneB = zonePriority[b.zone] ?? 99;
+              if (zoneA !== zoneB) return zoneA - zoneB;
+              return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+            });
+
+            const booksById: Record<number, any> = {};
+            books.forEach((b: any) => { booksById[b.id] = b; });
+
+            return sortedSections.length > 0 ? (
+              sortedSections.map((section) => {
+                const sectionBooks = (section.items || [])
+                  .filter((item: any) => item.book_id)
+                  .map((item: any) => booksById[item.book_id])
+                  .filter(Boolean);
+
+                return (
+                  <div key={section.id} className="mb-16">
+                    <UniversalSectionRenderer section={section} books={sectionBooks} />
+                  </div>
+                );
+              })
+            ) : page.content ? (
+              <div className="max-w-4xl mx-auto prose px-4">
+                <DynamicPageContentRenderer content={page.content} />
               </div>
-            ))
-          ) : page.content ? (
-            <div className="max-w-4xl mx-auto prose prose-invert">
-              <DynamicPageContentRenderer content={page.content} />
-            </div>
-          ) : (
-            <div className="text-center text-white/60">
-              <p>Inhalt wird bald hinzugefügt.</p>
-            </div>
-          )}
+            ) : (
+              <div className="text-center" style={{ color: 'var(--color-text-muted)' }}>
+                <p>Inhalt wird bald hinzugefügt.</p>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Navigation Badge - only visible in preview mode */}
