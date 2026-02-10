@@ -280,6 +280,36 @@ export async function registerRoutes(
   }
 
   try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS site_banners (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        badge_text VARCHAR(100),
+        button_text VARCHAR(200),
+        button_url TEXT,
+        bg_color VARCHAR(50) DEFAULT '#247ba0',
+        text_color VARCHAR(50) DEFAULT '#ffffff',
+        badge_bg_color VARCHAR(50) DEFAULT '#ffe066',
+        badge_text_color VARCHAR(50) DEFAULT '#2a2a2a',
+        visible BOOLEAN DEFAULT true,
+        status VARCHAR(20) DEFAULT 'draft',
+        position VARCHAR(20) DEFAULT 'top',
+        display_order INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`ALTER TABLE site_banners ADD COLUMN IF NOT EXISTS bg_color VARCHAR(50) DEFAULT '#247ba0'`);
+    await queryDB(`ALTER TABLE site_banners ADD COLUMN IF NOT EXISTS text_color VARCHAR(50) DEFAULT '#ffffff'`);
+    await queryDB(`ALTER TABLE site_banners ADD COLUMN IF NOT EXISTS badge_bg_color VARCHAR(50) DEFAULT '#ffe066'`);
+    await queryDB(`ALTER TABLE site_banners ADD COLUMN IF NOT EXISTS badge_text_color VARCHAR(50) DEFAULT '#2a2a2a'`);
+    log.info('Site banners table verified');
+  } catch (err) {
+    log.warn('Could not verify site_banners table:', err);
+  }
+
+  try {
     await queryDB(`ALTER TABLE awards ADD COLUMN IF NOT EXISTS tag_id INTEGER`);
     log.info('Awards tag_id column verified');
   } catch (err) {
@@ -447,7 +477,7 @@ export async function registerRoutes(
       const position = (req.query.position as string) || 'top';
 
       const result = await queryDB(
-        `SELECT id, name, message, badge_text, button_text, button_url, visible, status, position
+        `SELECT id, name, message, badge_text, button_text, button_url, bg_color, text_color, badge_bg_color, badge_text_color, visible, status, position
          FROM site_banners
          WHERE status = 'published' AND visible = true AND position = $1
          ORDER BY display_order DESC, id DESC LIMIT 1`,
@@ -458,7 +488,7 @@ export async function registerRoutes(
         if (position === 'top') {
           return res.json({
             ok: true,
-            banner: { visible: true, message: 'Diese Seite befindet sich derzeit in der Beta-Phase', badge_text: 'NEU', button_text: null, button_url: null }
+            banner: { visible: true, message: 'Diese Seite befindet sich derzeit in der Beta-Phase', badge_text: 'NEU', button_text: null, button_url: null, bg_color: '#247ba0', text_color: '#ffffff', badge_bg_color: '#ffe066', badge_text_color: '#2a2a2a' }
           });
         }
         return res.json({ ok: true, banner: null });
@@ -467,7 +497,7 @@ export async function registerRoutes(
       const banner = result.rows[0];
       return res.json({
         ok: true,
-        banner: { id: banner.id, name: banner.name, visible: banner.visible, message: banner.message, badge_text: banner.badge_text, button_text: banner.button_text, button_url: banner.button_url, position: banner.position }
+        banner: { id: banner.id, name: banner.name, visible: banner.visible, message: banner.message, badge_text: banner.badge_text, button_text: banner.button_text, button_url: banner.button_url, position: banner.position, bg_color: banner.bg_color || '#247ba0', text_color: banner.text_color || '#ffffff', badge_bg_color: banner.badge_bg_color || '#ffe066', badge_text_color: banner.badge_text_color || '#2a2a2a' }
       });
     } catch (error) {
       log.error('Error fetching banner config:', error);
@@ -475,7 +505,7 @@ export async function registerRoutes(
       if (position === 'top') {
         return res.json({
           ok: true,
-          banner: { visible: true, message: 'Diese Seite befindet sich derzeit in der Beta-Phase', badge_text: 'NEU', button_text: null, button_url: null }
+          banner: { visible: true, message: 'Diese Seite befindet sich derzeit in der Beta-Phase', badge_text: 'NEU', button_text: null, button_url: null, bg_color: '#247ba0', text_color: '#ffffff', badge_bg_color: '#ffe066', badge_text_color: '#2a2a2a' }
         });
       }
       return res.json({ ok: true, banner: null });
@@ -3934,7 +3964,7 @@ export async function registerRoutes(
       }
 
       const body = req.body;
-      const { name, message, badge_text, button_text, button_url, visible, status, position, display_order } = body;
+      const { name, message, badge_text, button_text, button_url, bg_color, text_color, badge_bg_color, badge_text_color, visible, status, position, display_order } = body;
 
       if (!name || name.trim() === '') {
         return res.status(400).json({ ok: false, error: 'Name is required' });
@@ -3947,8 +3977,9 @@ export async function registerRoutes(
       const result = await queryDB(
         `INSERT INTO site_banners (
           name, message, badge_text, button_text, button_url,
+          bg_color, text_color, badge_bg_color, badge_text_color,
           visible, status, position, display_order
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING *`,
         [
           name.trim(),
@@ -3956,6 +3987,10 @@ export async function registerRoutes(
           badge_text?.trim() || null,
           button_text?.trim() || null,
           button_url?.trim() || null,
+          bg_color || '#247ba0',
+          text_color || '#ffffff',
+          badge_bg_color || '#ffe066',
+          badge_text_color || '#2a2a2a',
           visible !== undefined ? visible : true,
           status || 'published',
           position || 'top',
@@ -3984,7 +4019,7 @@ export async function registerRoutes(
 
       const id = req.params.id;
       const body = req.body;
-      const { name, message, badge_text, button_text, button_url, visible, status, position, display_order } = body;
+      const { name, message, badge_text, button_text, button_url, bg_color, text_color, badge_bg_color, badge_text_color, visible, status, position, display_order } = body;
 
       if (!name || name.trim() === '') {
         return res.status(400).json({ ok: false, error: 'Name is required' });
@@ -3997,9 +4032,10 @@ export async function registerRoutes(
       const result = await queryDB(
         `UPDATE site_banners
          SET name = $1, message = $2, badge_text = $3, button_text = $4,
-             button_url = $5, visible = $6, status = $7, position = $8,
-             display_order = $9, updated_at = NOW()
-         WHERE id = $10
+             button_url = $5, bg_color = $6, text_color = $7, badge_bg_color = $8,
+             badge_text_color = $9, visible = $10, status = $11, position = $12,
+             display_order = $13, updated_at = NOW()
+         WHERE id = $14
          RETURNING *`,
         [
           name.trim(),
@@ -4007,6 +4043,10 @@ export async function registerRoutes(
           badge_text?.trim() || null,
           button_text?.trim() || null,
           button_url?.trim() || null,
+          bg_color || '#247ba0',
+          text_color || '#ffffff',
+          badge_bg_color || '#ffe066',
+          badge_text_color || '#2a2a2a',
           visible !== undefined ? visible : true,
           status || 'published',
           position || 'top',
