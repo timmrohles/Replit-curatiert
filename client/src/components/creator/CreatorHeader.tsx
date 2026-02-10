@@ -98,13 +98,13 @@ export const CreatorHeader = memo(function CreatorHeader({
           <div className="flex items-center gap-2 w-fit">
             <div 
               className={`kuratorname flex items-center gap-1.5 ${
-                isAdSection ? 'text-white' : 'text-blue'
+                isAdSection ? 'text-white' : 'text-cerulean'
               }`}
             >
               {name.toLowerCase().startsWith('coratiert') ? (
                 <>
                   <CoRatiertLogo size="md" />
-                  <span className={isAdSection ? 'text-white' : 'text-blue'}>
+                  <span className={isAdSection ? 'text-white' : 'text-cerulean'}>
                     {name.replace(/^coratiert\s*/i, '')}
                   </span>
                 </>
@@ -185,9 +185,9 @@ export const CreatorHeader = memo(function CreatorHeader({
               {/* "Mehr Info" Link immer anzeigen */}
               <button
                 onClick={() => setShowMoreInfo(!showMoreInfo)}
-                className="font-headline flex items-center gap-1 mt-1 text-blue hover:text-blue hover:opacity-80 uppercase tracking-tight transition-colors"
+                className="flex items-center gap-1 mt-1 text-cerulean hover:opacity-80 transition-colors"
               >
-                <Text as="span" variant="xs" className="text-blue">
+                <Text as="span" variant="xs" className="text-cerulean !text-[0.7rem] !normal-case !tracking-normal !font-normal">
                   {showMoreInfo ? 'Weniger' : 'Mehr Info'}
                 </Text>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${showMoreInfo ? 'rotate-180' : ''}`} />
@@ -333,9 +333,9 @@ export const CreatorHeader = memo(function CreatorHeader({
           {shouldTruncate && isTruncated && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="font-headline flex items-center gap-1 mt-2 text-blue hover:text-blue hover:opacity-80 uppercase tracking-tight transition-colors"
+              className="flex items-center gap-1 mt-2 text-cerulean hover:opacity-80 transition-colors"
             >
-              <Text as="span" variant="xs" className="text-blue">
+              <Text as="span" variant="xs" className="text-cerulean !text-[0.7rem] !normal-case !tracking-normal !font-normal">
                 {isExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen'}
               </Text>
               <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />

@@ -72,7 +72,7 @@ export const Text = React.forwardRef<HTMLElement, TypographyProps>(function Text
   onClick
 }, ref) {
   const styles: Record<string, string> = {
-    xs:      "!text-[length:var(--fluid-body-xs)] !leading-tight !font-sans !font-bold !uppercase !tracking-widest",      // ~12px (Labels)
+    xs:      "!text-[length:var(--fluid-body-xs)] !leading-tight !font-sans !tracking-widest",      // ~12px (Labels)
     small:   "!text-[length:var(--fluid-body-small)] !leading-snug !font-sans",   // ~14px (Meta)
     base:    "!text-[length:var(--fluid-body)] !leading-relaxed !font-sans",         // ~16-18px (Standard)
     default: "!text-[length:var(--fluid-body)] !leading-relaxed !font-sans",         // Alias für base
