@@ -434,9 +434,3 @@
     inset: -1px;
   }
 }
-
-.no-select-cascade,
-.no-select-cascade * {
-  -webkit-user-select: none !important;
-  user-select: none !important;
-}
