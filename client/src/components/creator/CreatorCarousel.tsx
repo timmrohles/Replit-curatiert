@@ -457,7 +457,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         )}
 
         {/* Sort Field - ISOLATED from other sections */}
-        <div className="mb-4 md:mb-6" style={{ contain: 'content' }} onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 md:mb-6 select-none" style={{ contain: 'content' }} onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.preventDefault()}>
           {/* Sort Chips - Mobile horizontal scroll, Desktop flex wrap */}
           <div className="flex justify-end">
             <div 
