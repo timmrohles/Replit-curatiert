@@ -54,6 +54,10 @@
   --megamenu-bg: #2a2a2a;
   --megamenu-text: #ffffff;
   --megamenu-border: rgba(255, 255, 255, 0.1);
+  --search-bg: #ffffff;
+  --search-text: #2a2a2a;
+  --search-border: rgba(0, 0, 0, 0.12);
+  --search-icon: #6b7280;
   --font-sans: 'Inter', sans-serif;
   --font-headline: 'Fjalla One', sans-serif;
   --font-serif: Georgia, serif;
@@ -175,6 +179,10 @@
   --megamenu-bg: #ffffff;
   --megamenu-text: #2a2a2a;
   --megamenu-border: rgba(0, 0, 0, 0.1);
+  --search-bg: #3a3a3a;
+  --search-text: #e5e5e5;
+  --search-border: rgba(255, 255, 255, 0.15);
+  --search-icon: #9ca3af;
 
 /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
