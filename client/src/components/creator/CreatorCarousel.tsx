@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, memo, useRef, useMemo } from 'react';
 import { BookCarouselItem, BookCarouselItemData } from "../book/BookCarouselItem";
 import { EditorialBookCard, EditorialBookCardData } from "../book/EditorialBookCard";
 import { CarouselContainer } from "../carousel/CarouselContainer";
@@ -179,15 +179,6 @@ export const CreatorCarousel = memo(function CreatorCarousel({
   useEditorialLayout = false, // Use minimalist editorial card layout
 }: CreatorCarouselProps) {
   const sortChipsRef = useRef<HTMLDivElement>(null);
-  const sectionRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const prevent = (e: Event) => { e.preventDefault(); };
-    el.addEventListener('selectstart', prevent);
-    return () => el.removeEventListener('selectstart', prevent);
-  }, []);
   const [sortBy, setSortBy] = useState("popularity");
   const [hoveredSort, setHoveredSort] = useState<string | null>(null);
   const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
@@ -431,10 +422,15 @@ export const CreatorCarousel = memo(function CreatorCarousel({
       className="py-6 md:py-8 w-full px-4" 
       style={{ 
         backgroundColor: 'transparent',
-        overflow: 'visible'
+        overflow: 'visible',
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+      } as React.CSSProperties}
+      onMouseDown={(e) => {
+        e.preventDefault();
       }}
     >
-      <div ref={sectionRef} className="max-w-7xl mx-auto w-full" style={{ backgroundColor: 'transparent', overflow: 'visible' }}>
+      <div className="max-w-7xl mx-auto w-full" style={{ backgroundColor: 'transparent', overflow: 'visible' }}>
         {/* Header with Creator Info and CTA */}
         {showHeader && (
           <div className="w-full mb-4 md:mb-6">
