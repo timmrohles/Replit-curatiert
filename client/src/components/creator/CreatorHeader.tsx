@@ -201,8 +201,8 @@ export const CreatorHeader = memo(function CreatorHeader({
         <div className="w-full mt-4 mb-4">
           <div className="flex gap-2 flex-wrap items-start">
             {/* Author Badge - Saffron */}
-            <button 
-              type="button"
+            <div 
+              role="group"
               className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
               style={{ backgroundColor: 'var(--color-saffron)' }}
               onClick={(e) => e.stopPropagation()}
@@ -219,12 +219,12 @@ export const CreatorHeader = memo(function CreatorHeader({
                 iconColor="#ffffff"
                 backgroundColor="var(--color-saffron)"
               />
-            </button>
+            </div>
 
             {/* Single Category Button - Coral */}
             {!categories && category && (
-              <button 
-                type="button"
+              <div 
+                role="group"
                 className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral cursor-pointer hover:scale-105 transition-all duration-200 select-none"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/categories/${category.toLowerCase().replace(/\s+/g, '-')}`); }}
               >
@@ -240,13 +240,13 @@ export const CreatorHeader = memo(function CreatorHeader({
                   iconColor="#ffffff"
                   backgroundColor="var(--vibrant-coral)"
                 />
-              </button>
+              </div>
             )}
             
             {/* Multiple Categories Buttons - Coral */}
             {categories && categories.map((cat) => (
-              <button 
-                type="button"
+              <div 
+                role="group"
                 key={cat}
                 className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral cursor-pointer hover:scale-105 transition-all duration-200 select-none"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/categories/${cat.toLowerCase().replace(/\s+/g, '-')}`); }}
@@ -263,13 +263,13 @@ export const CreatorHeader = memo(function CreatorHeader({
                   iconColor="#ffffff"
                   backgroundColor="var(--vibrant-coral)"
                 />
-              </button>
+              </div>
             ))}
             
             {/* Tag Buttons - Coral */}
             {tags && tags.slice(0, 2).map((tag) => (
-              <button 
-                type="button"
+              <div 
+                role="group"
                 key={tag}
                 className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral cursor-pointer hover:scale-105 transition-all duration-200 select-none"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}/`); }}
@@ -286,7 +286,7 @@ export const CreatorHeader = memo(function CreatorHeader({
                   iconColor="#ffffff"
                   backgroundColor="var(--vibrant-coral)"
                 />
-              </button>
+              </div>
             ))}
           </div>
         </div>
