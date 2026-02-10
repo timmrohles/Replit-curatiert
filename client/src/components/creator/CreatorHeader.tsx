@@ -196,9 +196,9 @@ export const CreatorHeader = memo(function CreatorHeader({
       <div className="w-full mt-4 md:mt-6 isolate">
         <Heading 
           as="h3"
-          variant="h2"
+          variant="h3"
           className="mb-4"
-          style={{ color: '#6B7280' }}
+          style={{ color: '#6B7280', fontSize: 'clamp(1.5rem, 1.3rem + 0.6vw, 2rem)' }}
         >
           {occasion.replace('und und', '&')}
         </Heading>
