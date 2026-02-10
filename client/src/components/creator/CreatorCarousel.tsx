@@ -456,13 +456,13 @@ export const CreatorCarousel = memo(function CreatorCarousel({
           </div>
         )}
 
-        {/* Sort Field */}
-        <div className="mb-4 md:mb-6">
+        {/* Sort Field - ISOLATED from other sections */}
+        <div className="mb-4 md:mb-6" onClick={(e) => e.stopPropagation()}>
           {/* Sort Chips - Mobile horizontal scroll, Desktop flex wrap */}
           <div className="flex justify-end">
             <div 
               ref={sortChipsRef}
-              className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full md:flex-wrap md:overflow-visible"
+              className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full md:flex-wrap md:overflow-visible select-none"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
             >
               {sortOptions.map((option) => {
