@@ -79,8 +79,7 @@ export const CreatorHeader = memo(function CreatorHeader({
   const navigate = useSafeNavigate();
 
   return (
-    <div className="w-full text-base leading-normal text-left">
-      {/* ☝️ RESET: Kappt alle Vererbung von Parent-Containern */}
+    <div className="w-full text-base leading-normal text-left select-none" onClick={(e) => e.stopPropagation()}>
       
       <div className="flex items-center gap-3 md:gap-4 lg:gap-6">
         <div className="flex-shrink-0">
@@ -311,7 +310,7 @@ export const CreatorHeader = memo(function CreatorHeader({
       )}
 
       {curationReason && (
-        <div className="w-full mt-4" onClick={(e) => e.stopPropagation()}>
+        <div className="w-full mt-4 select-text" onClick={(e) => e.stopPropagation()}>
           <Text 
             as="div"
             variant="base"
