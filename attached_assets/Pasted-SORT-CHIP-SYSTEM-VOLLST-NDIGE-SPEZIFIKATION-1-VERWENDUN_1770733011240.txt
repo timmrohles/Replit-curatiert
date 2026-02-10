@@ -1,0 +1,602 @@
+SORT CHIP SYSTEM - VOLLSTÄNDIGE SPEZIFIKATION
+🎯 1. VERWENDUNGSZWECK
+Die Sort Chips werden im CreatorCarousel verwendet, um Bücher nach verschiedenen Kriterien zu filtern und sortieren:
+
+Standard-Sortierungen:
+🔥 Beliebtheit (Default) - Nach Saves, Interaktionen, Engagement
+🏆 Auszeichnungen - Nach Awards/Shortlists/Longlists
+🏠 Indie-Verlage - Nur unabhängige Verlage
+💎 Hidden Gems - Hohe Qualität, niedrige Sichtbarkeit
+⚡ Relevant (aktuell) - Neueste Erscheinungen
+ONIX-basierte Filter (dynamisch):
+Werden automatisch generiert aus den Büchern:
+
+📚 Sachbuch, Roman, Lyrik, etc.
+🎭 Thriller, Fantasy, Science Fiction, etc.
+📖 Hardcover, Taschenbuch, eBook, etc.
+🎨 2. VISUELLES STYLING
+2.1 Base Styling (beide Zustände)
+.sort-chip {
+  padding: 0.25rem 0.625rem;        /* 4px 10px */
+  border-radius: 9999px;             /* Vollständig rund (Pill-Shape) */
+  transition: all 0.2s ease;         /* Smooth State-Wechsel */
+  flex-shrink: 0;                    /* Verhindert Schrumpfen */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);  /* Subtiler Schatten */
+}
+2.2 INACTIVE STATE (nicht ausgewählt)
+💡 Light Mode:
+background-color: #ffffff;         /* Weiß */
+color: #000000;                    /* Schwarz */
+border: 1px solid rgba(0,0,0,0.1); /* Sehr helle Outline */
+Hover:
+
+border-color: rgba(0,0,0,0.3);     /* Dunklere Outline */
+🌙 Dark Mode:
+background-color: #ffffff;         /* Bleibt Weiß! */
+color: #247ba0;                    /* Blue (Brand Color) */
+border: 1px solid rgba(0,0,0,0.1);
+Hover:
+
+border-color: rgba(0,0,0,0.3);
+💡 Design-Entscheidung: Im Dark Mode bleiben die Chips weiß mit blauem Text für besseren Kontrast gegen dunkle Backgrounds.
+
+2.3 ACTIVE STATE (ausgewählt)
+BEIDE MODES identisch:
+background-color: #247ba0;         /* Blue (Brand Color) */
+color: #ffffff;                    /* Weiß */
+box-shadow: 0 4px 6px rgba(0,0,0,0.1), 
+            0 2px 4px rgba(0,0,0,0.06);  /* Stärkerer Schatten */
+💡 Accessibility: Verwendet aria-pressed="true" für Screen Reader
+
+🔤 3. TYPOGRAFIE
+<Text 
+  as="span" 
+  variant="xs" 
+  className="whitespace-nowrap !normal-case !tracking-normal !font-semibold"
+>
+  {option.label}
+</Text>
+Spezifikationen:
+Schriftart: Inter (sans-serif)
+Größe: xs = clamp(0.75rem, 0.7rem + 0.2vw, 0.875rem) (12-14px)
+Weight: 600 (Semibold)
+Transform: normal-case (KEIN Uppercase)
+Tracking: normal (kein extra Letter-Spacing)
+Wrapping: whitespace-nowrap (keine Zeilenumbrüche)
+📱 4. RESPONSIVE BEHAVIOR
+Mobile (<768px):
+className="flex gap-2 overflow-x-auto scrollbar-hide"
+Layout: Horizontales Scroll
+Scrollbar: Versteckt (scrollbar-hide)
+Touch: Smooth Scrolling (WebkitOverflowScrolling: 'touch')
+Alignment: justify-end (rechts ausgerichtet)
+Desktop (≥768px):
+className="md:flex-wrap md:overflow-visible"
+Layout: Flex Wrap (mehrzeilig möglich)
+Kein Scroll: Alle Chips sichtbar
+⚙️ 5. FUNKTIONALE LOGIK
+5.1 State Management
+const [sortBy, setSortBy] = useState("popularity");  // Default
+const [hoveredSort, setHoveredSort] = useState<string | null>(null);
+5.2 Sortier-Algorithmen
+1️⃣ Beliebtheit (popularity):
+sortedBooks.sort((a, b) => (b.followCount || 0) - (a.followCount || 0));
+Sortiert nach followCount (Follows/Saves)
+Höchste Zahl = Platz 1
+2️⃣ Auszeichnungen (awarded):
+sortedBooks.sort((a, b) => {
+  const awardsA = (a.awards || 0) + (a.shortlist ? 1 : 0) + (a.longlist ? 1 : 0);
+  const awardsB = (b.awards || 0) + (b.shortlist ? 1 : 0) + (b.longlist ? 1 : 0);
+  return awardsB - awardsA;
+});
+Kombiniert: Awards + Shortlist + Longlist
+3️⃣ Indie (indie):
+return booksCopy.filter(book => book.isIndie);
+Filter statt Sortierung
+Nur Bücher mit isIndie: true
+4️⃣ Hidden Gems (hidden-gems):
+// Komplex: Qualität vs. Sichtbarkeit Score
+hiddenGemScore = (awards * 10) + (critical_acclaim_score) - (followCount * 0.5)
+Hohe Qualität (Awards) bei niedriger Popularität = Hidden Gem
+5️⃣ Relevant (trending):
+sortedBooks.sort((a, b) => {
+  const dateA = new Date(a.releaseDate).getTime();
+  const dateB = new Date(b.releaseDate).getTime();
+  return dateB - dateA;  // Neueste zuerst
+});
+6️⃣ ONIX-Filter (dynamisch):
+if (sortBy.startsWith('onix-')) {
+  const tagId = sortBy.replace('onix-', '');
+  return booksCopy.filter(book => 
+    book.onixTagIds?.includes(tagId)
+  );
+}
+ID-Format: onix-123
+Filtert Bücher mit diesem ONIX-Tag
+🔄 6. DYNAMISCHE ONIX-GENERIERUNG
+const onixFilterOptions = useMemo(() => {
+  const filters = [];
+  const seen = new Set();
+  
+  books.forEach(book => {
+    book.onixTagIds?.forEach(tagId => {
+      const tag = onixTags.find(t => t.id === tagId);
+      if (!tag || !tag.visible) return;
+      
+      const key = `${tag.onixCode}-${tag.displayName}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      
+      filters.push({
+        id: `onix-${tag.id}`,
+        label: tag.displayName,
+        tooltip: tag.description || '',
+        onixCode: tag.onixCode,
+        type: tag.tagType
+      });
+    });
+  });
+  
+  return filters;
+}, [books, onixTags]);
+Logik:
+
+Durchsucht alle Bücher nach ONIX-Tags
+Dedupliziert nach onixCode + displayName
+Nur visible: true Tags
+Generiert Filter-Optionen automatisch
+🎯 7. VISUELLER VERGLEICH
+┌─────────────────────────────────────────────────────┐
+│  INACTIVE (Light Mode)                              │
+├─────────────────────────────────────────────────────┤
+│  ╭──────────────╮  ╭──────────────╮                │
+│  │ Beliebtheit  │  │ Indie-Verlage│                │
+│  ╰──────────────╯  ╰──────────────╯                │
+│  Weiß BG, Schwarz Text, helle Border               │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│  ACTIVE (Both Modes)                                │
+├─────────────────────────────────────────────────────┤
+│  ╭──────────────╮  ╭──────────────╮                │
+│  │ Beliebtheit  │  │ Indie-Verlage│                │
+│  ╰──────────────╯  ╰──────────────╯                │
+│  Blue BG (#247ba0), Weiß Text, Shadow              │
+└─────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────┐
+│  INACTIVE (Dark Mode)                               │
+├─────────────────────────────────────────────────────┤
+│  ╭──────────────╮  ╭──────────────╮                │
+│  │ Beliebtheit  │  │ Indie-Verlage│                │
+│  ╰──────────────╯  ╰──────────────╯                │
+│  Weiß BG, Blue Text (#247ba0), Border              │
+└─────────────────────────────────────────────────────┘
+♿ 8. ACCESSIBILITY
+<button
+  className="sort-chip"
+  aria-pressed={isActive}  // Screen Reader State
+  onClick={() => setSortBy(option.id)}
+  onMouseEnter={() => setHoveredSort(option.id)}  // Hover State
+  onMouseLeave={() => setHoveredSort(null)}
+>
+
+ARIA: aria-pressed kommuniziert Toggle-Zustand
+Keyboard: Standard <button> Navigation
+Touch: flex-shrink: 0 verhindert Touch-Fehler
+Contrast: WCAG AA konform (Blue/White = 4.6:1)
+💡 9. BEST PRACTICES
+✅ DO:
+Verwende aria-pressed für Active State
+Halte Labels kurz (1-2 Wörter)
+Nutze ONIX-Tags für semantische Filter
+Default = "popularity" (bewährt sich)
+❌ DON'T:
+Keine Icons in Chips (Text-only)
+Keine Multi-Select (nur Single-Select)
+Keine Custom Colors (nur Brand Blue)
+Keine Animations (nur transition: 0.2s)
+Brauchst du weitere Details zu einem spezifischen Aspekt? 🎨
+
+kannst du mir auch die buchcover erklären, mit schatten und flip effekt und zitatebutton etc.
+Perfekt! Lass mich die Buchcover-Komponenten detailliert analysieren. 🔍
+
+Perfekt! Jetzt habe ich alle Informationen. Lass mir die vollständige Dokumentation erstellen:
+
+📚 BUCHCOVER SYSTEM - VOLLSTÄNDIGE SPEZIFIKATION
+🎯 1. ARCHITEKTUR ÜBERSICHT
+Komponenten:
+BookCard.tsx - Standard Book Card (Grid/List Views)
+BookCarouselItem.tsx - Carousel-optimierte Version (Horizontal Scroll)
+Gemeinsame Features:
+✅ Buchcover mit Schatten (rechts-unten Richtung)
+✅ Hover-Effekt (Zoom 105%)
+✅ ONIX Tags (Always-Visible + Hover-Tags)
+✅ Match Badge (75%+ = Green, 50%+ = Teal)
+✅ Interactive Buttons (Quote/Info/Tags)
+✅ Serie/Band Badges (SerieBadgeComponent)
+❌ KEIN Flip-Effekt mehr (wurde entfernt - "NO MORE FLIP")
+
+🎨 2. BUCHCOVER - SCHATTEN & STYLING
+2.1 Box Shadow (CSS Variables)
+Light Mode:
+--shadow-book-cover: 4px 4px 8px rgba(0, 0, 0, 0.2);
+Offset X: 4px (nach rechts)
+Offset Y: 4px (nach unten)
+Blur: 8px
+Farbe: Schwarz mit 20% Opacity
+Dark Mode:
+--shadow-book-cover-dark: 4px 4px 12px rgba(0, 0, 0, 0.4);
+Blur: 12px (stärker als Light Mode)
+Farbe: Schwarz mit 40% Opacity (dunkler für besseren Kontrast)
+2.2 Cover Container Styling
+<div 
+  className="aspect-[2/3] bg-muted rounded-[1px] relative overflow-hidden" 
+  style={{ 
+    border: '1px solid var(--color-border)',
+    boxShadow: 'var(--shadow-book-cover)'
+  }}
+>
+  <OptimizedImage
+    src={book.coverImage}
+    alt={book.title}
+    className="w-full h-full object-cover 
+               transition-transform duration-300 
+               group-hover:scale-105"
+  />
+</div>
+Spezifikationen:
+
+Aspect Ratio: 2:3 (Standard Buch-Proportionen)
+Background: var(--color-muted) (Fallback während Laden)
+Border Radius: 1px (minimale Rundung)
+Border: 1px solid #e5e5e5 (Light Mode)
+Overflow: hidden (verhindert Zoom-Überläufe)
+2.3 Hover-Effekt (Zoom)
+transition-transform duration-300 
+group-hover:scale-105
+Spezifikationen:
+
+Zoom: 105% (5% Vergrößerung)
+Duration: 300ms (smooth transition)
+Trigger: group-hover (Parent <div> muss group Klasse haben)
+Transform-Origin: center (Default - zentrierter Zoom)
+🏆 3. ONIX TAGS AUF COVER
+3.1 Tag-Kategorien (Visibility Logic)
+Always-Visible Tags:
+const alwaysVisibleBadges = useMemo(() => {
+  return onixTags.filter(tag => 
+    book.onixTagIds.includes(tag.id) && 
+    tag.visible && 
+    tag.visibilityLevel === 'prominent' &&
+    ['Auszeichnung', 'Status', 'Medienecho'].includes(tag.type)
+  ).slice(0, 2); // Max 2 Badges
+}, [onixTags, book.onixTagIds]);
+Regeln:
+
+Types: Auszeichnung, Status, Medienecho
+Max: 2 Badges
+Visibility: Immer sichtbar (kein Hover)
+Hover-Tags:
+const hoverTags = useMemo(() => {
+  const alwaysVisibleIds = alwaysVisibleBadges.map(t => t.id);
+  return prominentTags.filter(tag => 
+    !alwaysVisibleIds.includes(tag.id)
+  );
+}, [prominentTags, alwaysVisibleBadges]);
+Regeln:
+
+Max: 3 Tags (aus prominentTags)
+Visibility: opacity-0 group-hover:opacity-100
+Excludes: Already visible badges
+3.2 Tag Styling
+<div 
+  className="px-3 py-1.5 md:px-4 md:py-2 
+             text-xs md:text-sm 
+             border border-transparent 
+             rounded-full 
+             transition-all duration-200 
+             inline-flex items-center gap-1 
+             shadow-lg" 
+  style={{ 
+    backgroundColor: tag.color || ONIX_TAG_COLORS[tag.type] || '#70c1b3',
+    color: 'var(--color-white)'
+  }}
+>
+  <span className="whitespace-nowrap">
+    {ONIX_TAG_ICONS[tag.type] || '🏷️'} {tag.displayName}
+  </span>
+  <LikeButton 
+    entityId={`onix-tag-${tag.id}`}
+    variant="minimal"
+    size="sm"
+    iconColor="var(--color-white)"
+  />
+</div>
+Spezifikationen:
+
+Padding: 12px 16px (Desktop), 12px 12px (Mobile)
+Font Size: 14px (Desktop), 12px (Mobile)
+Border Radius: 9999px (Vollständig rund)
+Shadow: shadow-lg (0 10px 15px rgba(0,0,0,0.1))
+Background: Dynamisch per ONIX-Type (ONIX_TAG_COLORS)
+Icon: Emoji + Like Button
+3.3 Tag Positioning
+{/* Always-Visible Tags */}
+<div className="absolute top-3 left-3 right-16 
+                flex flex-wrap gap-2" 
+     style={{ zIndex: 50 }}>
+  {alwaysVisibleBadges.map(...)}
+</div>
+
+{/* Hover Tags */}
+<div className="absolute top-3 left-3 right-16 
+                flex flex-wrap gap-2 
+                opacity-0 group-hover:opacity-100 
+                transition-opacity duration-200" 
+     style={{ zIndex: 50 }}>
+  {hoverTags.map(...)}
+</div>
+Layout:
+
+Position: absolute (oben links)
+Top/Left: 12px (3 = 0.75rem)
+Right: 64px (Platz für Icon Buttons)
+Z-Index: 50 (über Cover, unter Buttons)
+Flex Wrap: Mehrere Zeilen möglich
+🎛️ 4. INTERACTIVE BUTTONS (TOP RIGHT)
+4.1 Button-Typen (BookCarouselItem)
+1️⃣ Quote Button (Pressestimmen):
+<button
+  onClick={handleReviewsToggle}
+  className="w-10 h-10 md:w-12 md:h-12 
+             rounded-full 
+             flex items-center justify-center 
+             transition-all hover:scale-110 
+             shadow-lg"
+  style={{ 
+    backgroundColor: showReviewsOverlay 
+      ? 'var(--color-blue)' 
+      : (resolvedTheme === 'dark' ? '#FFFFFF' : '#2a2a2a'),
+    color: showReviewsOverlay 
+      ? '#FFFFFF' 
+      : (resolvedTheme === 'dark' ? '#2a2a2a' : '#FFFFFF')
+  }}
+>
+
+  <Quote className="w-5 h-5 md:w-6 md:h-6" />
+</button>
+4.2 Button-Typen (BookCard)
+1️⃣ Info Button (Kurzbeschreibung):
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    setShowInfoOverlay(!showInfoOverlay);
+  }}
+  className="w-10 h-10 md:w-12 md:h-12 
+             rounded-full 
+             flex items-center justify-center 
+             transition-all hover:scale-110 
+             shadow-lg"
+>
+
+  <Info className="w-5 h-5 md:w-6 md:h-6" />
+</button>
+2️⃣ Tags Button (Categories):
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    setShowTagsOverlay(!showTagsOverlay);
+  }}
+>
+
+  <Tags className="w-5 h-5 md:w-6 md:h-6" />
+</button>
+4.3 Button Styling Spec
+Size:
+
+Mobile: 40px × 40px (w-10 h-10)
+Desktop: 48px × 48px (w-12 h-12)
+Colors (Inactive):
+
+Light Mode: Background #2a2a2a (Charcoal), Icon #FFFFFF
+Dark Mode: Background #FFFFFF (White), Icon #2a2a2a
+Colors (Active):
+
+Both Modes: Background #247ba0 (Blue), Icon #FFFFFF
+Effects:
+
+Hover: scale-110 (10% größer)
+Shadow: shadow-lg
+Border Radius: 9999px (vollständig rund)
+Transition: all (smooth State-Wechsel)
+Positioning:
+
+<div className="absolute top-3 right-3 
+                flex flex-row gap-2" 
+     style={{ zIndex: 150 }}>
+  {/* Buttons */}
+</div>
+Z-Index: 150 (über allem anderen)
+Gap: 8px (zwischen Buttons)
+🎨 5. REVIEWS OVERLAY (Pressestimmen)
+{showReviewsOverlay && bookWithMockReviews.reviews && (
+  <div 
+    className="absolute inset-0 
+               p-3 md:p-4 
+               flex flex-col gap-2 md:gap-3 
+               overflow-y-auto 
+               bg-black/90 
+               backdrop-blur-[8px]"
+    style={{ zIndex: 100 }}
+    onClick={(e) => e.stopPropagation()}
+  >
+    <Heading 
+      as="h5" 
+      variant="h6" 
+      className="text-white !normal-case"
+    >
+      Pressestimmen
+    </Heading>
+    
+    {bookWithMockReviews.reviews.slice(0, 3).map((review, index) => (
+      <div key={index} className="flex flex-col gap-1">
+        <Text 
+          as="p" 
+          variant="small" 
+          className="text-white !normal-case 
+                     !tracking-normal 
+                     leading-relaxed italic"
+        >
+          "{review.quote}"
+        </Text>
+        <Text 
+          as="p" 
+          variant="xs" 
+          className="text-white opacity-75 
+                     !normal-case !tracking-normal"
+        >
+          — {review.source}
+        </Text>
+      </div>
+    ))}
+  </div>
+)}
+Spezifikationen:
+
+Background: rgba(0, 0, 0, 0.9) (90% Schwarz)
+Backdrop Blur: 8px (Glasmorphism)
+Z-Index: 100 (über Cover, unter Buttons)
+Max Reviews: 3
+Overflow: overflow-y-auto (Scrollbar bei Bedarf)
+Padding: 12px (Mobile), 16px (Desktop)
+Typografie:
+
+Überschrift: h6 (Fjalla One, UPPERCASE)
+Quote: small (Inter, Italic, White)
+Source: xs (Inter, 75% Opacity)
+💎 6. MATCH BADGE (Unten Links)
+{book.matchPercentage !== undefined && book.matchPercentage > 0 && (
+  <div 
+    className="absolute bottom-3 left-3 
+               px-3 py-1.5 md:px-4 md:py-2 
+               text-xs md:text-sm 
+               rounded-full shadow-lg 
+               backdrop-blur-sm"
+    style={{ 
+      backgroundColor: 
+        book.matchPercentage >= 75 
+          ? 'rgba(90, 150, 144, 0.95)'   // Teal Dark (>75%)
+          : book.matchPercentage >= 50 
+            ? 'rgba(160, 206, 200, 0.95)' // Teal Light (50-74%)
+            : 'rgba(247, 244, 239, 0.95)', // Beige (<50%)
+      color: 
+        book.matchPercentage >= 50 
+          ? '#FFFFFF' 
+          : '#3A3A3A',
+      fontFamily: 'Fjalla One',
+      zIndex: 51
+    }}
+  >
+    {book.matchPercentage}% Match
+  </div>
+)}
+Color Logic:
+
+Match %	Background	Text Color
+≥75%	Teal Dark (#5a9690)	White
+50-74%	Teal Light (#a0cec8)	White
+<50%	Beige (#f7f4ef)	Charcoal
+Spezifikationen:
+
+Font: Fjalla One (Headline Font)
+Size: 12px (Mobile), 14px (Desktop)
+Backdrop Blur: sm (4px)
+Shadow: shadow-lg
+Z-Index: 51 (über Tags)
+🎬 7. ❌ FLIP-EFFEKT (ENTFERNT)
+⚠️ WICHTIG: Der Flip-Effekt wurde entfernt in der aktuellen Version!
+
+Grund für Entfernung:
+{/* Cover Container - NO MORE FLIP */}
+<div 
+  className="aspect-[2/3] bg-muted rounded-[1px] 
+             relative overflow-hidden" 
+  ...
+>
+Kommentar im Code:
+
+BookCarouselItem.tsx Line 290: {/* Cover Container - NO MORE FLIP */}
+BookCard.tsx Line 203: {/* Cover Container - NO FLIP */}
+Stattdessen:
+
+Overlays für Zusatzinformationen (Reviews, Info, Tags)
+Hover-Tags für Genre/Category
+Expand-Button für Klappentext (unter dem Cover)
+📏 8. RESPONSIVE SIZING
+BookCarouselItem - Size Variants:
+const sizeClasses = {
+  sm: "min-h-[480px] md:min-h-[600px]",
+  md: "min-h-[520px] md:min-h-[680px]",
+  lg: "min-h-[580px] md:min-h-[750px]"
+};
+BookCard - View Modes:
+// Compact Mode
+viewMode === 'compact' 
+  ? 'w-full min-h-[360px] md:min-h-[440px]'
+  : 'w-44 md:w-60 min-h-[400px] md:min-h-[520px]'
+Padding System:
+// BookCarouselItem
+className="pl-2 pb-2 pt-1 pr-1 
+           md:pl-3 md:pb-3 md:pt-2 md:pr-2"
+
+// BookCard (Compact)
+className="pl-1.5 pb-1.5 pt-1 pr-1 
+           md:pl-2 md:pb-2 md:pt-1.5 md:pr-1.5"
+Asymmetrisch:
+
+Left/Bottom: Mehr Padding (Schatten-Richtung!)
+Top/Right: Weniger Padding
+Desktop: 1.5× Mobile Werte
+🎨 9. VISUELLES DIAGRAMM
+┌─────────────────────────────────────────────────┐
+│ 🏆 Serie Badge (außerhalb Cover)               │
+└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────┐
+│ ┌─────────────────────────────────────────────┐ │
+│ │ 🏷️ ONIX Tags (top-left)    🎛️ Buttons │ │
+│ │ ┌──────────┐  ┌──────────┐    (top-right) │ │
+│ │ │Auszeichn.│  │Bestseller│    ┌─┐ ┌─┐     │ │
+│ │ └──────────┘  └──────────┘    │🔊│ │ℹ️│     │ │
+│ │                               └─┘ └─┘     │ │
+│ │                                           │ │
+│ │         📷 BUCHCOVER                      │ │
+│ │         (Hover: Zoom 105%)                │ │
+│ │         (Schatten: 4px/4px/8px)           │ │
+│ │                                           │ │
+│ │                                           │ │
+│ │                                           │ │
+│ │ ┌────────────┐                            │ │
+│ │ │ 85% Match  │ (bottom-left)              │ │
+│ │ └────────────┘                            │ │
+│ └─────────────────────────────────────────────┘ │
+│ 📖 BUCHTITEL (Fjalla One, h4, UPPERCASE)        │
+│ ✍️ Autorenname (Inter Bold, base, normal-case) │
+│ 📝 Klappentext (Inter, small, expandable)      │
+│ 🔗 Mehr lesen Button (Blue Underline)          │
+│ 💰 Preis (if available)                        │
+│ 🛒 Buy Buttons (Affiliate Links)               │
+└─────────────────────────────────────────────────┘
+💡 10. BEST PRACTICES
+✅ DO:
+Schatten immer via --shadow-book-cover Variable
+Hover-Zoom auf 105% begrenzen (Performance)
+Interactive Buttons mit e.stopPropagation() schützen
+Match Badge nur bei matchPercentage > 0 anzeigen
+Max 2 Always-Visible Tags, Max 3 Hover-Tags
+❌ DON'T:
+Kein Flip-Effekt (deprecated)
+Keine Custom Shadows (nutze Variables)
+Keine Zoom > 110% (Layout-Breaks)
+Keine Tags ohne visible: true Flag
+Keine Overlays ohne onClick={(e) => e.stopPropagation()}
