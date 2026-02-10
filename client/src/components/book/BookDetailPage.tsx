@@ -1199,7 +1199,7 @@ export function BookDetailPage() {
                 </>
               )}
               
-              <Text variant="default" className="mb-1 leading-relaxed font-semibold">
+              <Text variant="default" className="mb-1 leading-relaxed font-semibold" style={{ color: '#6B7280' }}>
                 {book.author}
               </Text>
               

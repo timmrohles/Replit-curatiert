@@ -176,7 +176,7 @@ export const CreatorHeader = memo(function CreatorHeader({
                 <Text 
                   as="div"
                   variant="xs"
-                  className={`font-normal leading-relaxed ${isAdSection ? 'text-white' : 'text-foreground/80'}`}
+                  className={`font-normal leading-relaxed ${isAdSection ? 'text-white' : 'text-foreground'}`}
                 >
                   {bio}
                 </Text>
@@ -207,7 +207,8 @@ export const CreatorHeader = memo(function CreatorHeader({
         <Heading 
           as="h3"
           variant="h3"
-          className="mb-4 text-foreground"
+          className="mb-4"
+          style={{ color: '#6B7280' }}
         >
           {occasion.replace('und und', '&')}
         </Heading>
