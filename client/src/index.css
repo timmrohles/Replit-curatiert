@@ -58,6 +58,17 @@
   --font-headline: 'Fjalla One', sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
+
+  --fluid-h1: clamp(1.875rem, 1.45rem + 1.8vw, 3rem);
+  --fluid-h2: clamp(1.75rem, 1.5rem + 1vw, 2.25rem);
+  --fluid-h3: clamp(1.25rem, 1.15rem + 0.4vw, 1.5rem);
+  --fluid-h4: clamp(1.125rem, 1.05rem + 0.3vw, 1.375rem);
+  --fluid-h5: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --fluid-h6: clamp(0.875rem, 0.825rem + 0.2vw, 1rem);
+  --fluid-body: clamp(1rem, 0.95rem + 0.2vw, 1.125rem);
+  --fluid-body-small: clamp(0.875rem, 0.85rem + 0.1vw, 0.9375rem);
+  --fluid-body-xs: clamp(0.75rem, 0.725rem + 0.1vw, 0.8125rem);
+  --fluid-price-label: clamp(0.875rem, 0.7rem + 0.65vw, 1.125rem);
   --color-blue-cerulean: #247ba0;
   --color-coral-vibrant: #f25f5c;
   --color-gold-royal: #ffe066;
