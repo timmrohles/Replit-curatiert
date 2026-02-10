@@ -295,7 +295,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
       },
       { 
         id: 'trending', 
-        label: 'Relevant (aktuell)',
+        label: 'Aktuell',
         tooltip: 'Sortiert Neuerscheinungen nach Veröffentlichungszeitpunkt'
       },
     ];
@@ -462,7 +462,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
           <div className="flex justify-end">
             <div 
               ref={sortChipsRef}
-              className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full md:flex-wrap md:overflow-visible select-none"
+              className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full select-none"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
             >
               {sortOptions.map((option) => {
@@ -494,8 +494,8 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         {/* Horizontal Carousel with CarouselContainer */}
         <div className="mb-12">
           <CarouselContainer
-            showDesktopButtons={sortedBooks.length >= 6}
-            showMobileButtons={sortedBooks.length >= 3}
+            showDesktopButtons={sortedBooks.length > 4}
+            showMobileButtons={sortedBooks.length > 2}
             className="pb-4"
             buttonOffset={8}
           >
