@@ -54,7 +54,7 @@ export function LikeButton({
   const isSaffronBackground = backgroundColor === 'var(--color-saffron)';
   
   // Liked heart is ALWAYS coral, UNLESS on coral/saffron background (then white)
-  const likedHeartColor = (isCoralBackground || isSaffronBackground) ? '#ffffff' : 'var(--vibrant-coral)';
+  const likedHeartColor = (isCoralBackground || isSaffronBackground) ? '#ffffff' : 'var(--color-coral-vibrant, #f25f5c)';
   
   // Override finalIconColor for coral/saffron backgrounds
   const effectiveIconColor = (isCoralBackground || isSaffronBackground) ? '#ffffff' : finalIconColor;
