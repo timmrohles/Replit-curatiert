@@ -459,10 +459,10 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         {/* Sort Field - ISOLATED from other sections */}
         <div className="mb-4 md:mb-6">
           {/* Sort Chips - Mobile horizontal scroll, Desktop flex wrap */}
-          <div className="flex justify-end">
+          <div className="relative flex justify-end">
             <div 
               ref={sortChipsRef}
-              className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full select-none overscroll-x-contain"
+              className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full select-none overscroll-x-contain pr-6 md:pr-0"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
             >
               {sortOptions.map((option) => {
@@ -488,6 +488,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
                 );
               })}
             </div>
+            <div className="absolute right-0 top-0 bottom-0 w-10 pointer-events-none bg-gradient-to-l from-[var(--color-beige)] to-transparent md:hidden" />
           </div>
         </div>
 
