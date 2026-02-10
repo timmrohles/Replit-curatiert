@@ -24,7 +24,9 @@ import {
   BookOpen,
   Filter,
   Target,
-  Ban
+  Ban,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -1053,6 +1055,7 @@ function MultiSelectTags({ selectedIds, onChange }: { selectedIds: number[]; onC
   const [tags, setTags] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [togglingId, setTogglingId] = useState<number | null>(null);
 
   useEffect(() => {
     loadTags();
@@ -1060,7 +1063,7 @@ function MultiSelectTags({ selectedIds, onChange }: { selectedIds: number[]; onC
 
   const loadTags = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tags`, {
+      const response = await fetch(`${API_BASE_URL}/onix-tags`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1079,6 +1082,32 @@ function MultiSelectTags({ selectedIds, onChange }: { selectedIds: number[]; onC
       onChange(selectedIds.filter(i => i !== id));
     } else {
       onChange([...selectedIds, id]);
+    }
+  };
+
+  const handleVisibilityToggle = async (e: React.MouseEvent, tag: any) => {
+    e.stopPropagation();
+    setTogglingId(tag.id);
+    try {
+      const adminToken = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '';
+      const newVisible = !tag.visible;
+      const resp = await fetch(`${API_BASE_URL}/onix-tags/${tag.id}/visibility`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Token': adminToken,
+        },
+        body: JSON.stringify({ visible: newVisible }),
+      });
+      if (resp.ok) {
+        setTags(prev => prev.map(t => t.id === tag.id ? { ...t, visible: newVisible } : t));
+      } else {
+        console.error('Tag visibility toggle failed:', resp.status);
+      }
+    } catch (err) {
+      console.error('Error toggling tag visibility:', err);
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -1109,16 +1138,40 @@ function MultiSelectTags({ selectedIds, onChange }: { selectedIds: number[]; onC
           filteredTags.map(tag => (
             <div
               key={tag.id}
-              className="p-2 border-b hover:bg-gray-50 cursor-pointer flex items-center gap-2"
+              className={`p-2 border-b cursor-pointer flex items-center gap-2 ${
+                tag.visible === false ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'
+              }`}
               onClick={() => handleToggle(tag.id)}
             >
               <Checkbox checked={selectedIds.includes(tag.id)} />
-              <div className="flex-1">
-                <div className="text-sm font-medium">{tag.name}</div>
-                {tag.tag_type && (
-                  <div className="text-xs text-gray-500">{tag.tag_type}</div>
-                )}
+              <div className="flex-1 min-w-0">
+                <div className={`text-sm font-medium ${tag.visible === false ? 'line-through text-gray-400' : ''}`}>
+                  {tag.displayName || tag.name}
+                </div>
+                <div className="text-xs text-gray-500 flex items-center gap-1">
+                  {tag.type || tag.tag_type || ''}
+                  {tag.visible === false && (
+                    <span className="text-red-400 font-medium ml-1">versteckt</span>
+                  )}
+                </div>
               </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className={tag.visible === false ? 'text-red-400' : 'text-green-600'}
+                onClick={(e) => handleVisibilityToggle(e, tag)}
+                disabled={togglingId === tag.id}
+                title={tag.visible === false ? 'Tag sichtbar machen' : 'Tag verstecken'}
+              >
+                {togglingId === tag.id ? (
+                  <span className="w-4 h-4 block animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+                ) : tag.visible === false ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </Button>
             </div>
           ))
         )}
@@ -1136,6 +1189,7 @@ function MultiSelectAwardDefinitions({ selectedIds, onChange }: { selectedIds: n
   const [definitions, setDefinitions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [togglingId, setTogglingId] = useState<number | null>(null);
 
   useEffect(() => {
     loadDefinitions();
@@ -1149,7 +1203,6 @@ function MultiSelectAwardDefinitions({ selectedIds, onChange }: { selectedIds: n
         },
       });
       const result = await response.json();
-      // Expected: { id, name, slug }
       setDefinitions(result.data || []);
       setLoading(false);
     } catch (err) {
@@ -1166,12 +1219,38 @@ function MultiSelectAwardDefinitions({ selectedIds, onChange }: { selectedIds: n
     }
   };
 
+  const handleVisibilityToggle = async (e: React.MouseEvent, def: any) => {
+    e.stopPropagation();
+    setTogglingId(def.id);
+    try {
+      const adminToken = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '';
+      const newVisible = !def.visible;
+      const resp = await fetch(`${API_BASE_URL}/awards/${def.id}/visibility`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Token': adminToken,
+        },
+        body: JSON.stringify({ visible: newVisible }),
+      });
+      if (resp.ok) {
+        setDefinitions(prev => prev.map(d => d.id === def.id ? { ...d, visible: newVisible } : d));
+      } else {
+        console.error('Award visibility toggle failed:', resp.status);
+      }
+    } catch (err) {
+      console.error('Error toggling award visibility:', err);
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const filteredDefinitions = definitions.filter(def =>
     def.name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {
-    return <div className="p-3 border rounded text-sm text-gray-500">Lade Award Definitions...</div>;
+    return <div className="p-3 border rounded text-sm text-gray-500">Lade Auszeichnungen...</div>;
   }
 
   return (
@@ -1187,22 +1266,46 @@ function MultiSelectAwardDefinitions({ selectedIds, onChange }: { selectedIds: n
       <div className="max-h-48 overflow-y-auto">
         {filteredDefinitions.length === 0 ? (
           <div className="p-3 text-sm text-gray-500 text-center">
-            {definitions.length === 0 ? 'Keine Award Definitions verfügbar (API-Endpoint fehlt noch)' : 'Keine Ergebnisse'}
+            {definitions.length === 0 ? 'Keine Auszeichnungen verfügbar' : 'Keine Ergebnisse'}
           </div>
         ) : (
           filteredDefinitions.map(def => (
             <div
               key={def.id}
-              className="p-2 border-b hover:bg-gray-50 cursor-pointer flex items-center gap-2"
+              className={`p-2 border-b cursor-pointer flex items-center gap-2 ${
+                def.visible === false ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'
+              }`}
               onClick={() => handleToggle(def.id)}
             >
               <Checkbox checked={selectedIds.includes(def.id)} />
-              <div className="flex-1">
-                <div className="text-sm font-medium">{def.name}</div>
-                {def.description && (
-                  <div className="text-xs text-gray-500 truncate">{def.description}</div>
-                )}
+              <div className="flex-1 min-w-0">
+                <div className={`text-sm font-medium ${def.visible === false ? 'line-through text-gray-400' : ''}`}>
+                  {def.name}
+                </div>
+                <div className="text-xs text-gray-500 flex items-center gap-1">
+                  {def.description && <span className="truncate">{def.description}</span>}
+                  {def.visible === false && (
+                    <span className="text-red-400 font-medium ml-1">versteckt</span>
+                  )}
+                </div>
               </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                className={def.visible === false ? 'text-red-400' : 'text-green-600'}
+                onClick={(e) => handleVisibilityToggle(e, def)}
+                disabled={togglingId === def.id}
+                title={def.visible === false ? 'Auszeichnung sichtbar machen' : 'Auszeichnung verstecken'}
+              >
+                {togglingId === def.id ? (
+                  <span className="w-4 h-4 block animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+                ) : def.visible === false ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </Button>
             </div>
           ))
         )}
