@@ -45,6 +45,8 @@ interface Affiliate {
   website_url?: string | null;
   link_template: string;
   product_url_template?: string | null;
+  icon_url?: string | null;
+  favicon_url?: string | null;
   display_order: number;
   is_active: boolean;
   notes?: string | null;
@@ -425,7 +427,15 @@ export function AdminAffiliate() {
           {affiliates.map((affiliate) => (
             <div key={affiliate.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
-                <div className="flex-1">
+                <div className="flex-1 flex items-start gap-3">
+                  {(affiliate.icon_url || affiliate.favicon_url) && (
+                    <img
+                      src={affiliate.icon_url || affiliate.favicon_url || ''}
+                      alt={affiliate.name}
+                      className="w-8 h-8 rounded mt-0.5"
+                    />
+                  )}
+                  <div>
                   <h3 className="text-lg font-semibold">{affiliate.name}</h3>
                   <p className="text-sm text-gray-600 font-mono">Slug: {affiliate.slug}</p>
                   <p className="text-sm text-gray-600 mt-1">
@@ -436,6 +446,7 @@ export function AdminAffiliate() {
                     <span className={affiliate.is_active ? 'text-green-600' : 'text-gray-400'}>
                       {affiliate.is_active ? '✓ Active' : '○ Inactive'}
                     </span>
+                  </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -649,6 +660,47 @@ export function AdminAffiliate() {
                 className="w-full px-3 py-2 border rounded-lg"
                 placeholder="https://www.thalia.de"
               />
+            </div>
+
+            {/* Icon URL */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Icon URL (Optional)</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={editingAffiliate.icon_url || ''}
+                  onChange={(e) => setEditingAffiliate({ ...editingAffiliate, icon_url: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="https://example.com/icon.png"
+                />
+                {editingAffiliate.icon_url && (
+                  <img src={editingAffiliate.icon_url} alt="Icon" className="w-8 h-8 rounded" />
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Eigenes Icon (z.B. 64x64px PNG). Falls leer, wird das Favicon verwendet.
+              </p>
+            </div>
+
+            {/* Favicon URL */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Favicon URL (Optional)</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={editingAffiliate.favicon_url || ''}
+                  onChange={(e) => setEditingAffiliate({ ...editingAffiliate, favicon_url: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-lg"
+                  placeholder="https://www.google.com/s2/favicons?domain=thalia.de&sz=64"
+                />
+                {editingAffiliate.favicon_url && (
+                  <img src={editingAffiliate.favicon_url} alt="Favicon" className="w-6 h-6" />
+                )}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Falls kein Icon angegeben, wird dieses Favicon als Fallback verwendet.
+                Auto-URL: https://www.google.com/s2/favicons?domain=DOMAIN&sz=64
+              </p>
             </div>
 
             {/* Link Template */}

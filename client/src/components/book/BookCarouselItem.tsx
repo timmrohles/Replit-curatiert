@@ -11,6 +11,52 @@ import { OptimizedImage } from '../common/OptimizedImage';
 import { LikeButton } from '../favorites/LikeButton';
 import { SerieBadgeComponent } from '../common/SerieBadge';
 
+interface ActiveAffiliate {
+  id: number;
+  name: string;
+  slug: string;
+  website_url: string | null;
+  link_template: string;
+  icon_url: string | null;
+  favicon_url: string | null;
+  display_order: number;
+}
+
+let cachedAffiliates: ActiveAffiliate[] | null = null;
+let affiliatePromise: Promise<ActiveAffiliate[]> | null = null;
+
+function fetchActiveAffiliates(): Promise<ActiveAffiliate[]> {
+  if (cachedAffiliates) return Promise.resolve(cachedAffiliates);
+  if (affiliatePromise) return affiliatePromise;
+  affiliatePromise = fetch('/api/affiliates/active')
+    .then(r => r.json())
+    .then(data => {
+      cachedAffiliates = data.ok ? data.data : [];
+      return cachedAffiliates!;
+    })
+    .catch(() => {
+      cachedAffiliates = [];
+      return [];
+    });
+  return affiliatePromise;
+}
+
+function buildAffiliateUrl(template: string, isbn: string): string {
+  return template.replace(/\{isbn13\}/g, isbn).replace(/\{isbn\}/g, isbn);
+}
+
+function getAffiliateIcon(affiliate: ActiveAffiliate): string {
+  if (affiliate.icon_url) return affiliate.icon_url;
+  if (affiliate.favicon_url) return affiliate.favicon_url;
+  if (affiliate.website_url) {
+    try {
+      const domain = new URL(affiliate.website_url).hostname;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+    } catch {}
+  }
+  return `https://www.google.com/s2/favicons?domain=${affiliate.slug}.de&sz=64`;
+}
+
 export interface BookCarouselItemData {
   id: string;
   title: string;
@@ -64,6 +110,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
   const [showReviewsOverlay, setShowReviewsOverlay] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [isKlappentextExpanded, setIsKlappentextExpanded] = useState(false);
+  const [affiliates, setAffiliates] = useState<ActiveAffiliate[]>([]);
 
   // ✅ TEMPORARY: Add mock reviews for testing if not present
   const bookWithMockReviews = useMemo(() => {
@@ -122,7 +169,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
     };
   }, [bookWithMockReviews]);
 
-  // Fetch ONIX Tags
+  // Fetch ONIX Tags and Affiliates
   useEffect(() => {
     getAllONIXTags()
       .then(setOnixTags)
@@ -130,6 +177,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
         console.error('Error loading ONIX tags in BookCarouselItem:', error);
         setOnixTags([]);
       });
+    fetchActiveAffiliates().then(setAffiliates);
   }, []);
 
   // Memoized callbacks for better performance
@@ -146,24 +194,6 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
   const handleNavigate = useCallback(() => {
     navigate(getBookUrl(book));
   }, [navigate, book]);
-  
-  const handleBuecherDeClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (book.isbn) {
-      const affiliatePartnerId = 'coratiert';
-      const affiliateUrl = `https://www.buecher.de/go/?isbn=${book.isbn}&partner=${affiliatePartnerId}`;
-      window.open(affiliateUrl, '_blank', 'noopener,noreferrer');
-    }
-  }, [book.isbn]);
-  
-  const handleGenialokalClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (book.isbn) {
-      const genialokalPartnerId = 'coratiert-genial';
-      const affiliateUrl = `https://www.genialokal.de/produkt/${book.isbn}/?partnerId=${genialokalPartnerId}`;
-      window.open(affiliateUrl, '_blank', 'noopener,noreferrer');
-    }
-  }, [book.isbn]);
 
   const handleShare = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -497,44 +527,33 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
               />
             </Button>
             
-            {/* Affiliate Buttons - with Favicons via Google's service (CORS-safe) */}
-            <div className="flex items-center gap-1.5 transition-opacity duration-200">
-              {/* bücher.de Affiliate Button with Favicon */}
-              {book.isbn && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-10 w-10 md:h-11 md:w-11 shadow-none"
-                  onClick={handleBuecherDeClick}
-                  title="Bei bücher.de kaufen"
-                >
-                  <img 
-                    src="https://www.google.com/s2/favicons?domain=buecher.de&sz=64"
-                    alt="bücher.de"
-                    className="w-5 h-5"
-                    loading="lazy"
-                  />
-                </Button>
-              )}
-              
-              {/* geniallokal Affiliate Button with Favicon */}
-              {book.isbn && (
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-10 w-10 md:h-11 md:w-11 shadow-none"
-                  onClick={handleGenialokalClick}
-                  title="Bei geniallokal kaufen"
-                >
-                  <img 
-                    src="https://www.google.com/s2/favicons?domain=genialokal.de&sz=64"
-                    alt="geniallokal"
-                    className="w-5 h-5"
-                    loading="lazy"
-                  />
-                </Button>
-              )}
-            </div>
+            {/* Affiliate Buttons - dynamisch aus DB */}
+            {book.isbn && affiliates.length > 0 && (
+              <div className="flex items-center gap-1.5">
+                {affiliates.map((aff) => (
+                  <Button
+                    key={aff.id}
+                    variant="ghost"
+                    size="icon"
+                    className="h-10 w-10 md:h-11 md:w-11 shadow-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const url = buildAffiliateUrl(aff.link_template, book.isbn!);
+                      window.open(url, '_blank', 'noopener,noreferrer');
+                    }}
+                    title={`Bei ${aff.name} kaufen`}
+                    data-testid={`button-affiliate-${aff.slug}`}
+                  >
+                    <img
+                      src={getAffiliateIcon(aff)}
+                      alt={aff.name}
+                      className="w-5 h-5"
+                      loading="lazy"
+                    />
+                  </Button>
+                ))}
+              </div>
+            )}
             
             {/* Arrow Right Button */}
             <Button 

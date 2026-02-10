@@ -19,6 +19,7 @@ const Diagnostics = lazy(() => import('../admin/Diagnostics').then(m => ({ defau
 const UserModulesManager = lazy(() => import('../../components/admin/UserModulesManager').then(m => ({ default: m.UserModulesManager })));
 const PasswordWarningBanner = lazy(() => import('../../components/admin/PasswordWarningBanner').then(m => ({ default: m.PasswordWarningBanner })));
 const SiteBannerTab = lazy(() => import('../../components/admin/SiteBannerTab').then(m => ({ default: m.SiteBannerTab })));
+const AdminAffiliate = lazy(() => import('../../components/admin/AdminAffiliate').then(m => ({ default: m.AdminAffiliate })));
 
 // ✅ Import types and API functions
 import type { Book, Curator, Tag, ONIXTag, MenuItem, Section, Page } from '../../utils/api';
@@ -857,20 +858,9 @@ export function ContentManager() {
 
           {/* Affiliates Tab */}
           {activeTab === 'affiliates' && (
-            <div className="p-8 text-center" style={{ color: '#666666' }}>
-              <h2 className="text-2xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-                💼 Affiliate Management
-              </h2>
-              <p className="mb-4">Verwalte deine Affiliate-Partner und Provisionen hier.</p>
-              <button
-                onClick={() => safeNav('/sys-mgmt-xK9/affiliate-management')}
-                className="px-6 py-3 rounded-lg transition-colors inline-flex items-center gap-2"
-                style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-              >
-                <ExternalLink className="w-5 h-5" />
-                Zur Affiliate-Verwaltung
-              </button>
-            </div>
+            <Suspense fallback={<div className="p-8 text-center">Lade Affiliate-Verwaltung...</div>}>
+              <AdminAffiliate />
+            </Suspense>
           )}
 
           {/* Section Library Tab */}

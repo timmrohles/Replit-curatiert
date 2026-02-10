@@ -93,6 +93,11 @@ export function BookDetailPage() {
   const [bookAwards, setBookAwards] = useState<BookAwardInfo[]>([]);
   const [googleRating, setGoogleRating] = useState<GoogleBooksRating | null>(null);
   const [isLoadingRating, setIsLoadingRating] = useState(true);
+  const [activeAffiliates, setActiveAffiliates] = useState<Array<{
+    id: number; name: string; slug: string; website_url: string | null;
+    link_template: string; icon_url: string | null; favicon_url: string | null;
+    display_order: number;
+  }>>([]);
   
   // Accordion states for mobile
   const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
@@ -632,6 +637,11 @@ export function BookDetailPage() {
     
     loadAwardsAndTags();
     loadGoogleRating();
+
+    fetch('/api/affiliates/active')
+      .then(r => r.json())
+      .then(data => { if (isMounted && data.ok) setActiveAffiliates(data.data || []); })
+      .catch(() => { if (isMounted) setActiveAffiliates([]); });
     
     return () => {
       isMounted = false;
@@ -1234,7 +1244,8 @@ export function BookDetailPage() {
               {/* Format Switcher - ONIX RelatedProducts */}
 
               
-              {/* Affiliate Partners */}
+              {/* Affiliate Partners - dynamisch aus DB */}
+              {activeAffiliates.length > 0 && book.isbn && (
               <section className="mb-6" aria-labelledby="buy-links-heading">
                 <Heading 
                   as="h3"
@@ -1245,14 +1256,17 @@ export function BookDetailPage() {
                   Kaufen bei:
                 </Heading>
                 <div className="grid grid-cols-2 gap-2 md:gap-3 mb-3" role="list">
-                  {book.affiliatePartners.map((partner, index) => {
-                    const purchaseUrl = partner.urlTemplate.replace('{ISBN}', book.isbn.replace(/-/g, ''));
-                    // Placeholder Preis - kommt später aus ONIX
-                    const price = "24,99 €";
+                  {activeAffiliates.map((aff) => {
+                    const cleanIsbn = book.isbn.replace(/-/g, '');
+                    const purchaseUrl = aff.link_template
+                      .replace(/\{isbn13\}/g, cleanIsbn)
+                      .replace(/\{isbn\}/g, cleanIsbn)
+                      .replace(/\{ISBN\}/g, cleanIsbn);
+                    const iconSrc = aff.icon_url || aff.favicon_url || (aff.website_url ? `https://www.google.com/s2/favicons?domain=${new URL(aff.website_url).hostname}&sz=64` : '');
                     
                     return (
                       <Button
-                        key={index}
+                        key={aff.id}
                         variant="outline"
                         className="px-2 py-4 md:px-4 md:py-6 transition-all border-2 w-full justify-between"
                         style={{
@@ -1267,17 +1281,18 @@ export function BookDetailPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           role="listitem"
-                          aria-label={`Buch bei ${partner.name} kaufen für ${price}`}
+                          aria-label={`Buch bei ${aff.name} kaufen`}
+                          data-testid={`button-detail-affiliate-${aff.slug}`}
                         >
-                          <Text variant="small" as="span" className="truncate">
-                            {partner.name}
-                          </Text>
-                          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-                            <Text variant="small" as="span" className="font-semibold">
-                              {price}
+                          <div className="flex items-center gap-2 truncate">
+                            {iconSrc && (
+                              <img src={iconSrc} alt="" className="w-4 h-4 flex-shrink-0" loading="lazy" />
+                            )}
+                            <Text variant="small" as="span" className="truncate">
+                              {aff.name}
                             </Text>
-                            <ExternalLink className="w-3.5 h-3.5 md:w-4 md:h-4 transition-colors" aria-hidden="true" />
                           </div>
+                          <ExternalLink className="w-3.5 h-3.5 md:w-4 md:h-4 transition-colors flex-shrink-0" aria-hidden="true" />
                         </a>
                       </Button>
                     );
@@ -1287,6 +1302,7 @@ export function BookDetailPage() {
                   Ggf. zzgl. Versandkosten. Preise für eBooks und Hörbücher können abweichen.
                 </Text>
               </section>
+              )}
               
               {/* Used Books Section */}
               <section className="mb-6 pt-4 border-t border-surface-muted" aria-labelledby="used-books-heading">

@@ -12,6 +12,52 @@ import { useFavorites } from '../favorites/FavoritesContext';
 import { useCart } from '../shop/CartContext';
 import { getBookUrl } from '../../utils/bookUrlHelper';
 
+interface ActiveAffiliate {
+  id: number;
+  name: string;
+  slug: string;
+  website_url: string | null;
+  link_template: string;
+  icon_url: string | null;
+  favicon_url: string | null;
+  display_order: number;
+}
+
+let cachedAffiliates: ActiveAffiliate[] | null = null;
+let affiliatePromise: Promise<ActiveAffiliate[]> | null = null;
+
+function fetchActiveAffiliates(): Promise<ActiveAffiliate[]> {
+  if (cachedAffiliates) return Promise.resolve(cachedAffiliates);
+  if (affiliatePromise) return affiliatePromise;
+  affiliatePromise = fetch('/api/affiliates/active')
+    .then(r => r.json())
+    .then(data => {
+      cachedAffiliates = data.ok ? data.data : [];
+      return cachedAffiliates!;
+    })
+    .catch(() => {
+      cachedAffiliates = [];
+      return [];
+    });
+  return affiliatePromise;
+}
+
+function buildAffiliateUrl(template: string, isbn: string): string {
+  return template.replace(/\{isbn13\}/g, isbn).replace(/\{isbn\}/g, isbn);
+}
+
+function getAffiliateIcon(affiliate: ActiveAffiliate): string {
+  if (affiliate.icon_url) return affiliate.icon_url;
+  if (affiliate.favicon_url) return affiliate.favicon_url;
+  if (affiliate.website_url) {
+    try {
+      const domain = new URL(affiliate.website_url).hostname;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+    } catch {}
+  }
+  return `https://www.google.com/s2/favicons?domain=${affiliate.slug}.de&sz=64`;
+}
+
 interface Book {
   id: string;
   cover?: string;
@@ -56,6 +102,11 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [affiliates, setAffiliates] = useState<ActiveAffiliate[]>([]);
+
+  useEffect(() => {
+    fetchActiveAffiliates().then(setAffiliates);
+  }, []);
 
   useEffect(() => {
     const currentRef = scrollContainerRef.current;
@@ -410,52 +461,32 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
                     >
                       <Share2 className="w-3 h-3 md:w-4 md:h-4" style={{ strokeWidth: 1.5 }} />
                     </Button>
-                    {/* bücher.de Affiliate Button with Favicon */}
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 md:h-8 md:w-8 shadow-none"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const affiliatePartnerId = 'coratiert';
-                        const isbn = book.isbn || '';
-                        if (isbn) {
-                          const affiliateUrl = `https://www.buecher.de/go/?isbn=${isbn}&partner=${affiliatePartnerId}`;
-                          window.open(affiliateUrl, '_blank', 'noopener,noreferrer');
-                        }
-                      }}
-                      title="Bei bücher.de kaufen"
-                    >
-                      <img 
-                        src="https://www.google.com/s2/favicons?domain=buecher.de&sz=64"
-                        alt="bücher.de"
-                        className="w-3 h-3 md:w-4 md:h-4"
-                        loading="lazy"
-                      />
-                    </Button>
-                    {/* geniallokal Affiliate Button with Favicon */}
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6 md:h-8 md:w-8 shadow-none"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const genialokalPartnerId = 'coratiert-genial';
-                        const isbn = book.isbn || '';
-                        if (isbn) {
-                          const affiliateUrl = `https://www.genialokal.de/produkt/${isbn}/?partnerId=${genialokalPartnerId}`;
-                          window.open(affiliateUrl, '_blank', 'noopener,noreferrer');
-                        }
-                      }}
-                      title="Bei geniallokal kaufen"
-                    >
-                      <img 
-                        src="https://www.google.com/s2/favicons?domain=genialokal.de&sz=64"
-                        alt="genialokal"
-                        className="w-3 h-3 md:w-4 md:h-4"
-                        loading="lazy"
-                      />
-                    </Button>
+                    {/* Dynamic Affiliate Buttons */}
+                    {book.isbn && affiliates.length > 0 && (
+                      <>
+                        {affiliates.map((aff) => (
+                          <Button
+                            key={aff.id}
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 md:h-8 md:w-8 shadow-none"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const url = buildAffiliateUrl(aff.link_template, book.isbn!);
+                              window.open(url, '_blank', 'noopener,noreferrer');
+                            }}
+                            title={`Bei ${aff.name} kaufen`}
+                          >
+                            <img
+                              src={getAffiliateIcon(aff)}
+                              alt={aff.name}
+                              className="w-3 h-3 md:w-4 md:h-4"
+                              loading="lazy"
+                            />
+                          </Button>
+                        ))}
+                      </>
+                    )}
                     <Button 
                       variant="ghost" 
                       size="icon" 

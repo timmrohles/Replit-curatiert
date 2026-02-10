@@ -232,6 +232,50 @@ export async function registerRoutes(
     log.warn('Could not verify storefront tables:', err);
   }
 
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS affiliates (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL UNIQUE,
+        network VARCHAR(50) DEFAULT 'manual',
+        merchant_id VARCHAR(255),
+        program_id VARCHAR(255),
+        website_url TEXT,
+        link_template TEXT NOT NULL DEFAULT '',
+        product_url_template TEXT,
+        icon_url TEXT,
+        favicon_url TEXT,
+        display_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS book_affiliates (
+        id SERIAL PRIMARY KEY,
+        book_id VARCHAR(255) NOT NULL,
+        affiliate_id INTEGER NOT NULL REFERENCES affiliates(id) ON DELETE CASCADE,
+        merchant_product_id VARCHAR(255),
+        external_id VARCHAR(255),
+        link_override TEXT,
+        display_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(book_id, affiliate_id)
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_affiliates_active ON affiliates(is_active)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_book_affiliates_book ON book_affiliates(book_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_book_affiliates_affiliate ON book_affiliates(affiliate_id)`);
+    log.info('Affiliate tables verified');
+  } catch (err) {
+    log.warn('Could not verify affiliate tables:', err);
+  }
+
   // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
@@ -2247,6 +2291,7 @@ export async function registerRoutes(
         `SELECT
            id, name, slug, network, merchant_id, program_id,
            website_url, link_template, product_url_template,
+           icon_url, favicon_url,
            display_order, is_active, notes, created_at, updated_at
          FROM affiliates
          ORDER BY display_order ASC, name ASC`,
@@ -2267,6 +2312,7 @@ export async function registerRoutes(
       const {
         id, name, website_url, link_template, product_url_template,
         network, merchant_id, program_id, notes,
+        icon_url, favicon_url,
         display_order, is_active
       } = body;
 
@@ -2287,14 +2333,16 @@ export async function registerRoutes(
              name = $1, slug = $2, network = $3, merchant_id = $4,
              program_id = $5, website_url = $6, link_template = $7,
              product_url_template = $8, display_order = $9,
-             is_active = $10, notes = $11, updated_at = NOW()
-           WHERE id = $12
+             is_active = $10, notes = $11,
+             icon_url = $12, favicon_url = $13, updated_at = NOW()
+           WHERE id = $14
            RETURNING *`,
           [
             name, slug, network || 'manual', merchant_id || null,
             program_id || null, website_url || null, link_template || '',
             product_url_template || null, display_order || 0,
-            is_active !== false, notes || null, id
+            is_active !== false, notes || null,
+            icon_url || null, favicon_url || null, id
           ]
         );
 
@@ -2308,15 +2356,18 @@ export async function registerRoutes(
           `INSERT INTO affiliates (
              name, slug, network, merchant_id, program_id,
              website_url, link_template, product_url_template,
+             icon_url, favicon_url,
              display_order, is_active, notes,
              created_at, updated_at
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
            RETURNING *`,
           [
             name, slug, network || 'manual', merchant_id || null,
             program_id || null, website_url || null, link_template || '',
-            product_url_template || null, display_order || 0,
+            product_url_template || null,
+            icon_url || null, favicon_url || null,
+            display_order || 0,
             is_active !== false, notes || null
           ]
         );
@@ -2346,11 +2397,37 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/api/affiliates/active', async (_req: Request, res: Response) => {
+    try {
+      const result = await queryDB(
+        `SELECT id, name, slug, website_url, link_template, icon_url, favicon_url, display_order
+         FROM affiliates
+         WHERE is_active = true
+         ORDER BY display_order ASC, name ASC`,
+        []
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Active affiliates fetch error:', error);
+      return res.json({ ok: true, data: [] });
+    }
+  });
+
   app.get('/api/books/:id/affiliates', async (req: Request, res: Response) => {
     try {
       const bookId = req.params.id;
       const result = await queryDB(
-        `SELECT * FROM get_book_affiliate_links($1) ORDER BY display_order ASC`,
+        `SELECT
+           ba.id, ba.book_id, ba.affiliate_id,
+           ba.merchant_product_id, ba.external_id, ba.link_override,
+           ba.display_order, ba.is_active,
+           a.name AS affiliate_name, a.slug AS affiliate_slug,
+           a.link_template, a.website_url, a.icon_url, a.favicon_url,
+           a.merchant_id AS affiliate_merchant_id
+         FROM book_affiliates ba
+         JOIN affiliates a ON ba.affiliate_id = a.id
+         WHERE ba.book_id = $1 AND ba.is_active = true AND a.is_active = true
+         ORDER BY ba.display_order ASC, a.display_order ASC`,
         [bookId]
       );
       return res.json({ ok: true, data: result.rows });

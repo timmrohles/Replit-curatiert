@@ -11,6 +11,52 @@ import { ONIX_TAG_COLORS, ONIX_TAG_ICONS } from '../../utils/tag-colors';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { LikeButton } from '../favorites/LikeButton';
 
+interface ActiveAffiliate {
+  id: number;
+  name: string;
+  slug: string;
+  website_url: string | null;
+  link_template: string;
+  icon_url: string | null;
+  favicon_url: string | null;
+  display_order: number;
+}
+
+let cachedAffiliates: ActiveAffiliate[] | null = null;
+let affiliatePromise: Promise<ActiveAffiliate[]> | null = null;
+
+function fetchActiveAffiliates(): Promise<ActiveAffiliate[]> {
+  if (cachedAffiliates) return Promise.resolve(cachedAffiliates);
+  if (affiliatePromise) return affiliatePromise;
+  affiliatePromise = fetch('/api/affiliates/active')
+    .then(r => r.json())
+    .then(data => {
+      cachedAffiliates = data.ok ? data.data : [];
+      return cachedAffiliates!;
+    })
+    .catch(() => {
+      cachedAffiliates = [];
+      return [];
+    });
+  return affiliatePromise;
+}
+
+function buildAffiliateUrl(template: string, isbn: string): string {
+  return template.replace(/\{isbn13\}/g, isbn).replace(/\{isbn\}/g, isbn);
+}
+
+function getAffiliateIcon(affiliate: ActiveAffiliate): string {
+  if (affiliate.icon_url) return affiliate.icon_url;
+  if (affiliate.favicon_url) return affiliate.favicon_url;
+  if (affiliate.website_url) {
+    try {
+      const domain = new URL(affiliate.website_url).hostname;
+      return `https://www.google.com/s2/favicons?domain=${domain}&sz=64`;
+    } catch {}
+  }
+  return `https://www.google.com/s2/favicons?domain=${affiliate.slug}.de&sz=64`;
+}
+
 export interface EditorialBookCardData {
   id: string;
   title: string;
@@ -124,8 +170,8 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
   const [showTagsOverlay, setShowTagsOverlay] = useState(false);
   const [showInfoOverlay, setShowInfoOverlay] = useState(false);
   const [isKlappentextExpanded, setIsKlappentextExpanded] = useState(false);
+  const [affiliates, setAffiliates] = useState<ActiveAffiliate[]>([]);
 
-  // Fetch ONIX Tags
   useEffect(() => {
     getAllONIXTags()
       .then(setOnixTags)
@@ -133,6 +179,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
         console.error('Error loading ONIX tags in EditorialBookCard:', error);
         setOnixTags([]);
       });
+    fetchActiveAffiliates().then(setAffiliates);
   }, []);
 
   // Get ONIX tags for this book
@@ -419,54 +466,33 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
 
           <ShareButton book={book} />
           
-          {/* Affiliate Buttons */}
-          <div className="flex items-center gap-1.5">
-            {/* bücher.de Affiliate Button with Favicon */}
-            {book.isbn && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-10 w-10 md:h-11 md:w-11 shadow-none"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const affiliatePartnerId = 'coratiert';
-                  const affiliateUrl = `https://www.buecher.de/go/?isbn=${book.isbn}&partner=${affiliatePartnerId}`;
-                  window.open(affiliateUrl, '_blank', 'noopener,noreferrer');
-                }}
-                title="Bei bücher.de kaufen"
-              >
-                <img 
-                  src="https://www.google.com/s2/favicons?domain=buecher.de&sz=64"
-                  alt="bücher.de"
-                  className="w-5 h-5"
-                  loading="lazy"
-                />
-              </Button>
-            )}
-            
-            {/* geniallokal Affiliate Button with Favicon */}
-            {book.isbn && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-10 w-10 md:h-11 md:w-11 shadow-none"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const genialokalPartnerId = 'coratiert-genial';
-                  const affiliateUrl = `https://www.genialokal.de/produkt/${book.isbn}/?partnerId=${genialokalPartnerId}`;
-                  window.open(affiliateUrl, '_blank', 'noopener,noreferrer');
-                }}
-                title="Bei geniallokal kaufen"
-              >
-                <img 
-                  src="https://www.google.com/s2/favicons?domain=genialokal.de&sz=64"
-                  alt="geniallokal"
-                  className="w-5 h-5"
-                  loading="lazy"
-                />
-              </Button>
-            )}
-          </div>
+          {/* Affiliate Buttons - dynamisch aus DB */}
+          {book.isbn && affiliates.length > 0 && (
+            <div className="flex items-center gap-1.5">
+              {affiliates.map((aff) => (
+                <Button
+                  key={aff.id}
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 md:h-11 md:w-11 shadow-none"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const url = buildAffiliateUrl(aff.link_template, book.isbn!);
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
+                  title={`Bei ${aff.name} kaufen`}
+                  data-testid={`button-affiliate-${aff.slug}`}
+                >
+                  <img
+                    src={getAffiliateIcon(aff)}
+                    alt={aff.name}
+                    className="w-5 h-5"
+                    loading="lazy"
+                  />
+                </Button>
+              ))}
+            </div>
+          )}
           
           {/* Arrow Right Button */}
           <Button 
