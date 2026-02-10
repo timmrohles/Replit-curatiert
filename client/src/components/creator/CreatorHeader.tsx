@@ -195,7 +195,7 @@ export const CreatorHeader = memo(function CreatorHeader({
 
       <div className="w-full mt-4 md:mt-6 isolate">
         <Heading 
-          as="h2"
+          as="h3"
           variant="h2"
           className="mb-4"
           style={{ color: '#6B7280' }}
