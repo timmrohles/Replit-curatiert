@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, Share2, Mail, Copy, Check, MessageCircle, ChevronDown } from 'lucide-react';
+import { Tags, ArrowRight, Quote, Share2, Mail, Copy, Check, MessageCircle, ChevronDown, Award } from 'lucide-react';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -168,7 +168,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
   const navigate = useSafeNavigate();
   const { resolvedTheme } = useTheme();
   const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
-  const [showTagsOverlay, setShowTagsOverlay] = useState(false);
+  const [showAwardsOverlay, setShowAwardsOverlay] = useState(false);
   const [showInfoOverlay, setShowInfoOverlay] = useState(false);
   const [isKlappentextExpanded, setIsKlappentextExpanded] = useState(false);
   const [affiliates, setAffiliates] = useState<ActiveAffiliate[]>([]);
@@ -191,6 +191,11 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
       book.onixTagIds?.includes(tag.id) && tag.visible
     );
   }, [onixTags, book.onixTagIds]);
+
+  const awardTags = useMemo(() =>
+    bookONIXTags.filter(tag => ['Auszeichnung', 'Medienecho', 'Status'].includes(tag.type)),
+    [bookONIXTags]
+  );
 
   // Separate hover vs always-visible badges
   const hoverTags = useMemo(() => 
@@ -219,42 +224,44 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
             }}
           >
             {/* Interactive Icons - oben rechts INNERHALB des Covers */}
-            <div className="absolute top-3 right-3 flex gap-2" style={{ zIndex: 150 }}>
+            <div className="absolute top-3 right-3 flex flex-col gap-2" style={{ zIndex: 150 }}>
               {/* Pressestimmen Button */}
               {book.reviews && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowInfoOverlay(!showInfoOverlay);
-                    setShowTagsOverlay(false);
+                    setShowAwardsOverlay(false);
                   }}
                   className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
                   style={{ 
-                    backgroundColor: showInfoOverlay ? 'var(--color-blue)' : (resolvedTheme === 'dark' ? '#FFFFFF' : '#2a2a2a'),
-                    color: showInfoOverlay ? '#FFFFFF' : (resolvedTheme === 'dark' ? '#2a2a2a' : '#FFFFFF')
+                    backgroundColor: '#247ba0',
+                    color: '#FFFFFF'
                   }}
                   title="Pressestimmen anzeigen"
+                  data-testid="button-pressestimmen"
                 >
                   <Quote className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
               )}
               
-              {/* Tags Icon */}
-              {bookONIXTags.length > 0 && (
+              {/* Auszeichnungen Icon */}
+              {awardTags.length > 0 && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setShowTagsOverlay(!showTagsOverlay);
+                    setShowAwardsOverlay(!showAwardsOverlay);
                     setShowInfoOverlay(false);
                   }}
                   className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
                   style={{ 
-                    backgroundColor: showTagsOverlay ? 'var(--color-teal)' : (resolvedTheme === 'dark' ? '#FFFFFF' : '#2a2a2a'),
-                    color: showTagsOverlay ? '#FFFFFF' : (resolvedTheme === 'dark' ? '#2a2a2a' : '#FFFFFF')
+                    backgroundColor: '#247ba0',
+                    color: '#FFFFFF'
                   }}
-                  title="Tags anzeigen"
+                  title="Auszeichnungen anzeigen"
+                  data-testid="button-awards"
                 >
-                  <Tags className="w-5 h-5 md:w-6 md:h-6" />
+                  <Award className="w-5 h-5 md:w-6 md:h-6" />
                 </button>
               )}
             </div>
@@ -338,24 +345,29 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
               </div>
             )}
             
-            {/* Tags Overlay */}
-            {showTagsOverlay && bookONIXTags.length > 0 && (
-              <div className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-black/85 backdrop-blur-[8px]">
-                <h5 className="text-white font-headline text-base normal-case">
-                  Tags
+            {/* Awards Overlay */}
+            {showAwardsOverlay && awardTags.length > 0 && (
+              <div className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-white">
+                <h5 className="text-[#2a2a2a] font-headline text-base normal-case">
+                  Auszeichnungen
                 </h5>
                 
                 <div className="flex flex-wrap gap-2">
-                  {bookONIXTags.map((tag) => (
+                  {awardTags.map((tag) => (
                     <div
                       key={tag.id}
-                      className="px-3 py-1.5 text-xs rounded-full inline-flex items-center gap-1"
-                      style={{ 
-                        backgroundColor: tag.color || ONIX_TAG_COLORS[tag.type] || '#70c1b3',
-                        color: 'var(--color-white)'
-                      }}
+                      className="bg-[#247ba0]/10 text-[#247ba0] border border-[#247ba0]/20 rounded-full px-3 py-1.5 inline-flex items-center gap-1.5 text-xs"
                     >
-                      <span>{ONIX_TAG_ICONS[tag.type] || '🏷️'} {tag.displayName}</span>
+                      <span>{tag.displayName}</span>
+                      <LikeButton 
+                        entityId={`onix-tag-${tag.id}`}
+                        entityType="tag"
+                        entityTitle={tag.displayName}
+                        entitySubtitle={tag.type}
+                        variant="minimal"
+                        size="sm"
+                        iconColor="#247ba0"
+                      />
                     </div>
                   ))}
                 </div>
@@ -364,15 +376,15 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
             
             {/* Reviews/Kommentare Overlay */}
             {showInfoOverlay && book.reviews && (
-              <div className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-black/85 backdrop-blur-[8px]">
-                <h5 className="text-white font-headline text-base normal-case">
+              <div className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-white">
+                <h5 className="text-[#2a2a2a] font-headline text-base normal-case">
                   Kommentare
                 </h5>
                 
                 <Text 
                   as="div" 
                   variant="small" 
-                  className="text-white !normal-case !tracking-normal leading-relaxed whitespace-pre-line"
+                  className="text-[#2a2a2a] !normal-case !tracking-normal leading-relaxed whitespace-pre-line"
                 >
                   {book.reviews}
                 </Text>

@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useMemo, useCallback } from 'react';
 import { useSafeNavigate, buildBookUrl } from '../../utils/routing';
-import { Info, Tags, ArrowRight, Share2, ShoppingCart } from 'lucide-react';
+import { Info, Tags, Quote, Award, ArrowRight, Share2, ShoppingCart } from 'lucide-react';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -102,8 +102,8 @@ export const BookCard = memo(function BookCard({
   
   const safeNav = useSafeNavigate();
   const { resolvedTheme } = useTheme();
-  const [showTagsOverlay, setShowTagsOverlay] = useState(false);
-  const [showInfoOverlay, setShowInfoOverlay] = useState(false);
+  const [showAwardsOverlay, setShowAwardsOverlay] = useState(false);
+  const [showReviewsOverlay, setShowReviewsOverlay] = useState(false);
   const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
   const [affiliates, setAffiliates] = useState<ActiveAffiliate[]>([]);
 
@@ -169,6 +169,14 @@ export const BookCard = memo(function BookCard({
     return prominentTags.filter(tag => !alwaysVisibleIds.includes(tag.id));
   }, [onixTags, onixTagIds, alwaysVisibleBadges, prominentTags]);
 
+  const awardTags = useMemo(() => {
+    if (!onixTags.length || !onixTagIds.length) return [];
+    return onixTags.filter(tag =>
+      onixTagIds.includes(tag.id) &&
+      ['Auszeichnung', 'Medienecho', 'Status'].includes(tag.type)
+    );
+  }, [onixTags, onixTagIds]);
+
   // Get Serie/Band info
   const serieInfo = useMemo(() => {
     if (!book?.seriesName || !book?.collectionNumber) return null;
@@ -206,41 +214,39 @@ export const BookCard = memo(function BookCard({
         <div className="aspect-[2/3] bg-muted rounded-[1px] relative overflow-visible">
           {/* Interactive Icons - OUTSIDE flip container, always visible */}
           <div className="absolute top-3 right-3 flex flex-col gap-2 z-50">
-            {/* Icon A - Info/Short Description */}
-            {klappentext && (
+            {(klappentext || (book as any)?.reviews) && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowInfoOverlay(!showInfoOverlay);
-                  setShowTagsOverlay(false);
+                  setShowReviewsOverlay(!showReviewsOverlay);
+                  setShowAwardsOverlay(false);
                 }}
                 className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
                 style={{ 
-                  backgroundColor: showInfoOverlay ? 'var(--color-blue)' : (resolvedTheme === 'dark' ? '#FFFFFF' : '#2a2a2a'),
-                  color: showInfoOverlay ? '#FFFFFF' : (resolvedTheme === 'dark' ? '#2a2a2a' : '#FFFFFF')
+                  backgroundColor: '#247ba0',
+                  color: '#FFFFFF'
                 }}
-                title="Kurzbeschreibung anzeigen"
+                title="Pressestimmen anzeigen"
               >
-                <Info className="w-5 h-5 md:w-6 md:h-6" />
+                <Quote className="w-5 h-5 md:w-6 md:h-6" />
               </button>
             )}
             
-            {/* Icon B - Tags/Categories Overlay */}
-            {tags && tags.length > 0 && (
+            {awardTags.length > 0 && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  setShowTagsOverlay(!showTagsOverlay);
-                  setShowInfoOverlay(false);
+                  setShowAwardsOverlay(!showAwardsOverlay);
+                  setShowReviewsOverlay(false);
                 }}
                 className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
                 style={{ 
-                  backgroundColor: showTagsOverlay ? 'var(--color-blue)' : (resolvedTheme === 'dark' ? '#FFFFFF' : '#2a2a2a'),
-                  color: showTagsOverlay ? '#FFFFFF' : (resolvedTheme === 'dark' ? '#2a2a2a' : '#FFFFFF')
+                  backgroundColor: '#247ba0',
+                  color: '#FFFFFF'
                 }}
-                title="Tags anzeigen"
+                title="Auszeichnungen anzeigen"
               >
-                <Tags className="w-5 h-5 md:w-6 md:h-6" />
+                <Award className="w-5 h-5 md:w-6 md:h-6" />
               </button>
             )}
           </div>
@@ -335,60 +341,64 @@ export const BookCard = memo(function BookCard({
               </div>
             )}
             
-            {/* Tags Overlay */}
-            {showTagsOverlay && tags && (
+            {/* Awards Overlay */}
+            {showAwardsOverlay && awardTags.length > 0 && (
               <div 
-                className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-black/85 backdrop-blur-[8px]"
+                className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-white"
               >
                 <Heading 
                   as="h5" 
                   variant="h6" 
-                  className="text-white !normal-case"
+                  className="text-[#2a2a2a] !normal-case"
                 >
-                  Tags
+                  Auszeichnungen
                 </Heading>
                 
-                {/* Tags */}
                 <div className="flex flex-wrap gap-x-2 gap-y-2">
-                  {tags.map((tag) => (
-                    <a
-                      key={tag}
-                      href={`/tag/${encodeURIComponent(tag)}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                      className="text-white hover:text-cerulean underline transition-colors"
+                  {awardTags.map((tag) => (
+                    <div
+                      key={tag.id}
+                      className="bg-[#247ba0]/10 text-[#247ba0] border border-[#247ba0]/20 rounded-full px-3 py-1.5 inline-flex items-center gap-1.5"
                     >
                       <Text 
                         as="span" 
                         variant="small"
                         className="!normal-case !tracking-normal"
                       >
-                        {tag}
+                        {tag.displayName}
                       </Text>
-                    </a>
+                      <LikeButton 
+                        entityId={`onix-tag-${tag.id}`}
+                        entityType="tag"
+                        entityTitle={tag.displayName}
+                        entitySubtitle={tag.type}
+                        variant="minimal"
+                        size="sm"
+                        iconColor="#247ba0"
+                      />
+                    </div>
                   ))}
                 </div>
               </div>
             )}
             
-            {/* Info Overlay */}
-            {showInfoOverlay && klappentext && (
+            {/* Reviews Overlay */}
+            {showReviewsOverlay && (klappentext || book?.reviews) && (
               <div 
-                className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-black/85 backdrop-blur-[8px]"
+                className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-white"
               >
                 <Heading 
                   as="h5" 
                   variant="h6" 
-                  className="text-white !normal-case"
+                  className="text-[#2a2a2a] !normal-case"
                 >
-                  Kurzbeschreibung
+                  Pressestimmen
                 </Heading>
                 
                 <Text 
                   as="p" 
                   variant="small" 
-                  className="text-white !normal-case !tracking-normal leading-relaxed"
+                  className="text-[#2a2a2a] !normal-case !tracking-normal leading-relaxed"
                 >
                   {klappentext}
                 </Text>

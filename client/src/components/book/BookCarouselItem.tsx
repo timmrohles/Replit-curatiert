@@ -1,6 +1,6 @@
 import React, { useState, memo, useEffect, useMemo, useCallback } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, ShoppingCart, Share2 } from 'lucide-react';
+import { Tags, ArrowRight, Quote, ShoppingCart, Share2, Award } from 'lucide-react';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -109,66 +109,10 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
   const { resolvedTheme } = useTheme();
   const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
   const [showReviewsOverlay, setShowReviewsOverlay] = useState(false);
+  const [showAwardsOverlay, setShowAwardsOverlay] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   const [isKlappentextExpanded, setIsKlappentextExpanded] = useState(false);
   const [affiliates, setAffiliates] = useState<ActiveAffiliate[]>([]);
-
-  // ✅ TEMPORARY: Add mock reviews for testing if not present
-  const bookWithMockReviews = useMemo(() => {
-    if (book.reviews && book.reviews.length > 0) {
-      return book;
-    }
-    
-    // Add mock reviews to every 3rd book for testing
-    const shouldAddMockReviews = parseInt(book.id) % 3 === 0;
-    
-    if (shouldAddMockReviews) {
-      return {
-        ...book,
-        reviews: [
-          {
-            source: 'Die Zeit',
-            quote: 'Ein brillantes Meisterwerk, das den Leser von der ersten bis zur letzten Seite fesselt.'
-          },
-          {
-            source: 'Süddeutsche Zeitung',
-            quote: 'Sprachgewaltig und bewegend. Ein Roman, der noch lange nachhallt.'
-          },
-          {
-            source: 'Der Spiegel',
-            quote: 'Eine literarische Entdeckung ersten Ranges.'
-          }
-        ]
-      };
-    }
-    
-    return book;
-  }, [book]);
-
-  // ✅ TEMPORARY: Add mock klappentext for testing if not present
-  const bookWithMockData = useMemo(() => {
-    // If klappentext or shortDescription already exists, use it
-    if (bookWithMockReviews.klappentext || bookWithMockReviews.shortDescription) {
-      return bookWithMockReviews;
-    }
-    
-    // Mock klappentexte for different books
-    const mockKlappentexte = [
-      'Eine Stadt hinter einer Mauer, ein Mann auf der Suche nach verlorener Liebe. Murakamis neuester Roman ist eine magische Reise zwischen Realität und Traum, die den Leser in ihren Bann zieht und nicht mehr loslässt.',
-      'Eine Frau verliert ihre Sprache nach einem Trauma. Ihr Griechischlehrer versucht, ihr das Sprechen zurückzugeben. Ein poetischer Roman über Verlust und Heilung, über die Macht der Worte und die Suche nach Identität.',
-      'Ein fesselnder Roman über Familie, Identität und die Suche nach dem eigenen Platz in der Welt. Mit großer Erzählkraft und tiefem Einblick in die menschliche Seele geschrieben.',
-      'Eine Geschichte, die unter die Haut geht. Einfühlsam und präzise erzählt, voller unvergesslicher Charaktere und Momente, die noch lange nachwirken.',
-      'Ein literarisches Meisterwerk, das die großen Fragen des Lebens stellt: Wer sind wir? Wohin gehen wir? Was bleibt von uns? Sprachgewaltig und bewegend.',
-    ];
-    
-    // Select klappentext based on book ID
-    const klappentextIndex = parseInt(bookWithMockReviews.id) % mockKlappentexte.length;
-    
-    return {
-      ...bookWithMockReviews,
-      klappentext: mockKlappentexte[klappentextIndex]
-    };
-  }, [bookWithMockReviews]);
 
   // Fetch ONIX Tags and Affiliates
   useEffect(() => {
@@ -184,7 +128,14 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
   // Memoized callbacks for better performance
   const handleReviewsToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    setShowAwardsOverlay(false);
     setShowReviewsOverlay(prev => !prev);
+  }, []);
+
+  const handleAwardsToggle = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowReviewsOverlay(false);
+    setShowAwardsOverlay(prev => !prev);
   }, []);
   
   const handleKlappentextToggle = useCallback((e: React.MouseEvent) => {
@@ -279,6 +230,16 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
     return match ? match[0] : null;
   }, [serieTags]);
 
+  const awardTags = useMemo(() => {
+    const combined = [...alwaysVisibleBadges, ...prominentTags];
+    const seen = new Set<string>();
+    return combined.filter(tag => {
+      if (seen.has(tag.id)) return false;
+      seen.add(tag.id);
+      return ['Auszeichnung', 'Medienecho', 'Status'].includes(tag.type);
+    });
+  }, [alwaysVisibleBadges, prominentTags]);
+
   return (
     <div 
       className="bg-transparent flex-shrink-0 flex flex-col group relative z-10"
@@ -298,19 +259,33 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
         {/* Cover mit BookCard-Styling und Flip */}
         <div className="aspect-[2/3] bg-muted rounded-[1px] relative overflow-visible">
           {/* Interactive Icons - OUTSIDE flip container, always visible */}
-          <div className="absolute top-3 right-3 flex flex-row gap-2" style={{ zIndex: 150 }}>
+          <div className="absolute top-3 right-3 flex flex-col gap-2" style={{ zIndex: 150 }}>
             {/* Pressestimmen Button */}
-            {bookWithMockReviews.reviews && bookWithMockReviews.reviews.length > 0 && (
+            {book.reviews && book.reviews.length > 0 && (
               <button
                 onClick={handleReviewsToggle}
                 className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
                 style={{ 
-                  backgroundColor: showReviewsOverlay ? 'var(--color-blue)' : (resolvedTheme === 'dark' ? '#FFFFFF' : '#2a2a2a'),
-                  color: showReviewsOverlay ? '#FFFFFF' : (resolvedTheme === 'dark' ? '#2a2a2a' : '#FFFFFF')
+                  backgroundColor: '#247ba0',
+                  color: '#FFFFFF'
                 }}
                 title="Pressestimmen anzeigen"
               >
                 <Quote className="w-5 h-5 md:w-6 md:h-6" />
+              </button>
+            )}
+            {/* Auszeichnungen Button */}
+            {awardTags.length > 0 && (
+              <button
+                onClick={handleAwardsToggle}
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
+                style={{ 
+                  backgroundColor: '#247ba0',
+                  color: '#FFFFFF'
+                }}
+                title="Auszeichnungen anzeigen"
+              >
+                <Award className="w-5 h-5 md:w-6 md:h-6" />
               </button>
             )}
           </div>
@@ -406,38 +381,75 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
             )}
             
             {/* Reviews Overlay - Pressestimmen */}
-            {showReviewsOverlay && bookWithMockReviews.reviews && (
+            {showReviewsOverlay && book.reviews && (
               <div 
-                className="absolute inset-0 p-3 md:p-4 flex flex-col gap-2 md:gap-3 overflow-y-auto bg-black/90 backdrop-blur-[8px]"
+                className="absolute inset-0 p-3 md:p-4 flex flex-col gap-2 md:gap-3 overflow-y-auto bg-white"
                 style={{ zIndex: 100 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <Heading 
                   as="h5" 
                   variant="h6" 
-                  className="text-white !normal-case"
+                  className="text-[#2a2a2a] !normal-case"
                 >
                   Pressestimmen
                 </Heading>
                 
-                {/* Reviews - Display first 2-3 reviews */}
                 <div className="flex flex-col gap-2 md:gap-3">
-                  {bookWithMockReviews.reviews.slice(0, 3).map((review, index) => (
+                  {book.reviews.slice(0, 3).map((review, index) => (
                     <div key={index} className="flex flex-col gap-1">
                       <Text 
                         as="p" 
                         variant="small" 
-                        className="text-white !normal-case !tracking-normal leading-relaxed italic"
+                        className="text-[#2a2a2a] !normal-case !tracking-normal leading-relaxed italic"
                       >
                         "{review.quote}"
                       </Text>
                       <Text 
                         as="p" 
                         variant="xs" 
-                        className="text-white opacity-75 !normal-case !tracking-normal"
+                        className="text-[#2a2a2a] opacity-60 !normal-case !tracking-normal"
                       >
                         — {review.source}
                       </Text>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Awards Overlay - Auszeichnungen */}
+            {showAwardsOverlay && awardTags.length > 0 && (
+              <div 
+                className="absolute inset-0 p-3 md:p-4 flex flex-col gap-2 md:gap-3 overflow-y-auto bg-white"
+                style={{ zIndex: 100 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Heading 
+                  as="h5" 
+                  variant="h6" 
+                  className="text-[#2a2a2a] !normal-case"
+                >
+                  Auszeichnungen
+                </Heading>
+                
+                <div className="flex flex-wrap gap-2">
+                  {awardTags.map((tag) => (
+                    <div 
+                      key={tag.id}
+                      className="bg-[#247ba0]/10 text-[#247ba0] border border-[#247ba0]/20 rounded-full px-3 py-1.5 inline-flex items-center gap-1.5"
+                    >
+                      <span className="text-xs md:text-sm whitespace-nowrap">{tag.displayName}</span>
+                      <LikeButton 
+                        entityId={`onix-tag-${tag.id}`}
+                        entityType="tag"
+                        entityTitle={tag.displayName}
+                        entitySubtitle={tag.type}
+                        variant="minimal"
+                        size="sm"
+                        iconColor="#247ba0"
+                        backgroundColor="transparent"
+                      />
                     </div>
                   ))}
                 </div>
@@ -468,7 +480,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
           </Text>
           
           {/* Klappentext - nur dieser Bereich expandiert */}
-          {(bookWithMockData.klappentext || bookWithMockData.shortDescription) && (
+          {(book.klappentext || book.shortDescription) && (
             <div className="flex flex-col flex-1 min-h-0">
               <div className={`${isKlappentextExpanded ? 'flex-1 overflow-y-auto' : 'h-[6.5rem] md:h-[7rem] flex-shrink-0'}`}>
                 <Text 
@@ -479,7 +491,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
                     color: 'var(--color-foreground-muted)'
                   }}
                 >
-                  {bookWithMockData.klappentext || bookWithMockData.shortDescription}
+                  {book.klappentext || book.shortDescription}
                 </Text>
               </div>
               <button
