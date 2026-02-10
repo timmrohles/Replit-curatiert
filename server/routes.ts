@@ -4,6 +4,7 @@ import { queryDB, testConnection } from "./db";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import multer from "multer";
+import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 
@@ -317,7 +318,7 @@ export async function registerRoutes(
       const isAuthed = await requireAdminGuard(req, res);
       if (!isAuthed) return;
 
-      avatarUpload.single('avatar')(req, res, (err: any) => {
+      avatarUpload.single('avatar')(req, res, async (err: any) => {
         if (err) {
           log.error('Multer error:', err);
           return res.status(400).json({ ok: false, error: err.message || 'Upload fehlgeschlagen' });
@@ -327,10 +328,29 @@ export async function registerRoutes(
           return res.status(400).json({ ok: false, error: 'Keine Datei hochgeladen' });
         }
 
-        const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-        log.info('Avatar uploaded:', avatarUrl);
+        try {
+          const originalPath = req.file.path;
+          const webpFilename = req.file.filename.replace(/\.[^.]+$/, '.webp');
+          const webpPath = path.join(uploadsDir, webpFilename);
 
-        return res.json({ ok: true, data: { url: avatarUrl } });
+          await sharp(originalPath)
+            .webp({ quality: 82 })
+            .resize({ width: 512, height: 512, fit: 'cover' })
+            .toFile(webpPath);
+
+          if (originalPath !== webpPath) {
+            fs.unlinkSync(originalPath);
+          }
+
+          const avatarUrl = `/uploads/avatars/${webpFilename}`;
+          log.info('Avatar uploaded & converted to WebP:', avatarUrl);
+
+          return res.json({ ok: true, data: { url: avatarUrl } });
+        } catch (convErr) {
+          log.error('WebP conversion error:', convErr);
+          const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+          return res.json({ ok: true, data: { url: avatarUrl } });
+        }
       });
     } catch (error) {
       log.error('Avatar upload error:', error);
