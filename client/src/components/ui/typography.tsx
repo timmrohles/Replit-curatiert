@@ -80,7 +80,7 @@ export const Text = React.forwardRef<HTMLElement, TypographyProps>(function Text
     large:   "!text-[length:var(--fluid-h5)] !leading-snug !font-sans",           // ~18-20px (Hervorgehoben)
     'price-label': "!text-[length:var(--fluid-price-label)] !leading-snug !font-sans",  // 📱 Mobil 14px → 💻 Desktop 18px
   };
-  return <Tag ref={ref as any} style={style} id={id} href={href as any} onClick={onClick as any} className={cn(styles[variant] || styles.default, className)}>{children}</Tag>;
+  return <Tag ref={ref as any} style={style} id={id} href={href as any} onClick={onClick as any} className="!text-[length:var(--fluid-body-small)] !leading-snug !font-sans text-white whitespace-nowrap font-normal">{children}</Tag>;
 });
 
 /**
