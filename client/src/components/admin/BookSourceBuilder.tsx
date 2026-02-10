@@ -649,8 +649,9 @@ function IncludeSourcesEditor({ config, onChange }: { config: BookSourceConfig; 
       {/* Award Instances */}
       <div>
         <label className="text-sm font-medium mb-2 block">
-          Auszeichnungen (Instances)
+          Auszeichnungen (Jahrgänge)
         </label>
+        <p className="text-xs text-gray-500 mb-1">Konkrete Preis-Jahrgänge, z.B. "Deutscher Buchpreis 2024"</p>
         <MultiSelectAwardInstances
           selectedIds={config.query?.include?.awardInstanceIds || []}
           onChange={(ids) => onChange({
@@ -741,7 +742,7 @@ function ExcludeSourcesEditor({ config, onChange }: { config: BookSourceConfig; 
       {/* Award Instances */}
       <div>
         <label className="text-sm font-medium mb-2 block">
-          Auszeichnungen (Instances)
+          Auszeichnungen (Jahrgänge)
         </label>
         <MultiSelectAwardInstances
           selectedIds={config.query?.exclude?.awardInstanceIds || []}
@@ -1336,7 +1337,9 @@ function MultiSelectAwardInstances({ selectedIds, onChange }: { selectedIds: num
         },
       });
       const result = await response.json();
-      // Expected: { id, awardId, awardName, year, label, displayLabel }
+      if (result.success === false) {
+        console.error('Award editions API error:', result.error);
+      }
       setInstances(result.data || []);
       setLoading(false);
     } catch (err) {
@@ -1374,7 +1377,7 @@ function MultiSelectAwardInstances({ selectedIds, onChange }: { selectedIds: num
       <div className="max-h-48 overflow-y-auto">
         {filteredInstances.length === 0 ? (
           <div className="p-3 text-sm text-gray-500 text-center">
-            {instances.length === 0 ? 'Keine Award Instances verfügbar (API-Endpoint fehlt noch)' : 'Keine Ergebnisse'}
+            {instances.length === 0 ? 'Noch keine Auszeichnungs-Jahrgänge angelegt. Erstelle sie unter Auszeichnungen → Editionen.' : 'Keine Ergebnisse'}
           </div>
         ) : (
           filteredInstances.map(inst => (

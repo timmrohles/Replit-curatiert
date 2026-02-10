@@ -1225,6 +1225,24 @@ export async function registerRoutes(
     }
   });
 
+  // Flat endpoint: all editions across all awards (for Page Composer picker)
+  app.get('/api/award_editions', async (_req: Request, res: Response) => {
+    try {
+      const result = await queryDB(
+        `SELECT e.id, e.award_id, e.year, e.theme, e.notes,
+                a.name AS award_name, a.visibility AS status
+         FROM award_editions e
+         JOIN awards a ON e.award_id = a.id
+         ORDER BY a.name ASC, e.year DESC`,
+        []
+      );
+      return res.json({ success: true, data: result.rows });
+    } catch (error) {
+      log.error('Award editions fetch error:', error);
+      return res.status(500).json({ success: false, error: 'Fehler beim Laden der Auszeichnungs-Jahrgänge' });
+    }
+  });
+
   // Editions
   app.get('/api/awards/:awardId/editions', async (req: Request, res: Response) => {
     try {
