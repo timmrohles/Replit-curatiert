@@ -180,7 +180,6 @@ export function CarouselContainer({
           scrollbarWidth: 'none', // Firefox
           msOverflowStyle: 'none', // IE/Edge
           WebkitOverflowScrolling: 'touch', // iOS smooth scrolling
-          touchAction: 'pan-x', // Enable horizontal touch scrolling
           cursor: 'grab',
           overflowX: 'auto',
           overflowY: 'visible',
