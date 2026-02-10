@@ -158,25 +158,6 @@
     color: #FFFFFF !important;
   }
 
-  /* 🎯 KURATORNAME - Eigene Klasse für Creator Namen */
-  .kuratorname {
-    font-family: var(--font-family-headline);
-    font-size: clamp(1.75rem, 1.5rem + 0.8vw, 2.25rem);
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    font-weight: 400;
-    line-height: 1.2;
-  }
-
-  .section-title {
-    font-family: var(--font-headline);
-    font-size: clamp(1.5rem, 1.3rem + 0.6vw, 2rem);
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-    font-weight: 400;
-    line-height: 1.2;
-  }
-
   /* 📘 SERIES LINK - Blaue Links für Buchreihen-Badges */
   .series-link {
     color: var(--color-blue);
@@ -736,6 +717,25 @@
   .heart-bounce {
     animation: heartBounce 0.4s cubic-bezier(0.36, 0, 0.66, -0.56);
   }
+}
+
+/* 🎯 KURATORNAME & SECTION-TITLE - Außerhalb @layer für höchste Priorität */
+.kuratorname {
+  font-family: var(--font-family-headline);
+  font-size: clamp(1.75rem, 1.5rem + 0.8vw, 2.25rem);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.section-title {
+  font-family: var(--font-headline);
+  font-size: clamp(1.5rem, 1.3rem + 0.6vw, 2rem);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 /* ================================================================
