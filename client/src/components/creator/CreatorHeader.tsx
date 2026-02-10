@@ -192,7 +192,7 @@ export const CreatorHeader = memo(function CreatorHeader({
         </div>
       </div>
       <div className="w-full mt-4 md:mt-6 isolate">
-        <h3 className="section-title mb-4 text-[292929]">
+        <h3 className="section-title mb-4 text-foreground">
           {occasion.replace('und und', '&')}
         </h3>
       </div>
