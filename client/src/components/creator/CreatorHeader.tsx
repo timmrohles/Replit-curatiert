@@ -122,7 +122,7 @@ export const CreatorHeader = memo(function CreatorHeader({
             <Text 
               as="span"
               variant="small" 
-              className={`!font-semibold ${isAdSection ? 'text-white' : 'text-black'}`}
+              className={`font-semibold ${isAdSection ? 'text-white' : 'text-gray-500'}`}
             >
               {focus.includes('ANZEIGE') ? (
                 <>
@@ -194,7 +194,7 @@ export const CreatorHeader = memo(function CreatorHeader({
       </div>
 
       <div className="w-full mt-4 md:mt-6 isolate">
-        <h3 className="section-title mb-4 text-gray-500">
+        <h3 className="section-title mb-4 text-black">
           {occasion.replace('und und', '&')}
         </h3>
       </div>
@@ -310,7 +310,7 @@ export const CreatorHeader = memo(function CreatorHeader({
             }
             className={`leading-relaxed ${
               shouldTruncate && !isExpanded ? 'line-clamp-3' : ''
-            } ${isAdSection ? 'text-white' : 'text-foreground'}`}
+            } ${isAdSection ? 'text-white' : 'text-gray-500'}`}
             ref={textRef}
           >
             {curationReason}
