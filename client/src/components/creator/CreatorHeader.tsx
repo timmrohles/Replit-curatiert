@@ -80,7 +80,6 @@ export const CreatorHeader = memo(function CreatorHeader({
 
   return (
     <div className="w-full text-base leading-normal text-left">
-      
       <div className="flex items-center gap-3 md:gap-4 lg:gap-6">
         <div className="flex-shrink-0">
           <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-blue ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
@@ -192,13 +191,11 @@ export const CreatorHeader = memo(function CreatorHeader({
           )}
         </div>
       </div>
-
       <div className="w-full mt-4 md:mt-6 isolate">
-        <h3 className="section-title mb-4 text-black">
+        <h3 className="section-title mb-4 text-[292929]">
           {occasion.replace('und und', '&')}
         </h3>
       </div>
-
       {/* Tags and Category Section - ISOLATED from other sections */}
       {(category || categories || (tags && tags.length > 0)) && (
         <div className="w-full mt-4 mb-4">
@@ -294,7 +291,6 @@ export const CreatorHeader = memo(function CreatorHeader({
           </div>
         </div>
       )}
-
       {curationReason && (
         <div className="w-full mt-4">
           <Text 
