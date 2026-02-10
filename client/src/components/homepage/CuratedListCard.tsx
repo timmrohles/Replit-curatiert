@@ -73,7 +73,7 @@ export const CuratedListCard = memo(function CuratedListCard({
         <div className="flex items-center gap-3">
           {curatorAvatar && (
             <div className="relative flex-shrink-0">
-              <div className="curator-avatar curator-avatar-sm ring-2 ring-blue ring-offset-2 shadow-lg">
+              <div className="curator-avatar curator-avatar-sm ring-2 ring-cerulean ring-offset-2 shadow-lg">
                 <ImageWithFallback
                   src={curatorAvatar}
                   alt={curator}

@@ -147,7 +147,7 @@ export const DSCuratedListCard = memo(function DSCuratedListCard({
             {/* Avatar + Name + Focus */}
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden ring-2 ring-blue ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
                   <ImageWithFallback
                     src={displayCreatorAvatar || ''}
                     alt={displayCreatorName}

@@ -80,7 +80,7 @@ export const EventCard = memo(function EventCard({
         <div className="mb-4">
           <div className="flex items-center gap-3 md:gap-4">
             <div className="flex-shrink-0">
-              <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-blue ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+              <div className="w-16 h-16 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
                 <ImageWithFallback
                   src={curatorImage}
                   alt={`${curatorName} Profilbild`}

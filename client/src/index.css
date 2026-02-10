@@ -343,6 +343,7 @@
   .text-gold { color: var(--color-gold-royal); }
   .text-teal { color: var(--color-teal-tropical); }
   .text-saffron { color: var(--color-saffron); }
+  .ring-cerulean { --tw-ring-color: var(--color-blue-cerulean); }
   .bg-cerulean { background-color: var(--color-blue-cerulean); }
   .bg-coral { background-color: var(--color-coral-vibrant); }
   .bg-gold { background-color: var(--color-gold-royal); }
