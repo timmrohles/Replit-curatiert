@@ -270,14 +270,14 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
 
         {/* Titel & Autor UNTER dem Cover */}
         <div className="flex flex-col gap-0.5 mt-3">
-          <Heading 
-            as="h4" 
-            variant="h2" 
-            className="text-foreground line-clamp-2 !normal-case"
+          <Text 
+            as="p" 
+            variant="base" 
+            className="text-foreground font-semibold line-clamp-2"
             style={{ minHeight: '2.8em', lineHeight: '1.4em' }}
           >
             {book.title}
-          </Heading>
+          </Text>
           
           <Text 
             as="p" 
