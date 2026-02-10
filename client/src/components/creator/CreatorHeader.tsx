@@ -79,7 +79,7 @@ export const CreatorHeader = memo(function CreatorHeader({
   const navigate = useSafeNavigate();
 
   return (
-    <div className="w-full text-base leading-normal text-left select-none" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => { const target = e.target as HTMLElement; if (!target.closest('[data-selectable]')) { e.preventDefault(); } }}>
+    <div className="w-full text-base leading-normal text-left">
       
       <div className="flex items-center gap-3 md:gap-4 lg:gap-6">
         <div className="flex-shrink-0">
@@ -215,7 +215,7 @@ export const CreatorHeader = memo(function CreatorHeader({
 
       {/* Tags and Category Section - ISOLATED from other sections */}
       {(category || categories || (tags && tags.length > 0)) && (
-        <div className="w-full mt-4 mb-4 isolate select-none" onMouseDown={(e) => e.preventDefault()} onClick={(e) => e.stopPropagation()}>
+        <div className="w-full mt-4 mb-4">
           <div className="flex gap-2 flex-wrap items-start">
             {/* Author Badge - Saffron */}
             <button 
@@ -310,7 +310,7 @@ export const CreatorHeader = memo(function CreatorHeader({
       )}
 
       {curationReason && (
-        <div className="w-full mt-4 select-text isolate" data-selectable="true" onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+        <div className="w-full mt-4" data-selectable="true">
           <Text 
             as="div"
             variant="base"
