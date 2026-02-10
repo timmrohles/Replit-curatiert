@@ -310,7 +310,7 @@ export const CreatorHeader = memo(function CreatorHeader({
       )}
 
       {curationReason && (
-        <div className="w-full mt-4" data-selectable="true">
+        <div className="w-full mt-4">
           <Text 
             as="div"
             variant="base"

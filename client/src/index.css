@@ -344,16 +344,6 @@
   .tag-pill { background-color: var(--color-bg-light, #f7f4ef); color: var(--foreground); border: 1px solid hsl(var(--border)); font-weight: 600; transition: all 0.2s ease; }
   .tag-pill:hover { background-color: var(--color-coral-vibrant, #f25f5c); color: #FFFFFF; border-color: var(--color-coral-vibrant, #f25f5c); }
 
-  .no-select-cascade,
-  .no-select-cascade * {
-    -webkit-user-select: none !important;
-    user-select: none !important;
-  }
-  .no-select-cascade [data-selectable],
-  .no-select-cascade [data-selectable] * {
-    -webkit-user-select: text !important;
-    user-select: text !important;
-  }
 
   /* Hide ugly search cancel button in Chrome until we can style it properly */
   input[type="search"]::-webkit-search-cancel-button {
@@ -443,4 +433,10 @@
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+}
+
+.no-select-cascade,
+.no-select-cascade * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
 }
