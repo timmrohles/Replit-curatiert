@@ -1,4 +1,6 @@
+import { useState, useEffect, useMemo } from 'react';
 import { CuratedBookSection } from '../book/CuratedBookSection';
+import { getAllONIXTags, type ONIXTag } from '../../utils/api/tags';
 
 interface CreatorCarouselSectionProps {
   section: any;
@@ -34,6 +36,27 @@ export function CreatorCarouselSection({ section, books = [], className = '' }: 
   const curatorFocus = config.curatorFocus || title;
   const curatorBio = config.curatorBio || '';
 
+  const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    getAllONIXTags()
+      .then(tags => { if (isMounted) setOnixTags(tags); })
+      .catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
+  const resolvedTagNames = useMemo(() => {
+    const tagIds: number[] = config.books?.query?.include?.tagIds || [];
+    if (tagIds.length === 0 || onixTags.length === 0) return [];
+    return tagIds
+      .map(id => {
+        const tag = onixTags.find(t => String(t.id) === String(id));
+        return tag ? (tag as any).displayName || tag.name : null;
+      })
+      .filter(Boolean) as string[];
+  }, [config.books?.query?.include?.tagIds, onixTags]);
+
   const mappedBooks = books.map(mapBookForCarousel);
 
   return (
@@ -51,7 +74,8 @@ export function CreatorCarouselSection({ section, books = [], className = '' }: 
             isVerified: config.isVerified || config.verified || false,
           }}
           books={mappedBooks}
-          category={config.category || title}
+          category={config.category || undefined}
+          tags={resolvedTagNames.length > 0 ? resolvedTagNames : undefined}
           showHeader={true}
           showCta={false}
           showVideo={config.showVideo || false}
