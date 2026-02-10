@@ -279,6 +279,13 @@ export async function registerRoutes(
     log.warn('Could not verify affiliate tables:', err);
   }
 
+  try {
+    await queryDB(`ALTER TABLE awards ADD COLUMN IF NOT EXISTS tag_id INTEGER`);
+    log.info('Awards tag_id column verified');
+  } catch (err) {
+    log.warn('Could not add tag_id to awards:', err);
+  }
+
   // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
@@ -1066,7 +1073,11 @@ export async function registerRoutes(
   app.get('/api/awards', async (_req: Request, res: Response) => {
     try {
       const result = await queryDB('SELECT * FROM awards ORDER BY name ASC', []);
-      return res.json({ ok: true, data: result.rows });
+      const mapped = result.rows.map((row: any) => ({
+        ...row,
+        visible: row.visibility !== 'hidden',
+      }));
+      return res.json({ ok: true, data: mapped });
     } catch (error) {
       return res.json({ ok: true, data: [] });
     }
@@ -1107,14 +1118,36 @@ export async function registerRoutes(
           return res.status(404).json({ success: false, error: 'Award not found' });
         }
 
-        return res.json({ success: true, data: result.rows[0] });
+        const award = result.rows[0];
+        if (award.tag_id) {
+          try {
+            await queryDB(
+              `UPDATE tags SET name = $1, updated_at = NOW() WHERE id = $2`,
+              [name.trim(), award.tag_id]
+            );
+          } catch (syncErr) {
+            log.warn('Could not sync tag name for award:', syncErr);
+          }
+        }
+
+        return res.json({ success: true, data: award });
       } else {
-        const result = await queryDB(
-          `INSERT INTO awards (name, slug, issuer_name, website_url, description, logo_url, country, created_at, updated_at)
+        const tagSlug = await generateUniqueSlug('tags', name);
+        const tagResult = await queryDB(
+          `INSERT INTO tags (name, slug, color, tag_type, visible, scope, source, created_at, updated_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
            RETURNING *`,
-          [name.trim(), slug, issuer_name || null, website_url || null, description || null, logo_url || null, country || null]
+          [name.trim(), tagSlug, '#FFD700', 'award', true, 'book', 'award-auto']
         );
+        const newTag = tagResult.rows[0];
+
+        const result = await queryDB(
+          `INSERT INTO awards (name, slug, issuer_name, website_url, description, logo_url, country, tag_id, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+           RETURNING *`,
+          [name.trim(), slug, issuer_name || null, website_url || null, description || null, logo_url || null, country || null, newTag.id]
+        );
+        log.info(`Award "${name}" created with auto-linked tag id=${newTag.id}`);
         return res.json({ success: true, data: result.rows[0] });
       }
     } catch (error) {
@@ -1131,15 +1164,63 @@ export async function registerRoutes(
       }
 
       const id = req.params.id;
+      const awardResult = await queryDB('SELECT tag_id FROM awards WHERE id = $1', [id]);
+      const tagId = awardResult.rows[0]?.tag_id;
+
       const result = await queryDB('DELETE FROM awards WHERE id = $1 RETURNING id', [id]);
 
       if (result.rows.length === 0) {
         return res.status(404).json({ success: false, error: 'Award not found' });
       }
 
+      if (tagId) {
+        try {
+          await queryDB('DELETE FROM tags WHERE id = $1', [tagId]);
+          log.info(`Deleted linked tag id=${tagId} for award id=${id}`);
+        } catch (tagErr) {
+          log.warn('Could not delete linked tag:', tagErr);
+        }
+      }
+
       return res.json({ success: true, data: { id } });
     } catch (error) {
       log.error('Award delete error:', error);
+      return res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  app.patch('/api/awards/:id/visibility', async (req: Request, res: Response) => {
+    try {
+      const adminToken = req.headers['x-admin-token'] as string;
+      if (!adminToken || !(await verifyAdminToken(adminToken))) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
+
+      const id = req.params.id;
+      const { visible } = req.body;
+
+      const awardResult = await queryDB('SELECT tag_id FROM awards WHERE id = $1', [id]);
+      if (awardResult.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Award not found' });
+      }
+
+      const tagId = awardResult.rows[0]?.tag_id;
+
+      await queryDB(
+        'UPDATE awards SET visibility = $1, updated_at = NOW() WHERE id = $2',
+        [visible === true ? 'visible' : 'hidden', id]
+      );
+
+      if (tagId) {
+        await queryDB(
+          'UPDATE tags SET visible = $1, updated_at = NOW() WHERE id = $2',
+          [visible === true, tagId]
+        );
+      }
+
+      return res.json({ success: true, data: { id, visible, tag_id: tagId } });
+    } catch (error) {
+      log.error('Award visibility toggle error:', error);
       return res.status(500).json({ success: false, error: String(error) });
     }
   });
@@ -2169,12 +2250,162 @@ export async function registerRoutes(
     }
   });
 
+  const TAG_TYPE_MAP: Record<string, string> = {
+    'award': 'Auszeichnung',
+    'topic': 'Motiv (MVB)',
+    'genre': 'Genre (THEMA)',
+    'audience': 'Zielgruppe',
+    'feature': 'Ausstattung',
+    'publisher_cluster': 'Herkunft',
+    'media': 'Medienecho',
+    'status': 'Status',
+    'serie': 'Serie',
+    'band': 'Band',
+    'feeling': 'Feeling',
+    'gattung': 'Gattung',
+    'stil_veredelung': 'Stil-Veredelung',
+    'schauplatz': 'Schauplatz',
+    'zeitgeist': 'Zeitgeist',
+  };
+
+  function mapTagRow(row: any) {
+    const mappedType = TAG_TYPE_MAP[row.tag_type] || row.tag_type || '';
+    return {
+      ...row,
+      displayName: row.name || '',
+      type: mappedType,
+      onixCode: row.onix_code || '',
+      visibilityLevel: row.scope === 'book' ? 'prominent' : (row.scope || 'filter'),
+    };
+  }
+
   app.get('/api/onix-tags', async (_req: Request, res: Response) => {
     try {
       const result = await queryDB('SELECT * FROM tags ORDER BY name ASC', []);
-      return res.json({ ok: true, data: result.rows });
+      return res.json({ ok: true, data: result.rows.map(mapTagRow) });
     } catch (error) {
       return res.json({ ok: true, data: [] });
+    }
+  });
+
+  app.get('/api/onix-tags/:id', async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const result = await queryDB('SELECT * FROM tags WHERE id = $1', [id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Tag not found' });
+      }
+      return res.json({ ok: true, data: mapTagRow(result.rows[0]) });
+    } catch (error) {
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/onix-tags', async (req: Request, res: Response) => {
+    try {
+      const adminToken = req.headers['x-admin-token'] as string;
+      if (!adminToken || !(await verifyAdminToken(adminToken))) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
+
+      const body = req.body;
+      const id = body.id;
+      const name = body.displayName || body.name;
+      const color = body.color;
+      const REVERSE_TAG_TYPE_MAP: Record<string, string> = Object.fromEntries(
+        Object.entries(TAG_TYPE_MAP).map(([k, v]) => [v, k])
+      );
+      const rawType = body.type || body.tag_type || '';
+      const tag_type = REVERSE_TAG_TYPE_MAP[rawType] || rawType;
+      const visible = body.visible;
+      const scope = body.scope || 'book';
+      const source = body.source || 'manual';
+      const onix_code = body.onixCode || body.onix_code;
+      const onix_scheme_id = body.onix_scheme_id;
+      const onix_heading_text = body.onix_heading_text || body.originalName;
+      const display_order = body.display_order || body.displayOrder || 0;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ success: false, error: 'Name is required' });
+      }
+
+      const slug = await generateUniqueSlug('tags', name, id);
+
+      if (id) {
+        const result = await queryDB(
+          `UPDATE tags
+           SET name = $1, slug = $2, color = $3, tag_type = $4, visible = $5,
+               scope = $6, source = $7, onix_code = $8, onix_scheme_id = $9,
+               onix_heading_text = $10, display_order = $11, updated_at = NOW()
+           WHERE id = $12
+           RETURNING *`,
+          [name.trim(), slug, color || null, tag_type || null, visible !== false, scope || 'book', source || 'manual', onix_code || null, onix_scheme_id || null, onix_heading_text || null, display_order || 0, id]
+        );
+
+        if (result.rows.length === 0) {
+          return res.status(404).json({ success: false, error: 'Tag not found' });
+        }
+
+        return res.json({ success: true, data: mapTagRow(result.rows[0]) });
+      } else {
+        const result = await queryDB(
+          `INSERT INTO tags (name, slug, color, tag_type, visible, scope, source, onix_code, onix_scheme_id, onix_heading_text, display_order, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+           RETURNING *`,
+          [name.trim(), slug, color || null, tag_type || null, visible !== false, scope || 'book', source || 'manual', onix_code || null, onix_scheme_id || null, onix_heading_text || null, display_order || 0]
+        );
+        return res.json({ success: true, data: mapTagRow(result.rows[0]) });
+      }
+    } catch (error) {
+      log.error('ONIX Tag save error:', error);
+      return res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  app.patch('/api/onix-tags/:id/visibility', async (req: Request, res: Response) => {
+    try {
+      const adminToken = req.headers['x-admin-token'] as string;
+      if (!adminToken || !(await verifyAdminToken(adminToken))) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
+
+      const id = req.params.id;
+      const { visible } = req.body;
+
+      const result = await queryDB(
+        'UPDATE tags SET visible = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+        [visible === true, id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Tag not found' });
+      }
+
+      return res.json({ success: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Tag visibility toggle error:', error);
+      return res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/onix-tags/:id', async (req: Request, res: Response) => {
+    try {
+      const adminToken = req.headers['x-admin-token'] as string;
+      if (!adminToken || !(await verifyAdminToken(adminToken))) {
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
+
+      const id = req.params.id;
+      const result = await queryDB('DELETE FROM tags WHERE id = $1 RETURNING id', [id]);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Tag not found' });
+      }
+
+      return res.json({ success: true, data: { id } });
+    } catch (error) {
+      log.error('ONIX Tag delete error:', error);
+      return res.status(500).json({ success: false, error: String(error) });
     }
   });
 

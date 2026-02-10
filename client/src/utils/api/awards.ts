@@ -33,6 +33,7 @@ export interface Award {
   type?: AwardType;
   visible?: boolean;
   order?: number;
+  tag_id?: number;
   onixTagIds?: string[];
   createdAt?: string;
   updatedAt?: string;
@@ -302,19 +303,15 @@ function getAdminHeaders(): HeadersInit {
 
 export async function saveAward(award: Partial<Award>): Promise<Award | null> {
   try {
-    const isUpdate = award.id !== undefined && award.id !== null;
-    const url = isUpdate ? `${BASE_URL}/admin/awards/${award.id}` : `${BASE_URL}/admin/awards`;
-    const method = isUpdate ? 'PUT' : 'POST';
-
-    const response = await fetch(url, {
-      method,
+    const response = await fetch(`${BASE_URL}/awards`, {
+      method: 'POST',
       headers: getAdminHeaders(),
       body: JSON.stringify(award),
     });
     const data = await response.json();
-    if (!data.ok) return null;
+    if (!data.success) return null;
     clearAwardsCache();
-    return data.data?.award || data.data;
+    return data.data || null;
   } catch (error) {
     console.error('Error saving award:', error);
     return null;
@@ -323,15 +320,31 @@ export async function saveAward(award: Partial<Award>): Promise<Award | null> {
 
 export async function deleteAward(id: string | number): Promise<boolean> {
   try {
-    const response = await fetch(`${BASE_URL}/admin/awards/${id}`, {
+    const response = await fetch(`${BASE_URL}/awards/${id}`, {
       method: 'DELETE',
       headers: getAdminHeaders(),
     });
     const data = await response.json();
-    if (data.ok) clearAwardsCache();
-    return data.ok;
+    if (data.success) clearAwardsCache();
+    return data.success || false;
   } catch (error) {
     console.error('Error deleting award:', error);
+    return false;
+  }
+}
+
+export async function toggleAwardVisibility(id: string | number, visible: boolean): Promise<boolean> {
+  try {
+    const response = await fetch(`${BASE_URL}/awards/${id}/visibility`, {
+      method: 'PATCH',
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ visible }),
+    });
+    const data = await response.json();
+    if (data.success) clearAwardsCache();
+    return data.success || false;
+  } catch (error) {
+    console.error('Error toggling award visibility:', error);
     return false;
   }
 }

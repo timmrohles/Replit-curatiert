@@ -173,6 +173,7 @@ export const BookCard = memo(function BookCard({
     if (!onixTags.length || !onixTagIds.length) return [];
     return onixTags.filter(tag =>
       onixTagIds.includes(tag.id) &&
+      tag.visible &&
       ['Auszeichnung', 'Medienecho', 'Status'].includes(tag.type)
     );
   }, [onixTags, onixTagIds]);

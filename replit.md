@@ -88,6 +88,16 @@ All routes prefixed with `/api/`:
 - **CSS Utility Classes** (in index.css): text-cerulean, bg-coral, tag-pill, favorite-badge, btn-admin-login, logo-spine-*, etc.
 
 ## Recent Changes (2026-02-10)
+- **Tag & Award Visibility Management**: Full backend-synced visibility system
+  - ONIX Tags CRUD: POST/DELETE /api/onix-tags, PATCH /api/onix-tags/:id/visibility with admin auth
+  - Tag type mapping (DB English → Frontend German): award→Auszeichnung, topic→Motiv (MVB), genre→Genre (THEMA), audience→Zielgruppe, feature→Ausstattung, publisher_cluster→Herkunft, + 4 more types
+  - Reverse mapping for POST/create operations (German → DB English)
+  - Awards.tag_id column: auto-created linked tag (tag_type='award') when new award is created
+  - Award visibility toggle (PATCH /api/awards/:id/visibility) syncs both awards.visibility and linked tags.visible
+  - GET /api/awards maps visibility string to boolean `visible` field for frontend
+  - Book card components (BookCard, BookCarouselItem, EditorialBookCard) all filter tags by visible flag
+  - AwardsManager: Eye/EyeOff visibility toggle, linked tag_id display
+  - Fixed frontend API paths from /api/admin/awards to /api/awards (correcting pre-existing mismatch)
 - **Curator Picker in PageComposer**: Replaced generic "Curator Type" dropdown (Redaktion/Community/Extern) with real curator picker that loads from `/api/curators`. Shows avatar, name, focus/theme, verified badge. Stores curatorId, curatorName, curatorAvatar, curatorFocus, curatorBio, isVerified in section config. Applied to both creator_carousel and book_carousel section editors.
 - **CreatorCarouselSection**: Now passes curatorBio from section config to CuratedBookSection for biography display
 - **Tag pill event isolation**: All tag pills, categories, bio, curation reason, and sort sections use `<button type="button">` with `stopPropagation()` and `select-none` to prevent selection cascade

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Save, Edit2, Trash2, Award as AwardIcon, Upload, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
-import { Award, AwardType, getAllAwards, saveAward, deleteAward, uploadAwardLogo, clearAwardsCache, getAllONIXTags, ONIXTag } from '../../utils/api';
+import { Award, AwardType, getAllAwards, saveAward, deleteAward, uploadAwardLogo, toggleAwardVisibility, clearAwardsCache, getAllONIXTags, ONIXTag } from '../../utils/api';
 import { toast } from 'sonner';
 
 // Helper: Get icon for award type
@@ -270,19 +270,20 @@ export function AwardsManager() {
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span 
-                      className="px-2 py-0.5 rounded text-xs"
-                      style={{ 
-                        backgroundColor: getAwardTypeColor(award.type || 'Gewinner') + '20',
-                        color: getAwardTypeColor(award.type || 'Gewinner')
-                      }}
-                    >
-                      {award.type}
-                    </span>
+                  <div className="flex items-center gap-3 mt-1 flex-wrap">
+                    {award.tag_id && (
+                      <span className="px-2 py-0.5 rounded text-xs" style={{ backgroundColor: '#FFD70030', color: '#B8860B' }}>
+                        Tag #{award.tag_id} verknüpft
+                      </span>
+                    )}
+                    {!award.tag_id && (
+                      <span className="px-2 py-0.5 rounded text-xs" style={{ backgroundColor: '#f0f0f0', color: '#999' }}>
+                        Kein Tag verknüpft
+                      </span>
+                    )}
                     {linkedTags.length > 0 && (
                       <span className="text-xs" style={{ color: '#666666' }}>
-                        🏷️ {linkedTags.length} ONIX-Tag{linkedTags.length > 1 ? 's' : ''}: {linkedTags.map(t => t.displayName).join(', ')}
+                        🏷️ {linkedTags.map(t => t.displayName).join(', ')}
                       </span>
                     )}
                   </div>
@@ -290,6 +291,21 @@ export function AwardsManager() {
 
                 {/* Actions */}
                 <div className="flex gap-2">
+                  <button
+                    onClick={async () => {
+                      const newVisible = !(award.visible !== false);
+                      const success = await toggleAwardVisibility(String(award.id), newVisible);
+                      if (success) {
+                        toast.success(newVisible ? 'Auszeichnung sichtbar' : 'Auszeichnung versteckt');
+                        loadData();
+                      }
+                    }}
+                    className="p-2 rounded-lg transition-colors"
+                    style={{ backgroundColor: award.visible !== false ? '#4CAF50' : '#9E9E9E', color: '#FFFFFF' }}
+                    title={award.visible !== false ? 'Sichtbar - Klicken zum Verstecken' : 'Versteckt - Klicken zum Anzeigen'}
+                  >
+                    {award.visible !== false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  </button>
                   <button
                     onClick={() => setEditingAward(award)}
                     className="p-2 rounded-lg hover:bg-white/80 transition-colors"
