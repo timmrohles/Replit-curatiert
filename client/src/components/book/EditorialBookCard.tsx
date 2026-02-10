@@ -281,7 +281,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
           
           <Text 
             as="p" 
-            variant="base" 
+            variant="small" 
             className="text-gray-500 normal-case font-bold tracking-normal line-clamp-1"
           >
             {book.author}
