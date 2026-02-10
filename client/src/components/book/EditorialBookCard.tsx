@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, Share2 } from 'lucide-react';
+import { Tags, ArrowRight, Quote, Share2, Mail, Copy, Check, MessageCircle } from 'lucide-react';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { getBookUrl } from '../../utils/bookUrlHelper';
 import { getAllONIXTags, ONIXTag } from '../../utils/api';
 import { ONIX_TAG_COLORS, ONIX_TAG_ICONS } from '../../utils/tag-colors';
@@ -37,6 +38,85 @@ interface EditorialBookCardProps {
  * - Klappentext UNTER dem Cover
  * - KEINE Preise, kein Verlag, keine Reihe
  */
+
+function ShareButton({ book }: { book: EditorialBookCardData }) {
+  const [copied, setCopied] = useState(false);
+
+  const bookUrl = `${window.location.origin}${getBookUrl(book)}`;
+  const shareText = `${book.title} von ${book.author} – entdeckt auf coratiert.de`;
+
+  const handleShare = (channel: string) => {
+    const encodedText = encodeURIComponent(shareText);
+    const encodedUrl = encodeURIComponent(bookUrl);
+
+    switch (channel) {
+      case 'whatsapp':
+        window.open(`https://wa.me/?text=${encodedText}%20${encodedUrl}`, '_blank', 'noopener,noreferrer');
+        break;
+      case 'email':
+        window.open(`mailto:?subject=${encodeURIComponent(book.title)}&body=${encodedText}%0A${encodedUrl}`);
+        break;
+      case 'copy':
+        navigator.clipboard.writeText(bookUrl).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        });
+        break;
+    }
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 md:h-11 md:w-11 shadow-none"
+          onClick={(e) => e.stopPropagation()}
+          title="Teilen"
+          data-testid="button-share-book"
+        >
+          <Share2 className="w-5 h-5" style={{ color: '#3A3A3A' }} />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-48 p-1"
+        align="start"
+        side="top"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm hover-elevate"
+          onClick={() => handleShare('whatsapp')}
+          data-testid="button-share-whatsapp"
+        >
+          <MessageCircle className="w-4 h-4 text-green-600" />
+          <span>WhatsApp</span>
+        </button>
+        <button
+          type="button"
+          className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm hover-elevate"
+          onClick={() => handleShare('email')}
+          data-testid="button-share-email"
+        >
+          <Mail className="w-4 h-4 text-muted-foreground" />
+          <span>E-Mail</span>
+        </button>
+        <button
+          type="button"
+          className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm hover-elevate"
+          onClick={() => handleShare('copy')}
+          data-testid="button-share-copy"
+        >
+          {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+          <span>{copied ? 'Kopiert!' : 'Link kopieren'}</span>
+        </button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function EditorialBookCard({ book }: EditorialBookCardProps) {
   const navigate = useSafeNavigate();
   const { resolvedTheme } = useTheme();
@@ -336,6 +416,8 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
             size="md" 
             iconColor="#3A3A3A"
           />
+
+          <ShareButton book={book} />
           
           {/* Affiliate Buttons */}
           <div className="flex items-center gap-1.5">
