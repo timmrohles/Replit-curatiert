@@ -21,6 +21,7 @@ interface ActiveAffiliate {
   icon_url: string | null;
   favicon_url: string | null;
   display_order: number;
+  show_in_carousel: boolean;
 }
 
 let cachedAffiliates: ActiveAffiliate[] | null = null;
@@ -464,7 +465,7 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
                     {/* Dynamic Affiliate Buttons */}
                     {book.isbn && affiliates.length > 0 && (
                       <>
-                        {affiliates.map((aff) => (
+                        {affiliates.filter(aff => aff.show_in_carousel).map((aff) => (
                           <Button
                             key={aff.id}
                             variant="ghost"

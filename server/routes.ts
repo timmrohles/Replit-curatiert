@@ -248,11 +248,13 @@ export async function registerRoutes(
         favicon_url TEXT,
         display_order INTEGER DEFAULT 0,
         is_active BOOLEAN DEFAULT true,
+        show_in_carousel BOOLEAN DEFAULT false,
         notes TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    await queryDB(`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS show_in_carousel BOOLEAN DEFAULT false`);
     await queryDB(`
       CREATE TABLE IF NOT EXISTS book_affiliates (
         id SERIAL PRIMARY KEY,
@@ -2292,7 +2294,7 @@ export async function registerRoutes(
            id, name, slug, network, merchant_id, program_id,
            website_url, link_template, product_url_template,
            icon_url, favicon_url,
-           display_order, is_active, notes, created_at, updated_at
+           display_order, is_active, show_in_carousel, notes, created_at, updated_at
          FROM affiliates
          ORDER BY display_order ASC, name ASC`,
         []
@@ -2313,7 +2315,7 @@ export async function registerRoutes(
         id, name, website_url, link_template, product_url_template,
         network, merchant_id, program_id, notes,
         icon_url, favicon_url,
-        display_order, is_active
+        display_order, is_active, show_in_carousel
       } = body;
 
       if (!name) {
@@ -2334,15 +2336,15 @@ export async function registerRoutes(
              program_id = $5, website_url = $6, link_template = $7,
              product_url_template = $8, display_order = $9,
              is_active = $10, notes = $11,
-             icon_url = $12, favicon_url = $13, updated_at = NOW()
-           WHERE id = $14
+             icon_url = $12, favicon_url = $13, show_in_carousel = $14, updated_at = NOW()
+           WHERE id = $15
            RETURNING *`,
           [
             name, slug, network || 'manual', merchant_id || null,
             program_id || null, website_url || null, link_template || '',
             product_url_template || null, display_order || 0,
             is_active !== false, notes || null,
-            icon_url || null, favicon_url || null, id
+            icon_url || null, favicon_url || null, show_in_carousel === true, id
           ]
         );
 
@@ -2357,10 +2359,10 @@ export async function registerRoutes(
              name, slug, network, merchant_id, program_id,
              website_url, link_template, product_url_template,
              icon_url, favicon_url,
-             display_order, is_active, notes,
+             display_order, is_active, show_in_carousel, notes,
              created_at, updated_at
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW(), NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
            RETURNING *`,
           [
             name, slug, network || 'manual', merchant_id || null,
@@ -2368,7 +2370,7 @@ export async function registerRoutes(
             product_url_template || null,
             icon_url || null, favicon_url || null,
             display_order || 0,
-            is_active !== false, notes || null
+            is_active !== false, show_in_carousel === true, notes || null
           ]
         );
         return res.json({ success: true, data: result.rows[0] });
@@ -2400,7 +2402,7 @@ export async function registerRoutes(
   app.get('/api/affiliates/active', async (_req: Request, res: Response) => {
     try {
       const result = await queryDB(
-        `SELECT id, name, slug, website_url, link_template, icon_url, favicon_url, display_order
+        `SELECT id, name, slug, website_url, link_template, icon_url, favicon_url, display_order, show_in_carousel
          FROM affiliates
          WHERE is_active = true
          ORDER BY display_order ASC, name ASC`,

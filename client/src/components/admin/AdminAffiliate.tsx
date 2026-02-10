@@ -49,6 +49,7 @@ interface Affiliate {
   favicon_url?: string | null;
   display_order: number;
   is_active: boolean;
+  show_in_carousel: boolean;
   notes?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -408,7 +409,8 @@ export function AdminAffiliate() {
               name: '', 
               link_template: 'https://www.example.com/search?isbn={isbn13}',
               display_order: 0,
-              is_active: true
+              is_active: true,
+              show_in_carousel: false
             })}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
           >
@@ -441,11 +443,21 @@ export function AdminAffiliate() {
                   <p className="text-sm text-gray-600 mt-1">
                     <code className="bg-gray-100 px-2 py-1 rounded text-xs">{affiliate.link_template}</code>
                   </p>
-                  <div className="mt-2 flex items-center gap-3 text-sm">
+                  <div className="mt-2 flex items-center gap-3 text-sm flex-wrap">
                     <span className="text-gray-600">Order: {affiliate.display_order}</span>
                     <span className={affiliate.is_active ? 'text-green-600' : 'text-gray-400'}>
                       {affiliate.is_active ? '✓ Active' : '○ Inactive'}
                     </span>
+                    {affiliate.show_in_carousel && (
+                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                        Karussell
+                      </span>
+                    )}
+                    {!affiliate.show_in_carousel && affiliate.is_active && (
+                      <span className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">
+                        Nur Detailseite
+                      </span>
+                    )}
                   </div>
                   </div>
                 </div>
@@ -771,6 +783,23 @@ export function AdminAffiliate() {
                 className="w-4 h-4"
               />
               <label className="text-sm font-medium">Active</label>
+            </div>
+
+            {/* Show in Carousel */}
+            <div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={editingAffiliate.show_in_carousel === true}
+                  onChange={(e) => setEditingAffiliate({ ...editingAffiliate, show_in_carousel: e.target.checked })}
+                  className="w-4 h-4"
+                />
+                <label className="text-sm font-medium">In Buchkarussells anzeigen</label>
+              </div>
+              <p className="text-xs text-gray-500 mt-1 ml-6">
+                Wenn aktiviert, erscheint dieser Partner auch in den kompakten Buchkarten und Karussells. 
+                Auf der Produktdetailseite erscheinen immer alle aktiven Partner.
+              </p>
             </div>
           </div>
 

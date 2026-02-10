@@ -20,6 +20,7 @@ interface ActiveAffiliate {
   icon_url: string | null;
   favicon_url: string | null;
   display_order: number;
+  show_in_carousel: boolean;
 }
 
 let cachedAffiliates: ActiveAffiliate[] | null = null;
@@ -469,7 +470,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
           {/* Affiliate Buttons - dynamisch aus DB */}
           {book.isbn && affiliates.length > 0 && (
             <div className="flex items-center gap-1.5">
-              {affiliates.map((aff) => (
+              {affiliates.filter(aff => aff.show_in_carousel).map((aff) => (
                 <Button
                   key={aff.id}
                   variant="ghost"
