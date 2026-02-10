@@ -130,8 +130,8 @@ export const CreatorHeader = memo(function CreatorHeader({
           <div className="flex flex-wrap items-center gap-x-2 mt-0.5">
             <Text 
               as="span"
-              variant="xs" 
-              className={`!text-[0.7rem] !tracking-wide ${isAdSection ? 'text-white' : 'text-foreground/70'}`}
+              variant="small" 
+              className={`!font-semibold ${isAdSection ? 'text-white' : 'text-black'}`}
             >
               {focus.includes('ANZEIGE') ? (
                 <>
