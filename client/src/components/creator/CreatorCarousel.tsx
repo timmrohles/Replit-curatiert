@@ -419,7 +419,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
 
   return (
     <section 
-      className="py-3 md:py-4 w-full px-4" 
+      className="py-1 md:py-2 w-full px-4" 
       style={{ 
         backgroundColor: 'transparent',
         overflow: 'visible',
