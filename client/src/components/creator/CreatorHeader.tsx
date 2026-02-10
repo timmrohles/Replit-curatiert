@@ -194,14 +194,9 @@ export const CreatorHeader = memo(function CreatorHeader({
       </div>
 
       <div className="w-full mt-4 md:mt-6 isolate">
-        <Heading 
-          as="h3"
-          variant="h3"
-          className="mb-4"
-          style={{ color: '#6B7280', fontSize: 'clamp(1.5rem, 1.3rem + 0.6vw, 2rem)' }}
-        >
+        <h3 className="section-title mb-4 text-gray-500">
           {occasion.replace('und und', '&')}
-        </Heading>
+        </h3>
       </div>
 
       {/* Tags and Category Section - ISOLATED from other sections */}
