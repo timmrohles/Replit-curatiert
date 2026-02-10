@@ -18,7 +18,7 @@
  * ==================================================================
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Plus, 
   Save, 
@@ -34,7 +34,10 @@ import {
   Copy,
   FileText,
   Video,
-  Image as ImageIcon
+  Image as ImageIcon,
+  BadgeCheck,
+  Search,
+  User
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -112,6 +115,30 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
   
   // ✅ NEW: Draft/Published Filter
   const [includeDraft, setIncludeDraft] = useState(true);
+
+  // Curator picker state
+  const [curators, setCurators] = useState<any[]>([]);
+  const [curatorsLoading, setCuratorsLoading] = useState(false);
+  const [curatorSearch, setCuratorSearch] = useState('');
+
+  const loadCurators = useCallback(async () => {
+    if (curators.length > 0) return;
+    setCuratorsLoading(true);
+    try {
+      const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
+      const res = await fetch(`${API_BASE_URL}/curators`, {
+        headers: { 'X-Admin-Token': token || '' },
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setCurators(Array.isArray(result.data) ? result.data : []);
+      }
+    } catch (e) {
+      console.error('Failed to load curators:', e);
+    } finally {
+      setCuratorsLoading(false);
+    }
+  }, [curators.length]);
 
   // ============================================================================
   // DATA LOADING
@@ -1006,7 +1033,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   </label>
                   <Input
                     type="text"
-                    placeholder="e.g., Neue Bücher"
+                    placeholder="z.B. Neue Bücher"
                     value={editingSection.config?.title || ''}
                     onChange={(e) => setEditingSection({
                       ...editingSection,
@@ -1020,7 +1047,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   <label className="text-sm font-medium mb-2 block">Description</label>
                   <Input
                     type="text"
-                    placeholder="e.g., Frisch erschienen und handverlesen"
+                    placeholder="z.B. Frisch erschienen und handverlesen"
                     value={editingSection.config?.description || ''}
                     onChange={(e) => setEditingSection({
                       ...editingSection,
@@ -1029,25 +1056,110 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   />
                 </div>
 
-                {/* Curator Type */}
+                {/* Kurator:in auswählen */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Curator Type</label>
-                  <Select
-                    value={editingSection.config?.curatorType || 'redaktion'}
-                    onValueChange={(value) => setEditingSection({
-                      ...editingSection,
-                      config: { ...editingSection.config, curatorType: value }
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="redaktion">Redaktion</SelectItem>
-                      <SelectItem value="community">Community</SelectItem>
-                      <SelectItem value="extern">Extern</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <label className="text-sm font-medium mb-2 block">
+                    Kurator:in <span className="text-red-500">*</span>
+                  </label>
+
+                  {editingSection.config?.curatorId && (() => {
+                    const selected = curators.find(c => String(c.id) === String(editingSection.config?.curatorId));
+                    const displayName = selected?.name || editingSection.config?.curatorName || '';
+                    const displayAvatar = selected?.avatar || editingSection.config?.curatorAvatar || '';
+                    const displayFocus = selected?.focus || editingSection.config?.curatorFocus || '';
+                    const displayVerified = selected?.verified ?? editingSection.config?.isVerified ?? false;
+                    if (!displayName) return null;
+                    return (
+                      <div className="flex items-center gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50 mb-2">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                          {displayAvatar ? (
+                            <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><User className="w-5 h-5 text-gray-400" /></div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-sm truncate">{displayName}</span>
+                            {displayVerified && <BadgeCheck className="w-4 h-4 flex-shrink-0" style={{ color: '#247ba0' }} />}
+                          </div>
+                          {displayFocus && <span className="text-xs text-gray-500 truncate block">{displayFocus}</span>}
+                        </div>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => {
+                          setEditingSection({ ...editingSection, config: { ...editingSection.config, curatorId: null, curatorName: '', curatorAvatar: '', curatorFocus: '', curatorBio: '', isVerified: false } });
+                        }}>
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    );
+                  })()}
+
+                  {!editingSection.config?.curatorId && (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          type="text"
+                          placeholder="Kurator:in suchen..."
+                          className="pl-9"
+                          value={curatorSearch}
+                          onChange={(e) => setCuratorSearch(e.target.value)}
+                          onFocus={() => loadCurators()}
+                        />
+                      </div>
+                      {curatorsLoading && <p className="text-xs text-gray-500 p-2">Lade Kurator:innen...</p>}
+                      {!curatorsLoading && curators.length > 0 && (
+                        <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
+                          {curators
+                            .filter(c => {
+                              if (!curatorSearch.trim()) return true;
+                              const q = curatorSearch.toLowerCase();
+                              return (c.name || '').toLowerCase().includes(q) || (c.focus || '').toLowerCase().includes(q);
+                            })
+                            .map(curator => (
+                              <button
+                                key={curator.id}
+                                type="button"
+                                className="w-full flex items-center gap-3 p-2.5 hover:bg-gray-50 transition-colors text-left"
+                                onClick={() => {
+                                  setEditingSection({
+                                    ...editingSection,
+                                    config: {
+                                      ...editingSection.config,
+                                      curatorId: String(curator.id),
+                                      curatorName: curator.name || '',
+                                      curatorAvatar: curator.avatar || '',
+                                      curatorFocus: curator.focus || '',
+                                      curatorBio: curator.bio || '',
+                                      isVerified: Boolean(curator.verified),
+                                    }
+                                  });
+                                  setCuratorSearch('');
+                                }}
+                              >
+                                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                                  {curator.avatar ? (
+                                    <img src={curator.avatar} alt={curator.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center"><User className="w-4 h-4 text-gray-400" /></div>
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-sm font-medium truncate">{curator.name}</span>
+                                    {curator.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#247ba0' }} />}
+                                  </div>
+                                  {curator.focus && <span className="text-xs text-gray-500 truncate block">{curator.focus}</span>}
+                                </div>
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                      {!curatorsLoading && curators.length === 0 && curatorSearch && (
+                        <p className="text-xs text-gray-500 p-2">Keine Kurator:innen gefunden</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Curator Reason */}
@@ -1164,7 +1276,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   </label>
                   <Input
                     type="text"
-                    placeholder="e.g., Neue Bücher"
+                    placeholder="z.B. Neue Bücher"
                     value={editingSection.config?.title || ''}
                     onChange={(e) => setEditingSection({
                       ...editingSection,
@@ -1177,7 +1289,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                 <div>
                   <label className="text-sm font-medium mb-2 block">Description</label>
                   <textarea
-                    placeholder="e.g., Frisch erschienen und handverlesen"
+                    placeholder="z.B. Frisch erschienen und handverlesen"
                     value={editingSection.config?.description || ''}
                     onChange={(e) => setEditingSection({
                       ...editingSection,
@@ -1188,35 +1300,117 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   />
                 </div>
 
-                {/* Curator Type */}
+                {/* Kurator:in auswählen (Book Carousel) */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Curator Type</label>
-                  <Select
-                    value={editingSection.config?.curatorType || 'redaktion'}
-                    onValueChange={(value) => setEditingSection({
-                      ...editingSection,
-                      config: { ...editingSection.config, curatorType: value }
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="redaktion">Redaktion</SelectItem>
-                      <SelectItem value="community">Community</SelectItem>
-                      <SelectItem value="extern">Extern</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <label className="text-sm font-medium mb-2 block">
+                    Kurator:in <span className="text-red-500">*</span>
+                  </label>
+
+                  {editingSection.config?.curatorId && (() => {
+                    const selected = curators.find(c => String(c.id) === String(editingSection.config?.curatorId));
+                    const displayName = selected?.name || editingSection.config?.curatorName || '';
+                    const displayAvatar = selected?.avatar || editingSection.config?.curatorAvatar || '';
+                    const displayFocus = selected?.focus || editingSection.config?.curatorFocus || '';
+                    const displayVerified = selected?.verified ?? editingSection.config?.isVerified ?? false;
+                    if (!displayName) return null;
+                    return (
+                      <div className="flex items-center gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50 mb-2">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                          {displayAvatar ? (
+                            <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><User className="w-5 h-5 text-gray-400" /></div>
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-semibold text-sm truncate">{displayName}</span>
+                            {displayVerified && <BadgeCheck className="w-4 h-4 flex-shrink-0" style={{ color: '#247ba0' }} />}
+                          </div>
+                          {displayFocus && <span className="text-xs text-gray-500 truncate block">{displayFocus}</span>}
+                        </div>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => {
+                          setEditingSection({ ...editingSection, config: { ...editingSection.config, curatorId: null, curatorName: '', curatorAvatar: '', curatorFocus: '', curatorBio: '', isVerified: false } });
+                        }}>
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    );
+                  })()}
+
+                  {!editingSection.config?.curatorId && (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Input
+                          type="text"
+                          placeholder="Kurator:in suchen..."
+                          className="pl-9"
+                          value={curatorSearch}
+                          onChange={(e) => setCuratorSearch(e.target.value)}
+                          onFocus={() => loadCurators()}
+                        />
+                      </div>
+                      {curatorsLoading && <p className="text-xs text-gray-500 p-2">Lade Kurator:innen...</p>}
+                      {!curatorsLoading && curators.length > 0 && (
+                        <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
+                          {curators
+                            .filter(c => {
+                              if (!curatorSearch.trim()) return true;
+                              const q = curatorSearch.toLowerCase();
+                              return (c.name || '').toLowerCase().includes(q) || (c.focus || '').toLowerCase().includes(q);
+                            })
+                            .map(curator => (
+                              <button
+                                key={curator.id}
+                                type="button"
+                                className="w-full flex items-center gap-3 p-2.5 hover:bg-gray-50 transition-colors text-left"
+                                onClick={() => {
+                                  setEditingSection({
+                                    ...editingSection,
+                                    config: {
+                                      ...editingSection.config,
+                                      curatorId: String(curator.id),
+                                      curatorName: curator.name || '',
+                                      curatorAvatar: curator.avatar || '',
+                                      curatorFocus: curator.focus || '',
+                                      curatorBio: curator.bio || '',
+                                      isVerified: Boolean(curator.verified),
+                                    }
+                                  });
+                                  setCuratorSearch('');
+                                }}
+                              >
+                                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                                  {curator.avatar ? (
+                                    <img src={curator.avatar} alt={curator.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center"><User className="w-4 h-4 text-gray-400" /></div>
+                                  )}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-sm font-medium truncate">{curator.name}</span>
+                                    {curator.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#247ba0' }} />}
+                                  </div>
+                                  {curator.focus && <span className="text-xs text-gray-500 truncate block">{curator.focus}</span>}
+                                </div>
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Curator Reason */}
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    Curator Reason
-                    <span className="text-xs text-gray-500 ml-2">(overrides Description)</span>
+                    Begründung
+                    <span className="text-xs text-gray-500 ml-2">(überschreibt Description)</span>
                   </label>
                   <textarea
-                    placeholder="e.g., Diese Bücher bieten einen guten Einstieg..."
+                    placeholder="z.B. Diese Bücher bieten einen guten Einstieg..."
                     value={editingSection.config?.curatorReason || ''}
                     onChange={(e) => setEditingSection({
                       ...editingSection,

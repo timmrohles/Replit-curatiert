@@ -88,6 +88,9 @@ All routes prefixed with `/api/`:
 - **CSS Utility Classes** (in index.css): text-cerulean, bg-coral, tag-pill, favorite-badge, btn-admin-login, logo-spine-*, etc.
 
 ## Recent Changes (2026-02-10)
+- **Curator Picker in PageComposer**: Replaced generic "Curator Type" dropdown (Redaktion/Community/Extern) with real curator picker that loads from `/api/curators`. Shows avatar, name, focus/theme, verified badge. Stores curatorId, curatorName, curatorAvatar, curatorFocus, curatorBio, isVerified in section config. Applied to both creator_carousel and book_carousel section editors.
+- **CreatorCarouselSection**: Now passes curatorBio from section config to CuratedBookSection for biography display
+- **Tag pill event isolation**: All tag pills, categories, bio, curation reason, and sort sections use `<button type="button">` with `stopPropagation()` and `select-none` to prevent selection cascade
 - **Avatar Upload**: Backend route `/api/admin/upload/avatar` with multer (JPG/PNG/WebP/GIF, max 5MB), stored in `client/src/public/uploads/avatars/`, served via `/uploads` static route. Auth enforced before file acceptance.
 - **Verified Curator Badge**: Blue checkmark (BadgeCheck) next to curator name in CreatorHeader, CreatorCarousel, CuratedBookSection, CreatorCarouselSection, AuthorStorefront. DB `visible` column maps to `verified` in frontend.
 - **Biography Word Limit**: Max 100 words with real-time counter in CuratorsManager, border turns coral at 90+ words

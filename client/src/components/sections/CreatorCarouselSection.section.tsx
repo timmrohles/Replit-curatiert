@@ -32,6 +32,7 @@ export function CreatorCarouselSection({ section, books = [], className = '' }: 
   const curatorAvatar = config.curatorAvatar || '';
   const curatorName = config.curatorName || 'coratiert Redaktion';
   const curatorFocus = config.curatorFocus || title;
+  const curatorBio = config.curatorBio || '';
 
   const mappedBooks = books.map(mapBookForCarousel);
 
@@ -43,6 +44,7 @@ export function CreatorCarouselSection({ section, books = [], className = '' }: 
             avatar: curatorAvatar,
             name: curatorName,
             focus: curatorFocus,
+            bio: curatorBio,
             occasion: config.occasion || '',
             curationReason: curatorReason,
             showSocials: false,
