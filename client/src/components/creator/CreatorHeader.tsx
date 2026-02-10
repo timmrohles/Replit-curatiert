@@ -100,16 +100,7 @@ export const CreatorHeader = memo(function CreatorHeader({
                 isAdSection ? 'text-white' : 'text-cerulean'
               }`}
             >
-              {name.toLowerCase().startsWith('coratiert') ? (
-                <>
-                  <CoRatiertLogo size="md" />
-                  <span className={isAdSection ? 'text-white' : 'text-cerulean'}>
-                    {name.replace(/^coratiert\s*/i, '')}
-                  </span>
-                </>
-              ) : (
-                name
-              )}
+              {name}
               {isVerified && (
                 <BadgeCheck className="w-5 h-5 flex-shrink-0" style={{ color: '#247ba0' }} />
               )}
@@ -186,7 +177,7 @@ export const CreatorHeader = memo(function CreatorHeader({
                 onClick={() => setShowMoreInfo(!showMoreInfo)}
                 className="flex items-center gap-1 mt-1 text-cerulean hover:opacity-80 transition-colors"
               >
-                <Text as="span" variant="xs" className="text-cerulean !text-[0.7rem] !normal-case !tracking-normal !font-normal">
+                <Text as="span" variant="small" className="text-cerulean !normal-case !tracking-normal !font-normal">
                   {showMoreInfo ? 'Weniger' : 'Mehr Info'}
                 </Text>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${showMoreInfo ? 'rotate-180' : ''}`} />
@@ -204,8 +195,8 @@ export const CreatorHeader = memo(function CreatorHeader({
 
       <div className="w-full mt-4 md:mt-6 isolate">
         <Heading 
-          as="h3"
-          variant="h3"
+          as="h2"
+          variant="h2"
           className="mb-4"
           style={{ color: '#6B7280' }}
         >
@@ -334,7 +325,7 @@ export const CreatorHeader = memo(function CreatorHeader({
               onClick={() => setIsExpanded(!isExpanded)}
               className="flex items-center gap-1 mt-2 text-cerulean hover:opacity-80 transition-colors"
             >
-              <Text as="span" variant="xs" className="text-cerulean !text-[0.7rem] !normal-case !tracking-normal !font-normal">
+              <Text as="span" variant="small" className="text-cerulean !normal-case !tracking-normal !font-normal">
                 {isExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen'}
               </Text>
               <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
