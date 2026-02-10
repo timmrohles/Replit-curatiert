@@ -216,8 +216,8 @@ export const CreatorHeader = memo(function CreatorHeader({
 
       {/* Tags and Category Section - ISOLATED from other sections */}
       {(category || categories || (tags && tags.length > 0)) && (
-        <div className="w-full mt-4 mb-4" onClick={(e) => e.stopPropagation()}>
-          <div className="flex gap-2 flex-wrap items-start select-none">
+        <div className="w-full mt-4 mb-4" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+          <div className="flex gap-2 flex-wrap items-start select-none" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
             {/* Author Badge - Saffron */}
             <button 
               type="button"
@@ -225,7 +225,7 @@ export const CreatorHeader = memo(function CreatorHeader({
               style={{ backgroundColor: 'var(--color-saffron)' }}
               onClick={(e) => e.stopPropagation()}
             >
-              <Text as="span" variant="small" className="text-white font-semibold whitespace-nowrap">
+              <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
                 {name}
               </Text>
               <LikeButton 
@@ -244,9 +244,9 @@ export const CreatorHeader = memo(function CreatorHeader({
               <button 
                 type="button"
                 className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral cursor-pointer hover:scale-105 transition-all duration-200 select-none"
-                onClick={(e) => { e.stopPropagation(); navigate(`/categories/${category.toLowerCase().replace(/\s+/g, '-')}`); }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/categories/${category.toLowerCase().replace(/\s+/g, '-')}`); }}
               >
-                <Text as="span" variant="small" className="text-white font-semibold whitespace-nowrap">
+                <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
                   {category}
                 </Text>
                 <LikeButton 
@@ -267,9 +267,9 @@ export const CreatorHeader = memo(function CreatorHeader({
                 type="button"
                 key={cat}
                 className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral cursor-pointer hover:scale-105 transition-all duration-200 select-none"
-                onClick={(e) => { e.stopPropagation(); navigate(`/categories/${cat.toLowerCase().replace(/\s+/g, '-')}`); }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/categories/${cat.toLowerCase().replace(/\s+/g, '-')}`); }}
               >
-                <Text as="span" variant="small" className="text-white font-semibold whitespace-nowrap">
+                <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
                   {cat}
                 </Text>
                 <LikeButton 
@@ -290,9 +290,9 @@ export const CreatorHeader = memo(function CreatorHeader({
                 type="button"
                 key={tag}
                 className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral cursor-pointer hover:scale-105 transition-all duration-200 select-none"
-                onClick={(e) => { e.stopPropagation(); navigate(`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}/`); }}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}/`); }}
               >
-                <Text as="span" variant="small" className="text-white font-semibold whitespace-nowrap">
+                <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
                   {tag}
                 </Text>
                 <LikeButton 
