@@ -2700,6 +2700,46 @@ export async function registerRoutes(
         books = booksResult.rows || [];
       }
 
+      const curatorIds = new Set<string>();
+      sections.forEach((s: any) => {
+        const cfg = s.section_config || s.config;
+        if (cfg?.curatorId) curatorIds.add(String(cfg.curatorId));
+      });
+
+      let curatorsMap: Record<string, any> = {};
+      if (curatorIds.size > 0) {
+        const curatorIdsArray = Array.from(curatorIds);
+        const cPlaceholders = curatorIdsArray.map((_, i) => `$${i + 1}`).join(',');
+        const curatorsResult = await queryDB(
+          `SELECT id, name, bio, avatar_url, focus, visible FROM curators WHERE id IN (${cPlaceholders}) AND deleted_at IS NULL`,
+          curatorIdsArray.map(Number)
+        );
+        for (const c of curatorsResult.rows || []) {
+          curatorsMap[String(c.id)] = c;
+        }
+      }
+
+      const enrichedSections = sections.map((s: any) => {
+        const cfg = { ...(s.section_config || s.config) };
+        if (cfg.curatorId && curatorsMap[String(cfg.curatorId)]) {
+          const cur = curatorsMap[String(cfg.curatorId)];
+          cfg.curatorName = cur.name || cfg.curatorName || '';
+          cfg.curatorAvatar = cur.avatar_url || cfg.curatorAvatar || '';
+          cfg.curatorBio = cur.bio || cfg.curatorBio || '';
+          cfg.curatorFocus = cur.focus || cfg.curatorFocus || '';
+          cfg.isVerified = cur.visible ?? cfg.isVerified ?? false;
+        }
+        return {
+          id: s.id,
+          zone: s.zone,
+          type: s.section_type,
+          title: cfg.title || '',
+          config: cfg,
+          items: s.items,
+          order: s.sort_order,
+        };
+      });
+
       const response = {
         ok: true,
         page: {
@@ -2717,15 +2757,7 @@ export async function registerRoutes(
           description: page.seo_description,
           enabled: page.status === 'published' && page.visibility === 'visible',
         },
-        sections: sections.map((s: any) => ({
-          id: s.id,
-          zone: s.zone,
-          type: s.section_type,
-          title: s.section_config?.title || s.config?.title || '',
-          config: s.section_config || s.config,
-          items: s.items,
-          order: s.sort_order,
-        })),
+        sections: enrichedSections,
         books: books,
       };
 
