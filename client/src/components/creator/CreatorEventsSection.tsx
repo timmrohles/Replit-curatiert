@@ -189,8 +189,8 @@ export function CreatorEventsSection({
               {/* Scrollable Container */}
               <div 
                 ref={eventsCarouselRef}
-                className="overflow-x-auto pb-4 scrollbar-hide scroll-smooth"
-                style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                className="overflow-x-auto pb-4 scrollbar-hide scroll-smooth overscroll-x-contain"
+                style={{ scrollSnapType: 'x proximity', scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
               >
                 <div className="flex gap-6">
                   {filteredEvents.map((event) => (

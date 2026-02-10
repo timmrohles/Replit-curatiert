@@ -122,10 +122,10 @@ export function DSCarousel({
       {/* Carousel Container */}
       <div 
         ref={carouselRef}
-        className={`flex overflow-x-auto pb-4 scrollbar-hide ${className}`}
+        className={`flex overflow-x-auto pb-4 scrollbar-hide overscroll-x-contain ${className}`}
         style={{ 
           gap: `${gap}px`,
-          scrollSnapType: className.includes('snap-') ? 'x mandatory' : 'none'
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {children}

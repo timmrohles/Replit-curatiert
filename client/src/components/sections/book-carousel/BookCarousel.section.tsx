@@ -32,8 +32,8 @@ export function BookCarouselSection({ books }: BookCarouselProps) {
       {/* Scrollable Container */}
       <div 
         ref={scrollRef}
-        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth overscroll-x-contain"
+        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
       >
         {books.map((book) => (
           <div key={book.id} className="flex-shrink-0 w-48">

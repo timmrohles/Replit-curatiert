@@ -238,16 +238,17 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
           <div
             ref={scrollContainerRef}
             onScroll={checkScrollButtons}
-            className="flex gap-4 md:gap-6 overflow-x-auto px-4 md:px-0 pb-4 snap-x snap-mandatory scrollbar-hide"
+            className="flex gap-4 md:gap-6 overflow-x-auto px-4 md:px-0 pb-4 snap-x snap-proximity md:snap-mandatory overscroll-x-contain scrollbar-hide"
             style={{
               scrollbarWidth: 'none',
-              msOverflowStyle: 'none'
+              msOverflowStyle: 'none',
+              WebkitOverflowScrolling: 'touch',
             }}
           >
             {books.map((book) => (
               <div
                 key={book.id}
-                className="flex-shrink-0 w-[calc(100vw-2rem)] md:w-[280px] snap-start cursor-pointer"
+                className="flex-shrink-0 w-[75vw] sm:w-[60vw] md:w-[280px] snap-start cursor-pointer"
                 onClick={() => navigate(getBookUrl(book))}
               >
                 {/* Curator Info - only shown when review data exists */}

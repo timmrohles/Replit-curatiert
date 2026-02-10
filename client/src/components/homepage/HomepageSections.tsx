@@ -224,8 +224,8 @@ export function HomepageSections({
             <div className="relative">
               <div
                 ref={refs.eventsCarouselRef}
-                className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-proximity md:snap-mandatory overscroll-x-contain"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
               >
                 {filteredEvents.map(event => (
                   <div key={event.id} className="snap-start shrink-0">

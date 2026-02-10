@@ -241,8 +241,8 @@ export function MostRecommended({ books = defaultBooks, onViewAll }: MostRecomme
           <div 
             ref={scrollContainerRef}
             onScroll={checkScrollButtons}
-            className="overflow-x-auto pb-4 pl-4 md:pl-8 scrollbar-hide scroll-smooth"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="overflow-x-auto pb-4 pl-4 md:pl-8 scrollbar-hide scroll-smooth overscroll-x-contain"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
           >
             <div className="flex gap-3">
               {books.map((book, index) => (

@@ -629,7 +629,7 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
                 backgroundColor={state.storefront.colors?.heroBackground || '#70c1b3'}
                 textColor={textColorOnHero}
               />
-              <div className="flex gap-2 md:gap-3 overflow-x-auto pb-12 scrollbar-hide">
+              <div className="flex gap-2 md:gap-3 overflow-x-auto pb-12 scrollbar-hide overscroll-x-contain">
                 {state.storefront.books.map((book) => (
                   <BookCard 
                     key={book.id} 
@@ -863,8 +863,8 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
                     {/* Scrollable Container */}
                     <div 
                       ref={eventsCarouselRef}
-                      className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4"
-                      style={{ scrollSnapType: 'x mandatory' }}
+                      className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth pb-4 overscroll-x-contain"
+                      style={{ scrollSnapType: 'x proximity', WebkitOverflowScrolling: 'touch' }}
                     >
                       {filteredEvents.map((event) => (
                         <div 

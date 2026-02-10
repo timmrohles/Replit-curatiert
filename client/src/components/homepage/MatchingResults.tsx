@@ -134,7 +134,7 @@ export function MatchingResults({
           </div>
         </div>
 
-        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide overscroll-x-contain">
           {bookMatches.map((match, index) => {
             const matchPercentage = Math.min(
               Math.round((match.score / allTags.length) * 100),
@@ -259,7 +259,7 @@ export function MatchingResults({
           </div>
         </div>
 
-        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide overscroll-x-contain">
           {bookMatches.slice(0, 4).map((match, index) => (
             <motion.div
               key={`self-${match.book.id}`}
@@ -366,7 +366,7 @@ export function MatchingResults({
             </div>
           </div>
 
-          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+          <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide overscroll-x-contain">
             {curatorMatches.map((match, index) => (
               <motion.div
                 key={match.curator.id}
@@ -456,7 +456,7 @@ export function MatchingResults({
           </div>
         </div>
 
-        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide overscroll-x-contain">
           {bookMatches.slice(0, 4).map((match, index) => (
             <motion.div
               key={`author-${match.book.id}`}
@@ -559,7 +559,7 @@ export function MatchingResults({
           </div>
         </div>
 
-        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide overscroll-x-contain">
           {bookMatches.slice(0, 4).map((match, index) => (
             <motion.div
               key={`publisher-${match.book.id}`}

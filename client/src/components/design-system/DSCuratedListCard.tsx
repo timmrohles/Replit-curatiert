@@ -306,8 +306,8 @@ export const DSCuratedListCard = memo(function DSCuratedListCard({
             {/* Scrollable Container */}
             <div 
               ref={scrollRef}
-              className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-12 lg:px-12"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth px-12 lg:px-12 overscroll-x-contain"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
             >
               {displayBooks.map((book) => (
                 <div key={book.id} className="flex-shrink-0 w-[117px]">

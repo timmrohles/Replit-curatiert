@@ -60,7 +60,7 @@ export function GenreCarouselSection({ backgroundColor = 'var(--charcoal)', titl
             {/* Scroll Container */}
             <div 
               ref={genreCarouselRef}
-              className="flex gap-2 md:gap-3 overflow-x-auto pb-4 px-4 scrollbar-hide snap-x snap-mandatory"
+              className="flex gap-2 md:gap-3 overflow-x-auto pb-4 px-4 scrollbar-hide snap-x snap-proximity md:snap-mandatory overscroll-x-contain"
             >
               {/* Hardboiled */}
               <div className="flex-shrink-0 w-32 md:w-44 snap-center group cursor-pointer">

@@ -483,7 +483,7 @@ export function BookSubscriptionPage() {
             arrowColor="#FFFFFF"
             arrowBg="rgba(255, 255, 255, 0.1)"
             arrowHoverBg="#70c1b3"
-            className="snap-x snap-mandatory"
+            className="snap-x snap-proximity md:snap-mandatory"
           >
             <DSGenreCard
               label="Belletristik"

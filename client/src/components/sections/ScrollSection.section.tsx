@@ -83,8 +83,8 @@ export function ScrollSection({
           <div
             ref={carouselRef}
             onScroll={checkScrollability}
-            className={`overflow-x-auto scrollbar-hide ${className}`}
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className={`overflow-x-auto scrollbar-hide overscroll-x-contain ${className}`}
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
           >
             {children}
           </div>

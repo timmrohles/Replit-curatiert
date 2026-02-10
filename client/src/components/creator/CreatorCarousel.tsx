@@ -462,7 +462,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
           <div className="flex justify-end">
             <div 
               ref={sortChipsRef}
-              className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full select-none"
+              className="flex gap-2 overflow-x-auto scrollbar-hide max-w-full select-none overscroll-x-contain"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
             >
               {sortOptions.map((option) => {
