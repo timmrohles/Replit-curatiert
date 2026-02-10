@@ -85,6 +85,7 @@ interface CreatorCarouselProps {
   creatorBio?: string;
   creatorWebsiteUrl?: string;
   isAmbassador?: boolean;
+  isVerified?: boolean;
   showHeader?: boolean;
   
   // Books
@@ -144,6 +145,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
   creatorBio,
   creatorWebsiteUrl,
   isAmbassador = false,
+  isVerified = false,
   showHeader = true,
   books,
   category,
@@ -440,6 +442,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
               bio={creatorBio}
               websiteUrl={creatorWebsiteUrl}
               isAmbassador={isAmbassador}
+              isVerified={isVerified}
               category={category}
               categories={categories}
               tags={tags}

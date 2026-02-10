@@ -87,7 +87,14 @@ All routes prefixed with `/api/`:
 - **CSS Variables**: --font-sans, --font-headline, --color-blue-cerulean, --color-coral-vibrant, etc.
 - **CSS Utility Classes** (in index.css): text-cerulean, bg-coral, tag-pill, favorite-badge, btn-admin-login, logo-spine-*, etc.
 
-## Recent Changes (2026-02-09)
+## Recent Changes (2026-02-10)
+- **Avatar Upload**: Backend route `/api/admin/upload/avatar` with multer (JPG/PNG/WebP/GIF, max 5MB), stored in `client/src/public/uploads/avatars/`, served via `/uploads` static route. Auth enforced before file acceptance.
+- **Verified Curator Badge**: Blue checkmark (BadgeCheck) next to curator name in CreatorHeader, CreatorCarousel, CuratedBookSection, CreatorCarouselSection, AuthorStorefront. DB `visible` column maps to `verified` in frontend.
+- **Biography Word Limit**: Max 100 words with real-time counter in CuratorsManager, border turns coral at 90+ words
+- CuratorsManager: File upload button + URL fallback for avatar, BadgeCheck icon replaces Star for verified status
+- Backend `mapCuratorRow` now returns both `visible` and `verified` fields for compatibility
+
+## Previous Changes (2026-02-09)
 - **Achieved zero TypeScript compilation errors** across entire codebase (down from 482)
 - Fixed 368+ errors across 82 files using parallel subagents
 - Key type fix patterns applied:

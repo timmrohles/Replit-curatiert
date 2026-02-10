@@ -58,6 +58,7 @@ interface CuratorInfo {
   bio?: string;
   websiteUrl?: string;
   isAmbassador?: boolean;
+  isVerified?: boolean;
   showSocials?: boolean;
 }
 
@@ -174,6 +175,7 @@ export function CuratedBookSection({
           creatorBio={effectiveCurator.bio}
           creatorWebsiteUrl={effectiveCurator.websiteUrl}
           isAmbassador={effectiveCurator.isAmbassador || false}
+          isVerified={effectiveCurator.isVerified || false}
           showHeader={showHeader}
           books={books}
           category={category}

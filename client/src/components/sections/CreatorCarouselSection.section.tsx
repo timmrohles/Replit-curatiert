@@ -46,6 +46,7 @@ export function CreatorCarouselSection({ section, books = [], className = '' }: 
             occasion: config.occasion || '',
             curationReason: curatorReason,
             showSocials: false,
+            isVerified: config.isVerified || config.verified || false,
           }}
           books={mappedBooks}
           category={config.category || title}

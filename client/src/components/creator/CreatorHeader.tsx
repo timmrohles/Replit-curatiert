@@ -1,5 +1,5 @@
 import { memo, useState, useRef, useEffect } from 'react';
-import { ShoppingCart, Heart, User, Menu, X, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Heart, User, Menu, X, ChevronDown, BadgeCheck } from 'lucide-react';
 import { CoRatiertLogo } from '../common/CoRatiertLogo';
 import { useSafeNavigate } from '../../utils/routing';
 import { useFavorites } from '../favorites/FavoritesContext';
@@ -18,13 +18,14 @@ interface CreatorHeaderProps {
   bio?: string;
   websiteUrl?: string;
   isAmbassador?: boolean;
+  isVerified?: boolean;
   textColor?: string;
   iconColor?: string;
   sectionBackgroundColor?: string;
   category?: string;
   categories?: string[];
   tags?: string[];
-  isLCP?: boolean; // ⚡ PERFORMANCE: Mark as LCP image for priority loading
+  isLCP?: boolean;
 }
 
 export const CreatorHeader = memo(function CreatorHeader({
@@ -37,6 +38,7 @@ export const CreatorHeader = memo(function CreatorHeader({
   bio,
   websiteUrl,
   isAmbassador = false,
+  isVerified = false,
   textColor = 'white',
   iconColor = 'white',
   sectionBackgroundColor = 'transparent',
@@ -108,6 +110,9 @@ export const CreatorHeader = memo(function CreatorHeader({
                 </>
               ) : (
                 name
+              )}
+              {isVerified && (
+                <BadgeCheck className="w-5 h-5 flex-shrink-0" style={{ color: '#247ba0' }} />
               )}
             </div>
             

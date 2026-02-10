@@ -256,6 +256,7 @@ export function AuthorStorefront({ authorId }: { authorId: string }) {
         occasion=""
         curationReason={storefront.description}
         bio={storefront.authorBio}
+        isVerified={storefront.isVerified || false}
         sectionBackgroundColor={heroBackgroundColor}
       />
 

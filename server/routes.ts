@@ -3,6 +3,9 @@ import { type Server } from "http";
 import { queryDB, testConnection } from "./db";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 const log = {
   info: (...args: unknown[]) => console.log('[INFO]', ...args),
@@ -134,6 +137,7 @@ function mapCuratorRow(row: any) {
       website: row.website_url || row.website || '',
     },
     visible: Boolean(row.visible),
+    verified: Boolean(row.visible),
     display_order: Number(row.display_order) || 0,
     status: row.status || 'draft',
     visibility: row.visibility || 'visible',
@@ -227,6 +231,66 @@ export async function registerRoutes(
   } catch (err) {
     log.warn('Could not verify storefront tables:', err);
   }
+
+  // ==================================================================
+  // AVATAR UPLOAD
+  // ==================================================================
+  const uploadsDir = path.resolve(process.cwd(), 'client/src/public/uploads/avatars');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  const avatarStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, uploadsDir),
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname) || '.jpg';
+      cb(null, `avatar-${uniqueSuffix}${ext}`);
+    }
+  });
+
+  const avatarUpload = multer({
+    storage: avatarStorage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      if (allowed.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Nur JPG, PNG, WebP und GIF erlaubt'));
+      }
+    }
+  });
+
+  const uploadsRoot = path.resolve(process.cwd(), 'client/src/public/uploads');
+  const expressModule = await import('express');
+  app.use('/uploads', expressModule.default.static(uploadsRoot));
+
+  app.post('/api/admin/upload/avatar', async (req: Request, res: Response) => {
+    try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
+      avatarUpload.single('avatar')(req, res, (err: any) => {
+        if (err) {
+          log.error('Multer error:', err);
+          return res.status(400).json({ ok: false, error: err.message || 'Upload fehlgeschlagen' });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({ ok: false, error: 'Keine Datei hochgeladen' });
+        }
+
+        const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+        log.info('Avatar uploaded:', avatarUrl);
+
+        return res.json({ ok: true, data: { url: avatarUrl } });
+      });
+    } catch (error) {
+      log.error('Avatar upload error:', error);
+      return res.status(500).json({ ok: false, error: 'Upload fehlgeschlagen' });
+    }
+  });
 
   // ==================================================================
   // HEALTH CHECK

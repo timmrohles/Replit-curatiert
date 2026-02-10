@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Search, Upload, X, Check, Star, Users, BookOpen } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, Edit2, Search, Upload, X, Check, Star, Users, BookOpen, BadgeCheck, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_BASE_URL } from '../../config/apiClient';
 
@@ -32,6 +32,8 @@ export function CuratorsManager() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadCurators();
@@ -41,6 +43,38 @@ export function CuratorsManager() {
     'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
     'Content-Type': 'application/json'
   });
+
+  const uploadAvatar = async (file: File) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '';
+      const response = await fetch(`${API_BASE_URL}/admin/upload/avatar`, {
+        method: 'POST',
+        headers: { 'X-Admin-Token': token },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.ok && data.data?.url) {
+        setEditingCurator(prev => prev ? { ...prev, avatar_url: data.data.url } : prev);
+        toast.success('Avatar hochgeladen');
+      } else {
+        toast.error(data.error || 'Upload fehlgeschlagen');
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      toast.error('Upload fehlgeschlagen');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const countWords = (text: string): number => {
+    return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+  };
 
   const loadCurators = async () => {
     setLoading(true);
@@ -71,7 +105,7 @@ export function CuratorsManager() {
             bio: c.bio || '',
             avatar_url: c.avatar_url || c.avatar || '',
             focus: c.focus || '',
-            verified: c.visible || false,
+            verified: c.verified || c.visible || false,
             socials: {
               instagram: c.instagram || c.instagram_url || '',
               youtube: c.youtube || c.youtube_url || '',
@@ -364,7 +398,7 @@ export function CuratorsManager() {
                     <h3 className="font-bold text-lg flex items-center gap-2" style={{ color: '#3A3A3A' }}>
                       {curator.name}
                       {curator.verified && (
-                        <Star className="w-4 h-4" style={{ color: '#F4B942' }} />
+                        <BadgeCheck className="w-5 h-5" style={{ color: '#247ba0' }} />
                       )}
                     </h3>
                     {curator.focus && (
@@ -525,36 +559,94 @@ export function CuratorsManager() {
                   </label>
                   <textarea
                     value={editingCurator.bio || ''}
-                    onChange={(e) => setEditingCurator({ ...editingCurator, bio: e.target.value })}
+                    onChange={(e) => {
+                      const words = countWords(e.target.value);
+                      if (words <= 100 || e.target.value.length < (editingCurator.bio || '').length) {
+                        setEditingCurator({ ...editingCurator, bio: e.target.value });
+                      }
+                    }}
                     rows={4}
                     className="w-full px-4 py-2 border rounded-lg"
-                    style={{ borderColor: '#E5E7EB' }}
-                    placeholder="Kurze Beschreibung des Kurators..."
+                    style={{ borderColor: countWords(editingCurator.bio || '') >= 90 ? '#f25f5c' : '#E5E7EB' }}
+                    placeholder="Kurze Beschreibung des Kurators (max. 100 Wörter)..."
                   />
+                  <div className="flex justify-end mt-1">
+                    <span
+                      className="text-xs"
+                      style={{ color: countWords(editingCurator.bio || '') > 100 ? '#f25f5c' : '#666666' }}
+                    >
+                      {countWords(editingCurator.bio || '')} / 100 Wörter
+                    </span>
+                  </div>
                 </div>
 
-                {/* Avatar URL */}
+                {/* Avatar */}
                 <div>
                   <label className="block text-sm mb-2 font-medium" style={{ color: '#3A3A3A' }}>
-                    Avatar URL
+                    Avatar
                   </label>
-                  <input
-                    type="text"
-                    value={editingCurator.avatar_url || ''}
-                    onChange={(e) => setEditingCurator({ ...editingCurator, avatar_url: e.target.value })}
-                    className="w-full px-4 py-2 border rounded-lg"
-                    style={{ borderColor: '#E5E7EB' }}
-                    placeholder="https://..."
-                  />
-                  {editingCurator.avatar_url && (
-                    <div className="mt-2">
-                      <img
-                        src={editingCurator.avatar_url}
-                        alt="Preview"
-                        className="w-24 h-24 rounded-full object-cover"
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0">
+                      {editingCurator.avatar_url ? (
+                        <img
+                          src={editingCurator.avatar_url}
+                          alt="Avatar"
+                          className="w-24 h-24 rounded-full object-cover border-2"
+                          style={{ borderColor: '#E5E7EB' }}
+                        />
+                      ) : (
+                        <div
+                          className="w-24 h-24 rounded-full flex items-center justify-center border-2 border-dashed"
+                          style={{ borderColor: '#9CA3AF', backgroundColor: '#F7F4EF' }}
+                        >
+                          <Users className="w-8 h-8" style={{ color: '#9CA3AF' }} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadAvatar(file);
+                          e.target.value = '';
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="w-full px-4 py-2 border rounded-lg flex items-center justify-center gap-2 text-sm hover:bg-gray-50 transition-colors"
+                        style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
+                      >
+                        {uploading ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                            Wird hochgeladen...
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon className="w-4 h-4" />
+                            Bild hochladen
+                          </>
+                        )}
+                      </button>
+                      <div className="text-xs" style={{ color: '#9CA3AF' }}>
+                        JPG, PNG, WebP oder GIF (max. 5 MB)
+                      </div>
+                      <input
+                        type="text"
+                        value={editingCurator.avatar_url || ''}
+                        onChange={(e) => setEditingCurator({ ...editingCurator, avatar_url: e.target.value })}
+                        className="w-full px-3 py-1.5 border rounded-lg text-sm"
+                        style={{ borderColor: '#E5E7EB' }}
+                        placeholder="oder URL eingeben: https://..."
                       />
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Verified */}
@@ -564,13 +656,16 @@ export function CuratorsManager() {
                       type="checkbox"
                       checked={editingCurator.verified || false}
                       onChange={(e) => setEditingCurator({ ...editingCurator, verified: e.target.checked })}
-                      className="w-4 h-4"
+                      className="w-4 h-4 accent-blue-500"
                     />
                     <span className="text-sm font-medium" style={{ color: '#3A3A3A' }}>
                       Verifizierter Kurator
                     </span>
-                    <Star className="w-4 h-4" style={{ color: '#F4B942' }} />
+                    <BadgeCheck className="w-5 h-5" style={{ color: editingCurator.verified ? '#247ba0' : '#9CA3AF' }} />
                   </label>
+                  <p className="text-xs mt-1 ml-6" style={{ color: '#666666' }}>
+                    Zeigt einen blauen Haken neben dem Kurator-Namen im Frontend
+                  </p>
                 </div>
 
                 {/* Socials */}
