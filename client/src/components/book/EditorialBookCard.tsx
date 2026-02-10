@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, Share2, Mail, Copy, Check, MessageCircle } from 'lucide-react';
+import { Tags, ArrowRight, Quote, Share2, Mail, Copy, Check, MessageCircle, ChevronDown } from 'lucide-react';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -436,14 +436,12 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
                 e.stopPropagation();
                 setIsKlappentextExpanded(!isKlappentextExpanded);
               }}
-              className="text-left underline hover:no-underline transition-all mt-3 md:mt-1.5"
-              style={{
-                color: 'var(--color-blue)',
-                fontSize: '0.875rem',
-                lineHeight: '1.25rem'
-              }}
+              className="flex items-center gap-1 mt-2 text-cerulean hover:opacity-80 transition-colors"
             >
-              {isKlappentextExpanded ? 'Weniger lesen' : 'Mehr lesen'}
+              <Text as="span" variant="small" className="text-cerulean !normal-case !tracking-normal !font-normal">
+                {isKlappentextExpanded ? 'Weniger lesen' : 'Mehr lesen'}
+              </Text>
+              <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isKlappentextExpanded ? 'rotate-180' : ''}`} />
             </button>
           </>
         )}
