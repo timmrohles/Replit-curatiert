@@ -69,6 +69,7 @@
   --fluid-body-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
   --fluid-body-xs: clamp(0.71875rem, 0.7rem + 0.08vw, 0.78125rem);
   --fluid-price-label: clamp(0.8125rem, 0.65rem + 0.6vw, 1rem);
+  --shadow-book-cover: 4px 4px 8px rgba(0, 0, 0, 0.2);
   --color-blue-cerulean: #247ba0;
   --color-coral-vibrant: #f25f5c;
   --color-gold-royal: #ffe066;
@@ -164,6 +165,7 @@
   --shadow-lg: 0px 2px 0px 0px hsl(0 0% 100% / 0.00), 0px 4px 6px -1px hsl(0 0% 100% / 0.00);
   --shadow-xl: 0px 2px 0px 0px hsl(0 0% 100% / 0.00), 0px 8px 10px -1px hsl(0 0% 100% / 0.00);
   --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 100% / 0.00);
+  --shadow-book-cover: 4px 4px 12px rgba(0, 0, 0, 0.4);
   --color-charcoal: #2a2a2a;
   --header-bg: #2a2a2a;
   --nav-bg: #ffffff;
@@ -366,6 +368,27 @@
   .favorite-badge { background-color: var(--color-coral-vibrant); color: #FFFFFF; font-weight: 700; font-family: var(--font-sans); }
   .tag-pill { background-color: var(--color-bg-light, #f7f4ef); color: var(--foreground); border: 1px solid hsl(var(--border)); font-weight: 600; transition: all 0.2s ease; }
   .tag-pill:hover { background-color: var(--color-coral-vibrant, #f25f5c); color: #FFFFFF; border-color: var(--color-coral-vibrant, #f25f5c); }
+
+  .sort-chip {
+    padding: 0.25rem 0.625rem;
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid rgba(0,0,0,0.1);
+    cursor: pointer;
+  }
+  .sort-chip:hover { border-color: rgba(0,0,0,0.3); }
+  .sort-chip[aria-pressed="true"] {
+    background-color: var(--color-blue-cerulean);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  .dark .sort-chip { color: var(--color-blue-cerulean); }
+  .dark .sort-chip[aria-pressed="true"] { color: #ffffff; }
 
 
   /* Hide ugly search cancel button in Chrome until we can style it properly */

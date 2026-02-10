@@ -268,11 +268,10 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
             {/* Match Badge */}
             {book.matchPercentage !== undefined && book.matchPercentage > 0 && (
               <div 
-                className="absolute bottom-3 left-3 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-full shadow-lg backdrop-blur-sm"
+                className="absolute bottom-3 left-3 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-full shadow-lg backdrop-blur-sm font-headline"
                 style={{ 
                   backgroundColor: book.matchPercentage >= 75 ? 'rgba(90, 150, 144, 0.95)' : book.matchPercentage >= 50 ? 'rgba(160, 206, 200, 0.95)' : 'rgba(247, 244, 239, 0.95)',
                   color: book.matchPercentage >= 50 ? '#FFFFFF' : '#3A3A3A',
-                  fontFamily: 'Fjalla One',
                   zIndex: 51
                 }}
                 title={`${book.matchPercentage}% Match zu deinem Profil`}
@@ -342,14 +341,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
             {/* Tags Overlay */}
             {showTagsOverlay && bookONIXTags.length > 0 && (
               <div className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-black/85 backdrop-blur-[8px]">
-                <h5 
-                  className="text-white"
-                  style={{ 
-                    fontFamily: 'Fjalla One',
-                    fontSize: '1rem',
-                    textTransform: 'none'
-                  }}
-                >
+                <h5 className="text-white font-headline text-base normal-case">
                   Tags
                 </h5>
                 
@@ -373,14 +365,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
             {/* Reviews/Kommentare Overlay */}
             {showInfoOverlay && book.reviews && (
               <div className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-black/85 backdrop-blur-[8px]">
-                <h5 
-                  className="text-white"
-                  style={{ 
-                    fontFamily: 'Fjalla One',
-                    fontSize: '1rem',
-                    textTransform: 'none'
-                  }}
-                >
+                <h5 className="text-white font-headline text-base normal-case">
                   Kommentare
                 </h5>
                 

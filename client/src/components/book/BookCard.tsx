@@ -265,11 +265,10 @@ export const BookCard = memo(function BookCard({
             {/* Match Badge - unten links */}
             {matchPercentage !== undefined && matchPercentage > 0 && (
               <div 
-                className="absolute bottom-3 left-3 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-full shadow-lg backdrop-blur-sm"
+                className="absolute bottom-3 left-3 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-full shadow-lg backdrop-blur-sm font-headline"
                 style={{ 
                   backgroundColor: matchPercentage >= 75 ? 'rgba(90, 150, 144, 0.95)' : matchPercentage >= 50 ? 'rgba(160, 206, 200, 0.95)' : 'rgba(247, 244, 239, 0.95)',
                   color: matchPercentage >= 50 ? '#FFFFFF' : '#3A3A3A',
-                  fontFamily: 'Fjalla One',
                   zIndex: 51
                 }}
                 title={`${matchPercentage}% Match zu deinem Profil`}
