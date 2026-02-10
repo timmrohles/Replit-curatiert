@@ -272,7 +272,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
         <div className="flex flex-col gap-0.5 mt-3">
           <Heading 
             as="h4" 
-            variant="h3" 
+            variant="h2" 
             className="text-foreground line-clamp-2 !normal-case"
             style={{ minHeight: '2.8em', lineHeight: '1.4em' }}
           >
