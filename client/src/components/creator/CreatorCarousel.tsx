@@ -428,7 +428,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
       <div className="max-w-7xl mx-auto w-full" style={{ backgroundColor: 'transparent', overflow: 'visible' }}>
         {/* Header with Creator Info and CTA */}
         {showHeader && (
-          <div className="w-full mb-4 md:mb-6">
+          <div className="w-full mb-4 md:mb-6" style={{ contain: 'content' }}>
             <CreatorHeader
               avatar={creatorAvatar}
               name={creatorName}
@@ -457,7 +457,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         )}
 
         {/* Sort Field - ISOLATED from other sections */}
-        <div className="mb-4 md:mb-6" onClick={(e) => e.stopPropagation()}>
+        <div className="mb-4 md:mb-6" style={{ contain: 'content' }} onClick={(e) => e.stopPropagation()}>
           {/* Sort Chips - Mobile horizontal scroll, Desktop flex wrap */}
           <div className="flex justify-end">
             <div 
