@@ -310,7 +310,7 @@ export const CreatorHeader = memo(function CreatorHeader({
             }
             className={`leading-relaxed ${
               shouldTruncate && !isExpanded ? 'line-clamp-3' : ''
-            } ${isAdSection ? 'text-white' : 'text-gray-500'}`}
+            } ${isAdSection ? 'text-white' : 'text-black'}`}
             ref={textRef}
           >
             {curationReason}
