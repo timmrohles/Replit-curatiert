@@ -420,6 +420,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
   return (
     <section 
       className="py-6 md:py-8 w-full px-4" 
+      data-no-select="true"
       style={{ 
         backgroundColor: 'transparent',
         overflow: 'visible',
@@ -427,6 +428,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         userSelect: 'none',
       } as React.CSSProperties}
       onMouseDown={(e) => {
+        console.log('MOUSEDOWN PREVENTED on CreatorCarousel');
         e.preventDefault();
       }}
     >
