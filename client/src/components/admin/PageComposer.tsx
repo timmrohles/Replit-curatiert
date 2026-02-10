@@ -189,7 +189,6 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
     } catch (err) {
       console.error('❌ Error loading sections:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
-      setSections([]);
     } finally {
       setLoading(false);
     }
@@ -293,7 +292,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
         sort_order: editingSection.sort_order || 0,
         section_type: sectionType,  // ✅ Separate column in database!
         config: editingSection.config || {},
-        status: editingSection.status || 'draft',
+        status: editingSection.status || 'published',
         visibility: editingSection.visibility || 'visible',
         publish_at: editingSection.publish_at || null,
         unpublish_at: editingSection.unpublish_at || null,
@@ -325,11 +324,21 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
         throw new Error(`Failed to save section: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
+      const savedData = await response.json().catch(() => null);
+      console.log('✅ Section saved successfully:', savedData);
+
+      setError(null);
+      try {
+        await loadSections();
+      } catch (loadErr) {
+        console.error('⚠️ Section saved but reload failed:', loadErr);
+      }
       setEditingSection(null);
-      await loadSections();
     } catch (err) {
       console.error('❌ Error saving section:', err);
-      setError(err instanceof Error ? err.message : 'Failed to save section');
+      const msg = err instanceof Error ? err.message : 'Failed to save section';
+      setError(msg);
+      alert(`❌ Fehler beim Speichern: ${msg}`);
     }
   };
 
@@ -362,19 +371,16 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
     try {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       
-      // ✅ FIX: Ensure section_type is in config
-      const configWithType = {
-        ...(section.config || {}),
-        section_type: section.type || (section.config as any)?.section_type || 'category_grid',
-      };
+      const zoneForDB = section.zone === 'aboveFold' ? 'above_fold' : section.zone;
 
       const payload = {
         page_id: page.id,
-        zone: section.zone,
-        sort_order: section.sort_order + 5, // Insert after original
-        status: 'draft', // Always create as draft
+        zone: zoneForDB,
+        sort_order: section.sort_order + 5,
+        section_type: section.type || (section.config as any)?.section_type || 'category_grid',
+        status: section.status || 'published',
         visibility: section.visibility,
-        config: configWithType,
+        config: section.config || {},
       };
 
       // Use standard sections endpoint (URL fixed with correct function name)
@@ -580,7 +586,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                         setEditingSection({ 
                           zone: zone.key as any, 
                           sort_order: (zoneSections.length + 1) * 10,
-                          status: 'draft',
+                          status: 'published',
                           visibility: 'visible'
                         });
                       }}
