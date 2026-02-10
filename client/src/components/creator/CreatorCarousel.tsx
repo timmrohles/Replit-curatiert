@@ -419,7 +419,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
 
   return (
     <section 
-      className="py-6 md:py-8 w-full px-4" 
+      className="py-3 md:py-4 w-full px-4" 
       style={{ 
         backgroundColor: 'transparent',
         overflow: 'visible',
@@ -492,7 +492,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         </div>
 
         {/* Horizontal Carousel with CarouselContainer */}
-        <div className="mb-12">
+        <div className="mb-4">
           <CarouselContainer
             showDesktopButtons={sortedBooks.length > 4}
             showMobileButtons={sortedBooks.length > 2}
