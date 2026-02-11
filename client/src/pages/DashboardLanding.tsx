@@ -34,19 +34,20 @@ export default function DashboardLanding() {
         ]}
       />
 
-      {/* Hero Section - Blauer Hintergrund, Text linksbündig */}
-      <Section variant="hero" className="bg-hero-blue !py-8">
+      {/* Hero Section */}
+      <Section variant="hero" className="!py-8" style={{ backgroundColor: 'var(--color-beige, #f7f4ef)' }}>
         <Container>
           <div className="-mt-4">
             <Heading 
               as="h1" 
               variant="h1" 
-              className="mb-4 !text-white"
+              className="mb-4"
+              style={{ color: 'var(--charcoal, #2a2a2a)' }}
             >
               Willkommen in deinem Dashboard
             </Heading>
             
-            <Text variant="large" className="max-w-3xl !text-white">
+            <Text variant="large" className="max-w-3xl" style={{ color: 'var(--color-text-secondary, #6B7280)' }}>
               Erstelle deine eigene Storefront, verwalte deine Bücher als Autor oder präsentiere dein Verlagsprogramm - alles an einem Ort.
             </Text>
           </div>
