@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSafeNavigate } from '../utils/routing';
-import { Sparkles, BookOpen, Building2, Shield, ArrowRight, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { Helmet } from 'react-helmet-async';
@@ -35,7 +35,7 @@ export default function DashboardLanding() {
       />
 
       {/* Hero Section */}
-      <Section variant="hero" className="!py-8" style={{ backgroundColor: 'var(--color-beige, #f7f4ef)' }}>
+      <Section variant="hero" className="!py-8 !bg-[var(--color-beige,#f7f4ef)]">
         <Container>
           <div className="-mt-4">
             <Heading 
@@ -62,10 +62,6 @@ export default function DashboardLanding() {
             {/* Storefront - Always Available */}
             <div className="rounded-xl shadow-sm border overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
               <div className="p-6 md:p-8">
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: '#D1FAE5' }}>
-                  <Sparkles className="w-7 h-7" style={{ color: '#10B981' }} />
-                </div>
-                
                 <h3 className="text-xl md:text-2xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
                   Creator Storefront
                 </h3>
@@ -114,10 +110,6 @@ export default function DashboardLanding() {
             {/* Author Access */}
             <div className="rounded-xl shadow-sm border overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
               <div className="p-6 md:p-8">
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: '#FED7AA' }}>
-                  <BookOpen className="w-7 h-7" style={{ color: '#F97316' }} />
-                </div>
-                
                 <h3 className="text-xl md:text-2xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
                   Autor Dashboard
                 </h3>
@@ -166,10 +158,6 @@ export default function DashboardLanding() {
             {/* Publisher Access */}
             <div className="rounded-xl shadow-sm border overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
               <div className="p-6 md:p-8">
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: '#DBEAFE' }}>
-                  <Building2 className="w-7 h-7" style={{ color: '#247ba0' }} />
-                </div>
-                
                 <h3 className="text-xl md:text-2xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
                   Verlags Dashboard
                 </h3>
@@ -219,9 +207,6 @@ export default function DashboardLanding() {
           {/* Info Section */}
           <div className="mt-12 rounded-xl p-6 md:p-8" style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}>
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EFF6FF' }}>
-                <Shield className="w-6 h-6" style={{ color: '#247ba0' }} />
-              </div>
               <div>
                 <h3 className="text-lg md:text-xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
                   Wie funktioniert die Freischaltung?
