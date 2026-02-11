@@ -23,7 +23,8 @@ import {
   Gift,
   Mail,
   MoreHorizontal,
-  Settings
+  Settings,
+  PenTool
 } from 'lucide-react';
 import { DashboardHome } from './dashboard/DashboardHome';
 import { DashboardProfile } from './dashboard/Profile';
@@ -49,6 +50,7 @@ import { AuthorBonuscontent } from './dashboard/author/AuthorBonuscontent';
 import { AuthorNewsletter } from './dashboard/author/AuthorNewsletter';
 import { AuthorEvents } from './dashboard/author/AuthorEvents';
 import { AuthorStatistics } from './dashboard/author/AuthorStatistics';
+import { AuthorRequest } from './dashboard/AuthorRequest';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { Breadcrumb } from '../components/layout/Breadcrumb';
@@ -79,6 +81,7 @@ type DashboardSection =
   | 'creator-campaigns'
   | 'creator-events'
   | 'creator-analytics'
+  | 'author-request'
   | 'author-storefront'
   | 'author-books'
   | 'author-community'
@@ -139,20 +142,19 @@ export default function ModularUserDashboard() {
 
   const loadUserModules = async () => {
     try {
-      const mockModules: UserModule[] = [
-        'creator_storefront', 'creator_curations', 'creator_reviews',
-        'creator_topics', 'creator_campaigns', 'creator_events', 'creator_analytics',
-        'author_storefront', 'author_books', 'author_community',
-        'author_bookclub', 'author_members', 'author_bonuscontent',
-        'author_newsletter', 'author_events', 'author_statistics'
-      ].map(key => ({
-        userId,
-        moduleKey: key,
-        enabled: true,
-        grantedAt: new Date().toISOString(),
-        grantedBy: 'demo-admin'
-      }));
-      setUserModules(mockModules);
+      const res = await fetch(`${API_BASE}/user-modules?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+      if (data.ok && data.data) {
+        setUserModules(data.data.map((m: any) => ({
+          userId,
+          moduleKey: m.module_key,
+          enabled: true,
+          grantedAt: m.created_at || new Date().toISOString(),
+          grantedBy: m.granted_by || 'system'
+        })));
+      } else {
+        setUserModules([]);
+      }
     } catch {
       setUserModules([]);
     } finally {
@@ -213,8 +215,11 @@ export default function ModularUserDashboard() {
 
   const availableCreatorItems = creatorNavItems.filter(item => !item.moduleKey || hasModule(item.moduleKey));
   const availableAuthorItems = authorNavItems.filter(item => !item.moduleKey || hasModule(item.moduleKey));
+  const hasAnyAuthorModule = authorNavItems.some(item => item.moduleKey && hasModule(item.moduleKey));
 
-  const allNavItems = [...coreNavItems, ...availableCreatorItems, ...availableAuthorItems];
+  const authorRequestItem: NavItem = { id: 'author-request', label: 'Autor werden', icon: PenTool, group: 'author' };
+
+  const allNavItems = [...coreNavItems, ...availableCreatorItems, ...(hasAnyAuthorModule ? availableAuthorItems : [authorRequestItem])];
   const currentNavItem = allNavItems.find(item => item.id === activeSection);
 
   const mobileTabItems: NavItem[] = [
@@ -312,7 +317,10 @@ export default function ModularUserDashboard() {
       <div className="flex-1 overflow-y-auto p-3 space-y-1">
         {renderNavGroup('Mein Bereich', coreNavItems, 'core', '#247ba0')}
         {availableCreatorItems.length > 0 && renderNavGroup('Creator', availableCreatorItems, 'creator', '#10B981')}
-        {availableAuthorItems.length > 0 && renderNavGroup('Autor:in', availableAuthorItems, 'author', '#F59E0B')}
+        {hasAnyAuthorModule 
+          ? renderNavGroup('Autor:in', availableAuthorItems, 'author', '#F59E0B')
+          : renderNavGroup('Autor:in', [authorRequestItem], 'author', '#F59E0B')
+        }
       </div>
 
       <div className="p-3 border-t" style={{ borderColor: '#E5E7EB' }}>
@@ -436,16 +444,17 @@ export default function ModularUserDashboard() {
               </div>
             )}
 
-            {availableAuthorItems.length > 0 && (
-              <div className="mb-3">
-                <div className="px-3 py-1.5 text-xs uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
-                  Autor:in
-                </div>
-                <div className="space-y-0.5">
-                  {availableAuthorItems.map(item => renderNavButton(item, '#F59E0B'))}
-                </div>
+            <div className="mb-3">
+              <div className="px-3 py-1.5 text-xs uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
+                Autor:in
               </div>
-            )}
+              <div className="space-y-0.5">
+                {hasAnyAuthorModule
+                  ? availableAuthorItems.map(item => renderNavButton(item, '#F59E0B'))
+                  : renderNavButton(authorRequestItem, '#F59E0B')
+                }
+              </div>
+            </div>
 
             <div className="pt-3 mt-2 border-t space-y-0.5" style={{ borderColor: '#E5E7EB' }}>
               <button
@@ -531,6 +540,8 @@ export default function ModularUserDashboard() {
           return hasModule('creator_events') ? <CreatorEvents /> : <FeatureLockedMessage feature="Events" />;
         case 'creator-analytics':
           return hasModule('creator_analytics') ? <CreatorAnalytics /> : <FeatureLockedMessage feature="Analytics" />;
+        case 'author-request':
+          return <AuthorRequest userId={userId} />;
         case 'author-storefront':
           return hasModule('author_storefront') ? <AuthorStorefront /> : <FeatureLockedMessage feature="Storefront" />;
         case 'author-books':

@@ -41,6 +41,13 @@ The platform is built with a modern web stack, featuring a React frontend and an
 -   **Robust Type Safety**: Extensive use of TypeScript with Zod schemas for API validation, ensuring data integrity and reducing runtime errors.
 -   **Admin Panel**: `/sys-mgmt-xK9/content-manager` for managing all content, including login at `/sys-mgmt-xK9/login`.
 
+## Author Verification Workflow
+-   **Author Request Flow**: Users can request author access from their dashboard ("Autor werden" in the sidebar). They search for their name in the ONIX book database, select a match (or indicate they're new), and submit a request.
+-   **Admin Approval**: Admins review requests in the Content Manager under "Autoren-Anträge" tab. Approving creates an author profile and enables all author modules (`author_storefront`, `author_books`, etc.) via the `user_modules` table.
+-   **ONIX Matching**: If the author exists in the books DB, the match name is stored in `author_profiles.onix_match_name`. If not yet in the DB, matching happens later when a book is published via ONIX.
+-   **Database Tables**: `author_profiles` (user-linked author data), `author_requests` (request workflow with status tracking), `user_modules` (per-user feature access).
+-   **Security Note**: Author request endpoints currently accept userId from the client; proper user authentication is needed before production use.
+
 ## External Dependencies
 -   **Database**: Neon PostgreSQL (connected via `NEON_DATABASE_URL` secret).
 -   **File Storage**: Local filesystem for avatar uploads (`client/src/public/uploads/avatars/`), served via a static route `/uploads`.

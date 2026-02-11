@@ -522,6 +522,49 @@ export async function registerRoutes(
     log.warn('Could not create user/module tables:', err);
   }
 
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS author_profiles (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT UNIQUE,
+        display_name TEXT NOT NULL,
+        slug TEXT UNIQUE,
+        bio TEXT,
+        website TEXT,
+        socials JSONB DEFAULT '{}',
+        onix_match_name TEXT,
+        avatar_url TEXT,
+        status TEXT DEFAULT 'draft',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_author_profiles_user ON author_profiles(user_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_author_profiles_status ON author_profiles(status)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_author_profiles_onix ON author_profiles(onix_match_name)`);
+
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS author_requests (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        requested_name TEXT NOT NULL,
+        onix_match_name TEXT,
+        message TEXT,
+        status TEXT DEFAULT 'pending',
+        decision_by TEXT,
+        decision_note TEXT,
+        decided_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_author_requests_user ON author_requests(user_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_author_requests_status ON author_requests(status)`);
+
+    log.info('author_profiles and author_requests tables verified');
+  } catch (err) {
+    log.warn('Could not create author tables:', err);
+  }
+
   // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
@@ -1320,6 +1363,212 @@ export async function registerRoutes(
     } catch (error) {
       log.error('Books search error:', error);
       return res.status(500).json({ ok: false, error: String(error), data: [] });
+    }
+  });
+
+  // ==================================================================
+  // AUTHOR VERIFICATION WORKFLOW
+  // ==================================================================
+
+  app.get('/api/authors/search-onix', async (req: Request, res: Response) => {
+    try {
+      const q = (req.query.q as string || '').trim();
+      if (!q || q.length < 2) {
+        return res.json({ ok: true, data: [] });
+      }
+      const result = await queryDB(
+        `SELECT DISTINCT author as name, COUNT(*) as book_count
+         FROM books
+         WHERE author IS NOT NULL AND author != '' AND author ILIKE $1
+         GROUP BY author
+         ORDER BY COUNT(*) DESC
+         LIMIT 20`,
+        [`%${q}%`]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Author ONIX search error:', error);
+      return res.status(500).json({ ok: false, error: 'Suche fehlgeschlagen' });
+    }
+  });
+
+  app.post('/api/author-requests', async (req: Request, res: Response) => {
+    try {
+      const { userId, requestedName, onixMatchName, message } = req.body;
+      if (!userId || !requestedName) {
+        return res.status(400).json({ ok: false, error: 'userId und requestedName sind erforderlich' });
+      }
+
+      const existing = await queryDB(
+        `SELECT id, status FROM author_requests WHERE user_id = $1 AND status IN ('pending', 'approved') LIMIT 1`,
+        [userId]
+      );
+      if (existing.rows.length > 0) {
+        const st = existing.rows[0].status;
+        if (st === 'pending') {
+          return res.status(409).json({ ok: false, error: 'Du hast bereits einen offenen Antrag.' });
+        }
+        if (st === 'approved') {
+          return res.status(409).json({ ok: false, error: 'Dein Autoren-Zugang wurde bereits freigeschaltet.' });
+        }
+      }
+
+      const result = await queryDB(
+        `INSERT INTO author_requests (user_id, requested_name, onix_match_name, message)
+         VALUES ($1, $2, $3, $4) RETURNING *`,
+        [userId, requestedName.trim(), onixMatchName?.trim() || null, message?.trim() || null]
+      );
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Author request error:', error);
+      return res.status(500).json({ ok: false, error: 'Antrag konnte nicht erstellt werden' });
+    }
+  });
+
+  app.get('/api/author-requests/status', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ ok: false, error: 'userId erforderlich' });
+      }
+      const result = await queryDB(
+        `SELECT * FROM author_requests WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`,
+        [userId]
+      );
+      if (result.rows.length === 0) {
+        return res.json({ ok: true, data: null });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Author request status error:', error);
+      return res.status(500).json({ ok: false, error: 'Status konnte nicht abgerufen werden' });
+    }
+  });
+
+  app.get('/api/admin/author-requests', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const status = (req.query.status as string) || 'pending';
+      const result = await queryDB(
+        `SELECT * FROM author_requests WHERE status = $1 ORDER BY created_at DESC`,
+        [status]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Admin author requests error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/author-requests/:id/approve', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const requestId = parseIdParam(req.params.id);
+      if (!requestId) return res.status(400).json({ ok: false, error: 'Ungültige ID' });
+
+      const { note } = req.body || {};
+
+      const reqResult = await queryDB(
+        `SELECT * FROM author_requests WHERE id = $1`,
+        [requestId]
+      );
+      if (reqResult.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Antrag nicht gefunden' });
+      }
+      const authorReq = reqResult.rows[0];
+      if (authorReq.status !== 'pending') {
+        return res.status(400).json({ ok: false, error: 'Antrag ist nicht mehr offen' });
+      }
+
+      await queryDB(
+        `UPDATE author_requests SET status = 'approved', decision_by = 'admin', decision_note = $1, decided_at = NOW() WHERE id = $2`,
+        [note || null, requestId]
+      );
+
+      const displayName = authorReq.onix_match_name || authorReq.requested_name;
+      const slug = await generateUniqueSlug('author_profiles', displayName);
+
+      const existingProfile = await queryDB(
+        `SELECT id FROM author_profiles WHERE user_id = $1 LIMIT 1`,
+        [authorReq.user_id]
+      );
+      if (existingProfile.rows.length === 0) {
+        await queryDB(
+          `INSERT INTO author_profiles (user_id, display_name, slug, onix_match_name, status)
+           VALUES ($1, $2, $3, $4, 'active')`,
+          [authorReq.user_id, displayName, slug, authorReq.onix_match_name || null]
+        );
+      }
+
+      const authorModules = [
+        'author_storefront', 'author_books', 'author_community',
+        'author_bookclub', 'author_members', 'author_bonuscontent',
+        'author_newsletter', 'author_events', 'author_statistics'
+      ];
+      for (const moduleKey of authorModules) {
+        await queryDB(
+          `INSERT INTO user_modules (user_id, module_key, granted_by, notes)
+           VALUES ($1, $2, 'admin', 'Autoren-Freischaltung')
+           ON CONFLICT (user_id, module_key) DO NOTHING`,
+          [authorReq.user_id, moduleKey]
+        );
+      }
+
+      return res.json({ ok: true, message: 'Autoren-Zugang freigeschaltet' });
+    } catch (error) {
+      log.error('Approve author error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/author-requests/:id/reject', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const requestId = parseIdParam(req.params.id);
+      if (!requestId) return res.status(400).json({ ok: false, error: 'Ungültige ID' });
+
+      const { note } = req.body || {};
+
+      const reqResult = await queryDB(
+        `SELECT status FROM author_requests WHERE id = $1`,
+        [requestId]
+      );
+      if (reqResult.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Antrag nicht gefunden' });
+      }
+      if (reqResult.rows[0].status !== 'pending') {
+        return res.status(400).json({ ok: false, error: 'Antrag ist nicht mehr offen' });
+      }
+
+      await queryDB(
+        `UPDATE author_requests SET status = 'rejected', decision_by = 'admin', decision_note = $1, decided_at = NOW() WHERE id = $2`,
+        [note || null, requestId]
+      );
+
+      return res.json({ ok: true, message: 'Antrag abgelehnt' });
+    } catch (error) {
+      log.error('Reject author error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/user-modules', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ ok: false, error: 'userId erforderlich' });
+      }
+      const result = await queryDB(
+        `SELECT module_key, granted_by, created_at FROM user_modules WHERE user_id = $1`,
+        [userId]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('User modules error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
     }
   });
 
