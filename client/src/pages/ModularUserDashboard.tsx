@@ -97,7 +97,7 @@ interface NavItem {
   group?: string;
 }
 
-export function ModularUserDashboard() {
+export default function ModularUserDashboard() {
   const navigate = useSafeNavigate();
   const location = useLocation();
   
