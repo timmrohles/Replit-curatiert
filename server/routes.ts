@@ -494,6 +494,34 @@ export async function registerRoutes(
     log.warn('Could not create selfpublisher_patterns table:', err);
   }
 
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS user_modules (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        module_key TEXT NOT NULL,
+        granted_by TEXT,
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, module_key)
+      )
+    `);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS module_requests (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        module_key TEXT NOT NULL,
+        reason TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ
+      )
+    `);
+    log.info('user_modules and module_requests tables verified');
+  } catch (err) {
+    log.warn('Could not create user/module tables:', err);
+  }
+
   // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
@@ -645,6 +673,26 @@ export async function registerRoutes(
         granularPublish: true,
       },
     });
+  });
+
+  app.get('/api/platform-stats', async (_req: Request, res: Response) => {
+    try {
+      const [booksRes, indieRes, tagsRes] = await Promise.all([
+        queryDB('SELECT COUNT(*) as cnt FROM books').catch(() => ({ rows: [{ cnt: 0 }] })),
+        queryDB('SELECT COUNT(*) as cnt FROM indie_publishers').catch(() => ({ rows: [{ cnt: 0 }] })),
+        queryDB("SELECT COUNT(*) as cnt FROM tags").catch(() => ({ rows: [{ cnt: 0 }] })),
+      ]);
+      return res.json({
+        ok: true,
+        stats: {
+          totalBooks: parseInt(booksRes.rows[0].cnt) || 0,
+          totalIndiePublishers: parseInt(indieRes.rows[0].cnt) || 0,
+          totalTags: parseInt(tagsRes.rows[0].cnt) || 0,
+        }
+      });
+    } catch (error) {
+      return res.json({ ok: true, stats: { totalBooks: 0, totalIndiePublishers: 0, totalTags: 0 } });
+    }
   });
 
   // ==================================================================
