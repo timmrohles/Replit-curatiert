@@ -1,45 +1,9 @@
-import { useState, useEffect } from 'react';
-import { BookOpen, Award, MessageSquare, Heart, Store, User, Star, TrendingUp } from 'lucide-react';
-
-const API_BASE = '/api';
-
-interface PlatformStats {
-  totalBooks: number;
-  totalIndiePublishers: number;
-  totalTags: number;
-  totalCategories: number;
-}
+import { MessageSquare, Heart, Store, User, Star } from 'lucide-react';
 
 export function DashboardHome() {
   const userName = 'Max Mustermann';
   const roles = ['Leser:in'];
   const progress = 35;
-
-  const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadPlatformStats();
-  }, []);
-
-  const loadPlatformStats = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/platform-stats`);
-      const data = await res.json();
-      if (data.ok && data.stats) {
-        setPlatformStats({
-          totalBooks: data.stats.totalBooks || 0,
-          totalIndiePublishers: data.stats.totalIndiePublishers || 0,
-          totalTags: data.stats.totalTags || 0,
-          totalCategories: 0,
-        });
-      }
-    } catch {
-      setPlatformStats(null);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const userKpis = [
     { label: 'Bewertungen', value: '0', icon: Star, subtitle: 'Noch keine Bewertungen' },
@@ -129,49 +93,6 @@ export function DashboardHome() {
           })}
         </div>
       </section>
-
-      {!loading && platformStats && (
-        <section className="rounded-lg p-5 md:p-8 border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
-          <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-            Plattform auf einen Blick
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EFF6FF' }}>
-                <BookOpen className="w-5 h-5" style={{ color: '#3B82F6' }} />
-              </div>
-              <div>
-                <div className="text-lg font-semibold" style={{ color: '#3A3A3A' }} data-testid="stat-total-books">
-                  {platformStats.totalBooks.toLocaleString('de-DE')}
-                </div>
-                <div className="text-xs" style={{ color: '#6B7280' }}>Bücher</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#ECFDF5' }}>
-                <Award className="w-5 h-5" style={{ color: '#10B981' }} />
-              </div>
-              <div>
-                <div className="text-lg font-semibold" style={{ color: '#3A3A3A' }} data-testid="stat-indie-publishers">
-                  {platformStats.totalIndiePublishers}
-                </div>
-                <div className="text-xs" style={{ color: '#6B7280' }}>Indie-Verlage</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FFF7ED' }}>
-                <TrendingUp className="w-5 h-5" style={{ color: '#F59E0B' }} />
-              </div>
-              <div>
-                <div className="text-lg font-semibold" style={{ color: '#3A3A3A' }} data-testid="stat-total-tags">
-                  {platformStats.totalTags}
-                </div>
-                <div className="text-xs" style={{ color: '#6B7280' }}>Themen & Tags</div>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
 
       <section className="rounded-lg p-5 md:p-8 border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
         <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
