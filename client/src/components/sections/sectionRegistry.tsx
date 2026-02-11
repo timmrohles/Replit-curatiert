@@ -15,12 +15,10 @@
 import React from 'react';
 import { CategoryGrid } from './CategoryGrid.section';
 import { RecipientCategoryGrid } from './RecipientCategoryGrid.section';
-import { TopicTagsGrid } from './TopicTagsGrid.section';
 import { HeroSection } from './HeroSection.section';
 import { CreatorCarouselSection } from './CreatorCarouselSection.section';
-import { FeaturedSection } from './FeaturedSection.section';
-import { GridSection } from './GridSection.section';
-import { HorizontalRowSection } from './HorizontalRowSection.section';
+import { SupportersSection } from './SupportersSection.section';
+import { GenreCategoriesSection } from '../tags/GenreCategoriesSection';
 import type { PageSection } from '../../types/page-resolve';
 import { normalizeType } from '../../types/normalize';
 
@@ -36,15 +34,18 @@ export interface SectionTypeDefinition {
 }
 
 /**
- * ✅ SINGLE SOURCE OF TRUTH für alle Section Types
+ * SINGLE SOURCE OF TRUTH für alle Section Types
  * Diese Liste wird sowohl im Admin UI als auch für Rendering verwendet
+ *
+ * Above the Fold: hero, category_grid
+ * Main Content: book_carousel, recipient_category_grid, storefronts, events, genre_categories, supporters
  */
 export const SECTION_TYPES: SectionTypeDefinition[] = [
   { 
     value: 'hero', 
     label: 'Hero-Banner', 
     allowedZones: ['aboveFold'],
-    description: 'Großes Banner mit Bild und Call-to-Action'
+    description: 'Hero-Banner mit Bild und Call-to-Action'
   },
   { 
     value: 'category_grid', 
@@ -53,76 +54,40 @@ export const SECTION_TYPES: SectionTypeDefinition[] = [
     description: 'Raster mit Kategorien und Bildern'
   },
   { 
-    value: 'recipient_category_grid', 
-    label: 'Empfänger-Raster', 
-    allowedZones: ['aboveFold', 'main'],
-    description: 'Raster mit Empfänger-Kategorien (Geschenke für...)'
-  },
-  { 
-    value: 'topic_tags_grid', 
-    label: 'Themen-Raster', 
-    allowedZones: ['aboveFold', 'main'],
-    description: 'Raster mit Themen-Tags'
-  },
-  { 
-    value: 'creator_carousel', 
-    label: 'Kurator:innen-Karussell', 
-    allowedZones: ['aboveFold', 'main'],
+    value: 'book_carousel', 
+    label: 'Buch-Karussell', 
+    allowedZones: ['main'],
     description: 'Karussell mit Kurator:in und Büchern'
   },
   { 
-    value: 'book_carousel', 
-    label: 'Buch-Karussell', 
-    allowedZones: ['aboveFold', 'main'],
-    description: 'Horizontal scrollendes Bücher-Karussell'
-  },
-  { 
-    value: 'book_grid', 
-    label: 'Bücher-Raster', 
+    value: 'recipient_category_grid', 
+    label: 'Empfänger-Raster', 
     allowedZones: ['main'],
-    description: 'Bücher als Raster-Layout'
+    description: 'Raster mit Empfänger-Kategorien (Geschenke für...)'
   },
   { 
-    value: 'book_list_row', 
-    label: 'Bücher-Zeile', 
+    value: 'storefronts', 
+    label: 'Storefronts', 
     allowedZones: ['main'],
-    description: 'Horizontale Zeile mit Büchern'
+    description: 'Kuratierte Buchläden von Expert:innen'
   },
   { 
-    value: 'book_featured', 
-    label: 'Buch-Highlight', 
-    allowedZones: ['aboveFold', 'main'],
-    description: 'Hervorgehobenes Buch in großer Darstellung'
-  },
-  { 
-    value: 'text_block', 
-    label: 'Textblock', 
-    allowedZones: ['aboveFold', 'main'],
-    description: 'Textinhalt mit Formatierung'
-  },
-  { 
-    value: 'image_gallery', 
-    label: 'Bildergalerie', 
+    value: 'events', 
+    label: 'Events', 
     allowedZones: ['main'],
-    description: 'Galerie mit mehreren Bildern'
+    description: 'Literarische Veranstaltungen und Lesungen'
   },
   { 
-    value: 'video_gallery', 
-    label: 'Videogalerie', 
+    value: 'genre_categories', 
+    label: 'Medien & Buch', 
     allowedZones: ['main'],
-    description: 'Galerie mit mehreren Videos'
+    description: 'Podcasts und Media-Einbettungen mit Buchempfehlungen'
   },
   { 
-    value: 'image', 
-    label: 'Einzelbild', 
-    allowedZones: ['aboveFold', 'main'],
-    description: 'Einzelnes Bild mit optionaler Beschriftung'
-  },
-  { 
-    value: 'video', 
-    label: 'Einzelvideo', 
-    allowedZones: ['aboveFold', 'main'],
-    description: 'Einzelnes eingebettetes Video'
+    value: 'supporters', 
+    label: 'Unterstützer:innen', 
+    allowedZones: ['main'],
+    description: 'Partner und Unterstützer der Plattform'
   },
 ];
 
@@ -137,74 +102,43 @@ export interface SectionComponentProps {
 }
 
 /**
- * ✅ Component Registry - Maps section.type to React Component
+ * Component Registry - Maps section.type to React Component
  * 
  * WICHTIG: Keys müssen EXAKT mit SECTION_TYPES.value UND DB.section_type übereinstimmen!
  */
 export const SECTION_COMPONENTS: Record<string, React.FC<SectionComponentProps>> = {
-  // Category & Grid Sections
-  category_grid: CategoryGrid,
-  recipient_category_grid: RecipientCategoryGrid,
-  topic_tags_grid: TopicTagsGrid,
-  
-  // Hero & Feature Sections
   hero: HeroSection as any,
-  
-  // Creator & Carousels
-  creator_carousel: CreatorCarouselSection as any,
+  category_grid: CategoryGrid,
   book_carousel: CreatorCarouselSection as any,
-  
-  // Book Sections
-  book_grid: GridSection as any,
-  book_list_row: CreatorCarouselSection as any,
-  book_featured: FeaturedSection as any,
-  
-  // Content Sections (Fallbacks for now)
-  text_block: ({ section }) => (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="prose prose-lg" dangerouslySetInnerHTML={{ __html: section.config?.content || '' }} />
+  recipient_category_grid: RecipientCategoryGrid,
+  storefronts: ({ section }) => (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h2
+        className="mb-6 text-center leading-tight text-[1.75rem] md:text-[2rem]"
+        style={{ fontFamily: 'Fjalla One', color: '#2a2a2a' }}
+      >
+        {section.config?.title || 'Storefronts'}
+      </h2>
+      <p className="text-center text-sm" style={{ color: '#555' }}>
+        Storefronts werden geladen…
+      </p>
     </div>
   ),
-  image_gallery: ({ section }) => (
-    <div className="text-center py-12 text-gray-500 border-2 border-dashed rounded-lg mx-4">
-      <p>Image Gallery Section</p>
-      <p className="text-sm">Coming soon</p>
+  events: ({ section }) => (
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h2
+        className="mb-6 text-center leading-tight text-[1.75rem] md:text-[2rem]"
+        style={{ fontFamily: 'Fjalla One', color: '#2a2a2a' }}
+      >
+        {section.config?.title || 'Events'}
+      </h2>
+      <p className="text-center text-sm" style={{ color: '#555' }}>
+        Events werden geladen…
+      </p>
     </div>
   ),
-  video_gallery: ({ section }) => (
-    <div className="text-center py-12 text-gray-500 border-2 border-dashed rounded-lg mx-4">
-      <p>Video Gallery Section</p>
-      <p className="text-sm">Coming soon</p>
-    </div>
-  ),
-  image: ({ section }) => (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      {section.config?.imageUrl && (
-        <img 
-          src={section.config.imageUrl} 
-          alt={section.config?.caption || ''} 
-          className="w-full h-auto rounded-lg"
-        />
-      )}
-      {section.config?.caption && (
-        <p className="text-center text-sm text-gray-600 mt-4">{section.config.caption}</p>
-      )}
-    </div>
-  ),
-  video: ({ section }) => (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {section.config?.videoUrl && (
-        <div className="aspect-video rounded-lg overflow-hidden">
-          <iframe
-            src={section.config.videoUrl}
-            className="w-full h-full"
-            allowFullScreen
-            title={section.config?.title || 'Video'}
-          />
-        </div>
-      )}
-    </div>
-  ),
+  genre_categories: GenreCategoriesSection as any,
+  supporters: SupportersSection as any,
 };
 
 // ============================================================================

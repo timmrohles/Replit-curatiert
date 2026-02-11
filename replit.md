@@ -18,7 +18,7 @@ The platform is built with a modern web stack, featuring a React frontend and an
 -   **Styling**: Tailwind CSS with a custom theme, global CSS utility classes, and self-hosted fonts (Fjalla One for headlines, Inter for body text) to ensure DSGVO compliance. Fluid responsive typography is implemented using `clamp()`.
 -   **Core Components**:
     -   `App.tsx`: Main application entry with lazy-loaded routes.
-    -   `UniversalSectionRenderer.tsx` and `sectionRegistry.tsx`: Central to dynamic content rendering, enabling flexible page layouts based on predefined section types (e.g., category_grid, hero, book_carousel).
+    -   `UniversalSectionRenderer.tsx` and `sectionRegistry.tsx`: Central to dynamic content rendering. **8 valid section types**: hero (Above Fold), category_grid (Above Fold/Main), book_carousel, recipient_category_grid, storefronts, events, genre_categories, supporters (all Main only).
     -   `CMSHomepage.tsx` and `DynamicPage.tsx`: Handle CMS-driven content for the homepage and dynamic pages with nested paths.
     -   `apiClient.ts`: Centralized API client.
 
