@@ -1986,6 +1986,38 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/api/curators/with-storefronts', async (_req: Request, res: Response) => {
+    try {
+      const result = await queryDB(
+        `SELECT c.id, c.name, c.bio, c.avatar_url, c.slug, c.focus,
+                s.id as storefront_id, s.name as storefront_name, s.slug as storefront_slug,
+                s.tagline, s.hero_image_url
+         FROM curators c
+         INNER JOIN storefronts s ON s.curator_id = c.id AND s.is_published = true AND s.deleted_at IS NULL
+         WHERE c.deleted_at IS NULL AND c.visible = true
+         ORDER BY c.display_order ASC, c.name ASC`,
+        []
+      );
+      const curators = result.rows.map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        bio: row.bio,
+        avatarUrl: row.avatar_url,
+        slug: row.slug,
+        focus: row.focus,
+        storefrontId: row.storefront_id,
+        storefrontName: row.storefront_name,
+        storefrontSlug: row.storefront_slug,
+        tagline: row.tagline,
+        heroImageUrl: row.hero_image_url,
+      }));
+      return res.json({ ok: true, data: curators });
+    } catch (error) {
+      log.error('Error loading curators with storefronts:', error);
+      return res.json({ ok: false, error: String(error), data: [] });
+    }
+  });
+
   app.get('/api/curators/:id', async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
