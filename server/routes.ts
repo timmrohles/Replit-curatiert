@@ -14,6 +14,42 @@ const log = {
   error: (...args: unknown[]) => console.error('[ERROR]', ...args),
 };
 
+const trackingRateCache = new Map<string, { count: number; windowStart: number }>();
+
+let cachedTrackingSettings: {
+  bot_user_agents: string[];
+  rate_limit_window_minutes: number;
+  rate_limit_max_views: number;
+  rate_limit_max_clicks: number;
+  excluded_admin_ips: string[];
+  _loaded_at: number;
+} | null = null;
+
+async function getTrackingSettings() {
+  if (cachedTrackingSettings && Date.now() - cachedTrackingSettings._loaded_at < 60_000) {
+    return cachedTrackingSettings;
+  }
+  try {
+    const result = await queryDB('SELECT * FROM tracking_settings WHERE id = 1');
+    if (result.rows.length > 0) {
+      cachedTrackingSettings = { ...result.rows[0], _loaded_at: Date.now() };
+      return cachedTrackingSettings;
+    }
+  } catch { /* fallback to defaults */ }
+  return {
+    bot_user_agents: ['Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider', 'YandexBot', 'facebookexternalhit', 'Twitterbot', 'AhrefsBot', 'SemrushBot', 'curl', 'wget', 'PostmanRuntime'],
+    rate_limit_window_minutes: 60,
+    rate_limit_max_views: 3,
+    rate_limit_max_clicks: 5,
+    excluded_admin_ips: [] as string[],
+    _loaded_at: Date.now(),
+  };
+}
+
+function getClientIp(req: Request): string {
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
+
 function slugify(text: string): string {
   return text
     .trim()
@@ -324,6 +360,33 @@ export async function registerRoutes(
     log.info('page_sections tracking columns verified');
   } catch (err) {
     log.warn('Could not add tracking columns to page_sections:', err);
+  }
+
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS tracking_settings (
+        id INTEGER PRIMARY KEY DEFAULT 1,
+        bot_user_agents TEXT[] DEFAULT ARRAY[
+          'Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider',
+          'YandexBot', 'Sogou', 'facebookexternalhit', 'Twitterbot',
+          'LinkedInBot', 'WhatsApp', 'Applebot', 'AhrefsBot', 'SemrushBot',
+          'MJ12bot', 'DotBot', 'PetalBot', 'UptimeRobot', 'StatusCake',
+          'Pingdom', 'GTmetrix', 'PageSpeed', 'Lighthouse', 'HeadlessChrome',
+          'PhantomJS', 'Scrapy', 'Python-urllib', 'Go-http-client', 'curl',
+          'wget', 'httpie', 'PostmanRuntime', 'insomnia'
+        ],
+        rate_limit_window_minutes INTEGER DEFAULT 60,
+        rate_limit_max_views INTEGER DEFAULT 3,
+        rate_limit_max_clicks INTEGER DEFAULT 5,
+        excluded_admin_ips TEXT[] DEFAULT ARRAY[]::TEXT[],
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        CONSTRAINT single_row CHECK (id = 1)
+      )
+    `);
+    await queryDB(`INSERT INTO tracking_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING`);
+    log.info('tracking_settings table verified');
+  } catch (err) {
+    log.warn('Could not create tracking_settings table:', err);
   }
 
   // ==================================================================
@@ -3630,7 +3693,7 @@ export async function registerRoutes(
     }
   });
 
-  // Section view/click tracking (public, no auth)
+  // Section view/click tracking (public, no auth) with bot/rate filtering
   app.post('/api/sections/:id/track', async (req: Request, res: Response) => {
     const id = parseIdParam(req.params.id);
     if (!id) return res.status(400).json({ ok: false });
@@ -3641,6 +3704,50 @@ export async function registerRoutes(
     }
 
     try {
+      const settings = await getTrackingSettings();
+      if (!settings) throw new Error('No tracking settings');
+      const ua = (req.headers['user-agent'] || '').toLowerCase();
+      const clientIp = getClientIp(req);
+
+      // 1. Bot User-Agent check
+      const isBot = (settings.bot_user_agents || []).some((bot: string) => ua.includes(bot.toLowerCase()));
+      if (isBot) {
+        return res.json({ ok: true, filtered: 'bot' });
+      }
+
+      // 2. Admin IP exclusion
+      if ((settings.excluded_admin_ips || []).includes(clientIp)) {
+        return res.json({ ok: true, filtered: 'admin_ip' });
+      }
+
+      // 3. Rate limiting per IP per section per type
+      const windowMs = (settings.rate_limit_window_minutes || 60) * 60 * 1000;
+      const maxPerWindow = type === 'view' ? (settings.rate_limit_max_views || 3) : (settings.rate_limit_max_clicks || 5);
+      const rateKey = `${clientIp}:${id}:${type}`;
+      const now = Date.now();
+      const entry = trackingRateCache.get(rateKey);
+
+      if (entry) {
+        if (now - entry.windowStart > windowMs) {
+          trackingRateCache.set(rateKey, { count: 1, windowStart: now });
+        } else if (entry.count >= maxPerWindow) {
+          return res.json({ ok: true, filtered: 'rate_limit' });
+        } else {
+          entry.count++;
+        }
+      } else {
+        trackingRateCache.set(rateKey, { count: 1, windowStart: now });
+      }
+
+      // Cleanup old entries periodically (every ~1000 requests)
+      if (Math.random() < 0.001) {
+        const keysToDelete: string[] = [];
+        trackingRateCache.forEach((val, key) => {
+          if (now - val.windowStart > windowMs * 2) keysToDelete.push(key);
+        });
+        keysToDelete.forEach(k => trackingRateCache.delete(k));
+      }
+
       const col = type === 'view' ? 'current_views' : 'current_clicks';
       await queryDB(`UPDATE public.page_sections SET ${col} = COALESCE(${col}, 0) + 1 WHERE id = $1`, [id]);
       return res.json({ ok: true });
@@ -4130,6 +4237,88 @@ export async function registerRoutes(
       log.error('Error deleting banner:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
+  });
+
+  // ==================================================================
+  // TRACKING SETTINGS (Admin)
+  // ==================================================================
+  app.get('/api/admin/tracking-settings', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const result = await queryDB('SELECT bot_user_agents, rate_limit_window_minutes, rate_limit_max_views, rate_limit_max_clicks, excluded_admin_ips, updated_at FROM tracking_settings WHERE id = 1');
+      if (result.rows.length === 0) {
+        return res.json({ ok: true, data: null });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Error fetching tracking settings:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.patch('/api/admin/tracking-settings', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+
+    try {
+      const { bot_user_agents, rate_limit_window_minutes, rate_limit_max_views, rate_limit_max_clicks, excluded_admin_ips } = req.body;
+      const updates: string[] = [];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      if (bot_user_agents !== undefined && Array.isArray(bot_user_agents)) {
+        updates.push(`bot_user_agents = $${paramIndex}::text[]`);
+        values.push(bot_user_agents);
+        paramIndex++;
+      }
+      if (rate_limit_window_minutes !== undefined) {
+        updates.push(`rate_limit_window_minutes = $${paramIndex}`);
+        values.push(Math.max(1, Math.min(1440, parseInt(String(rate_limit_window_minutes)) || 60)));
+        paramIndex++;
+      }
+      if (rate_limit_max_views !== undefined) {
+        updates.push(`rate_limit_max_views = $${paramIndex}`);
+        values.push(Math.max(1, Math.min(1000, parseInt(String(rate_limit_max_views)) || 3)));
+        paramIndex++;
+      }
+      if (rate_limit_max_clicks !== undefined) {
+        updates.push(`rate_limit_max_clicks = $${paramIndex}`);
+        values.push(Math.max(1, Math.min(1000, parseInt(String(rate_limit_max_clicks)) || 5)));
+        paramIndex++;
+      }
+      if (excluded_admin_ips !== undefined && Array.isArray(excluded_admin_ips)) {
+        updates.push(`excluded_admin_ips = $${paramIndex}::text[]`);
+        values.push(excluded_admin_ips.filter((ip: string) => ip && ip.trim()));
+        paramIndex++;
+      }
+
+      if (updates.length === 0) {
+        return res.status(400).json({ ok: false, error: 'No fields to update' });
+      }
+
+      updates.push('updated_at = NOW()');
+      const result = await queryDB(
+        `UPDATE tracking_settings SET ${updates.join(', ')} WHERE id = 1 RETURNING *`,
+        values
+      );
+
+      // Invalidate cache
+      cachedTrackingSettings = null;
+
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Error updating tracking settings:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Endpoint to get client's own IP (for admin convenience)
+  app.get('/api/admin/my-ip', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    return res.json({ ok: true, ip: getClientIp(req) });
   });
 
   // ==================================================================

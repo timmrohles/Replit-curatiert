@@ -97,6 +97,14 @@ All routes prefixed with `/api/`:
   - POST /api/sections/:id/track endpoint for incrementing views/clicks (no auth)
   - SectionCard badges show "Geplant" and limit progress indicators
   - Backend PATCH /api/admin/sections/:id accepts publish_at, unpublish_at, max_views, max_clicks
+- **Tracking Protection System**: Bot, crawler, and admin click filtering for accurate impression tracking
+  - tracking_settings table: bot_user_agents array, rate_limit_window_minutes, rate_limit_max_views/clicks, excluded_admin_ips
+  - POST /api/sections/:id/track: Bot User-Agent filtering, admin IP exclusion, IP-based rate limiting (in-memory cache)
+  - GET/PATCH /api/admin/tracking-settings: Admin CRUD for all tracking filter settings
+  - GET /api/admin/my-ip: Shows admin's current IP for easy exclusion
+  - AdminSettings UI: Tracking-Schutz section with editable bot list, rate limit controls, admin IP list, "add my IP" button
+  - trust proxy enabled, req.ip used for reliable IP detection behind proxies
+  - 30+ default bot agents (Googlebot, Bingbot, AhrefsBot, SemrushBot, curl, wget, etc.)
 - **LikeButton coral fix**: Changed --vibrant-coral (non-existent) to --color-coral-vibrant with fallback #f25f5c
 - **Search bar CSS**: Added --search-bg, --search-text, --search-border, --search-icon variables
 
