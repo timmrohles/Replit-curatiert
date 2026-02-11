@@ -72,6 +72,11 @@ interface Book {
   releaseDate?: string; // ISO date string (for Relevant/Trending)
   reviews?: Array<{ source: string; quote: string }>; // NEW: Pressestimmen from ONIX
   matchPercentage?: number; // NEW: Match percentage for editorial layout
+  is_indie?: boolean;
+  indie_type?: string | null;
+  is_hidden_gem?: boolean;
+  award_count?: number;
+  nomination_count?: number;
 }
 
 interface CreatorCarouselProps {
@@ -562,6 +567,11 @@ export const CreatorCarousel = memo(function CreatorCarousel({
                   shortDescription: book.shortDescription,
                   onixTagIds: book.onixTagIds,
                   matchPercentage: book.matchPercentage,
+                  is_indie: book.is_indie,
+                  indie_type: book.indie_type,
+                  is_hidden_gem: book.is_hidden_gem,
+                  award_count: book.award_count,
+                  nomination_count: book.nomination_count,
                 };
                 
                 // Render Editorial or Standard layout

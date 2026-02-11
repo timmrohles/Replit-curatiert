@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Lock, Check, AlertCircle, Shield, Plus, X, Wifi, Bot, Clock, Eye, MousePointer } from 'lucide-react';
+import { Lock, Check, AlertCircle, Shield, Plus, X, Wifi, Bot, Clock, Eye, MousePointer, BookOpen, Pen } from 'lucide-react';
 const API_BASE_URL = '/api';
+
+interface IndiePublisher {
+  id: number;
+  name: string;
+  source: string;
+  created_at: string;
+}
+
+interface SelfpublisherPattern {
+  id: number;
+  pattern: string;
+  match_type: string;
+  created_at: string;
+}
 
 interface TrackingSettings {
   bot_user_agents: string[];
@@ -38,9 +52,21 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
   const [newAdminIp, setNewAdminIp] = useState('');
   const [myIp, setMyIp] = useState<string | null>(null);
 
+  const [indiePublishers, setIndiePublishers] = useState<IndiePublisher[]>([]);
+  const [indieLoading, setIndieLoading] = useState(true);
+  const [newIndieName, setNewIndieName] = useState('');
+  const [indieMessage, setIndieMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const [spPatterns, setSpPatterns] = useState<SelfpublisherPattern[]>([]);
+  const [spLoading, setSpLoading] = useState(true);
+  const [newSpPattern, setNewSpPattern] = useState('');
+  const [spMessage, setSpMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   useEffect(() => {
     loadTrackingSettings();
     fetchMyIp();
+    loadIndiePublishers();
+    loadSpPatterns();
   }, []);
 
   const loadTrackingSettings = async () => {
@@ -126,6 +152,98 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
     const updated = { ...trackingSettings, [field]: value };
     setTrackingSettings(updated);
     saveTrackingSettings({ [field]: value });
+  };
+
+  const loadIndiePublishers = async () => {
+    setIndieLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/indie-publishers`, { headers: getAdminHeaders() });
+      const data = await res.json();
+      if (data.ok) setIndiePublishers(data.data || []);
+    } catch (err) {
+      console.error('Failed to load indie publishers:', err);
+    } finally {
+      setIndieLoading(false);
+    }
+  };
+
+  const addIndiePublisher = async () => {
+    if (!newIndieName.trim()) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/indie-publishers`, {
+        method: 'POST', headers: getAdminHeaders(),
+        body: JSON.stringify({ name: newIndieName.trim(), source: 'manual' }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setIndiePublishers(prev => [...prev, data.data].sort((a, b) => a.name.localeCompare(b.name)));
+        setNewIndieName('');
+        setIndieMessage({ type: 'success', text: 'Verlag hinzugefügt' });
+        setTimeout(() => setIndieMessage(null), 3000);
+      } else {
+        setIndieMessage({ type: 'error', text: data.error || 'Fehler' });
+      }
+    } catch (err) {
+      setIndieMessage({ type: 'error', text: 'Fehler beim Hinzufügen' });
+    }
+  };
+
+  const removeIndiePublisher = async (id: number) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/indie-publishers/${id}`, {
+        method: 'DELETE', headers: getAdminHeaders(),
+      });
+      const data = await res.json();
+      if (data.ok) setIndiePublishers(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error('Failed to remove indie publisher:', err);
+    }
+  };
+
+  const loadSpPatterns = async () => {
+    setSpLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/selfpublisher-patterns`, { headers: getAdminHeaders() });
+      const data = await res.json();
+      if (data.ok) setSpPatterns(data.data || []);
+    } catch (err) {
+      console.error('Failed to load selfpublisher patterns:', err);
+    } finally {
+      setSpLoading(false);
+    }
+  };
+
+  const addSpPattern = async () => {
+    if (!newSpPattern.trim()) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/selfpublisher-patterns`, {
+        method: 'POST', headers: getAdminHeaders(),
+        body: JSON.stringify({ pattern: newSpPattern.trim(), match_type: 'contains' }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setSpPatterns(prev => [...prev, data.data].sort((a, b) => a.pattern.localeCompare(b.pattern)));
+        setNewSpPattern('');
+        setSpMessage({ type: 'success', text: 'Pattern hinzugefügt' });
+        setTimeout(() => setSpMessage(null), 3000);
+      } else {
+        setSpMessage({ type: 'error', text: data.error || 'Fehler' });
+      }
+    } catch (err) {
+      setSpMessage({ type: 'error', text: 'Fehler beim Hinzufügen' });
+    }
+  };
+
+  const removeSpPattern = async (id: number) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/selfpublisher-patterns/${id}`, {
+        method: 'DELETE', headers: getAdminHeaders(),
+      });
+      const data = await res.json();
+      if (data.ok) setSpPatterns(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error('Failed to remove selfpublisher pattern:', err);
+    }
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -238,6 +356,135 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
             {loading ? 'Wird geändert...' : 'Passwort ändern'}
           </button>
         </form>
+      </div>
+
+      <hr style={{ borderColor: '#E5E7EB' }} />
+
+      {/* Indie Publishers Section */}
+      <div>
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <BookOpen className="w-6 h-6" style={{ color: '#70c1b3' }} />
+            <h2 className="text-2xl font-bold" style={{ color: '#2a2a2a', fontFamily: 'var(--font-heading)' }}>
+              Indie-Verlage
+            </h2>
+          </div>
+          <p className="text-sm" style={{ color: '#666666' }}>
+            Whitelist unabhängiger Verlage (z.B. Kurt-Wolff-Stiftung Mitglieder). Bücher dieser Verlage erhalten das Indie-Badge.
+          </p>
+        </div>
+
+        {indieMessage && (
+          <div className="p-3 rounded-lg flex items-center gap-2 mb-4"
+            style={{ backgroundColor: indieMessage.type === 'success' ? '#f0fdf4' : '#fef2f2', borderLeft: `4px solid ${indieMessage.type === 'success' ? '#70c1b3' : '#f25f5c'}` }}>
+            {indieMessage.type === 'success' ? <Check className="w-4 h-4" style={{ color: '#70c1b3' }} /> : <AlertCircle className="w-4 h-4" style={{ color: '#f25f5c' }} />}
+            <span className="text-sm" style={{ color: '#2a2a2a' }}>{indieMessage.text}</span>
+          </div>
+        )}
+
+        {indieLoading ? (
+          <div className="text-center py-4" style={{ color: '#999' }}>Lädt Indie-Verlage...</div>
+        ) : (
+          <div>
+            <div className="flex flex-wrap gap-1.5 mb-4 max-h-64 overflow-y-auto p-3 rounded-lg" style={{ backgroundColor: '#fafafa', border: '1px solid #E5E7EB' }}>
+              {indiePublishers.map((pub) => (
+                <span key={pub.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
+                  style={{ backgroundColor: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
+                  {pub.name}
+                  {pub.source !== 'manual' && <span className="text-[10px] opacity-60">({pub.source})</span>}
+                  <button type="button" onClick={() => removeIndiePublisher(pub.id)} className="ml-0.5 hover:opacity-60">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+              {indiePublishers.length === 0 && (
+                <span className="text-xs" style={{ color: '#999' }}>Keine Indie-Verlage konfiguriert</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-medium" style={{ color: '#666' }}>{indiePublishers.length} Verlage</span>
+            </div>
+            <div className="flex gap-2">
+              <input type="text" value={newIndieName} onChange={(e) => setNewIndieName(e.target.value)}
+                placeholder="z.B. Matthes & Seitz Berlin"
+                className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
+                style={{ borderColor: '#E5E7EB' }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addIndiePublisher(); } }} />
+              <button type="button" onClick={addIndiePublisher}
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80 flex items-center gap-1"
+                style={{ backgroundColor: '#70c1b3', color: '#fff' }}
+                disabled={!newIndieName.trim()}>
+                <Plus className="w-4 h-4" /> Verlag hinzufügen
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <hr style={{ borderColor: '#E5E7EB' }} />
+
+      {/* Self-Publisher Patterns Section */}
+      <div>
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <Pen className="w-6 h-6" style={{ color: '#f4a261' }} />
+            <h2 className="text-2xl font-bold" style={{ color: '#2a2a2a', fontFamily: 'var(--font-heading)' }}>
+              Self-Publisher-Erkennung
+            </h2>
+          </div>
+          <p className="text-sm" style={{ color: '#666666' }}>
+            Muster im Verlagsnamen, die auf Self-Publishing hinweisen. Zusätzlich wird geprüft ob Autor = Verlag.
+          </p>
+        </div>
+
+        {spMessage && (
+          <div className="p-3 rounded-lg flex items-center gap-2 mb-4"
+            style={{ backgroundColor: spMessage.type === 'success' ? '#f0fdf4' : '#fef2f2', borderLeft: `4px solid ${spMessage.type === 'success' ? '#70c1b3' : '#f25f5c'}` }}>
+            {spMessage.type === 'success' ? <Check className="w-4 h-4" style={{ color: '#70c1b3' }} /> : <AlertCircle className="w-4 h-4" style={{ color: '#f25f5c' }} />}
+            <span className="text-sm" style={{ color: '#2a2a2a' }}>{spMessage.text}</span>
+          </div>
+        )}
+
+        {spLoading ? (
+          <div className="text-center py-4" style={{ color: '#999' }}>Lädt Self-Publisher-Patterns...</div>
+        ) : (
+          <div>
+            <div className="flex flex-wrap gap-1.5 mb-4 p-3 rounded-lg" style={{ backgroundColor: '#fafafa', border: '1px solid #E5E7EB' }}>
+              {spPatterns.map((pat) => (
+                <span key={pat.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
+                  style={{ backgroundColor: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' }}>
+                  {pat.pattern}
+                  <span className="text-[10px] opacity-60">({pat.match_type})</span>
+                  <button type="button" onClick={() => removeSpPattern(pat.id)} className="ml-0.5 hover:opacity-60">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+              {spPatterns.length === 0 && (
+                <span className="text-xs" style={{ color: '#999' }}>Keine Patterns konfiguriert</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-xs font-medium" style={{ color: '#666' }}>{spPatterns.length} Patterns</span>
+            </div>
+            <div className="flex gap-2">
+              <input type="text" value={newSpPattern} onChange={(e) => setNewSpPattern(e.target.value)}
+                placeholder="z.B. BoD, epubli, tredition"
+                className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2"
+                style={{ borderColor: '#E5E7EB' }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSpPattern(); } }} />
+              <button type="button" onClick={addSpPattern}
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80 flex items-center gap-1"
+                style={{ backgroundColor: '#f4a261', color: '#fff' }}
+                disabled={!newSpPattern.trim()}>
+                <Plus className="w-4 h-4" /> Pattern hinzufügen
+              </button>
+            </div>
+            <p className="text-xs mt-3" style={{ color: '#999' }}>
+              Zusätzlich wird automatisch geprüft, ob der Autorname mit dem Verlagsnamen übereinstimmt (= Self-Publisher).
+            </p>
+          </div>
+        )}
       </div>
 
       <hr style={{ borderColor: '#E5E7EB' }} />

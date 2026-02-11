@@ -22,6 +22,11 @@ function mapBookForCarousel(book: any) {
     isbn: book.isbn13 || book.isbn || '',
     klappentext: book.description || book.klappentext || '',
     reviews: book.reviews || [],
+    is_indie: book.is_indie,
+    indie_type: book.indie_type,
+    is_hidden_gem: book.is_hidden_gem,
+    award_count: book.award_count,
+    nomination_count: book.nomination_count,
   };
 }
 

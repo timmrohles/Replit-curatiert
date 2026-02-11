@@ -78,6 +78,11 @@ export interface BookCarouselItemData {
   onixTagIds?: string[]; // NEW: ONIX Tag IDs for awards/badges
   seriesName?: string; // NEW: Name der Buchreihe für Badge
   seriesSlug?: string; // NEW: Slug der Buchreihe für Verlinkung
+  is_indie?: boolean;
+  indie_type?: string | null;
+  is_hidden_gem?: boolean;
+  award_count?: number;
+  nomination_count?: number;
   klappentext?: string; // Klappentext/Beschreibung
   
   // ============================================
@@ -322,6 +327,27 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
               </div>
             )}
             
+            {/* Enrichment Badges - top right corner */}
+            {(book.is_indie || (book.award_count && book.award_count > 0) || book.is_hidden_gem) && (
+              <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
+                {book.is_indie && (
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-teal, #70c1b3)', color: '#fff' }}>
+                    INDIE
+                  </div>
+                )}
+                {book.award_count !== undefined && book.award_count > 0 && (
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold, #ffe066)', color: '#2a2a2a' }}>
+                    AUSGEZEICHNET
+                  </div>
+                )}
+                {book.is_hidden_gem && (
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant, #f25f5c)', color: '#fff' }}>
+                    HIDDEN GEM
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* ONIX Tags on Cover - visible on hover (SAME AS BOOKCARD) */}
             {hoverTags.length > 0 && (
               <div className="absolute top-3 left-3 right-16 flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ zIndex: 50 }}>

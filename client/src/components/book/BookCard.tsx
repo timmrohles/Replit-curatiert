@@ -99,6 +99,11 @@ export const BookCard = memo(function BookCard({
   const onixTagIds = book?.onixTagIds || [];
   const klappentext = book?.klappentext;
   const tags = book?.tags;
+  const isIndie = (book as any)?.is_indie;
+  const indieType = (book as any)?.indie_type;
+  const isHiddenGem = (book as any)?.is_hidden_gem;
+  const awardCount = (book as any)?.award_count;
+  const nominationCount = (book as any)?.nomination_count;
   
   const safeNav = useSafeNavigate();
   const { resolvedTheme } = useTheme();
@@ -284,6 +289,27 @@ export const BookCard = memo(function BookCard({
               </div>
             )}
             
+            {/* Enrichment Badges - top right corner */}
+            {(isIndie || (awardCount && awardCount > 0) || isHiddenGem) && (
+              <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
+                {isIndie && (
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-teal, #70c1b3)', color: '#fff' }}>
+                    INDIE
+                  </div>
+                )}
+                {awardCount !== undefined && awardCount > 0 && (
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold, #ffe066)', color: '#2a2a2a' }}>
+                    AUSGEZEICHNET
+                  </div>
+                )}
+                {isHiddenGem && (
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant, #f25f5c)', color: '#fff' }}>
+                    HIDDEN GEM
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* ONIX Tags on Cover - visible on hover */}
             {hoverTags.length > 0 && (
               <div className="absolute top-3 left-3 right-16 flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{ zIndex: 50 }}>

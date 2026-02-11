@@ -389,6 +389,67 @@ export async function registerRoutes(
     log.warn('Could not create tracking_settings table:', err);
   }
 
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS indie_publishers (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL UNIQUE,
+        source TEXT DEFAULT 'manual',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    const countResult = await queryDB('SELECT COUNT(*) as cnt FROM indie_publishers');
+    if (parseInt(countResult.rows[0].cnt) === 0) {
+      const defaults = [
+        'Aufbau Verlag', 'Berenberg Verlag', 'Blumenbar', 'Droschl', 'Edition Nautilus',
+        'Friedenauer Presse', 'Galiani Berlin', 'Guggolz Verlag', 'Haymon Verlag',
+        'Kanon Verlag', 'Kein & Aber', 'Kiepenheuer & Witsch', 'Kunstmann',
+        'Liebeskind', 'Lilienfeld Verlag', 'Luchterhandt', 'Mairisch Verlag',
+        'Mare Verlag', 'Matthes & Seitz Berlin', 'Mitteldeutscher Verlag',
+        'Nagel & Kimche', 'Residenz Verlag', 'Rotpunktverlag', 'Schöffling & Co.',
+        'Secession Verlag', 'Suhrkamp', 'Tropen Verlag', 'Ullstein', 'Unionsverlag',
+        'Verbrecher Verlag', 'Verlag Antje Kunstmann', 'Verlag Klaus Wagenbach',
+        'Voland & Quist', 'Wallstein Verlag', 'Wunderhorn', 'Zsolnay'
+      ];
+      for (const name of defaults) {
+        await queryDB('INSERT INTO indie_publishers (name, source) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING', [name, 'kurt-wolff-stiftung']);
+      }
+    }
+    log.info('indie_publishers table verified');
+  } catch (err) {
+    log.warn('Could not create indie_publishers table:', err);
+  }
+
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS selfpublisher_patterns (
+        id SERIAL PRIMARY KEY,
+        pattern TEXT NOT NULL UNIQUE,
+        match_type TEXT DEFAULT 'contains',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    const countResult = await queryDB('SELECT COUNT(*) as cnt FROM selfpublisher_patterns');
+    if (parseInt(countResult.rows[0].cnt) === 0) {
+      const defaults = [
+        { pattern: 'BoD', match_type: 'contains' },
+        { pattern: 'Books on Demand', match_type: 'contains' },
+        { pattern: 'epubli', match_type: 'contains' },
+        { pattern: 'tredition', match_type: 'contains' },
+        { pattern: 'Nova MD', match_type: 'contains' },
+        { pattern: 'Independently published', match_type: 'contains' },
+        { pattern: 'Kindle Direct', match_type: 'contains' },
+        { pattern: 'CreateSpace', match_type: 'contains' },
+      ];
+      for (const d of defaults) {
+        await queryDB('INSERT INTO selfpublisher_patterns (pattern, match_type) VALUES ($1, $2) ON CONFLICT (pattern) DO NOTHING', [d.pattern, d.match_type]);
+      }
+    }
+    log.info('selfpublisher_patterns table verified');
+  } catch (err) {
+    log.warn('Could not create selfpublisher_patterns table:', err);
+  }
+
   // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
@@ -3074,6 +3135,65 @@ export async function registerRoutes(
           bookIdsArray
         );
         books = booksResult.rows || [];
+
+        try {
+          const indieRes = await queryDB('SELECT name FROM indie_publishers');
+          const indieNames = (indieRes.rows || []).map((r: any) => r.name.toLowerCase());
+          const spRes = await queryDB('SELECT pattern, match_type FROM selfpublisher_patterns');
+          const spPatterns = spRes.rows || [];
+
+          let awardMap: Record<number, { wins: number; nominations: number }> = {};
+          try {
+            const awardRes = await queryDB(
+              `SELECT ar.book_id,
+                ao.result_status
+               FROM award_recipients ar
+               JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
+               WHERE ar.book_id IN (${placeholders})`,
+              bookIdsArray
+            );
+            for (const row of awardRes.rows || []) {
+              if (!row.book_id) continue;
+              if (!awardMap[row.book_id]) awardMap[row.book_id] = { wins: 0, nominations: 0 };
+              const status = (row.result_status || '').toLowerCase();
+              if (status === 'winner' || status === 'gewinner') {
+                awardMap[row.book_id].wins++;
+              } else {
+                awardMap[row.book_id].nominations++;
+              }
+            }
+          } catch { /* award_recipients may not exist yet */ }
+
+          books = books.map((book: any) => {
+            const publisherLower = (book.publisher || '').toLowerCase();
+            const authorLower = (book.author || '').toLowerCase();
+
+            const isIndieVerlag = indieNames.some(name => publisherLower === name);
+            const isSelfPublisher = spPatterns.some((sp: any) => {
+              if (sp.match_type === 'exact') return publisherLower === sp.pattern.toLowerCase();
+              return publisherLower.includes(sp.pattern.toLowerCase());
+            });
+            const isAuthorPublisher = authorLower && publisherLower && (
+              authorLower === publisherLower ||
+              publisherLower.includes(authorLower) ||
+              authorLower.includes(publisherLower)
+            );
+
+            const awards = awardMap[book.id] || { wins: 0, nominations: 0 };
+            const isHiddenGem = awards.nominations > 0 && awards.wins === 0;
+
+            return {
+              ...book,
+              is_indie: isIndieVerlag || isSelfPublisher || isAuthorPublisher,
+              indie_type: isIndieVerlag ? 'indie_verlag' : (isSelfPublisher || isAuthorPublisher) ? 'selfpublisher' : null,
+              is_hidden_gem: isHiddenGem,
+              award_count: awards.wins,
+              nomination_count: awards.nominations,
+            };
+          });
+        } catch (enrichErr) {
+          log.warn('Book enrichment error (non-fatal):', enrichErr);
+        }
       }
 
       const curatorIds = new Set<string>();
@@ -3095,6 +3215,9 @@ export async function registerRoutes(
         }
       }
 
+      const booksById: Record<number, any> = {};
+      books.forEach((b: any) => { booksById[b.id] = b; });
+
       const enrichedSections = sections.map((s: any) => {
         const cfg = { ...(s.section_config || s.config) };
         if (cfg.curatorId && curatorsMap[String(cfg.curatorId)]) {
@@ -3105,13 +3228,34 @@ export async function registerRoutes(
           cfg.curatorFocus = cur.focus || cfg.curatorFocus || '';
           cfg.isVerified = cur.visible ?? cfg.isVerified ?? false;
         }
+
+        let sortedItems = Array.isArray(s.items) ? [...s.items] : [];
+        const sortMode = cfg.books?.query?.sort;
+        if (sortMode && sortedItems.length > 0) {
+          sortedItems.sort((a: any, b: any) => {
+            const bookA = booksById[a.book_id];
+            const bookB = booksById[b.book_id];
+            if (!bookA || !bookB) return 0;
+            if (sortMode === 'newest') {
+              return new Date(bookB.created_at || 0).getTime() - new Date(bookA.created_at || 0).getTime();
+            }
+            if (sortMode === 'awarded') {
+              return (bookB.award_count || 0) - (bookA.award_count || 0);
+            }
+            if (sortMode === 'popular') {
+              return (bookB.follow_count || 0) - (bookA.follow_count || 0);
+            }
+            return (a.sort_order || 0) - (b.sort_order || 0);
+          });
+        }
+
         return {
           id: s.id,
           zone: s.zone,
           type: s.section_type,
           title: cfg.title || '',
           config: cfg,
-          items: s.items,
+          items: sortedItems,
           order: s.sort_order,
         };
       });
@@ -4236,6 +4380,129 @@ export async function registerRoutes(
     } catch (error) {
       log.error('Error deleting banner:', error);
       return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // INDIE PUBLISHERS MANAGEMENT
+  // ==================================================================
+  app.get('/api/admin/indie-publishers', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const result = await queryDB('SELECT * FROM indie_publishers ORDER BY name ASC');
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Indie publishers fetch error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/indie-publishers', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const { name, source } = req.body;
+      if (!name || !name.trim()) {
+        return res.status(400).json({ ok: false, error: 'Name ist erforderlich' });
+      }
+      const result = await queryDB(
+        'INSERT INTO indie_publishers (name, source) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING RETURNING *',
+        [name.trim(), source || 'manual']
+      );
+      if (result.rows.length === 0) {
+        return res.status(409).json({ ok: false, error: 'Verlag existiert bereits' });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Indie publisher create error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/admin/indie-publishers/:id', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const id = req.params.id;
+      const result = await queryDB('DELETE FROM indie_publishers WHERE id = $1 RETURNING *', [id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Nicht gefunden' });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Indie publisher delete error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // SELFPUBLISHER PATTERNS MANAGEMENT
+  // ==================================================================
+  app.get('/api/admin/selfpublisher-patterns', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const result = await queryDB('SELECT * FROM selfpublisher_patterns ORDER BY pattern ASC');
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Selfpublisher patterns fetch error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/selfpublisher-patterns', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const { pattern, match_type } = req.body;
+      if (!pattern || !pattern.trim()) {
+        return res.status(400).json({ ok: false, error: 'Pattern ist erforderlich' });
+      }
+      const result = await queryDB(
+        'INSERT INTO selfpublisher_patterns (pattern, match_type) VALUES ($1, $2) ON CONFLICT (pattern) DO NOTHING RETURNING *',
+        [pattern.trim(), match_type || 'contains']
+      );
+      if (result.rows.length === 0) {
+        return res.status(409).json({ ok: false, error: 'Pattern existiert bereits' });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Selfpublisher pattern create error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/admin/selfpublisher-patterns/:id', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const id = req.params.id;
+      const result = await queryDB('DELETE FROM selfpublisher_patterns WHERE id = $1 RETURNING *', [id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Nicht gefunden' });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Selfpublisher pattern delete error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // PUBLIC INDIE CHECK HELPER (used by page resolve enrichment)
+  // ==================================================================
+  app.get('/api/indie-check', async (_req: Request, res: Response) => {
+    try {
+      const publishersResult = await queryDB('SELECT name FROM indie_publishers ORDER BY name ASC');
+      const patternsResult = await queryDB('SELECT pattern, match_type FROM selfpublisher_patterns ORDER BY pattern ASC');
+      return res.json({
+        ok: true,
+        indie_publishers: publishersResult.rows.map((r: any) => r.name),
+        selfpublisher_patterns: patternsResult.rows,
+      });
+    } catch (error) {
+      return res.json({ ok: true, indie_publishers: [], selfpublisher_patterns: [] });
     }
   });
 
