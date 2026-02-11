@@ -172,7 +172,7 @@ export function CreatorStorefront() {
           className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap"
           style={{
             backgroundColor: statusFilter === 'draft' ? '#F59E0B' : '#F3F4F6',
-            color: statusFilter === 'draft' ? '#FFFFFF' : '#3A3A3A'
+            color: statusFilter === 'draft' ? '#92400e' : '#3A3A3A'
           }}
         >
           Entwürfe ({storefronts.filter(s => s.status === 'draft').length})
@@ -288,7 +288,7 @@ export function CreatorStorefront() {
                     <button
                       onClick={() => unpublishStorefront(storefront.id)}
                       className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs transition-all hover:shadow-md touch-manipulation"
-                      style={{ backgroundColor: '#F59E0B', color: '#FFFFFF' }}
+                      style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
                       title="Zurücknehmen"
                     >
                       <EyeOff className="w-4 h-4" />
@@ -394,7 +394,7 @@ export function CreatorStorefront() {
                     setEditingStorefront(null);
                   }}
                   className="flex-1 px-4 py-3 rounded-lg font-medium transition-all"
-                  style={{ backgroundColor: '#F59E0B', color: '#FFFFFF' }}
+                  style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
                 >
                   Als Entwurf speichern
                 </button>

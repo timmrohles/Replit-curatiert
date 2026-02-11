@@ -126,7 +126,7 @@ export function AuthorCommunity() {
         <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg touch-manipulation"
-          style={{ backgroundColor: '#F59E0B', color: '#FFFFFF' }}
+          style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
         >
           <Plus className="w-5 h-5" />
           Neuer Post
@@ -171,7 +171,7 @@ export function AuthorCommunity() {
             className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap"
             style={{
               backgroundColor: statusFilter === 'all' ? '#F59E0B' : '#F3F4F6',
-              color: statusFilter === 'all' ? '#FFFFFF' : '#3A3A3A'
+              color: statusFilter === 'all' ? '#92400e' : '#3A3A3A'
             }}
           >
             Alle ({posts.length})
@@ -191,7 +191,7 @@ export function AuthorCommunity() {
             className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap"
             style={{
               backgroundColor: statusFilter === 'draft' ? '#F59E0B' : '#F3F4F6',
-              color: statusFilter === 'draft' ? '#FFFFFF' : '#3A3A3A'
+              color: statusFilter === 'draft' ? '#92400e' : '#3A3A3A'
             }}
           >
             Entwürfe ({posts.filter(p => p.status === 'draft').length})
@@ -206,7 +206,7 @@ export function AuthorCommunity() {
             className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap"
             style={{
               backgroundColor: typeFilter === 'all' ? '#F59E0B' : '#F3F4F6',
-              color: typeFilter === 'all' ? '#FFFFFF' : '#3A3A3A'
+              color: typeFilter === 'all' ? '#92400e' : '#3A3A3A'
             }}
           >
             Alle
@@ -218,7 +218,7 @@ export function AuthorCommunity() {
               className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap capitalize"
               style={{
                 backgroundColor: typeFilter === type ? '#F59E0B' : '#F3F4F6',
-                color: typeFilter === type ? '#FFFFFF' : '#3A3A3A'
+                color: typeFilter === type ? '#92400e' : '#3A3A3A'
               }}
             >
               {type === 'announcement' ? 'Ankündigung' : type === 'discussion' ? 'Diskussion' : 'Update'}
@@ -240,8 +240,8 @@ export function AuthorCommunity() {
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 rounded-lg text-sm text-white"
-              style={{ backgroundColor: '#F59E0B' }}
+              className="px-4 py-2 rounded-lg text-sm"
+              style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
             >
               Post erstellen
             </button>
@@ -314,7 +314,7 @@ export function AuthorCommunity() {
                     <button
                       onClick={() => unpublishPost(post.id)}
                       className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs transition-all hover:shadow-md touch-manipulation"
-                      style={{ backgroundColor: '#F59E0B', color: '#FFFFFF' }}
+                      style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
                       title="Zurücknehmen"
                     >
                       <EyeOff className="w-4 h-4" />
@@ -419,7 +419,7 @@ export function AuthorCommunity() {
                     setEditingPost(null);
                   }}
                   className="flex-1 px-4 py-3 rounded-lg font-medium transition-all"
-                  style={{ backgroundColor: '#F59E0B', color: '#FFFFFF' }}
+                  style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
                 >
                   Als Entwurf speichern
                 </button>

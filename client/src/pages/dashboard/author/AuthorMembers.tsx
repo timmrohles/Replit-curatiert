@@ -202,7 +202,7 @@ export function AuthorMembers() {
             className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap"
             style={{
               backgroundColor: filterType === 'premium' ? '#F59E0B' : '#F3F4F6',
-              color: filterType === 'premium' ? '#FFFFFF' : '#3A3A3A'
+              color: filterType === 'premium' ? '#92400e' : '#3A3A3A'
             }}
           >
             Premium ({totalPremium})

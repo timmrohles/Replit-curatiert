@@ -23,7 +23,7 @@ export function AuthorBooks() {
             Verwalte deine veröffentlichten Werke
           </p>
         </div>
-        <button className="px-4 py-2 rounded-lg text-sm text-white" style={{ backgroundColor: '#F59E0B' }}>
+        <button className="px-4 py-2 rounded-lg text-sm" style={{ backgroundColor: '#F59E0B', color: '#92400e' }}>
           <Plus className="w-4 h-4 inline mr-2" />
           Neues Buch
         </button>

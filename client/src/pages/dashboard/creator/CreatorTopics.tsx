@@ -39,9 +39,10 @@ export function CreatorTopics() {
 
       {/* Featured Topic */}
       <div 
-        className="rounded-lg p-6 md:p-8 text-white"
+        className="rounded-lg p-6 md:p-8"
         style={{ 
-          background: 'linear-gradient(135deg, #247ba0 0%, #70C1B3 100%)'
+          background: 'linear-gradient(135deg, #247ba0 0%, #1a6b8a 100%)',
+          color: '#ffffff'
         }}
       >
         <div className="flex items-start gap-4 mb-4">

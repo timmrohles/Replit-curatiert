@@ -140,7 +140,7 @@ export function AuthorEvents() {
         <button
           onClick={() => setShowCreateModal(true)}
           className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg touch-manipulation"
-          style={{ backgroundColor: '#F59E0B', color: '#FFFFFF' }}
+          style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
         >
           <Plus className="w-5 h-5" />
           Neues Event
@@ -185,7 +185,7 @@ export function AuthorEvents() {
             className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap"
             style={{
               backgroundColor: statusFilter === 'all' ? '#F59E0B' : '#F3F4F6',
-              color: statusFilter === 'all' ? '#FFFFFF' : '#3A3A3A'
+              color: statusFilter === 'all' ? '#92400e' : '#3A3A3A'
             }}
           >
             Alle ({events.length})
@@ -205,7 +205,7 @@ export function AuthorEvents() {
             className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap"
             style={{
               backgroundColor: statusFilter === 'draft' ? '#F59E0B' : '#F3F4F6',
-              color: statusFilter === 'draft' ? '#FFFFFF' : '#3A3A3A'
+              color: statusFilter === 'draft' ? '#92400e' : '#3A3A3A'
             }}
           >
             Entwürfe ({events.filter(e => e.status === 'draft').length})
@@ -220,7 +220,7 @@ export function AuthorEvents() {
             className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap"
             style={{
               backgroundColor: typeFilter === 'all' ? '#F59E0B' : '#F3F4F6',
-              color: typeFilter === 'all' ? '#FFFFFF' : '#3A3A3A'
+              color: typeFilter === 'all' ? '#92400e' : '#3A3A3A'
             }}
           >
             Alle
@@ -230,7 +230,7 @@ export function AuthorEvents() {
             className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap"
             style={{
               backgroundColor: typeFilter === 'online' ? '#F59E0B' : '#F3F4F6',
-              color: typeFilter === 'online' ? '#FFFFFF' : '#3A3A3A'
+              color: typeFilter === 'online' ? '#92400e' : '#3A3A3A'
             }}
           >
             Online
@@ -240,7 +240,7 @@ export function AuthorEvents() {
             className="px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap"
             style={{
               backgroundColor: typeFilter === 'offline' ? '#F59E0B' : '#F3F4F6',
-              color: typeFilter === 'offline' ? '#FFFFFF' : '#3A3A3A'
+              color: typeFilter === 'offline' ? '#92400e' : '#3A3A3A'
             }}
           >
             Vor Ort
@@ -261,8 +261,8 @@ export function AuthorEvents() {
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 rounded-lg text-sm text-white"
-              style={{ backgroundColor: '#F59E0B' }}
+              className="px-4 py-2 rounded-lg text-sm"
+              style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
             >
               Event erstellen
             </button>
@@ -348,7 +348,7 @@ export function AuthorEvents() {
                     <button
                       onClick={() => unpublishEvent(event.id)}
                       className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs transition-all hover:shadow-md touch-manipulation"
-                      style={{ backgroundColor: '#F59E0B', color: '#FFFFFF' }}
+                      style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
                       title="Zurücknehmen"
                     >
                       <EyeOff className="w-4 h-4" />
@@ -503,7 +503,7 @@ export function AuthorEvents() {
                     setEditingEvent(null);
                   }}
                   className="flex-1 px-4 py-3 rounded-lg font-medium transition-all"
-                  style={{ backgroundColor: '#F59E0B', color: '#FFFFFF' }}
+                  style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
                 >
                   Als Entwurf speichern
                 </button>
