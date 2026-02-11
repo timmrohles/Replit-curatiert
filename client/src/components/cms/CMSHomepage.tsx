@@ -112,8 +112,8 @@ export function CMSHomepage() {
   if (loading) {
     return (
       <>
-        <Header isHomePage={true} />
         <InfoBar />
+        <Header isHomePage={true} />
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
         </div>
@@ -125,8 +125,8 @@ export function CMSHomepage() {
   if (error || !page) {
     return (
       <>
-        <Header isHomePage={true} />
         <InfoBar />
+        <Header isHomePage={true} />
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
           <h1 className="text-4xl mb-4">Startseite nicht gefunden</h1>
           <p className="text-xl mb-8">{error || 'Die Startseite konnte nicht geladen werden.'}</p>
@@ -142,8 +142,8 @@ export function CMSHomepage() {
   if (!page.enabled) {
     return (
       <>
-        <Header isHomePage={true} />
         <InfoBar />
+        <Header isHomePage={true} />
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
           <h1 className="text-4xl mb-4">Startseite deaktiviert</h1>
           <p className="text-xl mb-8">Die Startseite ist derzeit nicht verfügbar.</p>
