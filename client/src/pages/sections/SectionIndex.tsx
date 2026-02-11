@@ -140,9 +140,9 @@ export default function SectionIndex() {
             const info = categoryLabels[cat];
             const count = sections.filter(s => s.category === cat).length;
             return (
-              <div key={cat} className="rounded-lg p-6 text-white" style={{ background: `linear-gradient(135deg, ${info.color}, ${info.color}cc)` }}>
+              <div key={cat} className="rounded-lg p-6" style={{ background: `linear-gradient(135deg, ${info.color}, ${info.color}cc)`, color: 'var(--charcoal, #2a2a2a)' }}>
                 <div className="text-4xl font-headline mb-2">{count}</div>
-                <div className="text-white/90">{info.title}</div>
+                <div style={{ opacity: 0.8 }}>{info.title}</div>
               </div>
             );
           })}
@@ -183,7 +183,7 @@ export default function SectionIndex() {
                           className="px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0"
                           style={{
                             backgroundColor: statusColors[section.status].bg,
-                            color: section.status === 'wip' ? '#92400e' : '#fff'
+                            color: section.status === 'wip' ? '#92400e' : section.status === 'ready' ? '#1a5c4a' : '#4a4a4a'
                           }}
                         >
                           {statusColors[section.status].label}

@@ -130,7 +130,7 @@ export function CMSHomepage() {
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
           <h1 className="text-4xl mb-4">Startseite nicht gefunden</h1>
           <p className="text-xl mb-8">{error || 'Die Startseite konnte nicht geladen werden.'}</p>
-          <p className="text-sm text-white/60 mb-8">
+          <p className="text-sm mb-8" style={{ color: 'var(--color-text-secondary)' }}>
             Bitte erstellen Sie im Content Manager eine Page mit Pfad "/" und Status "Published".
           </p>
         </div>

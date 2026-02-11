@@ -278,9 +278,9 @@ export function DynamicPage() {
         {/* Hero Section */}
         <div className="container mx-auto px-4 py-12">
           <div className="max-w-4xl mx-auto text-center mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6 text-white">{page.title}</h1>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6" style={{ color: 'var(--charcoal, #2a2a2a)' }}>{page.title}</h1>
             {page.description && (
-              <p className="text-xl text-white/80">{page.description}</p>
+              <p className="text-xl" style={{ color: 'var(--color-text-secondary)' }}>{page.description}</p>
             )}
           </div>
         </div>
