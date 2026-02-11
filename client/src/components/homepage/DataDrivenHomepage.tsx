@@ -17,8 +17,8 @@ import { resolvePage } from "../../utils/page-resolve-service";
 function LoadingState() {
   return (
     <>
-      <Header isHomePage={true} />
       <InfoBar />
+      <Header isHomePage={true} />
       <div
         className="flex items-center justify-center py-24 md:py-32 lg:py-48"
         style={{ minHeight: "60vh" }}
@@ -54,8 +54,8 @@ function LoadingState() {
 function ErrorState({ error }: { error: string }) {
   return (
     <>
-      <Header isHomePage={true} />
       <InfoBar />
+      <Header isHomePage={true} />
       <div
         className="flex items-center justify-center py-24 md:py-32 lg:py-48 px-4"
         style={{ minHeight: "60vh" }}
@@ -157,8 +157,8 @@ export function DataDrivenHomepage() {
       </Helmet>
 
       {/* Layout */}
-      <Header isHomePage={true} />
       <InfoBar />
+      <Header isHomePage={true} />
       
       {/* Main Content - ID für Skip Navigation */}
       <main id="main-content">

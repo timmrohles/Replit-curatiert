@@ -245,8 +245,8 @@ export function AuthorStorefront({ authorId }: { authorId: string }) {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header />
       <InfoBar />
+      <Header />
 
       {/* Creator Header */}
       <CreatorHeader

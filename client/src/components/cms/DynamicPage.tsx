@@ -182,8 +182,8 @@ export function DynamicPage() {
   if (loading) {
     return (
       <>
-        <Header isHomePage={false} />
         <InfoBar />
+        <Header isHomePage={false} />
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
         </div>
@@ -195,8 +195,8 @@ export function DynamicPage() {
   if (error || !page) {
     return (
       <>
-        <Header isHomePage={false} />
         <InfoBar />
+        <Header isHomePage={false} />
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
           <h1 className="text-4xl mb-4">404</h1>
           <p className="text-xl mb-8">{error || 'Seite nicht gefunden'}</p>
@@ -215,8 +215,8 @@ export function DynamicPage() {
   if (!page.enabled) {
     return (
       <>
-        <Header isHomePage={false} />
         <InfoBar />
+        <Header isHomePage={false} />
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
           <h1 className="text-4xl mb-4">Seite nicht verfügbar</h1>
           <p className="text-xl mb-8">Diese Seite ist derzeit deaktiviert.</p>
@@ -270,8 +270,8 @@ export function DynamicPage() {
       />
 
       {/* Layout */}
-      <Header isHomePage={false} />
       <InfoBar />
+      <Header isHomePage={false} />
       
       {/* Main Content */}
       <main id="main-content" className="min-h-screen">
