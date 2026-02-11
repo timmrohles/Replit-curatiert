@@ -87,7 +87,20 @@ All routes prefixed with `/api/`:
 - **CSS Variables**: --font-sans, --font-headline, --color-blue-cerulean, --color-coral-vibrant, etc.
 - **CSS Utility Classes** (in index.css): text-cerulean, bg-coral, tag-pill, favorite-badge, btn-admin-login, logo-spine-*, etc.
 
-## Recent Changes (2026-02-10)
+## Recent Changes (2026-02-11)
+- **Section Scheduling & Tracking**: Moved publish_at/unpublish_at from pages to sections level
+  - page_sections now has: publish_at, unpublish_at, max_views, max_clicks, current_views, current_clicks columns
+  - PageComposer section editor: datetime-local pickers for publish/unpublish dates
+  - Preset duration buttons: 1 Woche, 2 Wochen, 1 Monat, 3 Monate, 6 Monate + Reset
+  - View/click limits (max_views, max_clicks) for paid carousel ad preparation
+  - Public page resolve filters sections by scheduling dates and view/click limits
+  - POST /api/sections/:id/track endpoint for incrementing views/clicks (no auth)
+  - SectionCard badges show "Geplant" and limit progress indicators
+  - Backend PATCH /api/admin/sections/:id accepts publish_at, unpublish_at, max_views, max_clicks
+- **LikeButton coral fix**: Changed --vibrant-coral (non-existent) to --color-coral-vibrant with fallback #f25f5c
+- **Search bar CSS**: Added --search-bg, --search-text, --search-border, --search-icon variables
+
+## Previous Changes (2026-02-10)
 - **Tag & Award Visibility Management**: Full backend-synced visibility system
   - ONIX Tags CRUD: POST/DELETE /api/onix-tags, PATCH /api/onix-tags/:id/visibility with admin auth
   - Tag type mapping (DB English → Frontend German): award→Auszeichnung, topic→Motiv (MVB), genre→Genre (THEMA), audience→Zielgruppe, feature→Ausstattung, publisher_cluster→Herkunft, + 4 more types

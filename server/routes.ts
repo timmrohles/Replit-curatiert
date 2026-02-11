@@ -316,6 +316,16 @@ export async function registerRoutes(
     log.warn('Could not add tag_id to awards:', err);
   }
 
+  try {
+    await queryDB(`ALTER TABLE public.page_sections ADD COLUMN IF NOT EXISTS max_views INTEGER DEFAULT NULL`);
+    await queryDB(`ALTER TABLE public.page_sections ADD COLUMN IF NOT EXISTS max_clicks INTEGER DEFAULT NULL`);
+    await queryDB(`ALTER TABLE public.page_sections ADD COLUMN IF NOT EXISTS current_views INTEGER DEFAULT 0`);
+    await queryDB(`ALTER TABLE public.page_sections ADD COLUMN IF NOT EXISTS current_clicks INTEGER DEFAULT 0`);
+    log.info('page_sections tracking columns verified');
+  } catch (err) {
+    log.warn('Could not add tracking columns to page_sections:', err);
+  }
+
   // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
@@ -2973,6 +2983,10 @@ export async function registerRoutes(
          FROM public.page_sections ps
          WHERE ps.page_id = $1::bigint
            AND ($2::boolean = true OR ps.status = 'published')
+           AND ($2::boolean = true OR ps.publish_at IS NULL OR ps.publish_at <= NOW())
+           AND ($2::boolean = true OR ps.unpublish_at IS NULL OR ps.unpublish_at > NOW())
+           AND ($2::boolean = true OR ps.max_views IS NULL OR COALESCE(ps.current_views, 0) < ps.max_views)
+           AND ($2::boolean = true OR ps.max_clicks IS NULL OR COALESCE(ps.current_clicks, 0) < ps.max_clicks)
          ORDER BY ps.sort_order ASC`,
         [page.id, includeDraft]
       );
@@ -3490,7 +3504,7 @@ export async function registerRoutes(
     if (!pageId) return res.status(400).json({ ok: false, success: false, error: { code: 'INVALID_PAGE_ID' } });
 
     try {
-      const result = await queryDB(`SELECT id, page_id, zone, sort_order, section_type, config, status, visibility, publish_at, unpublish_at, created_at, updated_at FROM public.page_sections WHERE page_id = $1 ORDER BY zone ASC, sort_order ASC`, [pageId]);
+      const result = await queryDB(`SELECT id, page_id, zone, sort_order, section_type, config, status, visibility, publish_at, unpublish_at, max_views, max_clicks, current_views, current_clicks, created_at, updated_at FROM public.page_sections WHERE page_id = $1 ORDER BY zone ASC, sort_order ASC`, [pageId]);
       return res.json({ ok: true, success: true, data: result.rows, meta: { count: result.rows.length, pageId } });
     } catch (error) {
       log.error(`Error fetching sections for page ${pageId}:`, error);
@@ -3508,7 +3522,7 @@ export async function registerRoutes(
 
     try {
       const body = req.body;
-      const { zone = 'main', sort_order = 0, section_type = 'category_grid', config = {}, status = 'draft', visibility = 'visible' } = body;
+      const { zone = 'main', sort_order = 0, section_type = 'category_grid', config = {}, status = 'draft', visibility = 'visible', publish_at = null, unpublish_at = null, max_views = null, max_clicks = null } = body;
 
       let configJson: string;
       try {
@@ -3517,7 +3531,7 @@ export async function registerRoutes(
         return res.status(400).json({ ok: false, success: false, error: { code: 'INVALID_CONFIG', message: 'Config must be a valid JSON object' } });
       }
 
-      const result = await queryDB(`INSERT INTO public.page_sections (page_id, zone, sort_order, section_type, config, status, visibility, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW()) RETURNING id, page_id, zone, sort_order, section_type, config, status, visibility, created_at, updated_at`, [pageId, zone, sort_order, section_type, configJson, status, visibility]);
+      const result = await queryDB(`INSERT INTO public.page_sections (page_id, zone, sort_order, section_type, config, status, visibility, publish_at, unpublish_at, max_views, max_clicks, current_views, current_clicks, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 0, 0, NOW(), NOW()) RETURNING id, page_id, zone, sort_order, section_type, config, status, visibility, publish_at, unpublish_at, max_views, max_clicks, current_views, current_clicks, created_at, updated_at`, [pageId, zone, sort_order, section_type, configJson, status, visibility, publish_at, unpublish_at, max_views, max_clicks]);
       if (result.rows.length === 0) return res.status(500).json({ ok: false, success: false, error: { code: 'CREATE_FAILED' } });
       return res.json({ ok: true, success: true, data: result.rows[0] });
     } catch (error) {
@@ -3566,7 +3580,7 @@ export async function registerRoutes(
       const updates: string[] = [];
       const values: any[] = [];
       let paramIndex = 1;
-      const allowedFields = ['zone', 'sort_order', 'config', 'section_type', 'status', 'visibility'];
+      const allowedFields = ['zone', 'sort_order', 'config', 'section_type', 'status', 'visibility', 'publish_at', 'unpublish_at', 'max_views', 'max_clicks'];
       for (const field of allowedFields) {
         let value = body[field];
         if (field === 'section_type' && !value && body.config?.section_type) {
@@ -3574,19 +3588,22 @@ export async function registerRoutes(
         }
 
         if (value !== undefined) {
-          if (field === 'config' && typeof value === 'object') {
+          if ((field === 'publish_at' || field === 'unpublish_at' || field === 'max_views' || field === 'max_clicks') && value === null) {
+            updates.push(`${field} = NULL`);
+          } else if (field === 'config' && typeof value === 'object') {
             updates.push(`${field} = $${paramIndex}::jsonb`);
             values.push(JSON.stringify(value));
+            paramIndex++;
           } else {
             updates.push(`${field} = $${paramIndex}`);
             values.push(value);
+            paramIndex++;
           }
-          paramIndex++;
         }
       }
       if (updates.length === 0) return res.status(400).json({ ok: false, success: false, error: { code: 'NO_UPDATES' } });
       values.push(id);
-      const result = await queryDB(`UPDATE public.page_sections SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${paramIndex} RETURNING id, page_id, zone, sort_order, section_type, config, status, visibility, created_at, updated_at`, values);
+      const result = await queryDB(`UPDATE public.page_sections SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${paramIndex} RETURNING id, page_id, zone, sort_order, section_type, config, status, visibility, publish_at, unpublish_at, max_views, max_clicks, current_views, current_clicks, created_at, updated_at`, values);
       if (result.rows.length === 0) return res.status(404).json({ ok: false, success: false, error: { code: 'NOT_FOUND' } });
       return res.json({ ok: true, success: true, data: result.rows[0] });
     } catch (error) {
@@ -3610,6 +3627,26 @@ export async function registerRoutes(
     } catch (error) {
       log.error(`Error deleting section ${id}:`, error);
       return res.status(500).json({ ok: false, success: false, error: { code: 'DELETE_FAILED', message: String(error) } });
+    }
+  });
+
+  // Section view/click tracking (public, no auth)
+  app.post('/api/sections/:id/track', async (req: Request, res: Response) => {
+    const id = parseIdParam(req.params.id);
+    if (!id) return res.status(400).json({ ok: false });
+
+    const { type } = req.body;
+    if (type !== 'view' && type !== 'click') {
+      return res.status(400).json({ ok: false, error: 'type must be view or click' });
+    }
+
+    try {
+      const col = type === 'view' ? 'current_views' : 'current_clicks';
+      await queryDB(`UPDATE public.page_sections SET ${col} = COALESCE(${col}, 0) + 1 WHERE id = $1`, [id]);
+      return res.json({ ok: true });
+    } catch (error) {
+      log.error(`Error tracking ${type} for section ${id}:`, error);
+      return res.json({ ok: true });
     }
   });
 

@@ -57,6 +57,12 @@ import { BookSourceBuilder, type BookSourceConfig } from './BookSourceBuilder';
 // import { useDrag, useDrop } from 'react-dnd';
 import { SECTION_TYPES, getSectionTypesForZone } from '../sections/sectionRegistry';
 
+function toLocalDatetimeString(isoString: string): string {
+  const d = new Date(isoString);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -84,13 +90,17 @@ export interface PageSection {
   id: number;
   page_id: number;
   zone: 'header' | 'aboveFold' | 'main' | 'footer';
-  type: string; // 'category_grid', 'recipient_category_grid', 'topic_tags_grid'
+  type: string;
   sort_order: number;
   status: 'draft' | 'published';
   visibility: 'visible' | 'hidden';
   config?: Record<string, any>;
   publish_at?: string | null;
   unpublish_at?: string | null;
+  max_views?: number | null;
+  max_clicks?: number | null;
+  current_views?: number;
+  current_clicks?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -290,12 +300,14 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
         page_id: page.id,
         zone: zoneForDB,
         sort_order: editingSection.sort_order || 0,
-        section_type: sectionType,  // ✅ Separate column in database!
+        section_type: sectionType,
         config: editingSection.config || {},
         status: editingSection.status || 'published',
         visibility: editingSection.visibility || 'visible',
         publish_at: editingSection.publish_at || null,
         unpublish_at: editingSection.unpublish_at || null,
+        max_views: editingSection.max_views ?? null,
+        max_clicks: editingSection.max_clicks ?? null,
       };
 
       console.log('📤 Saving section with payload:', JSON.stringify(payload, null, 2));
@@ -727,6 +739,152 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   <SelectItem value="hidden">Versteckt</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* ============================================================================ */}
+            {/* SCHEDULING & TRACKING */}
+            {/* ============================================================================ */}
+            <div className="space-y-4 pt-2">
+              <Heading variant="h5" className="text-sm font-semibold flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Zeitplanung & Tracking
+              </Heading>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Veröffentlichen ab</label>
+                  <Input
+                    type="datetime-local"
+                    value={editingSection.publish_at ? toLocalDatetimeString(editingSection.publish_at) : ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      publish_at: e.target.value ? new Date(e.target.value).toISOString() : null
+                    })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Leer = sofort sichtbar</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Ausblenden ab</label>
+                  <Input
+                    type="datetime-local"
+                    value={editingSection.unpublish_at ? toLocalDatetimeString(editingSection.unpublish_at) : ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      unpublish_at: e.target.value ? new Date(e.target.value).toISOString() : null
+                    })}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Leer = bleibt sichtbar</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium mb-2 block">Schnell-Perioden</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { label: '1 Woche', days: 7 },
+                    { label: '2 Wochen', days: 14 },
+                    { label: '1 Monat', days: 30 },
+                    { label: '3 Monate', days: 90 },
+                    { label: '6 Monate', days: 180 },
+                  ].map(preset => (
+                    <Button
+                      key={preset.days}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const now = new Date();
+                        const end = new Date(now.getTime() + preset.days * 24 * 60 * 60 * 1000);
+                        setEditingSection({
+                          ...editingSection,
+                          publish_at: now.toISOString(),
+                          unpublish_at: end.toISOString(),
+                        });
+                      }}
+                    >
+                      {preset.label}
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingSection({
+                      ...editingSection,
+                      publish_at: null,
+                      unpublish_at: null,
+                    })}
+                  >
+                    Zurücksetzen
+                  </Button>
+                </div>
+              </div>
+
+              {(editingSection.publish_at || editingSection.unpublish_at) && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
+                  {editingSection.publish_at && (
+                    <p>Sichtbar ab: <strong>{new Date(editingSection.publish_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong></p>
+                  )}
+                  {editingSection.unpublish_at && (
+                    <p>Ausgeblendet ab: <strong>{new Date(editingSection.unpublish_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong></p>
+                  )}
+                  {editingSection.publish_at && editingSection.unpublish_at && (() => {
+                    const start = new Date(editingSection.publish_at!);
+                    const end = new Date(editingSection.unpublish_at!);
+                    const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+                    return <p className="mt-1 text-xs">Dauer: {days} Tage</p>;
+                  })()}
+                </div>
+              )}
+
+              <Separator />
+
+              <Heading variant="h5" className="text-sm font-semibold flex items-center gap-2">
+                <Eye className="w-4 h-4" />
+                Reichweiten-Limits (Anzeigen)
+              </Heading>
+              <p className="text-xs text-muted-foreground -mt-2">Für bezahlte Karusselle: Sektion wird nach Erreichen der Limits automatisch ausgeblendet.</p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Max. Aufrufe (Views)</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Unbegrenzt"
+                    value={editingSection.max_views ?? ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      max_views: e.target.value ? parseInt(e.target.value) : null
+                    })}
+                  />
+                  {editingSection.id && editingSection.current_views !== undefined && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Aktuell: {editingSection.current_views} Views
+                      {editingSection.max_views && ` / ${editingSection.max_views}`}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Max. Klicks</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Unbegrenzt"
+                    value={editingSection.max_clicks ?? ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      max_clicks: e.target.value ? parseInt(e.target.value) : null
+                    })}
+                  />
+                  {editingSection.id && editingSection.current_clicks !== undefined && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Aktuell: {editingSection.current_clicks} Klicks
+                      {editingSection.max_clicks && ` / ${editingSection.max_clicks}`}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             <Separator />
@@ -1680,9 +1838,22 @@ function SectionCard({
                   Versteckt
                 </Badge>
               )}
+              {(section.publish_at || section.unpublish_at) && (
+                <Badge variant="outline" className="text-xs">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  Geplant
+                </Badge>
+              )}
+              {(section.max_views || section.max_clicks) && (
+                <Badge variant="outline" className="text-xs">
+                  Limit: {section.max_views ? `${section.current_views || 0}/${section.max_views} Views` : ''}{section.max_views && section.max_clicks ? ' | ' : ''}{section.max_clicks ? `${section.current_clicks || 0}/${section.max_clicks} Klicks` : ''}
+                </Badge>
+              )}
             </div>
             <div className="text-xs text-gray-500">
               Reihenfolge: {section.sort_order}
+              {section.publish_at && <span className="ml-2">Ab: {new Date(section.publish_at).toLocaleDateString('de-DE')}</span>}
+              {section.unpublish_at && <span className="ml-2">Bis: {new Date(section.unpublish_at).toLocaleDateString('de-DE')}</span>}
             </div>
           </div>
         </div>
