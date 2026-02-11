@@ -5,8 +5,18 @@ const API_BASE_URL = '/api';
 interface IndiePublisher {
   id: number;
   name: string;
+  focus?: string | null;
   source: string;
   created_at: string;
+}
+
+interface FuzzyMatchResult {
+  id: number;
+  indie_name: string;
+  focus: string | null;
+  matches: Array<{ publisher: string; book_count: number; match_type: string }>;
+  match_count: number;
+  total_books: number;
 }
 
 interface SelfpublisherPattern {
@@ -56,6 +66,11 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
   const [indieLoading, setIndieLoading] = useState(true);
   const [newIndieName, setNewIndieName] = useState('');
   const [indieMessage, setIndieMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [fuzzyResults, setFuzzyResults] = useState<FuzzyMatchResult[] | null>(null);
+  const [fuzzyLoading, setFuzzyLoading] = useState(false);
+  const [fuzzySummary, setFuzzySummary] = useState<any>(null);
+  const [fuzzyFilter, setFuzzyFilter] = useState<'all' | 'matched' | 'unmatched'>('all');
 
   const [spPatterns, setSpPatterns] = useState<SelfpublisherPattern[]>([]);
   const [spLoading, setSpLoading] = useState(true);
@@ -197,6 +212,66 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
       if (data.ok) setIndiePublishers(prev => prev.filter(p => p.id !== id));
     } catch (err) {
       console.error('Failed to remove indie publisher:', err);
+    }
+  };
+
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>, replace: boolean = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (replace && !confirm('Achtung: Alle bestehenden Indie-Verlage werden gelöscht und durch die Excel-Daten ersetzt. Fortfahren?')) {
+      e.target.value = '';
+      return;
+    }
+    setBulkUploading(true);
+    setIndieMessage(null);
+    try {
+      const XLSX = await import('xlsx');
+      const buffer = await file.arrayBuffer();
+      const wb = XLSX.read(buffer);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws);
+      const publishers = rows.map((r: any) => {
+        const name = r['Verlag (PublisherName für SQL)'] || r['name'] || r['Name'] || r['Verlag'] || Object.values(r)[0];
+        const focus = r['Fokus / Besonderheit'] || r['focus'] || r['Fokus'] || null;
+        return { name: String(name || '').trim(), focus, source: 'excel-import' };
+      }).filter(p => p.name);
+
+      const res = await fetch(`${API_BASE_URL}/admin/indie-publishers/bulk`, {
+        method: 'POST', headers: getAdminHeaders(),
+        body: JSON.stringify({ publishers, replace }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setIndieMessage({ type: 'success', text: `${data.imported} importiert, ${data.skipped} übersprungen (bereits vorhanden)` });
+        loadIndiePublishers();
+      } else {
+        setIndieMessage({ type: 'error', text: data.error || 'Import fehlgeschlagen' });
+      }
+    } catch (err) {
+      setIndieMessage({ type: 'error', text: 'Excel-Datei konnte nicht gelesen werden' });
+    } finally {
+      setBulkUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const runFuzzyMatch = async () => {
+    setFuzzyLoading(true);
+    setFuzzyResults(null);
+    setFuzzySummary(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/indie-publishers/fuzzy-match`, { headers: getAdminHeaders() });
+      const data = await res.json();
+      if (data.ok) {
+        setFuzzyResults(data.results);
+        setFuzzySummary(data.summary);
+      } else {
+        setIndieMessage({ type: 'error', text: data.error || 'Fuzzy-Match fehlgeschlagen' });
+      }
+    } catch (err) {
+      setIndieMessage({ type: 'error', text: 'Fehler beim Fuzzy-Matching' });
+    } finally {
+      setFuzzyLoading(false);
     }
   };
 
@@ -389,9 +464,10 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
             <div className="flex flex-wrap gap-1.5 mb-4 max-h-64 overflow-y-auto p-3 rounded-lg" style={{ backgroundColor: '#fafafa', border: '1px solid #E5E7EB' }}>
               {indiePublishers.map((pub) => (
                 <span key={pub.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs"
-                  style={{ backgroundColor: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}>
+                  style={{ backgroundColor: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}
+                  title={pub.focus ? `Fokus: ${pub.focus}` : undefined}>
                   {pub.name}
-                  {pub.source !== 'manual' && <span className="text-[10px] opacity-60">({pub.source})</span>}
+                  {pub.focus && <span className="text-[10px] opacity-60">({pub.focus})</span>}
                   <button type="button" onClick={() => removeIndiePublisher(pub.id)} className="ml-0.5 hover:opacity-60">
                     <X className="w-3 h-3" />
                   </button>
@@ -417,6 +493,107 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
                 <Plus className="w-4 h-4" /> Verlag hinzufügen
               </button>
             </div>
+
+            <div className="flex gap-2 mt-3 flex-wrap">
+              <label className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80 flex items-center gap-1 cursor-pointer"
+                style={{ backgroundColor: '#247ba0', color: '#fff' }}>
+                {bulkUploading ? 'Importiere...' : 'Excel importieren (ergänzen)'}
+                <input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => handleExcelUpload(e, false)} className="hidden" disabled={bulkUploading} />
+              </label>
+              <label className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80 flex items-center gap-1 cursor-pointer"
+                style={{ backgroundColor: '#dc2626', color: '#fff' }}>
+                {bulkUploading ? 'Importiere...' : 'Excel importieren (ersetzen)'}
+                <input type="file" accept=".xlsx,.xls,.csv" onChange={(e) => handleExcelUpload(e, true)} className="hidden" disabled={bulkUploading} />
+              </label>
+              <button type="button" onClick={runFuzzyMatch} disabled={fuzzyLoading || indiePublishers.length === 0}
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-all hover:opacity-80 flex items-center gap-1"
+                style={{ backgroundColor: '#f4a261', color: '#fff' }}>
+                {fuzzyLoading ? 'Matching...' : 'Fuzzy-Match mit Datenbank'}
+              </button>
+            </div>
+
+            {fuzzySummary && (
+              <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#f0f9ff', border: '1px solid #bae6fd' }}>
+                <div className="text-sm font-medium mb-2" style={{ color: '#0369a1' }}>Fuzzy-Match Ergebnis</div>
+                <div className="grid grid-cols-4 gap-2 text-xs">
+                  <div className="text-center p-2 rounded" style={{ backgroundColor: '#fff' }}>
+                    <div className="font-bold text-lg" style={{ color: '#2a2a2a' }}>{fuzzySummary.total_indie}</div>
+                    <div style={{ color: '#666' }}>Indie-Verlage</div>
+                  </div>
+                  <div className="text-center p-2 rounded" style={{ backgroundColor: '#fff' }}>
+                    <div className="font-bold text-lg" style={{ color: '#16a34a' }}>{fuzzySummary.matched}</div>
+                    <div style={{ color: '#666' }}>Gefunden</div>
+                  </div>
+                  <div className="text-center p-2 rounded" style={{ backgroundColor: '#fff' }}>
+                    <div className="font-bold text-lg" style={{ color: '#dc2626' }}>{fuzzySummary.unmatched}</div>
+                    <div style={{ color: '#666' }}>Nicht gefunden</div>
+                  </div>
+                  <div className="text-center p-2 rounded" style={{ backgroundColor: '#fff' }}>
+                    <div className="font-bold text-lg" style={{ color: '#2a2a2a' }}>{fuzzySummary.total_db_publishers}</div>
+                    <div style={{ color: '#666' }}>DB-Verlage</div>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  {(['all', 'matched', 'unmatched'] as const).map(f => (
+                    <button key={f} type="button" onClick={() => setFuzzyFilter(f)}
+                      className="px-2 py-1 rounded text-xs font-medium transition-all"
+                      style={{ backgroundColor: fuzzyFilter === f ? '#247ba0' : '#e5e7eb', color: fuzzyFilter === f ? '#fff' : '#666' }}>
+                      {f === 'all' ? 'Alle' : f === 'matched' ? 'Gefunden' : 'Nicht gefunden'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {fuzzyResults && (
+              <div className="mt-3 max-h-96 overflow-y-auto rounded-lg" style={{ border: '1px solid #E5E7EB' }}>
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr style={{ backgroundColor: '#f8fafc' }}>
+                      <th className="text-left px-3 py-2 font-medium" style={{ color: '#374151' }}>Indie-Verlag</th>
+                      <th className="text-left px-3 py-2 font-medium" style={{ color: '#374151' }}>DB-Match</th>
+                      <th className="text-right px-3 py-2 font-medium" style={{ color: '#374151' }}>Typ</th>
+                      <th className="text-right px-3 py-2 font-medium" style={{ color: '#374151' }}>Titel</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fuzzyResults
+                      .filter(r => fuzzyFilter === 'all' || (fuzzyFilter === 'matched' ? r.match_count > 0 : r.match_count === 0))
+                      .map(r => (
+                        r.match_count > 0 ? r.matches.map((m, i) => (
+                          <tr key={`${r.id}-${i}`} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                            {i === 0 && (
+                              <td className="px-3 py-1.5 font-medium" style={{ color: '#2a2a2a' }} rowSpan={r.matches.length}>
+                                {r.indie_name}
+                                {r.focus && <span className="block text-[10px]" style={{ color: '#999' }}>{r.focus}</span>}
+                              </td>
+                            )}
+                            <td className="px-3 py-1.5" style={{ color: '#374151' }}>{m.publisher}</td>
+                            <td className="px-3 py-1.5 text-right">
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium"
+                                style={{
+                                  backgroundColor: m.match_type === 'exact' ? '#dcfce7' : m.match_type === 'contains' ? '#fef9c3' : '#fce7f3',
+                                  color: m.match_type === 'exact' ? '#166534' : m.match_type === 'contains' ? '#854d0e' : '#9d174d'
+                                }}>
+                                {m.match_type}
+                              </span>
+                            </td>
+                            <td className="px-3 py-1.5 text-right font-mono" style={{ color: '#374151' }}>{m.book_count}</td>
+                          </tr>
+                        )) : (
+                          <tr key={r.id} style={{ borderBottom: '1px solid #f3f4f6', backgroundColor: '#fef2f2' }}>
+                            <td className="px-3 py-1.5 font-medium" style={{ color: '#991b1b' }}>
+                              {r.indie_name}
+                              {r.focus && <span className="block text-[10px]" style={{ color: '#999' }}>{r.focus}</span>}
+                            </td>
+                            <td className="px-3 py-1.5" style={{ color: '#991b1b' }} colSpan={3}>Kein Match in der Datenbank</td>
+                          </tr>
+                        )
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>

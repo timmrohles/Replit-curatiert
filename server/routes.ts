@@ -394,25 +394,69 @@ export async function registerRoutes(
       CREATE TABLE IF NOT EXISTS indie_publishers (
         id SERIAL PRIMARY KEY,
         name TEXT NOT NULL UNIQUE,
+        focus TEXT,
         source TEXT DEFAULT 'manual',
         created_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    try { await queryDB('ALTER TABLE indie_publishers ADD COLUMN IF NOT EXISTS focus TEXT'); } catch {}
     const countResult = await queryDB('SELECT COUNT(*) as cnt FROM indie_publishers');
-    if (parseInt(countResult.rows[0].cnt) === 0) {
-      const defaults = [
-        'Aufbau Verlag', 'Berenberg Verlag', 'Blumenbar', 'Droschl', 'Edition Nautilus',
-        'Friedenauer Presse', 'Galiani Berlin', 'Guggolz Verlag', 'Haymon Verlag',
-        'Kanon Verlag', 'Kein & Aber', 'Kiepenheuer & Witsch', 'Kunstmann',
-        'Liebeskind', 'Lilienfeld Verlag', 'Luchterhandt', 'Mairisch Verlag',
-        'Mare Verlag', 'Matthes & Seitz Berlin', 'Mitteldeutscher Verlag',
-        'Nagel & Kimche', 'Residenz Verlag', 'Rotpunktverlag', 'Schöffling & Co.',
-        'Secession Verlag', 'Suhrkamp', 'Tropen Verlag', 'Ullstein', 'Unionsverlag',
-        'Verbrecher Verlag', 'Verlag Antje Kunstmann', 'Verlag Klaus Wagenbach',
-        'Voland & Quist', 'Wallstein Verlag', 'Wunderhorn', 'Zsolnay'
+    if (parseInt(countResult.rows[0].cnt) < 90) {
+      const defaults: Array<[string, string | null]> = [
+        ['8grad Verlag', null], ['Adocs Verlag', null], ['Aisthesis Verlag', null],
+        ['Alexander Verlag Berlin', null], ['Arco Verlag', null],
+        ['Argument Verlag mit Ariadne', 'Krimi / Feminismus'], ['Ariella Verlag', null],
+        ['Assoziation A', 'Politik / Globaler Süden'], ['Aviva Verlag', null],
+        ['be.bra Verlag', null], ['Berenberg Verlag', null], ['bilgerverlag', null],
+        ['Blumenbar Verlag', null], ['Brinkmann & Bose', null],
+        ['Büchergilde Gutenberg', null], ['C.H.Beck Literatur', null],
+        ['Das Kulturelle Gedächtnis', null], ['Die Andere Bibliothek', null],
+        ['Dittrich Verlag', null], ['Dörlemann Verlag', null], ['Droschl Verlag', null],
+        ['Edition Fünf', 'Frauenliteratur'], ['Edition Nautilus', null],
+        ['Edition Orient', null], ['Elfenbein Verlag', null], ['Engeler Verlag', null],
+        ['Erik Verlag', null], ['Favoritenpresse', null],
+        ['Friedenauer Presse', null], ['Galiani Berlin', null],
+        ['Guggolz Verlag', null], ['Hablizel Verlag', null],
+        ['Haymon Verlag', null], ['Helvetiq', null],
+        ['Henrich Editionen', null], ['Homunculus Verlag', null],
+        ['Jung und Jung', null], ['Kalkutta Verlag', null],
+        ['Kanon Verlag', null], ['Karl Rauch Verlag', null],
+        ['Kein & Aber', null], ['Kjona Verlag', null],
+        ['Klak Verlag', null], ['Klett-Cotta', null],
+        ['Kookbooks', null], ['Kremayr & Scheriau', null],
+        ['Kunstmann Verlag', null], ['Kupido Verlag', null],
+        ['Leibniz Verlag', null], ['Lenos Verlag', null],
+        ['Liebeskind', null], ['Lilienfeld Verlag', null],
+        ['Limbus Verlag', null], ['Louisoder Verlag', null],
+        ['Luftschacht Verlag', null], ['Mairisch Verlag', null],
+        ['Mandelbaum Verlag', 'Politik / Gesellschaft'], ['Mare Verlag', null],
+        ['Matthes & Seitz Berlin', null], ['Mirabilis Verlag', null],
+        ['Mitteldeutscher Verlag', null], ['Müry Salzmann', null],
+        ['Nagel & Kimche', null], ['Nordpark Verlag', null],
+        ['Osburg Verlag', null], ['Otto Müller Verlag', null],
+        ['P. Kirchheim Verlag', null], ['parasitenpresse', null],
+        ['Picus Verlag', null], ['Poetenladen Verlag', null],
+        ['Quintus Verlag', null], ['Reprodukt', 'Comic / Graphic Novel'],
+        ['Residenz Verlag', null], ['Rogner & Bernhard', null],
+        ['Rotpunktverlag', null], ['Rüffer & Rub', null],
+        ['Salzgeber Buchverlage', null], ['Schiler & Mücke', null],
+        ['Schöffling & Co.', null], ['Secession Verlag', null],
+        ['SuKuLTuR', null], ['Topalian & Milani', null],
+        ['Transit Verlag', null], ['Tropen Verlag', null],
+        ['Unionsverlag', null], ['Ventil Verlag', null],
+        ['Verbrecher Verlag', null], ['Verlag Antje Kunstmann', null],
+        ['Verlag Das Wunderhorn', null], ['Verlag Klaus Wagenbach', null],
+        ['Verlag Voland & Quist', null], ['Verlag Westfälisches Dampfboot', 'Theorie / Sozial'],
+        ['Verlagshaus Berlin', null], ['Voland & Quist', null],
+        ['w_orten & meer', 'Antirassismus / Queer'], ['Walde+Graf Verlag', null],
+        ['Wallstein Verlag', null], ['Wehrhahn Verlag', null],
+        ['weissbooks', null], ['Wunderhorn', null],
+        ['Suhrkamp', null], ['Kiepenheuer & Witsch', null],
+        ['Aufbau Verlag', null], ['Zsolnay', null],
+        ['Luchterhandt', null], ['Ullstein', null]
       ];
-      for (const name of defaults) {
-        await queryDB('INSERT INTO indie_publishers (name, source) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING', [name, 'kurt-wolff-stiftung']);
+      for (const [name, focus] of defaults) {
+        await queryDB('INSERT INTO indie_publishers (name, focus, source) VALUES ($1, $2, $3) ON CONFLICT (name) DO UPDATE SET focus = COALESCE(EXCLUDED.focus, indie_publishers.focus)', [name, focus, 'kurt-wolff-stiftung']);
       }
     }
     log.info('indie_publishers table verified');
@@ -4432,6 +4476,106 @@ export async function registerRoutes(
       return res.json({ ok: true, data: result.rows[0] });
     } catch (error) {
       log.error('Indie publisher delete error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/indie-publishers/bulk', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const { publishers, replace } = req.body;
+      if (!Array.isArray(publishers) || publishers.length === 0) {
+        return res.status(400).json({ ok: false, error: 'publishers Array ist erforderlich' });
+      }
+      if (replace) {
+        await queryDB('DELETE FROM indie_publishers');
+      }
+      let imported = 0;
+      let skipped = 0;
+      for (const pub of publishers) {
+        const name = typeof pub === 'string' ? pub : pub.name;
+        const focus = typeof pub === 'string' ? null : (pub.focus || null);
+        const source = typeof pub === 'string' ? 'bulk-import' : (pub.source || 'bulk-import');
+        if (!name || !name.trim()) { skipped++; continue; }
+        const result = await queryDB(
+          'INSERT INTO indie_publishers (name, focus, source) VALUES ($1, $2, $3) ON CONFLICT (name) DO NOTHING RETURNING id',
+          [name.trim(), focus, source]
+        );
+        if (result.rows.length > 0) imported++;
+        else skipped++;
+      }
+      return res.json({ ok: true, imported, skipped, total: publishers.length });
+    } catch (error) {
+      log.error('Indie publishers bulk import error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/admin/indie-publishers/fuzzy-match', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const indieRes = await queryDB('SELECT id, name, focus FROM indie_publishers ORDER BY name ASC');
+      const indiePublishers = indieRes.rows || [];
+
+      const booksRes = await queryDB(
+        `SELECT publisher, COUNT(*) as book_count
+         FROM books
+         WHERE publisher IS NOT NULL AND publisher != ''
+         GROUP BY publisher
+         ORDER BY COUNT(*) DESC`
+      );
+      const dbPublishers = booksRes.rows || [];
+
+      const results = indiePublishers.map((indie: any) => {
+        const indieLower = indie.name.toLowerCase().trim();
+        const matches: Array<{ publisher: string; book_count: number; match_type: string }> = [];
+
+        for (const dbPub of dbPublishers) {
+          const dbLower = dbPub.publisher.toLowerCase().trim();
+          if (dbLower === indieLower) {
+            matches.push({ publisher: dbPub.publisher, book_count: parseInt(dbPub.book_count), match_type: 'exact' });
+          } else if (dbLower.includes(indieLower) || indieLower.includes(dbLower)) {
+            matches.push({ publisher: dbPub.publisher, book_count: parseInt(dbPub.book_count), match_type: 'contains' });
+          } else {
+            const indieWords = indieLower.split(/\s+/).filter((w: string) => w.length > 2);
+            const dbWords = dbLower.split(/\s+/).filter((w: string) => w.length > 2);
+            const commonWords = indieWords.filter((w: string) => dbWords.some((dw: string) => dw.includes(w) || w.includes(dw)));
+            if (commonWords.length >= Math.max(1, Math.floor(indieWords.length * 0.5))) {
+              const isLikelyMatch = commonWords.length > 0 && (commonWords.length / Math.max(indieWords.length, dbWords.length)) > 0.3;
+              if (isLikelyMatch) {
+                matches.push({ publisher: dbPub.publisher, book_count: parseInt(dbPub.book_count), match_type: 'fuzzy' });
+              }
+            }
+          }
+        }
+
+        return {
+          id: indie.id,
+          indie_name: indie.name,
+          focus: indie.focus,
+          matches: matches.slice(0, 10),
+          match_count: matches.length,
+          total_books: matches.reduce((sum: number, m: any) => sum + m.book_count, 0),
+        };
+      });
+
+      const matched = results.filter((r: any) => r.match_count > 0);
+      const unmatched = results.filter((r: any) => r.match_count === 0);
+
+      return res.json({
+        ok: true,
+        summary: {
+          total_indie: indiePublishers.length,
+          matched: matched.length,
+          unmatched: unmatched.length,
+          total_db_publishers: dbPublishers.length,
+        },
+        results,
+      });
+    } catch (error) {
+      log.error('Fuzzy match error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });
