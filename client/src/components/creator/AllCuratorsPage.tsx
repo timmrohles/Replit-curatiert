@@ -32,9 +32,12 @@ interface Curator {
 
 interface AllCuratorsPageProps {
   onGoBack?: () => void;
+  pageTitle?: string;
+  pageSubtitle?: string;
+  breadcrumbLabel?: string;
 }
 
-export function AllCuratorsPage({ onGoBack }: AllCuratorsPageProps = { onGoBack: undefined }) {
+export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbLabel }: AllCuratorsPageProps = { onGoBack: undefined }) {
   const safeNavigate = useSafeNavigate();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
@@ -128,7 +131,7 @@ export function AllCuratorsPage({ onGoBack }: AllCuratorsPageProps = { onGoBack:
       <Breadcrumb
         items={[
           { label: "Start", href: "/", onClick: () => safeNavigate('/') },
-          { label: "Alle Kurator*innen" }
+          { label: breadcrumbLabel || "Alle Kurator*innen" }
         ]}
       />
 
@@ -140,11 +143,11 @@ export function AllCuratorsPage({ onGoBack }: AllCuratorsPageProps = { onGoBack:
               variant="h1"
               className="mb-4 !text-foreground"
             >
-              Alle Kurator*innen
+              {pageTitle || "Alle Kurator*innen"}
             </Heading>
 
             <Text variant="large" className="max-w-3xl !text-foreground">
-              Entdecke unsere Expert*innen und folge ihren Empfehlungen. Jede*r Kurator*in bringt eine einzigartige Perspektive und Expertise mit.
+              {pageSubtitle || "Entdecke unsere Expert*innen und folge ihren Empfehlungen. Jede*r Kurator*in bringt eine einzigartige Perspektive und Expertise mit."}
             </Text>
           </div>
         </Container>

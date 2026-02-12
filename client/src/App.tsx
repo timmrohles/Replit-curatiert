@@ -102,7 +102,7 @@ function App() {
                       <Route path="series" element={<S><SeriesPage /></S>} />
 
                       <Route path="curators" element={<S><AllCuratorsPage onGoBack={() => {}} /></S>} />
-                      <Route path="storefronts" element={<S><AllCuratorsPage onGoBack={() => {}} /></S>} />
+                      <Route path="storefronts" element={<S><AllCuratorsPage onGoBack={() => {}} pageTitle="Alle Bookstores" pageSubtitle="Entdecke die Bookstores unserer Kurator*innen – kuratierte Buchempfehlungen, persönliche Auswahl und einzigartige Perspektiven." breadcrumbLabel="Alle Bookstores" /></S>} />
                       <Route path="kurationen" element={<S><AllListsPage onGoBack={() => {}} /></S>} />
                       <Route path="creator/:creatorId" element={<S><CreatorStorefront /></S>} />
                       <Route path="storefront/:creatorId" element={<S><CreatorStorefront /></S>} />
