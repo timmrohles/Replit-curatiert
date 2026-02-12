@@ -1,9 +1,7 @@
-import { X, Trash2 } from "lucide-react";
-import { Button } from "../ui/button";
-import { FavoriteCard } from "./FavoriteCard";
-import { useState } from "react";
+import { X, Trash2, Heart } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { useFavorites } from "./FavoritesContext";
-import { Heading, Text } from "../ui";
+import { FavoriteCard } from "./FavoriteCard";
 
 interface FavoritesPanelProps {
   isOpen: boolean;
@@ -13,6 +11,18 @@ interface FavoritesPanelProps {
 export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
   const { favorites, removeFavorite } = useFavorites();
   const [activeTab, setActiveTab] = useState<string>("all");
+  const tabsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   const handleRemove = (id: string) => {
     removeFavorite(id);
@@ -24,59 +34,26 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
         "Möchten Sie wirklich alle Favoriten löschen? Diese Aktion kann nicht rückgängig gemacht werden."
       )
     ) {
-      // Remove all favorites one by one
       favorites.forEach((fav) => removeFavorite(fav.id));
     }
   };
 
   const tabs = [
     { id: "all", label: "Alle", count: favorites.length },
-    {
-      id: "book",
-      label: "Bücher",
-      count: favorites.filter((f) => f.type === "book").length,
-    },
-    {
-      id: "curator",
-      label: "Kurator:innen",
-      count: favorites.filter((f) => f.type === "creator").length,
-    },
-    {
-      id: "author",
-      label: "Autoren",
-      count: favorites.filter((f) => f.type === "author").length,
-    },
-    {
-      id: "publisher",
-      label: "Verlage",
-      count: favorites.filter((f) => f.type === "publisher").length,
-    },
-    {
-      id: "category",
-      label: "Kategorien",
-      count: favorites.filter((f) => f.type === "category").length,
-    },
-    {
-      id: "tag",
-      label: "Tags",
-      count: favorites.filter((f) => f.type === "tag").length,
-    },
-    {
-      id: "series",
-      label: "Buchreihen",
-      count: favorites.filter((f) => f.type === "series").length,
-    },
-    {
-      id: "genre",
-      label: "Genres",
-      count: favorites.filter((f) => f.type === "genre").length,
-    },
+    { id: "book", label: "Bücher", count: favorites.filter((f) => f.type === "book").length },
+    { id: "creator", label: "Kurator:innen", count: favorites.filter((f) => f.type === "creator").length },
+    { id: "author", label: "Autoren", count: favorites.filter((f) => f.type === "author").length },
+    { id: "publisher", label: "Verlage", count: favorites.filter((f) => f.type === "publisher").length },
+    { id: "category", label: "Kategorien", count: favorites.filter((f) => f.type === "category").length },
+    { id: "tag", label: "Tags", count: favorites.filter((f) => f.type === "tag").length },
+    { id: "series", label: "Buchreihen", count: favorites.filter((f) => f.type === "series").length },
+    { id: "genre", label: "Genres", count: favorites.filter((f) => f.type === "genre").length },
   ];
 
+  const visibleTabs = tabs.filter((t) => t.id === "all" || t.count > 0);
+
   const getFilteredFavorites = () => {
-    if (activeTab === "all") {
-      return favorites;
-    }
+    if (activeTab === "all") return favorites;
     return favorites.filter((f) => f.type === activeTab);
   };
 
@@ -86,144 +63,107 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
 
   return (
     <>
-      {/* Overlay */}
       <div
-        className="fixed inset-0 z-[200] transition-opacity"
-        style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+        className="fixed inset-0 z-[200] bg-black/60 transition-opacity"
         onClick={onClose}
+        data-testid="overlay-favorites"
       />
 
-      {/* Panel - Mobile: Full screen minus safe areas, Desktop: Centered modal */}
-      <div className="fixed inset-0 z-[200] flex items-end md:items-center justify-center md:p-4">
+      <div className="fixed inset-0 z-[201] flex items-end md:items-center md:justify-center pointer-events-none">
         <div
-          className="rounded-t-2xl md:rounded-2xl shadow-2xl w-full md:max-w-5xl h-[95vh] md:max-h-[90vh] flex flex-col"
-          style={{ backgroundColor: 'var(--color-white)' }}
+          className="pointer-events-auto bg-card text-card-foreground w-full md:max-w-2xl lg:max-w-4xl h-full md:h-auto md:max-h-[85vh] md:rounded-2xl md:mx-4 flex flex-col overflow-hidden md:shadow-2xl border-0 md:border md:border-border"
           onClick={(e) => e.stopPropagation()}
+          data-testid="panel-favorites"
         >
-          {/* Header */}
-          <div 
-            className="p-4 md:p-6 flex items-center justify-between border-b flex-shrink-0"
-            style={{ borderColor: 'var(--color-gray-200)' }}
-          >
-            <div className="flex-1 min-w-0 mr-4">
-              <Heading as="h2" variant="h3" className="mb-0.5 md:mb-1 truncate">
-                Meine Favoriten
-              </Heading>
-              <Text variant="xs" className="md:text-sm" style={{ color: 'var(--color-gray-600)' }}>
-                {favorites.length} {favorites.length === 1 ? "Element" : "Elemente"}
-              </Text>
+          <div className="flex items-center justify-between px-4 py-3 md:px-6 md:py-4 border-b border-border flex-shrink-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Heart className="w-5 h-5 text-[var(--color-coral-vibrant)] flex-shrink-0" />
+              <div className="min-w-0">
+                <h2 className="text-base md:text-lg font-headline text-foreground truncate">
+                  Meine Favoriten
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  {favorites.length} {favorites.length === 1 ? "Element" : "Elemente"} gespeichert
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 flex-shrink-0">
               {favorites.length > 0 && (
-                <Button
-                  variant="ghost"
+                <button
                   onClick={handleClearAll}
-                  className="rounded-xl hover:bg-red-50 h-10 px-3"
-                  style={{ color: 'var(--color-coral)' }}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-destructive-foreground bg-destructive/10 hover:bg-destructive/20 transition-colors"
+                  data-testid="button-clear-all-favorites"
                 >
-                  <Trash2 className="w-4 h-4 md:mr-2" />
-                  <span className="hidden md:inline">Alle löschen</span>
-                </Button>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Alle löschen</span>
+                </button>
               )}
-              <Button
-                variant="ghost"
-                size="icon"
+              <button
                 onClick={onClose}
-                className="rounded-xl h-10 w-10"
-                style={{ color: 'var(--color-charcoal)' }}
+                className="ml-1 w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                data-testid="button-close-favorites"
               >
                 <X className="w-5 h-5" />
-              </Button>
+              </button>
             </div>
           </div>
 
-          {/* Tabs - Horizontal scroll on mobile */}
-          <div 
-            className="px-4 md:px-6 overflow-x-auto scrollbar-hide border-b flex-shrink-0"
-            style={{ 
-              borderColor: 'var(--color-gray-200)',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch'
-            }}
+          <div
+            ref={tabsRef}
+            className="px-4 md:px-6 overflow-x-auto flex-shrink-0 border-b border-border"
+            style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
           >
-            <div className="flex gap-2 py-3 min-w-max">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="px-3 md:px-4 py-2 rounded-lg transition-all whitespace-nowrap flex-shrink-0 min-h-[44px] flex items-center"
-                  style={{
-                    backgroundColor: activeTab === tab.id 
-                      ? 'var(--color-coral)' 
-                      : 'var(--color-gray-100)',
-                    color: activeTab === tab.id 
-                      ? 'var(--color-white)' 
-                      : 'var(--color-charcoal)',
-                  }}
-                >
-                  <Text 
-                    as="span" 
-                    variant="xs"
-                    className="md:text-sm font-semibold"
-                    style={{ color: 'inherit' }}
+            <style>{`.fav-tabs::-webkit-scrollbar { display: none; }`}</style>
+            <div className="fav-tabs flex gap-1.5 py-2.5 min-w-max">
+              {visibleTabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors min-h-[36px] flex items-center gap-1.5 ${
+                      isActive
+                        ? "bg-[var(--color-coral-vibrant)] text-white"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                    data-testid={`tab-favorites-${tab.id}`}
                   >
                     {tab.label}
-                  </Text>
-                  {" "}
-                  <span
-                    className="ml-1.5 px-1.5 md:px-2 py-0.5 rounded text-xs font-medium"
-                    style={{
-                      backgroundColor: activeTab === tab.id 
-                        ? 'rgba(255, 255, 255, 0.25)' 
-                        : 'var(--color-gray-200)',
-                      color: activeTab === tab.id 
-                        ? 'var(--color-white)' 
-                        : 'var(--color-gray-700)',
-                    }}
-                  >
-                    {tab.count}
-                  </span>
-                </button>
-              ))}
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        isActive ? "bg-white/25 text-white" : "bg-background text-muted-foreground"
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Content - Scrollable */}
-          <div 
-            className="flex-1 overflow-y-auto p-4 md:p-6"
-            style={{ 
-              backgroundColor: 'var(--color-gray-50)',
-              WebkitOverflowScrolling: 'touch'
-            }}
+          <div
+            className="flex-1 overflow-y-auto bg-background p-4 md:p-6 pb-24 md:pb-6"
+            style={{ WebkitOverflowScrolling: "touch" }}
           >
             {filteredFavorites.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 md:py-16 text-center px-4">
-                <div 
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center mb-4"
-                  style={{ backgroundColor: 'var(--color-gray-200)' }}
-                >
-                  <span className="text-3xl md:text-4xl">💛</span>
+              <div className="flex flex-col items-center justify-center py-16 md:py-20 text-center px-6">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Heart className="w-7 h-7 text-muted-foreground" />
                 </div>
-                <Heading as="h3" variant="h4" className="mb-2">
+                <h3 className="text-base font-headline text-foreground mb-2">
                   {activeTab === "all"
                     ? "Noch keine Favoriten"
-                    : `Keine ${tabs.find((t) => t.id === activeTab)?.label}`}
-                </Heading>
-                <Text 
-                  variant="small" 
-                  className="max-w-sm"
-                  style={{ color: 'var(--color-gray-600)' }}
-                >
+                    : `Keine ${visibleTabs.find((t) => t.id === activeTab)?.label}`}
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
                   {activeTab === "all"
                     ? "Speichere Bücher, Kurator:innen, Autoren und mehr, um sie hier wiederzufinden."
-                    : `Markiere ${
-                        tabs.find((t) => t.id === activeTab)?.label
-                      } als Favoriten, um sie hier zu sehen.`}
-                </Text>
+                    : `Markiere ${visibleTabs.find((t) => t.id === activeTab)?.label} als Favoriten, um sie hier zu sehen.`}
+                </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredFavorites.map((item) => (
                   <FavoriteCard
                     key={item.id}
