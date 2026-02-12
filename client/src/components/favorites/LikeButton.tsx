@@ -9,6 +9,7 @@ interface LikeButtonProps {
   entityTitle?: string;
   entitySubtitle?: string;
   entityImage?: string;
+  entityColor?: string;
   isLiked?: boolean;
   onToggle?: () => void;
   onLike?: () => void;
@@ -26,6 +27,7 @@ export function LikeButton({
   entityTitle = "",
   entitySubtitle = "",
   entityImage,
+  entityColor,
   isLiked: controlledIsLiked,
   onToggle,
   onLike,
@@ -102,6 +104,7 @@ export function LikeButton({
         title: entityTitle,
         subtitle: entitySubtitle,
         image: entityImage,
+        color: entityColor,
       });
     } else {
       // Fallback to local state

@@ -367,6 +367,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
                       entityType="tag"
                       entityTitle={tag.displayName}
                       entitySubtitle={tag.type}
+                      entityColor={tag.color}
                       variant="minimal"
                       size="sm"
                       iconColor="var(--color-white)"
@@ -396,6 +397,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
                       entityType="tag"
                       entityTitle={tag.displayName}
                       entitySubtitle={tag.type}
+                      entityColor={tag.color}
                       variant="minimal"
                       size="sm"
                       iconColor="var(--color-white)"
@@ -471,6 +473,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
                         entityType="tag"
                         entityTitle={tag.displayName}
                         entitySubtitle={tag.type}
+                        entityColor={tag.color}
                         variant="minimal"
                         size="sm"
                         iconColor="#247ba0"

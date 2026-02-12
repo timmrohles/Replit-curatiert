@@ -306,6 +306,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
                       entityType="tag"
                       entityTitle={tag.displayName}
                       entitySubtitle={tag.type}
+                      entityColor={tag.color}
                       variant="minimal"
                       size="sm"
                       iconColor="var(--color-white)"
@@ -335,6 +336,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
                       entityType="tag"
                       entityTitle={tag.displayName}
                       entitySubtitle={tag.type}
+                      entityColor={tag.color}
                       variant="minimal"
                       size="sm"
                       iconColor="var(--color-white)"
@@ -364,6 +366,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
                         entityType="tag"
                         entityTitle={tag.displayName}
                         entitySubtitle={tag.type}
+                        entityColor={tag.color}
                         variant="minimal"
                         size="sm"
                         iconColor="#247ba0"

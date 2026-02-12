@@ -214,6 +214,7 @@ export const CreatorHeader = memo(function CreatorHeader({
                 entityId={creatorId}
                 entityType="creator"
                 entityTitle={name}
+                entityImage={avatar}
                 variant="minimal"
                 size="sm"
                 iconColor="#ffffff"

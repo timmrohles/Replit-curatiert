@@ -171,6 +171,7 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
                     title={item.title}
                     subtitle={item.subtitle}
                     imageUrl={item.image}
+                    color={item.color}
                     onRemove={() => handleRemove(item.id)}
                   />
                 ))}

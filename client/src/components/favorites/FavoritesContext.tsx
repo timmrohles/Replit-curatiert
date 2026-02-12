@@ -129,6 +129,7 @@ export interface FavoriteItem {
   title: string;
   subtitle?: string;
   image?: string;
+  color?: string;
 }
 
 /**
@@ -202,6 +203,82 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 const API_BASE = '/api';
 
 // ============================================================================
+// HYDRATION - Enrich favorites with metadata (images, colors) from APIs
+// ============================================================================
+
+async function hydrateFavorites(items: FavoriteItem[]): Promise<FavoriteItem[]> {
+  const needsCurators = items.some((f) => (f.type === 'creator' || f.type === 'author') && !f.image);
+  const needsTags = items.some((f) => f.type === 'tag' && (!f.image || !f.color));
+
+  if (!needsCurators && !needsTags) return items;
+
+  const [curatorsData, tagsData] = await Promise.all([
+    needsCurators
+      ? fetch(`${API_BASE}/curators`).then((r) => r.ok ? r.json() : null).catch(() => null)
+      : null,
+    needsTags
+      ? fetch(`${API_BASE}/onix-tags`).then((r) => r.ok ? r.json() : null).catch(() => null)
+      : null,
+  ]);
+
+  const curatorMap = new Map<string, { avatar?: string }>();
+  if (curatorsData) {
+    const list = curatorsData.data || curatorsData;
+    if (Array.isArray(list)) {
+      list.forEach((c: { id?: string | number; name?: string; avatar?: string; slug?: string }) => {
+        const entry = { avatar: c.avatar };
+        if (c.id) curatorMap.set(String(c.id), entry);
+        if (c.slug) curatorMap.set(c.slug, entry);
+        if (c.name) {
+          curatorMap.set(c.name.toLowerCase().replace(/\s+/g, '-').replace(/[äöüß]/g, (ch: string) => {
+            const map: Record<string, string> = { 'ä': 'ae', 'ö': 'oe', 'ü': 'ue', 'ß': 'ss' };
+            return map[ch] || ch;
+          }), entry);
+          curatorMap.set(`storefront-${c.id}`, entry);
+        }
+      });
+    }
+  }
+
+  const tagMap = new Map<string, { color?: string; imageUrl?: string }>();
+  if (tagsData) {
+    const list = tagsData.data || tagsData;
+    if (Array.isArray(list)) {
+      list.forEach((t: { id?: number; displayName?: string; color?: string; imageUrl?: string }) => {
+        const entry = { color: t.color, imageUrl: t.imageUrl };
+        if (t.id) {
+          tagMap.set(String(t.id), entry);
+          tagMap.set(`onix-tag-${t.id}`, entry);
+        }
+        if (t.displayName) {
+          tagMap.set(`tag-${t.displayName.toLowerCase()}`, entry);
+        }
+      });
+    }
+  }
+
+  return items.map((item) => {
+    if ((item.type === 'creator' || item.type === 'author' || item.type === 'storefront') && !item.image) {
+      const match = curatorMap.get(item.id);
+      if (match?.avatar) {
+        return { ...item, image: match.avatar };
+      }
+    }
+    if (item.type === 'tag' && (!item.image || !item.color)) {
+      const match = tagMap.get(item.id);
+      if (match) {
+        return {
+          ...item,
+          image: item.image || match.imageUrl || undefined,
+          color: item.color || match.color || undefined,
+        };
+      }
+    }
+    return item;
+  });
+}
+
+// ============================================================================
 // PROVIDER
 // ============================================================================
 
@@ -253,6 +330,12 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
           );
           setFavorites(loadedFavorites);
           logger.debug(`Loaded ${loadedFavorites.length} follows from backend`);
+          
+          if (isMounted) {
+            hydrateFavorites(loadedFavorites).then((hydrated) => {
+              if (isMounted) setFavorites(hydrated);
+            });
+          }
         }
         
       } catch (error) {
