@@ -1,124 +1,91 @@
-/**
- * ==================================================================
- * SAFE NAVIGATE HOOK - Crash-Prevention für Navigation
- * ==================================================================
- * 
- * Verhindert Crashes durch:
- * - Ungültige IDs (undefined, null, '')
- * - Fehlende Parameter
- * - Kaputte URLs
- * 
- * Features:
- * - Dev-only Warnings
- * - Fallback zu Homepage oder 404
- * - Type-safe Navigation
- * ==================================================================
- */
-
 import { useNavigate } from 'react-router-dom';
+import { useLocale } from '../utils/LocaleContext';
 
 const isDev = typeof import.meta !== 'undefined' && 
               import.meta.env && 
               import.meta.env.DEV;
 
+const ADMIN_PREFIX = '/sys-mgmt-xK9';
+
+function isAdminPath(path: string): boolean {
+  return path.startsWith(ADMIN_PREFIX);
+}
+
 interface NavigationOptions {
-  /** Fallback route if validation fails */
   fallback?: string;
-  /** Should log warnings in dev mode */
   silent?: boolean;
+  skipLocale?: boolean;
 }
 
 export function useSafeNavigate() {
   const navigate = useNavigate();
+  const { localePath } = useLocale();
 
-  /**
-   * Safe navigate to book detail page
-   */
+  const prefixPath = (path: string, skipLocale?: boolean): string => {
+    if (skipLocale || isAdminPath(path)) return path;
+    return localePath(path);
+  };
+
   const toBook = (bookId: string | undefined | null, options?: NavigationOptions) => {
     if (!bookId || bookId.trim() === '') {
       if (isDev && !options?.silent) {
         console.warn('[SafeNavigate] Blocked navigation to book - invalid ID:', bookId);
       }
-      if (options?.fallback) {
-        navigate(options.fallback);
-      }
+      if (options?.fallback) navigate(prefixPath(options.fallback, options?.skipLocale));
       return false;
     }
-    navigate(`/buch/${bookId}`);
+    navigate(prefixPath(`/buch/${bookId}`, options?.skipLocale));
     return true;
   };
 
-  /**
-   * Safe navigate to creator storefront
-   */
   const toCreator = (creatorSlug: string | undefined | null, options?: NavigationOptions) => {
     if (!creatorSlug || creatorSlug.trim() === '') {
       if (isDev && !options?.silent) {
         console.warn('[SafeNavigate] Blocked navigation to creator - invalid slug:', creatorSlug);
       }
-      if (options?.fallback) {
-        navigate(options.fallback);
-      }
+      if (options?.fallback) navigate(prefixPath(options.fallback, options?.skipLocale));
       return false;
     }
-    navigate(`/c/${creatorSlug}`);
+    navigate(prefixPath(`/c/${creatorSlug}`, options?.skipLocale));
     return true;
   };
 
-  /**
-   * Safe navigate to tag page
-   */
   const toTag = (tagSlug: string | undefined | null, options?: NavigationOptions) => {
     if (!tagSlug || tagSlug.trim() === '') {
       if (isDev && !options?.silent) {
         console.warn('[SafeNavigate] Blocked navigation to tag - invalid slug:', tagSlug);
       }
-      if (options?.fallback) {
-        navigate(options.fallback);
-      }
+      if (options?.fallback) navigate(prefixPath(options.fallback, options?.skipLocale));
       return false;
     }
-    navigate(`/t/${tagSlug}`);
+    navigate(prefixPath(`/t/${tagSlug}`, options?.skipLocale));
     return true;
   };
 
-  /**
-   * Safe navigate to category page
-   */
   const toCategory = (categorySlug: string | undefined | null, options?: NavigationOptions) => {
     if (!categorySlug || categorySlug.trim() === '') {
       if (isDev && !options?.silent) {
         console.warn('[SafeNavigate] Blocked navigation to category - invalid slug:', categorySlug);
       }
-      if (options?.fallback) {
-        navigate(options.fallback);
-      }
+      if (options?.fallback) navigate(prefixPath(options.fallback, options?.skipLocale));
       return false;
     }
-    navigate(`/kategorie/${categorySlug}`);
+    navigate(prefixPath(`/kategorie/${categorySlug}`, options?.skipLocale));
     return true;
   };
 
-  /**
-   * Safe navigate to any path with validation
-   */
   const toPath = (path: string | undefined | null, options?: NavigationOptions) => {
     if (!path || path.trim() === '') {
       if (isDev && !options?.silent) {
         console.warn('[SafeNavigate] Blocked navigation - invalid path:', path);
       }
-      if (options?.fallback) {
-        navigate(options.fallback);
-      }
+      if (options?.fallback) navigate(prefixPath(options.fallback, options?.skipLocale));
       return false;
     }
-    navigate(path);
+    navigate(prefixPath(path, options?.skipLocale));
     return true;
   };
 
-  /**
-   * Generic safe navigate - validates before navigation
-   */
   const safe = (path: string | undefined | null, options?: NavigationOptions) => {
     return toPath(path, options);
   };
@@ -130,7 +97,6 @@ export function useSafeNavigate() {
     toCategory,
     toPath,
     safe,
-    // Expose raw navigate for cases where you already validated
     raw: navigate
   };
 }

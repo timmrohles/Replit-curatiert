@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from '../utils/routing';
 import { ArrowRight, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { Header } from '../components/layout/Header';
@@ -10,18 +11,19 @@ import { Section } from '../components/ui/section';
 import { Heading, Text } from '../components/ui/typography';
 
 export default function DashboardLanding() {
+  const { t } = useTranslation();
   const navigate = useSafeNavigate();
   const [userModules] = useState({
-    storefront: true, // Always available
-    author: true, // Vorläufig freigeschaltet
-    publisher: true // Vorläufig freigeschaltet
+    storefront: true,
+    author: true,
+    publisher: true
   });
 
   return (
     <>
       <Helmet>
-        <title>Dashboard | coratiert.de</title>
-        <meta name="description" content="Verwalte deinen Creator Bookstore, Autor-Profile und Verlagsinhalte - alles an einem Ort." />
+        <title>{t('dashboardLanding.title')}</title>
+        <meta name="description" content={t('dashboardLanding.metaDescription')} />
       </Helmet>
       
       <Header />
@@ -44,11 +46,11 @@ export default function DashboardLanding() {
               className="mb-4"
               style={{ color: 'var(--charcoal, #2a2a2a)' }}
             >
-              Willkommen in deinem Dashboard
+              {t('dashboardLanding.heroTitle')}
             </Heading>
             
             <Text variant="large" className="max-w-3xl" style={{ color: 'var(--color-text-secondary, #6B7280)' }}>
-              Erstelle deinen eigenen Bookstore, verwalte deine Bücher als Autor oder präsentiere dein Verlagsprogramm - alles an einem Ort.
+              {t('dashboardLanding.heroDescription')}
             </Text>
           </div>
         </Container>
@@ -63,36 +65,36 @@ export default function DashboardLanding() {
             <div className="rounded-xl shadow-sm border overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
               <div className="p-6 md:p-8">
                 <h3 className="text-xl md:text-2xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-                  Creator Bookstore
+                  {t('dashboardLanding.creatorTitle')}
                 </h3>
                 
                 <div className="mb-4">
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: '#D1FAE5', color: '#10B981' }}>
                     <CheckCircle className="w-4 h-4" />
-                    Aktiv
+                    {t('common.active')}
                   </span>
                 </div>
 
                 <p className="text-sm md:text-base mb-6" style={{ color: '#6B7280' }}>
-                  Dein persönlicher Bookstore ist bereits freigeschaltet. Erstelle Reviews, teile Empfehlungen und baue deine Community auf.
+                  {t('dashboardLanding.creatorDescription')}
                 </p>
 
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10B981' }}></div>
-                    Creator Reviews erstellen
+                    {t('dashboardLanding.creatorFeature1')}
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10B981' }}></div>
-                    Dashboard Ratings verwalten
+                    {t('dashboardLanding.creatorFeature2')}
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10B981' }}></div>
-                    Events & Veranstaltungen
+                    {t('dashboardLanding.creatorFeature3')}
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10B981' }}></div>
-                    Analytics & Statistiken
+                    {t('dashboardLanding.creatorFeature4')}
                   </div>
                 </div>
 
@@ -101,7 +103,7 @@ export default function DashboardLanding() {
                   className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
                   style={{ backgroundColor: '#10B981', color: '#FFFFFF' }}
                 >
-                  Zum Creator Dashboard
+                  {t('dashboardLanding.creatorCta')}
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </div>
@@ -111,36 +113,36 @@ export default function DashboardLanding() {
             <div className="rounded-xl shadow-sm border overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
               <div className="p-6 md:p-8">
                 <h3 className="text-xl md:text-2xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-                  Autor Dashboard
+                  {t('dashboardLanding.authorTitle')}
                 </h3>
                 
                 <div className="mb-4">
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: '#FED7AA', color: '#F97316' }}>
                     <CheckCircle className="w-4 h-4" />
-                    Aktiv
+                    {t('common.active')}
                   </span>
                 </div>
 
                 <p className="text-sm md:text-base mb-6" style={{ color: '#6B7280' }}>
-                  Als verifizierter Autor erhältst du erweiterte Features für die Verwaltung deiner Bücher und die Interaktion mit deinen Lesern.
+                  {t('dashboardLanding.authorDescription')}
                 </p>
 
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#F97316' }}></div>
-                    Eigene Bücher verwalten
+                    {t('dashboardLanding.authorFeature1')}
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#F97316' }}></div>
-                    Bonuscontent veröffentlichen
+                    {t('dashboardLanding.authorFeature2')}
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#F97316' }}></div>
-                    Bookclub & Community
+                    {t('dashboardLanding.authorFeature3')}
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#F97316' }}></div>
-                    Lesungen & Events
+                    {t('dashboardLanding.authorFeature4')}
                   </div>
                 </div>
 
@@ -149,7 +151,7 @@ export default function DashboardLanding() {
                   className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
                   style={{ backgroundColor: '#F97316', color: '#FFFFFF' }}
                 >
-                  Zum Autor Dashboard
+                  {t('dashboardLanding.authorCta')}
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </div>
@@ -159,36 +161,36 @@ export default function DashboardLanding() {
             <div className="rounded-xl shadow-sm border overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
               <div className="p-6 md:p-8">
                 <h3 className="text-xl md:text-2xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-                  Verlags Dashboard
+                  {t('dashboardLanding.publisherTitle')}
                 </h3>
                 
                 <div className="mb-4">
                   <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium" style={{ backgroundColor: '#DBEAFE', color: '#247ba0' }}>
                     <CheckCircle className="w-4 h-4" />
-                    Aktiv
+                    {t('common.active')}
                   </span>
                 </div>
 
                 <p className="text-sm md:text-base mb-6" style={{ color: '#6B7280' }}>
-                  Als Verlag erhältst du professionelle Tools zur Verwaltung deines Programms und zur Präsentation deiner Autor:innen.
+                  {t('dashboardLanding.publisherDescription')}
                 </p>
 
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#247ba0' }}></div>
-                    Verlagsprogramm verwalten
+                    {t('dashboardLanding.publisherFeature1')}
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#247ba0' }}></div>
-                    Autor:innen präsentieren
+                    {t('dashboardLanding.publisherFeature2')}
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#247ba0' }}></div>
-                    Veranstaltungen planen
+                    {t('dashboardLanding.publisherFeature3')}
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: '#3A3A3A' }}>
                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#247ba0' }}></div>
-                    Analytics & Insights
+                    {t('dashboardLanding.publisherFeature4')}
                   </div>
                 </div>
 
@@ -197,7 +199,7 @@ export default function DashboardLanding() {
                   className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
                   style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
                 >
-                  Zum Verlags Dashboard
+                  {t('dashboardLanding.publisherCta')}
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </div>
@@ -209,20 +211,17 @@ export default function DashboardLanding() {
             <div className="flex items-start gap-4">
               <div>
                 <h3 className="text-lg md:text-xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-                  Wie funktioniert die Freischaltung?
+                  {t('dashboardLanding.infoTitle')}
                 </h3>
                 <div className="space-y-3 text-sm md:text-base" style={{ color: '#6B7280' }}>
                   <p>
-                    <strong style={{ color: '#3A3A3A' }}>Creator Bookstore:</strong> Ist für alle Nutzer sofort verfügbar. 
-                    Du kannst direkt loslegen und deinen eigenen Bookstore erstellen.
+                    <strong style={{ color: '#3A3A3A' }}>{t('dashboardLanding.infoCreatorLabel')}</strong> {t('dashboardLanding.infoCreatorText')}
                   </p>
                   <p>
-                    <strong style={{ color: '#3A3A3A' }}>Autor Dashboard:</strong> Beantrage den Zugang mit einem Klick. 
-                    Wir prüfen deine Anfrage und schalten dich als Autor frei, sobald wir deine Identität verifiziert haben.
+                    <strong style={{ color: '#3A3A3A' }}>{t('dashboardLanding.infoAuthorLabel')}</strong> {t('dashboardLanding.infoAuthorText')}
                   </p>
                   <p>
-                    <strong style={{ color: '#3A3A3A' }}>Verlags Dashboard:</strong> Für Verlage bieten wir umfangreiche 
-                    Verwaltungstools. Nach Prüfung deiner Anfrage erhältst du Zugang zum vollständigen Verlags-Backend.
+                    <strong style={{ color: '#3A3A3A' }}>{t('dashboardLanding.infoPublisherLabel')}</strong> {t('dashboardLanding.infoPublisherText')}
                   </p>
                 </div>
               </div>
@@ -236,7 +235,7 @@ export default function DashboardLanding() {
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-md"
               style={{ backgroundColor: '#FFFFFF', color: '#247ba0', border: '1px solid #E5E7EB' }}
             >
-              Zurück zur Startseite
+              {t('dashboardLanding.backToHome')}
             </button>
           </div>
         </div>

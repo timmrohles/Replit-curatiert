@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useSafeNavigate } from "../../utils/routing";
 import { Input } from "../ui/input";
 import { MegaMenu } from "./MegaMenu";
@@ -8,6 +9,7 @@ import { useFavorites } from "../favorites/FavoritesContext";
 import { ThemeToggle } from "../common/ThemeToggle";
 import { useTheme } from "../../utils/ThemeContext";
 import { Moon, Sun, Search, Heart, Menu, X, ChevronDown, ShoppingCart, User, Sliders, Star, Store, Bell, MoreHorizontal } from "lucide-react";
+import { RegionSwitcher } from "./RegionSwitcher";
 import { useNavigationV2, FALLBACK_NAVIGATION_V2 } from "../../utils/useNavigation"; // ✅ Clean import (no V2 suffix)
 import { logger } from "../../utils/logger"; // ✅ Add logger for debugging
 
@@ -238,6 +240,7 @@ export function Header({
   backgroundColor,
   textColor,
 }: HeaderProps) {
+  const { t } = useTranslation();
   const navigate = useSafeNavigate();
   const location = useLocation();
   const isDashboard = location.pathname.startsWith('/dashboard');
@@ -319,7 +322,14 @@ export function Header({
     }
   }, [navDataV2, navErrorV2]);
 
-  const formats = ['Hardcover', 'Softcover', 'eBook', 'Hörbuch', 'Spiel'];
+  const formatKeys = ['hardcover', 'softcover', 'ebook', 'audiobook', 'game'] as const;
+  const formatLabels: Record<string, string> = {
+    hardcover: t('header.hardcover'),
+    softcover: t('header.softcover'),
+    ebook: t('header.ebook'),
+    audiobook: t('header.audiobook'),
+    game: t('header.game'),
+  };
 
   // Sample data for suggestions
   const sampleBooks = [
@@ -418,32 +428,32 @@ export function Header({
     if (!searchQuery || searchQuery.length < 2) return [];
 
     const query = searchQuery.toLowerCase();
-    const suggestions: Array<{ text: string; type: 'Buch' | 'Autor*in' | 'Verlag' | 'Kategorie' }> = [];
+    const suggestions: Array<{ text: string; type: 'book' | 'author' | 'publisher' | 'category' }> = [];
 
     // Books
     sampleBooks.forEach(book => {
       if (book.toLowerCase().includes(query) && suggestions.length < 15) {
-        suggestions.push({ text: book, type: 'Buch' });
+        suggestions.push({ text: book, type: 'book' });
       }
     });
 
     // Authors
     sampleAuthors.forEach(author => {
       if (author.toLowerCase().includes(query) && suggestions.length < 15) {
-        suggestions.push({ text: author, type: 'Autor*in' });
+        suggestions.push({ text: author, type: 'author' });
       }
     });
 
     // Publishers
     samplePublishers.forEach(publisher => {
       if (publisher.toLowerCase().includes(query) && suggestions.length < 15) {
-        suggestions.push({ text: publisher, type: 'Verlag' });
+        suggestions.push({ text: publisher, type: 'publisher' });
       }
     });
 
     // Remove duplicates
     const unique = suggestions.filter((item, index, self) => 
-      index === self.findIndex(t => t.text === item.text)
+      index === self.findIndex(s => s.text === item.text)
     );
 
     return unique.slice(0, 8);
@@ -462,7 +472,7 @@ export function Header({
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-blue focus:text-white focus:rounded-br-lg focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-white"
       >
-        Zum Hauptinhalt springen
+        {t('header.skipToContent')}
       </a>
       <header
         className={`header-bg border-b border-gray-600 transition-all duration-300 ${
@@ -482,7 +492,7 @@ export function Header({
                   <div className="flex flex-col gap-0.5 mb-0.5">
                     {/* Subtitle line above logo */}
                     <p className="text-[12px] md:text-[13px] lg:text-[15px] origin-left font-sans text-cerulean scale-x-93 font-semibold text-shadow-subtle">
-                      Ausgezeichnete Bücher
+                      {t('header.tagline')}
                     </p>
                     {/* Lowercase logo */}
                     <span 
@@ -506,7 +516,7 @@ export function Header({
                   <Search className="search-icon-color absolute left-3 md:left-3.5 lg:left-4 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5" />
                   <Input
                     type="search"
-                    placeholder="Bücher, Formate, Kurator*innen..."
+                    placeholder={t('header.searchPlaceholder')}
                     className="search-bar pl-9 md:pl-11 lg:pl-12 pr-10 md:pr-12 lg:pr-14 h-10 md:h-11 rounded-lg text-sm md:text-base"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -517,7 +527,7 @@ export function Header({
                   <button
                     onClick={() => setIsFilterModalOpen(true)}
                     className="search-icon-color absolute right-3 md:right-3.5 lg:right-4 top-1/2 -translate-y-1/2 transition-colors"
-                    title="Filter"
+                    title={t('header.filter')}
                   >
                     <Sliders className="w-4 md:w-5 h-4 md:h-5" />
                   </button>
@@ -540,7 +550,7 @@ export function Header({
                           <span 
                             className="text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded-full suggestion-badge"
                           >
-                            {suggestion.type}
+                            {suggestion.type === 'book' ? t('header.suggestionBook') : suggestion.type === 'author' ? t('header.suggestionAuthor') : suggestion.type === 'publisher' ? t('header.suggestionPublisher') : t('header.suggestionCategory')}
                           </span>
                         </button>
                       ))}
@@ -554,13 +564,15 @@ export function Header({
                 className="hidden lg:flex items-center gap-1.5 md:gap-2 lg:gap-3"
                 style={{ paddingRight: 'env(safe-area-inset-right)' }}
               >
+                {/* Region Switcher */}
+                {!hideRegionSelector && <RegionSwitcher />}
                 {/* Theme Toggle */}
                 <ThemeToggle />
                 
                 <button
                   onClick={() => navigate('/dashboard')}
                   className="rounded-lg w-11 h-11 md:w-12 md:h-12 lg:w-14 lg:h-14 transition-all hover:scale-105 flex items-center justify-center bg-foreground hover:opacity-90"
-                  aria-label="Dashboard öffnen"
+                  aria-label={t('header.openDashboard')}
                   title="Dashboard"
                 >
                   <User className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-background" style={{ strokeWidth: 1.5 }} />
@@ -569,7 +581,7 @@ export function Header({
                   <button
                     onClick={() => setIsFavoritesPanelOpen(true)}
                     className="rounded-lg w-11 h-11 md:w-12 md:h-12 lg:w-14 lg:h-14 transition-all hover:scale-105 relative flex items-center justify-center bg-foreground hover:opacity-90"
-                    aria-label={`Favoriten öffnen${favoriteCount > 0 ? `, ${favoriteCount} Bücher gespeichert` : ''}`}
+                    aria-label={`${t('header.openFavorites')}${favoriteCount > 0 ? `, ${t('header.booksSaved', { count: favoriteCount })}` : ''}`}
                     title="Favoriten"
                   >
                     <Heart className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-background" style={{ strokeWidth: 1.5 }} />
@@ -637,7 +649,7 @@ export function Header({
                 </span>
               )}
             </div>
-            <span className="text-[10px] mt-0.5 leading-tight">Favoriten</span>
+            <span className="text-[10px] mt-0.5 leading-tight">{t('mobileNav.favorites')}</span>
           </button>
           <button
             data-testid="mobile-tab-ratings"
@@ -645,7 +657,7 @@ export function Header({
             className={`nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors ${location.pathname.includes('/dashboard/ratings') ? 'nav-mobile-active' : ''}`}
           >
             <Star className="w-5 h-5" strokeWidth={1.5} />
-            <span className="text-[10px] mt-0.5 leading-tight">Bewertungen</span>
+            <span className="text-[10px] mt-0.5 leading-tight">{t('mobileNav.ratings')}</span>
           </button>
           <button
             data-testid="mobile-tab-storefront"
@@ -653,7 +665,7 @@ export function Header({
             className={`nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors ${location.pathname.includes('/dashboard/creator-storefront') ? 'nav-mobile-active' : ''}`}
           >
             <Store className="w-5 h-5" strokeWidth={1.5} />
-            <span className="text-[10px] mt-0.5 leading-tight">Bookstore</span>
+            <span className="text-[10px] mt-0.5 leading-tight">{t('mobileNav.bookstore')}</span>
           </button>
           <button
             data-testid="mobile-tab-notifications"
@@ -661,7 +673,7 @@ export function Header({
             className={`nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors ${location.pathname.includes('/dashboard/notifications') ? 'nav-mobile-active' : ''}`}
           >
             <Bell className="w-5 h-5" strokeWidth={1.5} />
-            <span className="text-[10px] mt-0.5 leading-tight">Neuigkeiten</span>
+            <span className="text-[10px] mt-0.5 leading-tight">{t('mobileNav.news')}</span>
           </button>
           <button
             data-testid="mobile-tab-theme"
@@ -669,7 +681,7 @@ export function Header({
             className="nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors"
           >
             {resolvedTheme === 'dark' ? <Moon className="w-5 h-5" strokeWidth={1.5} /> : <Sun className="w-5 h-5" strokeWidth={1.5} />}
-            <span className="text-[10px] mt-0.5 leading-tight">{resolvedTheme === 'dark' ? 'Dunkel' : 'Hell'}</span>
+            <span className="text-[10px] mt-0.5 leading-tight">{resolvedTheme === 'dark' ? t('mobileNav.darkMode') : t('mobileNav.lightMode')}</span>
           </button>
           <button
             data-testid="mobile-tab-more"
@@ -677,7 +689,7 @@ export function Header({
             className={`nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors ${isDashboard && !location.pathname.includes('/dashboard/ratings') && !location.pathname.includes('/dashboard/creator-storefront') && !location.pathname.includes('/dashboard/notifications') ? 'nav-mobile-active' : ''}`}
           >
             <MoreHorizontal className="w-5 h-5" strokeWidth={1.5} />
-            <span className="text-[10px] mt-0.5 leading-tight">Mehr</span>
+            <span className="text-[10px] mt-0.5 leading-tight">{t('mobileNav.more')}</span>
           </button>
         </div>
       </nav>
@@ -692,7 +704,7 @@ export function Header({
         <div className="fixed inset-0 z-50" onClick={() => setIsFilterModalOpen(false)}>
           <div className="absolute top-20 right-4 md:right-8 bg-white rounded-2xl shadow-2xl max-w-md w-full md:w-80 p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl text-gray-900 font-headline">Filter</h2>
+              <h2 className="text-xl text-gray-900 font-headline">{t('header.filter')}</h2>
               <button
                 onClick={() => setIsFilterModalOpen(false)}
                 className="text-gray-500 hover:text-gray-700 transition-colors"
@@ -705,20 +717,20 @@ export function Header({
             
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm text-gray-700 mb-3">Formate</h3>
+                <h3 className="text-sm text-gray-700 mb-3">{t('header.formats')}</h3>
                 <div className="flex flex-wrap gap-2">
-                  {formats.map(format => (
+                  {formatKeys.map(formatKey => (
                     <button
-                      key={format}
-                      onClick={() => toggleFormat(format)}
+                      key={formatKey}
+                      onClick={() => toggleFormat(formatKey)}
                       className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        selectedFormats.includes(format)
+                        selectedFormats.includes(formatKey)
                           ? 'text-white'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
-                      style={selectedFormats.includes(format) ? { backgroundColor: 'var(--creator-accent)' } : {}}
+                      style={selectedFormats.includes(formatKey) ? { backgroundColor: 'var(--creator-accent)' } : {}}
                     >
-                      {format}
+                      {formatLabels[formatKey]}
                     </button>
                   ))}
                 </div>
@@ -731,7 +743,7 @@ export function Header({
                     className="text-sm transition-colors"
                     style={{ color: 'var(--creator-accent)' }}
                   >
-                    Alle Filter zurücksetzen
+                    {t('common.resetAll')}
                   </button>
                 </div>
               )}
@@ -742,7 +754,7 @@ export function Header({
                   className="w-full text-white py-3 rounded-lg transition-colors hover:opacity-90"
                   style={{ backgroundColor: 'var(--creator-accent)' }}
                 >
-                  Anwenden
+                  {t('common.apply')}
                 </button>
               </div>
             </div>

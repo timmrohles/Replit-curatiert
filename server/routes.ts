@@ -963,6 +963,40 @@ export async function registerRoutes(
   });
 
   // ==================================================================
+  // REGIONS (Public)
+  // ==================================================================
+  app.get('/api/regions', async (req: Request, res: Response) => {
+    try {
+      const activeOnly = req.query.active !== 'false';
+      const query = activeOnly
+        ? `SELECT * FROM regions WHERE is_active = true ORDER BY is_default DESC, locale ASC`
+        : `SELECT * FROM regions ORDER BY is_default DESC, locale ASC`;
+      const result = await queryDB(query);
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Error fetching regions:', error);
+      return res.json({ ok: true, data: [] });
+    }
+  });
+
+  app.get('/api/regions/:locale', async (req: Request, res: Response) => {
+    try {
+      const { locale } = req.params;
+      const result = await queryDB(
+        `SELECT * FROM regions WHERE locale = $1`,
+        [locale.toLowerCase()]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Region not found' });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Error fetching region:', error);
+      return res.status(500).json({ ok: false, error: 'Internal server error' });
+    }
+  });
+
+  // ==================================================================
   // SITE CONFIG - BANNER (Public)
   // ==================================================================
   app.get('/api/site-config/banner', async (req: Request, res: Response) => {
@@ -3448,16 +3482,33 @@ export async function registerRoutes(
     }
   });
 
-  app.get('/api/affiliates/active', async (_req: Request, res: Response) => {
+  app.get('/api/affiliates/active', async (req: Request, res: Response) => {
     try {
+      const region = (req.query.region as string) || 'de-de';
+      let regionConfig: any = null;
+      try {
+        const regionResult = await queryDB(`SELECT affiliate_config FROM regions WHERE locale = $1`, [region]);
+        if (regionResult.rows.length > 0) {
+          regionConfig = regionResult.rows[0].affiliate_config;
+        }
+      } catch { /* use all affiliates if regions table not available */ }
+
       const result = await queryDB(
-        `SELECT id, name, slug, website_url, link_template, icon_url, favicon_url, display_order, show_in_carousel
+        `SELECT id, name, slug, website_url, link_template, favicon_url, display_order, show_in_carousel
          FROM affiliates
          WHERE is_active = true
          ORDER BY display_order ASC, name ASC`,
         []
       );
-      return res.json({ ok: true, data: result.rows });
+
+      let data = result.rows;
+      if (regionConfig?.partners && Array.isArray(regionConfig.partners)) {
+        const allowedSlugs = regionConfig.partners;
+        const filtered = data.filter((a: any) => allowedSlugs.includes(a.slug));
+        if (filtered.length > 0) data = filtered;
+      }
+
+      return res.json({ ok: true, data, region });
     } catch (error) {
       log.error('Active affiliates fetch error:', error);
       return res.json({ ok: true, data: [] });

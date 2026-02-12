@@ -5,8 +5,9 @@ coratiert.de is a curated book recommendation platform designed to offer a perso
 
 ## User Preferences
 - Prioritize global CSS over inline styles for performance
-- German language for UI text
+- German language for UI text (default locale: de-de)
 - DSGVO-compliant: no external font loading, self-hosted only
+- Directory-based internationalization (not subdomains)
 
 ## System Architecture
 The platform is built with a modern web stack, featuring a React frontend and an Express.js backend.
@@ -56,6 +57,46 @@ The platform is built with a modern web stack, featuring a React frontend and an
 -   **Terminology**: UI displays "Bookstore" instead of "Storefront" (internal code still uses storefront naming).
 -   **CSS**: `.nav-mobile` uses CSS variables (`--nav-bg: #2a2a2a`, `--nav-text: #ffffff`). `.favorites-panel-container` has `bottom: 56px` on mobile to keep nav visible.
 -   **Z-index**: Nav at `z-[210]`, FavoritesPanel overlay at `z-[200]`, panel content at `z-[201]`.
+
+## Internationalization (i18n) & Regionalization
+
+### URL Structure
+-   **Pattern**: Directory-based locale prefixes: `/de-de/`, `/de-at/`, `/de-ch/`
+-   **Default**: `de-de` (Deutschland). Root `/` redirects to `/de-de/`.
+-   **Admin Routes**: No locale prefix (`/sys-mgmt-xK9/*` stays unchanged).
+-   **Route Structure**: All public routes are nested under `/:locale` in `App.tsx` via `LocaleLayout`.
+
+### Key Files
+-   `client/src/utils/LocaleContext.tsx`: `LocaleProvider`, `useLocale()` hook, `prefixWithLocale()`, region configs
+-   `client/src/components/layout/LocaleLayout.tsx`: Route wrapper that extracts `:locale` param and provides `LocaleProvider`
+-   `client/src/i18n/i18n.ts`: i18next configuration
+-   `client/src/i18n/locales/de.json`: German translations
+-   `client/src/i18n/locales/en.json`: English translations (template)
+-   `client/src/utils/formatting.ts`: Locale-aware date, number, currency formatting
+-   `client/src/components/layout/RegionSwitcher.tsx`: Region switcher UI component
+-   `client/src/components/common/LocaleLink.tsx`: Locale-aware `<Link>` wrapper
+
+### Navigation
+-   `useSafeNavigate()` (both `utils/routing.tsx` and `hooks/useSafeNavigate.tsx`) auto-prefix paths with current locale
+-   Admin paths (`/sys-mgmt-xK9/*`) are excluded from locale prefixing
+-   `LocaleLink` component wraps `<Link>` with auto locale prefixing for any remaining Link usages
+
+### Database
+-   `regions` table stores per-region configuration (locale, currency, affiliate partners, ONIX feed config, legal page references)
+-   Currently 3 regions: de-de (active, default), de-at, de-ch (both inactive, ready for activation)
+-   API endpoint: `GET /api/regions` (list), `GET /api/regions/:locale` (single)
+-   Affiliates endpoint supports `?region=de-de` parameter for region-specific partner filtering
+
+### Translation Pattern
+-   Use `useTranslation()` hook from `react-i18next` in components
+-   Keys are namespaced: `header.*`, `footer.*`, `mobileNav.*`, `dashboard.*`, `favorites.*`, `common.*`, etc.
+-   Components already converted: Header, Footer, FavoritesPanel, ModularUserDashboard, DashboardLanding
+
+### Adding a New Region
+1. Insert row in `regions` table with locale, affiliate_config, onix_feed_config
+2. Add region config in `LocaleContext.tsx` SUPPORTED_LOCALES
+3. Set `is_active = true` in regions table
+4. Region switcher auto-displays active regions
 
 ## External Dependencies
 -   **Database**: Neon PostgreSQL (connected via `NEON_DATABASE_URL` secret).

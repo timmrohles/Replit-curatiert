@@ -1,5 +1,6 @@
 import { X, Trash2, Heart, Store } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useSafeNavigate } from "../../utils/routing";
 import { useFavorites } from "./FavoritesContext";
 import { FavoriteCard } from "./FavoriteCard";
@@ -10,6 +11,7 @@ interface FavoritesPanelProps {
 }
 
 export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
+  const { t } = useTranslation();
   const { favorites, removeFavorite } = useFavorites();
   const navigate = useSafeNavigate();
   const [activeTab, setActiveTab] = useState<string>("all");
@@ -33,7 +35,7 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
   const handleClearAll = () => {
     if (
       window.confirm(
-        "Möchten Sie wirklich alle Favoriten löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+        t('favorites.confirmClearAll')
       )
     ) {
       favorites.forEach((fav) => removeFavorite(fav.id));
@@ -41,15 +43,15 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
   };
 
   const tabs = [
-    { id: "all", label: "Alle", count: favorites.length },
-    { id: "book", label: "Bücher", count: favorites.filter((f) => f.type === "book").length },
-    { id: "creator", label: "Kurator:innen", count: favorites.filter((f) => f.type === "creator").length },
-    { id: "author", label: "Autoren", count: favorites.filter((f) => f.type === "author").length },
-    { id: "publisher", label: "Verlage", count: favorites.filter((f) => f.type === "publisher").length },
-    { id: "category", label: "Kategorien", count: favorites.filter((f) => f.type === "category").length },
-    { id: "tag", label: "Themen", count: favorites.filter((f) => f.type === "tag").length },
-    { id: "series", label: "Buchreihen", count: favorites.filter((f) => f.type === "series").length },
-    { id: "genre", label: "Genres", count: favorites.filter((f) => f.type === "genre").length },
+    { id: "all", label: t('favorites.tabAll'), count: favorites.length },
+    { id: "book", label: t('favorites.tabBooks'), count: favorites.filter((f) => f.type === "book").length },
+    { id: "creator", label: t('favorites.tabCurators'), count: favorites.filter((f) => f.type === "creator").length },
+    { id: "author", label: t('favorites.tabAuthors'), count: favorites.filter((f) => f.type === "author").length },
+    { id: "publisher", label: t('favorites.tabPublishers'), count: favorites.filter((f) => f.type === "publisher").length },
+    { id: "category", label: t('favorites.tabCategories'), count: favorites.filter((f) => f.type === "category").length },
+    { id: "tag", label: t('favorites.tabTopics'), count: favorites.filter((f) => f.type === "tag").length },
+    { id: "series", label: t('favorites.tabSeries'), count: favorites.filter((f) => f.type === "series").length },
+    { id: "genre", label: t('favorites.tabGenres'), count: favorites.filter((f) => f.type === "genre").length },
   ];
 
   const visibleTabs = tabs.filter((t) => t.id === "all" || t.count > 0);
@@ -83,10 +85,10 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
               <Heart className="w-5 h-5 text-[var(--color-coral-vibrant)] flex-shrink-0" />
               <div className="min-w-0">
                 <h2 className="text-base md:text-lg font-headline text-foreground truncate">
-                  Meine Favoriten
+                  {t('favorites.title')}
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  {favorites.length} {favorites.length === 1 ? "Element" : "Elemente"} gespeichert
+                  {t('favorites.count', { count: favorites.length })}
                 </p>
               </div>
             </div>
@@ -98,7 +100,7 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
                   data-testid="button-clear-all-favorites"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Alle löschen</span>
+                  <span className="hidden sm:inline">{t('favorites.clearAll')}</span>
                 </button>
               )}
               <button
@@ -156,12 +158,12 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
                 </div>
                 <h3 className="text-base font-headline text-foreground mb-2">
                   {activeTab === "all"
-                    ? "Noch keine Favoriten"
+                    ? t('favorites.emptyTitle')
                     : `Keine ${visibleTabs.find((t) => t.id === activeTab)?.label}`}
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
                   {activeTab === "all"
-                    ? "Speichere Bücher, Kurator:innen, Autoren und mehr, um sie hier wiederzufinden."
+                    ? t('favorites.emptyDescription')
                     : `Markiere ${visibleTabs.find((t) => t.id === activeTab)?.label} als Favoriten, um sie hier zu sehen.`}
                 </p>
               </div>
@@ -194,7 +196,7 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
                 data-testid="button-favorites-to-storefront"
               >
                 <Store className="w-4 h-4" />
-                Favoriten für Bookstore übernehmen
+                {t('favorites.toStorefront')}
               </button>
             </div>
           )}

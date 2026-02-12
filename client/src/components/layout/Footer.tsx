@@ -1,11 +1,12 @@
-import React from 'react';
 import { useSafeNavigate } from '../../utils/routing';
 import { CoRatiertLogo } from '../common/CoRatiertLogo';
 import { Text } from '../ui/typography';
 import { Facebook, Twitter, Instagram, Youtube, Settings } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function Footer() {
   const navigate = useSafeNavigate();
+  const { t } = useTranslation();
   
   return (
     <>
@@ -14,8 +15,7 @@ export function Footer() {
         className="py-4 px-6 text-center border-t border-b bg-surface-elevated border-[var(--color-border)]"
       >
         <Text variant="small" className="max-w-4xl mx-auto text-content-muted">
-          <strong>Hinweis zu Affiliate-Links:</strong> Bei Käufen über unsere Links erhalten wir eine Provision. Für dich entstehen keine Mehrkosten. 
-          Die Provision hilft uns, diese Plattform zu betreiben und weiterhin kuratierte Buchempfehlungen anzubieten.
+          <strong>{t('footer.affiliateTitle')}</strong> {t('footer.affiliateText')}
         </Text>
       </div>
 
@@ -37,7 +37,7 @@ export function Footer() {
                       variant="xs"
                       className="origin-left text-[#247ba0] scale-x-93"
                     >
-                      Ausgezeichnete Bücher
+                      {t('footer.tagline')}
                     </Text>
                     {/* Lowercase logo */}
                     <CoRatiertLogo 
@@ -48,32 +48,32 @@ export function Footer() {
                 </button>
               </div>
               <p className="text-sm text-gray-400 mb-6">
-                Kuratierte Buchempfehlungen von deinen Lieblings-Kurator*innen
+                {t('footer.description')}
               </p>
               
               {/* Social Icons */}
               <div className="flex items-center gap-2">
                 <button
                   className="hover:bg-white/10 text-white p-2 rounded-lg transition-colors"
-                  aria-label="Facebook folgen"
+                  aria-label={t('footer.ariaLabel.facebook')}
                 >
                   <Facebook className="w-5 h-5" />
                 </button>
                 <button
                   className="hover:bg-white/10 text-white p-2 rounded-lg transition-colors"
-                  aria-label="Twitter folgen"
+                  aria-label={t('footer.ariaLabel.twitter')}
                 >
                   <Twitter className="w-5 h-5" />
                 </button>
                 <button
                   className="hover:bg-white/10 text-white p-2 rounded-lg transition-colors"
-                  aria-label="Instagram folgen"
+                  aria-label={t('footer.ariaLabel.instagram')}
                 >
                   <Instagram className="w-5 h-5" />
                 </button>
                 <button
                   className="hover:bg-white/10 text-white p-2 rounded-lg transition-colors"
-                  aria-label="YouTube folgen"
+                  aria-label={t('footer.ariaLabel.youtube')}
                 >
                   <Youtube className="w-5 h-5" />
                 </button>
@@ -82,14 +82,14 @@ export function Footer() {
 
             {/* Kuratiert */}
             <div>
-              <h3 className="headline mb-4">Kuratiert</h3>
+              <h3 className="headline mb-4">{t('footer.curated')}</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <button 
                     onClick={() => navigate('/ueber-uns')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Über uns
+                    {t('footer.aboutUs')}
                   </button>
                 </li>
                 <li>
@@ -97,7 +97,7 @@ export function Footer() {
                     onClick={() => navigate('/mission')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Mission
+                    {t('footer.mission')}
                   </button>
                 </li>
                 <li>
@@ -105,7 +105,7 @@ export function Footer() {
                     onClick={() => navigate('/faq')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    FAQ
+                    {t('footer.faq')}
                   </button>
                 </li>
                 <li>
@@ -115,7 +115,7 @@ export function Footer() {
                     title="Admin Login"
                   >
                     <Settings className="w-3.5 h-3.5" />
-                    Admin
+                    {t('footer.admin')}
                   </button>
                 </li>
               </ul>
@@ -123,14 +123,14 @@ export function Footer() {
 
             {/* Entdecken */}
             <div>
-              <h3 className="headline mb-4">Entdecken</h3>
+              <h3 className="headline mb-4">{t('footer.discover')}</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <button 
                     onClick={() => navigate('/curators')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Alle Kurator*innen
+                    {t('footer.allCurators')}
                   </button>
                 </li>
                 <li>
@@ -138,7 +138,7 @@ export function Footer() {
                     onClick={() => navigate('/storefronts')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Alle Kurationen
+                    {t('footer.allCurations')}
                   </button>
                 </li>
                 <li>
@@ -146,7 +146,7 @@ export function Footer() {
                     onClick={() => navigate('/events')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Events
+                    {t('footer.events')}
                   </button>
                 </li>
               </ul>
@@ -154,14 +154,14 @@ export function Footer() {
 
             {/* Alle Seiten - NEU */}
             <div>
-              <h3 className="headline mb-4">Alle Seiten</h3>
+              <h3 className="headline mb-4">{t('footer.allPages')}</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <button 
                     onClick={() => navigate('/')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Startseite
+                    {t('footer.homepage')}
                   </button>
                 </li>
                 <li>
@@ -169,7 +169,7 @@ export function Footer() {
                     onClick={() => navigate('/bücher')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Alle Bücher
+                    {t('footer.allBooks')}
                   </button>
                 </li>
                 <li>
@@ -177,7 +177,7 @@ export function Footer() {
                     onClick={() => navigate('/authors')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Autor*innen
+                    {t('footer.authors')}
                   </button>
                 </li>
                 <li>
@@ -185,7 +185,7 @@ export function Footer() {
                     onClick={() => navigate('/publishers')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Verlage
+                    {t('footer.publishers')}
                   </button>
                 </li>
                 <li>
@@ -193,7 +193,7 @@ export function Footer() {
                     onClick={() => navigate('/series')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Buchreihen
+                    {t('footer.series')}
                   </button>
                 </li>
                 <li>
@@ -201,7 +201,7 @@ export function Footer() {
                     onClick={() => navigate('/curators')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Kurator*innen
+                    {t('footer.curators')}
                   </button>
                 </li>
                 <li>
@@ -209,7 +209,7 @@ export function Footer() {
                     onClick={() => navigate('/storefronts')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Storefronts
+                    {t('footer.storefronts')}
                   </button>
                 </li>
                 <li>
@@ -217,7 +217,7 @@ export function Footer() {
                     onClick={() => navigate('/events')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Events
+                    {t('footer.events')}
                   </button>
                 </li>
                 <li>
@@ -225,7 +225,7 @@ export function Footer() {
                     onClick={() => navigate('/ueber-uns')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Über uns
+                    {t('footer.aboutUs')}
                   </button>
                 </li>
                 <li>
@@ -233,7 +233,7 @@ export function Footer() {
                     onClick={() => navigate('/mission')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Mission
+                    {t('footer.mission')}
                   </button>
                 </li>
                 <li>
@@ -241,7 +241,7 @@ export function Footer() {
                     onClick={() => navigate('/faq')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    FAQ
+                    {t('footer.faq')}
                   </button>
                 </li>
                 <li>
@@ -249,7 +249,7 @@ export function Footer() {
                     onClick={() => navigate('/dashboard')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Dashboard
+                    {t('footer.dashboard')}
                   </button>
                 </li>
                 <li>
@@ -257,7 +257,7 @@ export function Footer() {
                     onClick={() => navigate('/creator-dashboard')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Creator Dashboard
+                    {t('footer.creatorDashboard')}
                   </button>
                 </li>
                 <li>
@@ -281,14 +281,14 @@ export function Footer() {
 
             {/* Rechtliches */}
             <div>
-              <h3 className="headline mb-4">Rechtliches</h3>
+              <h3 className="headline mb-4">{t('footer.legal')}</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <button 
                     onClick={() => navigate('/impressum')} 
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Impressum
+                    {t('footer.impressum')}
                   </button>
                 </li>
                 <li>
@@ -296,7 +296,7 @@ export function Footer() {
                     onClick={() => navigate('/datenschutz')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    Datenschutz
+                    {t('footer.datenschutz')}
                   </button>
                 </li>
               </ul>
@@ -306,7 +306,7 @@ export function Footer() {
           {/* Bottom Bar */}
           <div className="pt-8 border-t border-white/10 text-center text-sm text-gray-400">
             <p className="flex items-center justify-center gap-2 flex-wrap">
-              © 2025 <CoRatiertLogo size="sm" />. Alle Rechte vorbehalten.
+              {t('footer.copyright', { year: new Date().getFullYear() })}
               {' '}
               <span className="hidden md:inline">·</span>
               {' '}
@@ -314,7 +314,7 @@ export function Footer() {
                 onClick={() => navigate('/impressum')} 
                 className="text-gray-400 hover:text-white transition-colors underline"
               >
-                Impressum
+                {t('footer.impressum')}
               </button>
               {' '}
               <span className="hidden md:inline">·</span>
@@ -323,7 +323,7 @@ export function Footer() {
                 onClick={() => navigate('/datenschutz')}
                 className="text-gray-400 hover:text-white transition-colors underline"
               >
-                Datenschutz
+                {t('footer.datenschutz')}
               </button>
             </p>
           </div>

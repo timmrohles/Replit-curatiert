@@ -11,6 +11,7 @@
 
 import { useNavigate, NavigateFunction } from 'react-router-dom';
 import { useCallback } from 'react';
+import { useLocale } from '../LocaleContext';
 
 // ============================================
 // TYPE DEFINITIONS
@@ -166,14 +167,20 @@ export function safeNavigate(
  * const safeNav = useSafeNavigate();
  * safeNav(buildBookUrl(book)); // Will not crash if book.id is missing
  */
+const ADMIN_PREFIX = '/sys-mgmt-xK9';
+
 export function useSafeNavigate() {
   const navigate = useNavigate();
+  const { localePath } = useLocale();
   
   return useCallback(
     (url: string | null | undefined, options?: { replace?: boolean }) => {
+      if (url && !url.startsWith(ADMIN_PREFIX)) {
+        return safeNavigate(navigate, localePath(url), options);
+      }
       return safeNavigate(navigate, url, options);
     },
-    [navigate]
+    [navigate, localePath]
   );
 }
 

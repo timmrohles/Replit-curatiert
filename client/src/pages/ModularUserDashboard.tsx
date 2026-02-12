@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from '../utils/routing';
 import { 
   User, 
@@ -100,6 +101,7 @@ interface NavItem {
 }
 
 export default function ModularUserDashboard() {
+  const { t } = useTranslation();
   const navigate = useSafeNavigate();
   const location = useLocation();
   
@@ -180,43 +182,43 @@ export default function ModularUserDashboard() {
   };
 
   const coreNavItems: NavItem[] = [
-    { id: 'home', label: 'Übersicht', icon: Home, group: 'core' },
-    { id: 'profile', label: 'Meine Daten', icon: User, group: 'core' },
-    { id: 'ratings', label: 'Bewertungen', icon: Star, group: 'core' },
-    { id: 'reviews', label: 'Rezensionen', icon: MessageSquare, group: 'core' },
-    { id: 'follows', label: 'Favoriten', icon: Heart, group: 'core' },
-    { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, group: 'core' },
-    { id: 'privacy', label: 'Datenschutz', icon: Lock, group: 'core' },
-    { id: 'settings', label: 'Einstellungen', icon: Settings, group: 'core' },
+    { id: 'home', label: t('dashboard.overview'), icon: Home, group: 'core' },
+    { id: 'profile', label: t('dashboard.myData'), icon: User, group: 'core' },
+    { id: 'ratings', label: t('dashboard.ratings'), icon: Star, group: 'core' },
+    { id: 'reviews', label: t('dashboard.reviews'), icon: MessageSquare, group: 'core' },
+    { id: 'follows', label: t('dashboard.favoritesList'), icon: Heart, group: 'core' },
+    { id: 'notifications', label: t('dashboard.notifications'), icon: Bell, group: 'core' },
+    { id: 'privacy', label: t('dashboard.privacy'), icon: Lock, group: 'core' },
+    { id: 'settings', label: t('dashboard.settings'), icon: Settings, group: 'core' },
   ];
 
   const creatorNavItems: NavItem[] = [
-    { id: 'creator-storefront', label: 'Bookstore', icon: Store, moduleKey: 'creator_storefront', group: 'creator' },
-    { id: 'creator-curations', label: 'Kurationen', icon: BookOpen, moduleKey: 'creator_curations', group: 'creator' },
-    { id: 'creator-reviews', label: 'Rezensionen', icon: MessageSquare, moduleKey: 'creator_reviews', group: 'creator' },
-    { id: 'creator-topics', label: 'Themen', icon: ListChecks, moduleKey: 'creator_topics', group: 'creator' },
-    { id: 'creator-campaigns', label: 'Kampagnen', icon: Megaphone, moduleKey: 'creator_campaigns', group: 'creator' },
-    { id: 'creator-events', label: 'Events', icon: Calendar, moduleKey: 'creator_events', group: 'creator' },
-    { id: 'creator-analytics', label: 'Statistiken', icon: BarChart3, moduleKey: 'creator_analytics', group: 'creator' },
+    { id: 'creator-storefront', label: t('dashboard.creatorBookstore'), icon: Store, moduleKey: 'creator_storefront', group: 'creator' },
+    { id: 'creator-curations', label: t('dashboard.creatorCurations'), icon: BookOpen, moduleKey: 'creator_curations', group: 'creator' },
+    { id: 'creator-reviews', label: t('dashboard.creatorReviews'), icon: MessageSquare, moduleKey: 'creator_reviews', group: 'creator' },
+    { id: 'creator-topics', label: t('dashboard.creatorTopics'), icon: ListChecks, moduleKey: 'creator_topics', group: 'creator' },
+    { id: 'creator-campaigns', label: t('dashboard.creatorCampaigns'), icon: Megaphone, moduleKey: 'creator_campaigns', group: 'creator' },
+    { id: 'creator-events', label: t('dashboard.creatorEvents'), icon: Calendar, moduleKey: 'creator_events', group: 'creator' },
+    { id: 'creator-analytics', label: t('dashboard.creatorAnalytics'), icon: BarChart3, moduleKey: 'creator_analytics', group: 'creator' },
   ];
 
   const authorNavItems: NavItem[] = [
-    { id: 'author-storefront', label: 'Bookstore', icon: Store, moduleKey: 'author_storefront', group: 'author' },
-    { id: 'author-books', label: 'Bücher', icon: BookOpen, moduleKey: 'author_books', group: 'author' },
-    { id: 'author-community', label: 'Community', icon: Users, moduleKey: 'author_community', group: 'author' },
-    { id: 'author-bookclub', label: 'Buchklub', icon: Gift, moduleKey: 'author_bookclub', group: 'author' },
-    { id: 'author-members', label: 'Mitglieder', icon: Users, moduleKey: 'author_members', group: 'author' },
-    { id: 'author-bonuscontent', label: 'Bonusinhalte', icon: Gift, moduleKey: 'author_bonuscontent', group: 'author' },
-    { id: 'author-newsletter', label: 'Newsletter', icon: Mail, moduleKey: 'author_newsletter', group: 'author' },
-    { id: 'author-events', label: 'Events', icon: Calendar, moduleKey: 'author_events', group: 'author' },
-    { id: 'author-statistics', label: 'Statistiken', icon: BarChart3, moduleKey: 'author_statistics', group: 'author' },
+    { id: 'author-storefront', label: t('dashboard.authorBookstore'), icon: Store, moduleKey: 'author_storefront', group: 'author' },
+    { id: 'author-books', label: t('dashboard.authorBooks'), icon: BookOpen, moduleKey: 'author_books', group: 'author' },
+    { id: 'author-community', label: t('dashboard.authorCommunity'), icon: Users, moduleKey: 'author_community', group: 'author' },
+    { id: 'author-bookclub', label: t('dashboard.authorBookclub'), icon: Gift, moduleKey: 'author_bookclub', group: 'author' },
+    { id: 'author-members', label: t('dashboard.authorMembers'), icon: Users, moduleKey: 'author_members', group: 'author' },
+    { id: 'author-bonuscontent', label: t('dashboard.authorBonuscontent'), icon: Gift, moduleKey: 'author_bonuscontent', group: 'author' },
+    { id: 'author-newsletter', label: t('dashboard.authorNewsletter'), icon: Mail, moduleKey: 'author_newsletter', group: 'author' },
+    { id: 'author-events', label: t('dashboard.authorEvents'), icon: Calendar, moduleKey: 'author_events', group: 'author' },
+    { id: 'author-statistics', label: t('dashboard.authorStatistics'), icon: BarChart3, moduleKey: 'author_statistics', group: 'author' },
   ];
 
   const availableCreatorItems = creatorNavItems.filter(item => !item.moduleKey || hasModule(item.moduleKey));
   const availableAuthorItems = authorNavItems.filter(item => !item.moduleKey || hasModule(item.moduleKey));
   const hasAnyAuthorModule = authorNavItems.some(item => item.moduleKey && hasModule(item.moduleKey));
 
-  const authorRequestItem: NavItem = { id: 'author-request', label: 'Autor werden', icon: PenTool, group: 'author' };
+  const authorRequestItem: NavItem = { id: 'author-request', label: t('dashboard.authorRequest'), icon: PenTool, group: 'author' };
 
   const allNavItems = [...coreNavItems, ...availableCreatorItems, ...(hasAnyAuthorModule ? availableAuthorItems : [authorRequestItem])];
   const currentNavItem = allNavItems.find(item => item.id === activeSection);
@@ -301,18 +303,18 @@ export default function ModularUserDashboard() {
               {userName}
             </div>
             <div className="text-xs" style={{ color: '#9CA3AF' }}>
-              Mitglied seit 2024
+              {t('dashboard.memberSince', { year: 2024 })}
             </div>
           </div>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-1">
-        {renderNavGroup('Mein Bereich', coreNavItems, 'core', '#247ba0')}
-        {availableCreatorItems.length > 0 && renderNavGroup('Creator', availableCreatorItems, 'creator', '#10B981')}
+        {renderNavGroup(t('dashboard.groupMyArea'), coreNavItems, 'core', '#247ba0')}
+        {availableCreatorItems.length > 0 && renderNavGroup(t('dashboard.groupCreator'), availableCreatorItems, 'creator', '#10B981')}
         {hasAnyAuthorModule 
-          ? renderNavGroup('Autor:in', availableAuthorItems, 'author', '#F59E0B')
-          : renderNavGroup('Autor:in', [authorRequestItem], 'author', '#F59E0B')
+          ? renderNavGroup(t('dashboard.groupAuthor'), availableAuthorItems, 'author', '#F59E0B')
+          : renderNavGroup(t('dashboard.groupAuthor'), [authorRequestItem], 'author', '#F59E0B')
         }
       </div>
 
@@ -324,7 +326,7 @@ export default function ModularUserDashboard() {
           style={{ color: '#247ba0' }}
         >
           <Home className="w-[18px] h-[18px]" />
-          <span className="text-sm">Zur Startseite</span>
+          <span className="text-sm">{t('common.backToHome')}</span>
         </button>
         <button
           onClick={handleLogout}
@@ -333,7 +335,7 @@ export default function ModularUserDashboard() {
           style={{ color: '#EF4444' }}
         >
           <LogOut className="w-[18px] h-[18px]" />
-          <span className="text-sm">Abmelden</span>
+          <span className="text-sm">{t('dashboard.logout')}</span>
         </button>
       </div>
     </aside>
@@ -363,7 +365,7 @@ export default function ModularUserDashboard() {
               </div>
               <div>
                 <div className="font-medium text-sm" style={{ color: '#3A3A3A' }}>{userName}</div>
-                <div className="text-xs" style={{ color: '#9CA3AF' }}>Mitglied seit 2024</div>
+                <div className="text-xs" style={{ color: '#9CA3AF' }}>{t('dashboard.memberSince', { year: 2024 })}</div>
               </div>
             </div>
             <button
@@ -379,7 +381,7 @@ export default function ModularUserDashboard() {
           <div className="overflow-y-auto p-3" style={{ maxHeight: 'calc(85vh - 72px)' }}>
             <div className="mb-3">
               <div className="px-3 py-1.5 text-xs uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
-                Mein Bereich
+                {t('dashboard.groupMyArea')}
               </div>
               <div className="space-y-0.5">
                 {coreNavItems.map(item => renderNavButton(item, '#247ba0'))}
@@ -389,7 +391,7 @@ export default function ModularUserDashboard() {
             {availableCreatorItems.length > 0 && (
               <div className="mb-3">
                 <div className="px-3 py-1.5 text-xs uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
-                  Creator
+                  {t('dashboard.groupCreator')}
                 </div>
                 <div className="space-y-0.5">
                   {availableCreatorItems.map(item => renderNavButton(item, '#10B981'))}
@@ -399,7 +401,7 @@ export default function ModularUserDashboard() {
 
             <div className="mb-3">
               <div className="px-3 py-1.5 text-xs uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
-                Autor:in
+                {t('dashboard.groupAuthor')}
               </div>
               <div className="space-y-0.5">
                 {hasAnyAuthorModule
@@ -417,7 +419,7 @@ export default function ModularUserDashboard() {
                 style={{ color: '#247ba0' }}
               >
                 <Home className="w-[18px] h-[18px]" />
-                <span className="text-sm">Zur Startseite</span>
+                <span className="text-sm">{t('common.backToHome')}</span>
               </button>
               <button
                 onClick={handleLogout}
@@ -426,7 +428,7 @@ export default function ModularUserDashboard() {
                 style={{ color: '#EF4444' }}
               >
                 <LogOut className="w-[18px] h-[18px]" />
-                <span className="text-sm">Abmelden</span>
+                <span className="text-sm">{t('dashboard.logout')}</span>
               </button>
             </div>
           </div>
@@ -520,10 +522,10 @@ export default function ModularUserDashboard() {
       return (
         <div className="p-6 rounded-lg border" style={{ backgroundColor: '#FEF2F2', borderColor: '#FCA5A5' }}>
           <h2 className="text-xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#991B1B' }}>
-            Fehler beim Laden
+            {t('dashboard.errorTitle')}
           </h2>
           <p className="text-sm" style={{ color: '#991B1B' }}>
-            Beim Laden dieser Seite ist ein Fehler aufgetreten. Bitte versuche es erneut.
+            {t('dashboard.errorDescription')}
           </p>
           <button 
             onClick={() => navigateToSection('home')}
@@ -531,7 +533,7 @@ export default function ModularUserDashboard() {
             className="mt-4 px-4 py-2 rounded-lg text-sm text-white"
             style={{ backgroundColor: '#247ba0' }}
           >
-            Zurück zur Übersicht
+            {t('dashboard.backToOverview')}
           </button>
         </div>
       );
