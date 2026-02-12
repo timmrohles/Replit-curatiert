@@ -2,6 +2,10 @@ import { useSafeNavigate } from '../utils/routing';
 import { Heart, Users, Lightbulb, Globe, Target, Compass, Sparkles } from 'lucide-react';
 import { Breadcrumb } from '../components/layout/Breadcrumb';
 import { Container, Section, Heading, Text } from '../components/ui';
+import { Header } from '../components/layout/Header';
+import { Footer } from '../components/layout/Footer';
+import { InfoBar } from '../components/layout/InfoBar';
+import { Helmet } from 'react-helmet-async';
 
 export default function Mission() {
   const navigate = useSafeNavigate();
@@ -13,43 +17,45 @@ export default function Mission() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-background)', minHeight: '100vh' }}>
-      {/* Canonical URL - SEO */}
-      <link rel="canonical" href="https://coratiert.de/mission/" />
-      
-      {/* Schema.org JSON-LD */}
-      <script type="application/ld+json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "AboutPage",
-          "@id": "https://coratiert.de/mission/",
-          "name": "Unsere Mission",
-          "description": "Bücher entdecken durch persönliche Empfehlungen statt Algorithmen",
-          "url": "https://coratiert.de/mission/",
-          "mainEntity": {
-            "@type": "Organization",
-            "@id": "https://coratiert.de/#organization",
-            "name": "coratiert.de",
-            "mission": "Bücher entdecken durch persönliche Empfehlungen statt Algorithmen. Wir glauben an die Kraft kuratierter Buchempfehlungen von echten Menschen."
-          }
-        })}
-      </script>
+      <InfoBar />
+      <Header />
 
-      {/* Hero Section - Text linksbündig */}
+      <Helmet>
+        <title>Unsere Mission | coratiert.de</title>
+        <meta name="description" content="Bücher entdecken durch persönliche Empfehlungen statt Algorithmen" />
+        <link rel="canonical" href="https://coratiert.de/mission/" />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "AboutPage",
+            "@id": "https://coratiert.de/mission/",
+            "name": "Unsere Mission",
+            "description": "Bücher entdecken durch persönliche Empfehlungen statt Algorithmen",
+            "url": "https://coratiert.de/mission/",
+            "mainEntity": {
+              "@type": "Organization",
+              "@id": "https://coratiert.de/#organization",
+              "name": "coratiert.de",
+              "mission": "Bücher entdecken durch persönliche Empfehlungen statt Algorithmen. Wir glauben an die Kraft kuratierter Buchempfehlungen von echten Menschen."
+            }
+          })}
+        </script>
+      </Helmet>
+
+      <Breadcrumb items={breadcrumbItems} />
+
       <Section variant="hero" className="bg-hero-blue !py-8">
         <Container>
-          <div className="max-w-2xl">
+          <div className="-mt-4">
             <Heading as="h1" variant="h1" className="mb-4 !text-foreground">
               UNSERE MISSION
             </Heading>
-            <Text variant="large" className="!text-foreground">
+            <Text variant="large" className="max-w-3xl !text-foreground">
               Bücher entdecken durch persönliche Empfehlungen statt Algorithmen
             </Text>
           </div>
         </Container>
       </Section>
-
-      {/* Breadcrumb */}
-      <Breadcrumb items={breadcrumbItems} />
 
       {/* Content Section */}
       <Section variant="default">
@@ -318,6 +324,8 @@ export default function Mission() {
           </div>
         </Container>
       </Section>
+
+      <Footer />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Breadcrumb } from '../components/layout/Breadcrumb';
 import { Container, Section, Heading, Text } from '../components/ui';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
+import { InfoBar } from '../components/layout/InfoBar';
 import { Helmet } from 'react-helmet-async';
 
 interface FAQItemProps {
@@ -206,17 +207,14 @@ export default function FAQ() {
   ];
 
   return (
-    <>
+    <div style={{ backgroundColor: 'var(--color-background)', minHeight: '100vh' }}>
+      <InfoBar />
+      <Header />
+
       <Helmet>
         <title>Häufig gestellte Fragen (FAQ) | coratiert.de</title>
         <meta name="description" content="Hier findest du Antworten auf die wichtigsten Fragen zu coratiert.de - von Kuratoren-Anmeldung bis zu Bestellungen und Datenschutz." />
         <link rel="canonical" href="https://coratiert.de/faq/" />
-      </Helmet>
-
-      <Header />
-
-      <div style={{ backgroundColor: 'var(--color-background)', minHeight: '100vh' }}>
-        {/* Schema.org JSON-LD */}
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
@@ -234,23 +232,22 @@ export default function FAQ() {
             }))
           })}
         </script>
+      </Helmet>
 
-        {/* Hero Section - Text linksbündig */}
-        <Section variant="hero" className="bg-hero-blue !py-8">
-          <Container>
-            <div className="max-w-2xl">
-              <Heading as="h1" variant="h1" className="mb-4 !text-foreground">
-                HÄUFIG GESTELLTE FRAGEN
-              </Heading>
-              <Text variant="large" className="!text-foreground">
-                Hier findest du Antworten auf die wichtigsten Fragen zu coratiert.de
-              </Text>
-            </div>
-          </Container>
-        </Section>
+      <Breadcrumb items={breadcrumbItems} />
 
-        {/* Breadcrumb */}
-        <Breadcrumb items={breadcrumbItems} />
+      <Section variant="hero" className="bg-hero-blue !py-8">
+        <Container>
+          <div className="-mt-4">
+            <Heading as="h1" variant="h1" className="mb-4 !text-foreground">
+              HÄUFIG GESTELLTE FRAGEN
+            </Heading>
+            <Text variant="large" className="max-w-3xl !text-foreground">
+              Hier findest du Antworten auf die wichtigsten Fragen zu coratiert.de
+            </Text>
+          </div>
+        </Container>
+      </Section>
 
         {/* Content Section */}
         <Section variant="default">
@@ -348,9 +345,8 @@ export default function FAQ() {
             </div>
           </Container>
         </Section>
-      </div>
 
       <Footer />
-    </>
+    </div>
   );
 }

@@ -1,5 +1,9 @@
 import { Breadcrumb } from '../components/layout/Breadcrumb';
 import { Container, Section, Heading, Text } from '../components/ui';
+import { Header } from '../components/layout/Header';
+import { Footer } from '../components/layout/Footer';
+import { InfoBar } from '../components/layout/InfoBar';
+import { Helmet } from 'react-helmet-async';
 
 export default function Datenschutz() {
   const breadcrumbItems = [
@@ -9,37 +13,39 @@ export default function Datenschutz() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-background)', minHeight: '100vh' }}>
-      {/* Canonical URL - SEO */}
-      <link rel="canonical" href="https://coratiert.de/datenschutz/" />
-      
-      {/* Schema.org JSON-LD */}
-      <script type="application/ld+json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebPage",
-          "@id": "https://coratiert.de/datenschutz/",
-          "name": "Datenschutzerklärung",
-          "description": "Informationen zur Verarbeitung Ihrer personenbezogenen Daten gemäß DSGVO",
-          "url": "https://coratiert.de/datenschutz/"
-        })}
-      </script>
+      <InfoBar />
+      <Header />
 
-      {/* Hero Section - Text linksbündig */}
+      <Helmet>
+        <title>Datenschutzerklärung | coratiert.de</title>
+        <meta name="description" content="Informationen zur Verarbeitung Ihrer personenbezogenen Daten gemäß DSGVO" />
+        <link rel="canonical" href="https://coratiert.de/datenschutz/" />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "@id": "https://coratiert.de/datenschutz/",
+            "name": "Datenschutzerklärung",
+            "description": "Informationen zur Verarbeitung Ihrer personenbezogenen Daten gemäß DSGVO",
+            "url": "https://coratiert.de/datenschutz/"
+          })}
+        </script>
+      </Helmet>
+
+      <Breadcrumb items={breadcrumbItems} />
+
       <Section variant="hero" className="bg-hero-blue !py-8">
         <Container>
-          <div className="max-w-2xl">
+          <div className="-mt-4">
             <Heading as="h1" variant="h1" className="mb-4 !text-foreground">
               DATENSCHUTZERKLÄRUNG
             </Heading>
-            <Text variant="large" className="!text-foreground">
+            <Text variant="large" className="max-w-3xl !text-foreground">
               Informationen zur Verarbeitung Ihrer personenbezogenen Daten gemäß DSGVO
             </Text>
           </div>
         </Container>
       </Section>
-
-      {/* Breadcrumb */}
-      <Breadcrumb items={breadcrumbItems} />
 
       {/* Content Section */}
       <Section variant="default">
@@ -289,6 +295,8 @@ export default function Datenschutz() {
           </div>
         </Container>
       </Section>
+
+      <Footer />
     </div>
   );
 }

@@ -1,6 +1,10 @@
 import { Heart, Users, BookOpen, Sparkles } from 'lucide-react';
 import { Breadcrumb } from '../components/layout/Breadcrumb';
 import { Container, Section, Heading, Text } from '../components/ui';
+import { Header } from '../components/layout/Header';
+import { Footer } from '../components/layout/Footer';
+import { InfoBar } from '../components/layout/InfoBar';
+import { Helmet } from 'react-helmet-async';
 
 export default function UeberUns() {
   const breadcrumbItems = [
@@ -10,54 +14,56 @@ export default function UeberUns() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-background)', minHeight: '100vh' }}>
-      {/* Canonical URL - SEO */}
-      <link rel="canonical" href="https://coratiert.de/ueber-uns/" />
-      
-      {/* Schema.org JSON-LD */}
-      <script type="application/ld+json">
-        {JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "AboutPage",
-          "@id": "https://coratiert.de/ueber-uns/",
-          "name": "Über uns",
-          "description": "Die Community-Buchhandlung für kuratierte Empfehlungen",
-          "url": "https://coratiert.de/ueber-uns/",
-          "mainEntity": {
-            "@type": "Organization",
-            "@id": "https://coratiert.de/#organization",
-            "name": "coratiert.de",
-            "description": "Community-Plattform für kuratierte Buchempfehlungen",
-            "url": "https://coratiert.de",
-            "founder": {
-              "@type": "Person",
-              "name": "Timm Rohles"
-            },
-            "contactPoint": {
-              "@type": "ContactPoint",
-              "email": "info@coratiert.de",
-              "telephone": "+49-175-2082594",
-              "contactType": "customer service"
-            }
-          }
-        })}
-      </script>
+      <InfoBar />
+      <Header />
 
-      {/* Hero Section - Text linksbündig */}
+      <Helmet>
+        <title>Über uns | coratiert.de</title>
+        <meta name="description" content="Die Community-Buchhandlung für kuratierte Empfehlungen" />
+        <link rel="canonical" href="https://coratiert.de/ueber-uns/" />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "AboutPage",
+            "@id": "https://coratiert.de/ueber-uns/",
+            "name": "Über uns",
+            "description": "Die Community-Buchhandlung für kuratierte Empfehlungen",
+            "url": "https://coratiert.de/ueber-uns/",
+            "mainEntity": {
+              "@type": "Organization",
+              "@id": "https://coratiert.de/#organization",
+              "name": "coratiert.de",
+              "description": "Community-Plattform für kuratierte Buchempfehlungen",
+              "url": "https://coratiert.de",
+              "founder": {
+                "@type": "Person",
+                "name": "Timm Rohles"
+              },
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "email": "info@coratiert.de",
+                "telephone": "+49-175-2082594",
+                "contactType": "customer service"
+              }
+            }
+          })}
+        </script>
+      </Helmet>
+
+      <Breadcrumb items={breadcrumbItems} />
+
       <Section variant="hero" className="bg-hero-blue !py-8">
         <Container>
-          <div className="max-w-2xl">
+          <div className="-mt-4">
             <Heading as="h1" variant="h1" className="mb-4 !text-foreground">
               ÜBER UNS
             </Heading>
-            <Text variant="large" className="!text-foreground">
+            <Text variant="large" className="max-w-3xl !text-foreground">
               Die Community-Buchhandlung für kuratierte Empfehlungen
             </Text>
           </div>
         </Container>
       </Section>
-
-      {/* Breadcrumb */}
-      <Breadcrumb items={breadcrumbItems} />
 
       {/* Content Section - Einfach ohne Hintergrund/Schatten */}
       <Section variant="default">
@@ -331,6 +337,8 @@ export default function UeberUns() {
           </div>
         </Container>
       </Section>
+
+      <Footer />
     </div>
   );
 }
