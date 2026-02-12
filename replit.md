@@ -42,6 +42,15 @@ The platform is built with a modern web stack, featuring a React frontend and an
 -   **Robust Type Safety**: Extensive use of TypeScript with Zod schemas for API validation, ensuring data integrity and reducing runtime errors.
 -   **Admin Panel**: `/sys-mgmt-xK9/content-manager` for managing all content, including login at `/sys-mgmt-xK9/login`.
 
+## Navigation Management
+-   **Admin UI**: `AdminNavigationV2.tsx` - Streamlined admin panel for managing navigation items with location filter tabs (Header/Footer/Alle).
+-   **Location-based filtering**: Navigation items have a `location` field (header/footer/mobile/sidebar). Admin can filter and manage items per location.
+-   **Footer API**: `GET /api/navigation/footer` returns footer navigation groups with children, consumed by the `Footer.tsx` component.
+-   **API-driven Footer**: The Footer component renders dynamically from the `/api/navigation/footer` endpoint with a hardcoded `FALLBACK_FOOTER_GROUPS` constant for graceful degradation.
+-   **Seed endpoint**: `POST /api/navigation/admin/seed-footer` (admin-guarded) initializes footer navigation items in the database.
+-   **Fallback export**: Admin panel includes a "Fallback exportieren" button that copies current navigation JSON to clipboard.
+-   **Database table**: `menu_items` on Neon DB stores all navigation items with columns: id, parent_id, name, label, slug, path, href, icon, kind, location, scope, panel_layout, clickable, level, display_order, visible, status, etc.
+
 ## Author Verification Workflow
 -   **Author Request Flow**: Users can request author access from their dashboard ("Autor werden" in the sidebar). They search for their name in the ONIX book database, select a match (or indicate they're new), and submit a request.
 -   **Admin Approval**: Admins review requests in the Content Manager under "Autoren-Anträge" tab. Approving creates an author profile and enables all author modules (`author_storefront`, `author_books`, etc.) via the `user_modules` table.

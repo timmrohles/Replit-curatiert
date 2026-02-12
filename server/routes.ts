@@ -1422,10 +1422,121 @@ export async function registerRoutes(
     }
   });
 
+  app.post('/api/navigation/admin/seed-footer', async (req: Request, res: Response) => {
+    try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+      const columnsResult = await queryDB(
+        `SELECT column_name FROM information_schema.columns WHERE table_name = 'menu_items'`,
+        []
+      );
+      const existingColumns = columnsResult.rows.map((row: any) => row.column_name);
+
+      if (!existingColumns.includes('location')) {
+        await queryDB(`ALTER TABLE menu_items ADD COLUMN location VARCHAR(50) DEFAULT 'header'`, []);
+      }
+      if (!existingColumns.includes('kind')) {
+        await queryDB(`ALTER TABLE menu_items ADD COLUMN kind VARCHAR(50) DEFAULT 'link'`, []);
+      }
+
+      const existing = await queryDB(
+        `SELECT id FROM menu_items WHERE location = 'footer' AND deleted_at IS NULL LIMIT 1`,
+        []
+      );
+      if (existing.rows.length > 0) {
+        return res.json({ success: true, message: 'Footer items already exist', seeded: false });
+      }
+
+      const groups = [
+        { name: 'Kuratiert', slug: 'footer-kuratiert', order: 1 },
+        { name: 'Entdecken', slug: 'footer-entdecken', order: 2 },
+        { name: 'Alle Seiten', slug: 'footer-alle-seiten', order: 3 },
+      ];
+
+      const groupIds: Record<string, number> = {};
+      for (const g of groups) {
+        const r = await queryDB(
+          `INSERT INTO menu_items (name, label, slug, path, href, kind, location, level, display_order, sort_order, visible, is_active, status, created_at, updated_at)
+           VALUES ($1, $2, $3, '', '', 'group', 'footer', 0, $4, $5, true, true, 'published', NOW(), NOW())
+           RETURNING id`,
+          [g.name, g.name, g.slug, g.order, g.order]
+        );
+        groupIds[g.slug] = r.rows[0].id;
+      }
+
+      const links = [
+        { parent: 'footer-kuratiert', name: 'Über uns', slug: 'footer-ueber-uns', path: '/ueber-uns', order: 1 },
+        { parent: 'footer-kuratiert', name: 'Mission', slug: 'footer-mission', path: '/mission', order: 2 },
+        { parent: 'footer-kuratiert', name: 'FAQ', slug: 'footer-faq', path: '/faq', order: 3 },
+        { parent: 'footer-kuratiert', name: 'Admin', slug: 'footer-admin', path: '/sys-mgmt-xK9/login', order: 4, icon: 'Settings' },
+        { parent: 'footer-entdecken', name: 'Alle Kurator:innen', slug: 'footer-alle-kuratoren', path: '/curators', order: 1 },
+        { parent: 'footer-entdecken', name: 'Alle Kurationen', slug: 'footer-alle-kurationen', path: '/kurationen', order: 2 },
+        { parent: 'footer-entdecken', name: 'Alle Bookstores', slug: 'footer-alle-bookstores', path: '/storefronts', order: 3 },
+        { parent: 'footer-entdecken', name: 'Alle Bücher', slug: 'footer-alle-buecher', path: '/bücher', order: 4 },
+        { parent: 'footer-entdecken', name: 'Alle Autor:innen', slug: 'footer-alle-autoren', path: '/authors', order: 5 },
+        { parent: 'footer-entdecken', name: 'Alle Verlage', slug: 'footer-alle-verlage', path: '/publishers', order: 6 },
+        { parent: 'footer-entdecken', name: 'Alle Events', slug: 'footer-alle-events', path: '/events', order: 7 },
+        { parent: 'footer-alle-seiten', name: 'Startseite', slug: 'footer-startseite', path: '/', order: 1 },
+        { parent: 'footer-alle-seiten', name: 'Serien', slug: 'footer-serien', path: '/series', order: 2 },
+        { parent: 'footer-alle-seiten', name: 'Dashboard', slug: 'footer-dashboard', path: '/dashboard', order: 3 },
+      ];
+
+      for (const link of links) {
+        await queryDB(
+          `INSERT INTO menu_items (parent_id, name, label, slug, path, href, icon, kind, location, level, display_order, sort_order, visible, is_active, status, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 'link', 'footer', 1, $8, $9, true, true, 'published', NOW(), NOW())`,
+          [groupIds[link.parent], link.name, link.name, link.slug, link.path, link.path, (link as any).icon || null, link.order, link.order]
+        );
+      }
+
+      return res.json({ success: true, message: 'Footer navigation seeded', seeded: true, groupIds });
+    } catch (error) {
+      console.error('Footer seed error:', error);
+      return res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/navigation/footer', async (_req: Request, res: Response) => {
+    try {
+      const result = await queryDB(
+        `SELECT id, parent_id, name, slug, path, icon, kind, location, display_order, visible
+         FROM menu_items
+         WHERE deleted_at IS NULL
+           AND location = 'footer'
+           AND visible = true
+           AND status = 'published'
+         ORDER BY level ASC, display_order ASC, id ASC`,
+        []
+      );
+
+      const rows = result.rows;
+      const groups = rows
+        .filter((r: any) => !r.parent_id)
+        .map((group: any) => ({
+          id: group.id,
+          name: group.name,
+          slug: group.slug,
+          children: rows
+            .filter((child: any) => child.parent_id === group.id)
+            .map((child: any) => ({
+              id: child.id,
+              name: child.name,
+              path: child.path || '/',
+              icon: child.icon || null,
+            }))
+        }));
+
+      return res.json({ success: true, data: groups });
+    } catch (error) {
+      console.error('Footer navigation error:', error);
+      return res.json({ success: true, data: [] });
+    }
+  });
+
   app.post('/api/navigation/admin/items', async (req: Request, res: Response) => {
     try {
       const body = req.body;
-      const { id, parent_id, name, path, description, icon, visible, display_order, target_type, target_page_id } = body;
+      const { id, parent_id, name, path, description, icon, visible, display_order, target_type, target_page_id, location, kind, scope, panel_layout, clickable, level } = body;
 
       if (!name || (typeof name === 'string' && name.trim() === '')) {
         return res.status(400).json({ success: false, error: 'Name is required and cannot be empty' });
@@ -1433,6 +1544,12 @@ export async function registerRoutes(
 
       const nameValue = typeof name === 'string' ? name.trim() : String(name);
       const slug = await generateUniqueSlug('menu_items', nameValue, id);
+      const locationValue = location || 'header';
+      const kindValue = kind || 'link';
+      const scopeValue = scope || 'public';
+      const panelLayoutValue = panel_layout || 'none';
+      const clickableValue = clickable !== false;
+      const levelValue = level || 0;
 
       if (id) {
         const result = await queryDB(
@@ -1452,20 +1569,16 @@ export async function registerRoutes(
              sort_order = $12,
              target_type = $13,
              target_page_id = $14,
+             location = $16,
+             kind = $17,
+             scope = $18,
+             panel_layout = $19,
+             clickable = $20,
+             level = $21,
              updated_at = NOW()
            WHERE id = $15
-           RETURNING
-             id, parent_id,
-             COALESCE(name, label) AS name,
-             slug,
-             COALESCE(path, href) AS path,
-             COALESCE(display_order, sort_order) AS display_order,
-             description, icon,
-             COALESCE(visible, is_active) AS visible,
-             target_type,
-             target_page_id,
-             created_at, updated_at`,
-          [parent_id, nameValue, nameValue, slug, path, path, description || '', icon || '', visible !== false, visible !== false, display_order || 0, display_order || 0, target_type || null, target_page_id || null, id]
+           RETURNING *`,
+          [parent_id, nameValue, nameValue, slug, path, path, description || '', icon || '', visible !== false, visible !== false, display_order || 0, display_order || 0, target_type || null, target_page_id || null, id, locationValue, kindValue, scopeValue, panelLayoutValue, clickableValue, levelValue]
         );
 
         if (result.rows.length === 0) {
@@ -1479,21 +1592,12 @@ export async function registerRoutes(
              parent_id, name, label, slug, path, href, description, icon,
              visible, is_active, display_order, sort_order,
              target_type, target_page_id,
+             location, kind, scope, panel_layout, clickable, level,
              created_at, updated_at
            )
-           VALUES ($1, $2::varchar, $3::text, $4, $5::varchar, $6::text, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
-           RETURNING
-             id, parent_id,
-             COALESCE(name, label) AS name,
-             slug,
-             COALESCE(path, href) AS path,
-             COALESCE(display_order, sort_order) AS display_order,
-             description, icon,
-             COALESCE(visible, is_active) AS visible,
-             target_type,
-             target_page_id,
-             created_at, updated_at`,
-          [parent_id, nameValue, nameValue, slug, path, path, description || '', icon || '', visible !== false, visible !== false, display_order || 0, display_order || 0, target_type || null, target_page_id || null]
+           VALUES ($1, $2::varchar, $3::text, $4, $5::varchar, $6::text, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, NOW(), NOW())
+           RETURNING *`,
+          [parent_id, nameValue, nameValue, slug, path, path, description || '', icon || '', visible !== false, visible !== false, display_order || 0, display_order || 0, target_type || null, target_page_id || null, locationValue, kindValue, scopeValue, panelLayoutValue, clickableValue, levelValue]
         );
         return res.json({ success: true, data: result.rows[0] });
       }

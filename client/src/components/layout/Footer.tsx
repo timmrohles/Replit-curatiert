@@ -3,14 +3,84 @@ import { CoRatiertLogo } from '../common/CoRatiertLogo';
 import { Text } from '../ui/typography';
 import { Facebook, Twitter, Instagram, Youtube, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+
+interface FooterLink {
+  id: number;
+  name: string;
+  path: string;
+  icon: string | null;
+}
+
+interface FooterGroup {
+  id: number;
+  name: string;
+  slug: string;
+  children: FooterLink[];
+}
+
+const FALLBACK_FOOTER_GROUPS: FooterGroup[] = [
+  {
+    id: -1,
+    name: 'Kuratiert',
+    slug: 'footer-kuratiert',
+    children: [
+      { id: -10, name: 'Über uns', path: '/ueber-uns', icon: null },
+      { id: -11, name: 'Mission', path: '/mission', icon: null },
+      { id: -12, name: 'FAQ', path: '/faq', icon: null },
+      { id: -13, name: 'Admin', path: '/sys-mgmt-xK9/login', icon: 'Settings' },
+    ]
+  },
+  {
+    id: -2,
+    name: 'Entdecken',
+    slug: 'footer-entdecken',
+    children: [
+      { id: -20, name: 'Alle Kurator:innen', path: '/curators', icon: null },
+      { id: -21, name: 'Alle Kurationen', path: '/kurationen', icon: null },
+      { id: -22, name: 'Alle Bookstores', path: '/storefronts', icon: null },
+      { id: -23, name: 'Alle Bücher', path: '/bücher', icon: null },
+      { id: -24, name: 'Alle Autor:innen', path: '/authors', icon: null },
+      { id: -25, name: 'Alle Verlage', path: '/publishers', icon: null },
+      { id: -26, name: 'Alle Events', path: '/events', icon: null },
+    ]
+  },
+  {
+    id: -3,
+    name: 'Alle Seiten',
+    slug: 'footer-alle-seiten',
+    children: [
+      { id: -30, name: 'Startseite', path: '/', icon: null },
+      { id: -31, name: 'Serien', path: '/series', icon: null },
+      { id: -32, name: 'Dashboard', path: '/dashboard', icon: null },
+    ]
+  }
+];
+
+function useFooterNavigation() {
+  return useQuery<{ success: boolean; data: FooterGroup[] }, Error, FooterGroup[]>({
+    queryKey: ['/api/navigation/footer'],
+    select: (response) => {
+      if (response?.success && Array.isArray(response.data) && response.data.length > 0) {
+        return response.data;
+      }
+      return FALLBACK_FOOTER_GROUPS;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
+    placeholderData: { success: true, data: FALLBACK_FOOTER_GROUPS },
+    throwOnError: false,
+  });
+}
 
 export function Footer() {
   const navigate = useSafeNavigate();
   const { t } = useTranslation();
+  const { data: footerGroups } = useFooterNavigation();
+  const groups = footerGroups || FALLBACK_FOOTER_GROUPS;
   
   return (
     <>
-      {/* Affiliate Disclaimer */}
       <div 
         className="py-4 px-6 text-center border-t border-b bg-surface-elevated border-[var(--color-border)]"
       >
@@ -19,19 +89,17 @@ export function Footer() {
         </Text>
       </div>
 
-      {/* Footer bleibt immer dunkel */}
-      <footer className="bg-[#2a2a2a] text-white py-12">
+      <footer className="bg-[#2a2a2a] text-white py-12" data-testid="footer">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8">
-            {/* Brand */}
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <button 
                   onClick={() => navigate('/')}
-                  className="text-left hover:opacity-80 transition-opacity"
+                  className="text-left opacity-90 hover:opacity-100 transition-opacity"
+                  data-testid="link-footer-home"
                 >
                   <div className="flex flex-col gap-0.5">
-                    {/* Subtitle line above logo - Typography System */}
                     <Text 
                       as="p"
                       variant="xs"
@@ -39,7 +107,6 @@ export function Footer() {
                     >
                       {t('footer.tagline')}
                     </Text>
-                    {/* Lowercase logo */}
                     <CoRatiertLogo 
                       size="lg" 
                       className="text-2xl md:text-[1.7rem] lg:text-[1.9rem]"
@@ -51,180 +118,59 @@ export function Footer() {
                 {t('footer.description')}
               </p>
               
-              {/* Social Icons */}
               <div className="flex items-center gap-2">
                 <button
-                  className="hover:bg-white/10 text-white p-2 rounded-lg transition-colors"
+                  className="text-white/70 hover:opacity-80 p-2 rounded-lg transition-opacity"
                   aria-label={t('footer.ariaLabel.facebook')}
+                  data-testid="link-footer-facebook"
                 >
                   <Facebook className="w-5 h-5" />
                 </button>
                 <button
-                  className="hover:bg-white/10 text-white p-2 rounded-lg transition-colors"
+                  className="text-white/70 hover:opacity-80 p-2 rounded-lg transition-opacity"
                   aria-label={t('footer.ariaLabel.twitter')}
+                  data-testid="link-footer-twitter"
                 >
                   <Twitter className="w-5 h-5" />
                 </button>
                 <button
-                  className="hover:bg-white/10 text-white p-2 rounded-lg transition-colors"
+                  className="text-white/70 hover:opacity-80 p-2 rounded-lg transition-opacity"
                   aria-label={t('footer.ariaLabel.instagram')}
+                  data-testid="link-footer-instagram"
                 >
                   <Instagram className="w-5 h-5" />
                 </button>
                 <button
-                  className="hover:bg-white/10 text-white p-2 rounded-lg transition-colors"
+                  className="text-white/70 hover:opacity-80 p-2 rounded-lg transition-opacity"
                   aria-label={t('footer.ariaLabel.youtube')}
+                  data-testid="link-footer-youtube"
                 >
                   <Youtube className="w-5 h-5" />
                 </button>
               </div>
             </div>
 
-            {/* Kuratiert */}
-            <div>
-              <h3 className="headline mb-4">{t('footer.curated')}</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <button 
-                    onClick={() => navigate('/ueber-uns')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.aboutUs')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/mission')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.mission')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/faq')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.faq')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/sys-mgmt-xK9/login')}
-                    className="text-gray-400 transition-colors hover:text-white text-left flex items-center gap-1.5"
-                    title="Admin Login"
-                  >
-                    <Settings className="w-3.5 h-3.5" />
-                    {t('footer.admin')}
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Entdecken */}
-            <div>
-              <h3 className="headline mb-4">{t('footer.discover')}</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <button 
-                    onClick={() => navigate('/curators')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.allCurators')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/kurationen')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.allCurations')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/storefronts')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.storefronts')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/bücher')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.allBooks')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/authors')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.authors')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/publishers')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.publishers')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/events')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.events')}
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Alle Seiten */}
-            <div>
-              <h3 className="headline mb-4">{t('footer.allPages')}</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <button 
-                    onClick={() => navigate('/')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.homepage')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/series')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.series')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/dashboard')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.dashboard')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/old-homepage')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    Alte Startseite
-                  </button>
-                </li>
-              </ul>
-            </div>
+            {groups.map((group) => (
+              <div key={group.id} data-testid={`footer-group-${group.slug}`}>
+                <h3 className="headline mb-4">{group.name}</h3>
+                <ul className="space-y-2 text-sm">
+                  {group.children.map((link) => (
+                    <li key={link.id}>
+                      <button 
+                        onClick={() => navigate(link.path)}
+                        className="text-gray-400 hover:opacity-80 transition-opacity text-left flex items-center gap-1.5"
+                        data-testid={`link-footer-${link.path.replace(/\//g, '-').replace(/^-/, '')}`}
+                      >
+                        {link.icon === 'Settings' && <Settings className="w-3.5 h-3.5" />}
+                        {link.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
 
-          {/* Bottom Bar */}
           <div className="pt-8 border-t border-white/10 text-center text-sm text-gray-400">
             <p className="flex items-center justify-center gap-2 flex-wrap">
               {t('footer.copyright', { year: new Date().getFullYear() })}
@@ -233,7 +179,8 @@ export function Footer() {
               {' '}
               <button 
                 onClick={() => navigate('/impressum')} 
-                className="text-gray-400 hover:text-white transition-colors underline"
+                className="text-gray-400 hover:opacity-80 transition-opacity underline"
+                data-testid="link-footer-impressum"
               >
                 {t('footer.impressum')}
               </button>
@@ -242,7 +189,8 @@ export function Footer() {
               {' '}
               <button 
                 onClick={() => navigate('/datenschutz')}
-                className="text-gray-400 hover:text-white transition-colors underline"
+                className="text-gray-400 hover:opacity-80 transition-opacity underline"
+                data-testid="link-footer-datenschutz"
               >
                 {t('footer.datenschutz')}
               </button>
