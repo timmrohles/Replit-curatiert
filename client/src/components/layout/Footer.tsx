@@ -206,22 +206,6 @@ export function Footer() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => navigate('/curators')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.curators')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/storefronts')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.storefronts')}
-                  </button>
-                </li>
-                <li>
-                  <button 
                     onClick={() => navigate('/dashboard')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
