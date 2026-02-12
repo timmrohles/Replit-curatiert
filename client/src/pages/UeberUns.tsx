@@ -321,17 +321,17 @@ export default function UeberUns() {
             </Heading>
             <div 
               className="p-8 rounded-2xl"
-              style={{ backgroundColor: 'var(--color-blue)' }}
+              style={{ backgroundColor: 'var(--color-beige)' }}
             >
-              <Text variant="body" className="mb-4 !text-white leading-relaxed">
+              <Text variant="body" className="mb-4 !text-foreground leading-relaxed">
                 coratiert.de wird von <strong>Timm Rohles</strong> betrieben – einem Buchliebhaber, 
                 der an die Kraft persönlicher Empfehlungen glaubt und die digitale Buchbranche 
                 menschlicher gestalten möchte.
               </Text>
-              <Text variant="body" className="!text-white leading-relaxed">
+              <Text variant="body" className="!text-foreground leading-relaxed">
                 Fragen, Anregungen oder Interesse an einer Kurator*innen-Partnerschaft?<br />
-                <strong>E-Mail:</strong> <a href="mailto:info@coratiert.de" className="underline hover:opacity-80">info@coratiert.de</a><br />
-                <strong>Telefon:</strong> <a href="tel:+491752082594" className="underline hover:opacity-80">+49 175 2082594</a>
+                <strong>E-Mail:</strong> <a href="mailto:info@coratiert.de" className="underline hover:opacity-80" style={{ color: 'var(--color-blue)' }}>info@coratiert.de</a><br />
+                <strong>Telefon:</strong> <a href="tel:+491752082594" className="underline hover:opacity-80" style={{ color: 'var(--color-blue)' }}>+49 175 2082594</a>
               </Text>
             </div>
           </div>
