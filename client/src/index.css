@@ -291,6 +291,16 @@
   color: var(--nav-text);
 }
 
+.favorites-panel-container {
+  bottom: 56px;
+}
+
+@media (min-width: 1024px) {
+  .favorites-panel-container {
+    bottom: 0;
+  }
+}
+
 .megamenu-dropdown {
   background-color: var(--megamenu-bg);
   color: var(--megamenu-text);

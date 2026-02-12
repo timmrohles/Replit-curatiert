@@ -356,7 +356,7 @@ export default function ModularUserDashboard() {
 
   const renderMobileBottomNav = () => (
     <nav 
-      className="nav-mobile lg:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
+      className="nav-mobile lg:hidden fixed bottom-0 left-0 right-0 z-[210] safe-area-bottom"
     >
       <div className="flex items-stretch">
         {mobileTabItems.map(item => {
@@ -383,9 +383,9 @@ export default function ModularUserDashboard() {
         })}
         <button
           data-testid="mobile-tab-favorites"
-          onClick={() => setIsFavoritesPanelOpen(true)}
+          onClick={() => setIsFavoritesPanelOpen(!isFavoritesPanelOpen)}
           className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors relative"
-          style={{ color: 'rgba(255,255,255,0.5)' }}
+          style={{ color: isFavoritesPanelOpen ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
         >
           <div className="relative">
             <Heart className="w-5 h-5" />

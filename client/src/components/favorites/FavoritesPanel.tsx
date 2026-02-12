@@ -65,11 +65,12 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
     <>
       <div
         className="fixed inset-0 z-[200] bg-black/60 transition-opacity"
+        style={{ bottom: 0 }}
         onClick={onClose}
         data-testid="overlay-favorites"
       />
 
-      <div className="fixed inset-0 z-[201] flex items-end md:items-center md:justify-center pointer-events-none">
+      <div className="fixed inset-x-0 top-0 z-[201] flex items-end md:items-center md:justify-center pointer-events-none favorites-panel-container">
         <div
           className="pointer-events-auto bg-card text-card-foreground w-full md:max-w-2xl lg:max-w-4xl h-full md:h-auto md:max-h-[85vh] md:rounded-2xl md:mx-4 flex flex-col overflow-hidden md:shadow-2xl border-0 md:border md:border-border"
           onClick={(e) => e.stopPropagation()}

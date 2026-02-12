@@ -622,7 +622,7 @@ export function Header({
       </header>
 
       {/* Mobile Bottom Navigation Bar - hidden on dashboard (dashboard has its own) */}
-      <nav className={`nav-mobile md:hidden fixed bottom-0 left-0 right-0 z-50 ${isDashboard ? 'hidden' : ''}`}>
+      <nav className={`nav-mobile md:hidden fixed bottom-0 left-0 right-0 z-[210] ${isDashboard ? 'hidden' : ''}`}>
         <div className="flex items-center justify-around px-4 py-3">
           <button
             onClick={() => navigate('/dashboard')}
