@@ -135,7 +135,7 @@ export function Footer() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => navigate('/storefronts')}
+                    onClick={() => navigate('/kurationen')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
                     {t('footer.allCurations')}

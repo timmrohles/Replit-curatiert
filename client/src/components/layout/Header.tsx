@@ -380,7 +380,7 @@ export function Header({
       // Kurator*innen-Menü
       'Alle Bücher': 'bücher',
       'Alle Kuratoren': 'curators',
-      'Alle Kurationen': 'storefronts',
+      'Alle Kurationen': 'kurationen',
       'Alle Veranstaltungen': 'events',
       // Literaturpreise
       'Deutscher Buchpreis': 'deutscher-buchpreis',
