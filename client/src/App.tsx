@@ -22,7 +22,7 @@ const PublishersPage = React.lazy(() => import('./components/creator/PublishersP
 const SeriesPage = React.lazy(() => import('./components/book/SeriesPage').then(m => ({ default: m.SeriesPage })));
 const AllCuratorsPage = React.lazy(() => import('./components/creator/AllCuratorsPage').then(m => ({ default: m.AllCuratorsPage })));
 const AllListsPage = React.lazy(() => import('./components/creator/AllListsPage').then(m => ({ default: m.AllListsPage })));
-const AllBookstoresPage = React.lazy(() => import('./components/creator/AllBookstoresPage').then(m => ({ default: m.AllBookstoresPage })));
+
 const EventsPage = React.lazy(() => import('./components/events/EventsPage').then(m => ({ default: m.EventsPage })));
 const ShopPage = React.lazy(() => import('./components/shop/ShopPage').then(m => ({ default: m.ShopPage })));
 const DynamicPage = React.lazy(() => import('./components/cms/DynamicPage').then(m => ({ default: m.DynamicPage })));
@@ -102,7 +102,7 @@ function App() {
                       <Route path="series" element={<S><SeriesPage /></S>} />
 
                       <Route path="curators" element={<S><AllCuratorsPage onGoBack={() => {}} /></S>} />
-                      <Route path="storefronts" element={<S><AllBookstoresPage /></S>} />
+                      <Route path="storefronts" element={<S><AllCuratorsPage onGoBack={() => {}} /></S>} />
                       <Route path="kurationen" element={<S><AllListsPage onGoBack={() => {}} /></S>} />
                       <Route path="creator/:creatorId" element={<S><CreatorStorefront /></S>} />
                       <Route path="storefront/:creatorId" element={<S><CreatorStorefront /></S>} />
