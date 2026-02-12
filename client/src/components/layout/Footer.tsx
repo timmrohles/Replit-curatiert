@@ -22,7 +22,7 @@ export function Footer() {
       {/* Footer bleibt immer dunkel */}
       <footer className="bg-[#2a2a2a] text-white py-12">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-6 md:gap-8 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8">
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2 mb-4">
@@ -143,25 +143,10 @@ export function Footer() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => navigate('/events')}
+                    onClick={() => navigate('/storefronts')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
-                    {t('footer.events')}
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Alle Seiten - NEU */}
-            <div>
-              <h3 className="headline mb-4">{t('footer.allPages')}</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <button 
-                    onClick={() => navigate('/')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.homepage')}
+                    {t('footer.storefronts')}
                   </button>
                 </li>
                 <li>
@@ -190,6 +175,29 @@ export function Footer() {
                 </li>
                 <li>
                   <button 
+                    onClick={() => navigate('/events')}
+                    className="text-gray-400 transition-colors hover:text-white text-left"
+                  >
+                    {t('footer.events')}
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Alle Seiten */}
+            <div>
+              <h3 className="headline mb-4">{t('footer.allPages')}</h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <button 
+                    onClick={() => navigate('/')}
+                    className="text-gray-400 transition-colors hover:text-white text-left"
+                  >
+                    {t('footer.homepage')}
+                  </button>
+                </li>
+                <li>
+                  <button 
                     onClick={() => navigate('/series')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
@@ -214,38 +222,6 @@ export function Footer() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => navigate('/events')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.events')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/ueber-uns')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.aboutUs')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/mission')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.mission')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/faq')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.faq')}
-                  </button>
-                </li>
-                <li>
-                  <button 
                     onClick={() => navigate('/dashboard')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
@@ -254,49 +230,10 @@ export function Footer() {
                 </li>
                 <li>
                   <button 
-                    onClick={() => navigate('/creator-dashboard')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.creatorDashboard')}
-                  </button>
-                </li>
-                <li>
-                  <button 
                     onClick={() => navigate('/old-homepage')}
                     className="text-gray-400 transition-colors hover:text-white text-left"
                   >
                     Alte Startseite
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/backend-health')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    Backend Health
-                  </button>
-                </li>
-              </ul>
-            </div>
-
-            {/* Rechtliches */}
-            <div>
-              <h3 className="headline mb-4">{t('footer.legal')}</h3>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <button 
-                    onClick={() => navigate('/impressum')} 
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.impressum')}
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => navigate('/datenschutz')}
-                    className="text-gray-400 transition-colors hover:text-white text-left"
-                  >
-                    {t('footer.datenschutz')}
                   </button>
                 </li>
               </ul>
