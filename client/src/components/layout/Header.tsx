@@ -623,12 +623,11 @@ export function Header({
 
       {/* Unified Mobile Bottom Navigation Bar - shown on all pages */}
       <nav className="nav-mobile md:hidden fixed bottom-0 left-0 right-0 z-[210] safe-area-bottom">
-        <div className="flex items-stretch">
+        <div className="grid grid-cols-6 w-full">
           <button
             data-testid="mobile-tab-favorites"
             onClick={() => setIsFavoritesPanelOpen(!isFavoritesPanelOpen)}
-            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors relative"
-            style={{ color: isFavoritesPanelOpen ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
+            className={`nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors relative ${isFavoritesPanelOpen ? 'nav-mobile-active' : ''}`}
           >
             <div className="relative">
               <Heart className="w-5 h-5" strokeWidth={1.5} />
@@ -643,8 +642,7 @@ export function Header({
           <button
             data-testid="mobile-tab-ratings"
             onClick={() => navigate('/dashboard/ratings')}
-            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
-            style={{ color: location.pathname.includes('/dashboard/ratings') ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
+            className={`nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors ${location.pathname.includes('/dashboard/ratings') ? 'nav-mobile-active' : ''}`}
           >
             <Star className="w-5 h-5" strokeWidth={1.5} />
             <span className="text-[10px] mt-0.5 leading-tight">Bewertungen</span>
@@ -652,8 +650,7 @@ export function Header({
           <button
             data-testid="mobile-tab-storefront"
             onClick={() => navigate('/dashboard/creator-storefront')}
-            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
-            style={{ color: location.pathname.includes('/dashboard/creator-storefront') ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
+            className={`nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors ${location.pathname.includes('/dashboard/creator-storefront') ? 'nav-mobile-active' : ''}`}
           >
             <Store className="w-5 h-5" strokeWidth={1.5} />
             <span className="text-[10px] mt-0.5 leading-tight">Storefront</span>
@@ -661,8 +658,7 @@ export function Header({
           <button
             data-testid="mobile-tab-notifications"
             onClick={() => navigate('/dashboard/notifications')}
-            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
-            style={{ color: location.pathname.includes('/dashboard/notifications') ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
+            className={`nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors ${location.pathname.includes('/dashboard/notifications') ? 'nav-mobile-active' : ''}`}
           >
             <Bell className="w-5 h-5" strokeWidth={1.5} />
             <span className="text-[10px] mt-0.5 leading-tight">Neuigkeiten</span>
@@ -670,8 +666,7 @@ export function Header({
           <button
             data-testid="mobile-tab-theme"
             onClick={toggleTheme}
-            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
-            style={{ color: 'rgba(255,255,255,0.5)' }}
+            className="nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors"
           >
             {resolvedTheme === 'dark' ? <Moon className="w-5 h-5" strokeWidth={1.5} /> : <Sun className="w-5 h-5" strokeWidth={1.5} />}
             <span className="text-[10px] mt-0.5 leading-tight">{resolvedTheme === 'dark' ? 'Dunkel' : 'Hell'}</span>
@@ -679,8 +674,7 @@ export function Header({
           <button
             data-testid="mobile-tab-more"
             onClick={() => navigate('/dashboard')}
-            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
-            style={{ color: isDashboard && !location.pathname.includes('/dashboard/ratings') && !location.pathname.includes('/dashboard/creator-storefront') && !location.pathname.includes('/dashboard/notifications') ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
+            className={`nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors ${isDashboard && !location.pathname.includes('/dashboard/ratings') && !location.pathname.includes('/dashboard/creator-storefront') && !location.pathname.includes('/dashboard/notifications') ? 'nav-mobile-active' : ''}`}
           >
             <MoreHorizontal className="w-5 h-5" strokeWidth={1.5} />
             <span className="text-[10px] mt-0.5 leading-tight">Mehr</span>

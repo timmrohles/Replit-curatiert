@@ -282,6 +282,15 @@
   border-top: 1px solid var(--nav-border);
 }
 
+.nav-mobile-btn {
+  color: var(--nav-text);
+  opacity: 0.5;
+}
+
+.nav-mobile-btn.nav-mobile-active {
+  opacity: 1;
+}
+
 .nav-mobile-icon {
   color: var(--nav-text);
   filter: var(--header-icon-shadow);
