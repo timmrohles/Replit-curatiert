@@ -146,6 +146,7 @@ interface DraggableItemProps {
   onMoveDown: (itemId: number) => void;
   canMoveUp: boolean;
   canMoveDown: boolean;
+  allItems: NavigationItem[];
   saving: boolean;
 }
 
@@ -166,6 +167,7 @@ function DraggableNavigationItem({
   onMoveDown,
   canMoveUp,
   canMoveDown,
+  allItems,
   saving
 }: DraggableItemProps) {
   const hasChildren = item.children && item.children.length > 0;
@@ -327,6 +329,25 @@ function DraggableNavigationItem({
           }}
         >
           <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <label className="block text-sm font-medium mb-1">Übergeordnetes Element (Parent)</label>
+              <select
+                value={editForm.parent_id ?? ''}
+                onChange={(e) => onUpdateForm({ ...editForm, parent_id: e.target.value ? Number(e.target.value) : null })}
+                className="w-full px-3 py-2 border rounded"
+                style={{ borderColor: '#E5E7EB' }}
+              >
+                <option value="">— Kein übergeordnetes Element (Root) —</option>
+                {allItems
+                  .filter(i => i.id !== item.id && i.parent_id === null)
+                  .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+                  .map(i => (
+                    <option key={i.id} value={i.id}>{i.name || i.slug}</option>
+                  ))
+                }
+              </select>
+            </div>
+
             <div>
               <label className="block text-sm font-medium mb-1">Slug</label>
               <input
@@ -1115,6 +1136,7 @@ export function AdminNavigationV2() {
       clickable: item.clickable,
       visible: item.visible,
       status: item.status,
+      parent_id: item.parent_id,
     });
   };
 
@@ -1495,6 +1517,7 @@ export function AdminNavigationV2() {
           onMoveDown={moveItemDown}
           canMoveUp={siblingIdx > 0}
           canMoveDown={siblingIdx < sortedSiblings.length - 1}
+          allItems={items}
           saving={saving}
         />
 
