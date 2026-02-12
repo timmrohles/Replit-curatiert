@@ -72,7 +72,7 @@ export function DashboardFollows() {
     { id: 'authors' as TabType, label: 'Autor:innen', icon: BookOpen, count: mockFollows.authors.length },
     { id: 'publishers' as TabType, label: 'Verlage', icon: Building2, count: mockFollows.publishers.length },
     { id: 'categories' as TabType, label: 'Kategorien', icon: Tag, count: mockFollows.categories.length },
-    { id: 'tags' as TabType, label: 'Tags', icon: Tag, count: mockFollows.tags.length },
+    { id: 'tags' as TabType, label: 'Themen', icon: Tag, count: mockFollows.tags.length },
     { id: 'curations' as TabType, label: 'Kurationen', icon: List, count: mockFollows.curations.length },
   ];
 

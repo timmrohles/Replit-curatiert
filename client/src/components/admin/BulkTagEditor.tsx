@@ -318,7 +318,7 @@ export function BulkTagEditor() {
                       {book.author}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#999999', marginTop: '0.25rem' }}>
-                      {bookTagCount} {bookTagCount === 1 ? 'Tag' : 'Tags'}
+                      {bookTagCount} {bookTagCount === 1 ? 'Thema' : 'Themen'}
                     </div>
                   </div>
                 </label>
@@ -395,9 +395,9 @@ export function BulkTagEditor() {
             Vorschau
           </div>
           <div style={{ fontSize: '0.875rem', color: '#666666' }}>
-            {operation === 'add' && `${selectedTagsToAdd.length} ${selectedTagsToAdd.length === 1 ? 'Tag' : 'Tags'} zu ${selectedBooks.length} ${selectedBooks.length === 1 ? 'Buch' : 'Büchern'} hinzufügen`}
-            {operation === 'remove' && `${selectedTagsToAdd.length} ${selectedTagsToAdd.length === 1 ? 'Tag' : 'Tags'} von ${selectedBooks.length} ${selectedBooks.length === 1 ? 'Buch' : 'Büchern'} entfernen`}
-            {operation === 'replace' && `Alle Tags von ${selectedBooks.length} ${selectedBooks.length === 1 ? 'Buch' : 'Büchern'} durch ${selectedTagsToAdd.length} ${selectedTagsToAdd.length === 1 ? 'Tag' : 'Tags'} ersetzen`}
+            {operation === 'add' && `${selectedTagsToAdd.length} ${selectedTagsToAdd.length === 1 ? 'Thema' : 'Themen'} zu ${selectedBooks.length} ${selectedBooks.length === 1 ? 'Buch' : 'Büchern'} hinzufügen`}
+            {operation === 'remove' && `${selectedTagsToAdd.length} ${selectedTagsToAdd.length === 1 ? 'Thema' : 'Themen'} von ${selectedBooks.length} ${selectedBooks.length === 1 ? 'Buch' : 'Büchern'} entfernen`}
+            {operation === 'replace' && `Alle Themen von ${selectedBooks.length} ${selectedBooks.length === 1 ? 'Buch' : 'Büchern'} durch ${selectedTagsToAdd.length} ${selectedTagsToAdd.length === 1 ? 'Thema' : 'Themen'} ersetzen`}
           </div>
         </div>
         <button

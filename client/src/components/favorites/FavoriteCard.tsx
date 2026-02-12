@@ -31,7 +31,7 @@ export const FavoriteCard = memo(function FavoriteCard({
       case "category":
         return { bg: "bg-[var(--color-coral-vibrant)]", text: "text-white", label: "Kategorie" };
       case "tag":
-        return { bg: "bg-primary", text: "text-primary-foreground", label: "Tag" };
+        return { bg: "bg-primary", text: "text-primary-foreground", label: "Thema" };
       case "series":
         return { bg: "bg-secondary", text: "text-secondary-foreground", label: "Buchreihe" };
       case "genre":

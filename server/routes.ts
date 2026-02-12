@@ -645,6 +645,230 @@ export async function registerRoutes(
   });
 
   // ==================================================================
+  // TAG IMAGE UPLOAD
+  // ==================================================================
+  const tagImagesDir = path.resolve(process.cwd(), 'client/src/public/uploads/tags');
+  if (!fs.existsSync(tagImagesDir)) {
+    fs.mkdirSync(tagImagesDir, { recursive: true });
+  }
+
+  const tagImageStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, tagImagesDir),
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname) || '.jpg';
+      cb(null, `tag-${uniqueSuffix}${ext}`);
+    }
+  });
+
+  const tagImageUpload = multer({
+    storage: tagImageStorage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'];
+      if (allowed.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Nur JPG, PNG, WebP, GIF und SVG erlaubt'));
+      }
+    }
+  });
+
+  app.post('/api/admin/upload/tag-image', async (req: Request, res: Response) => {
+    try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
+      tagImageUpload.single('image')(req, res, async (err: any) => {
+        if (err) {
+          log.error('Tag image upload error:', err);
+          return res.status(400).json({ ok: false, error: err.message || 'Upload fehlgeschlagen' });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({ ok: false, error: 'Keine Datei hochgeladen' });
+        }
+
+        try {
+          const originalPath = req.file.path;
+          const webpFilename = req.file.filename.replace(/\.[^.]+$/, '.webp');
+          const webpPath = path.join(tagImagesDir, webpFilename);
+
+          await sharp(originalPath)
+            .webp({ quality: 85 })
+            .resize({ width: 800, height: 800, fit: 'cover', withoutEnlargement: true })
+            .toFile(webpPath);
+
+          if (originalPath !== webpPath) {
+            fs.unlinkSync(originalPath);
+          }
+
+          const imageUrl = `/uploads/tags/${webpFilename}`;
+          log.info('Tag image uploaded & converted to WebP:', imageUrl);
+
+          return res.json({ ok: true, data: { url: imageUrl } });
+        } catch (convErr) {
+          log.error('Tag image WebP conversion error:', convErr);
+          const imageUrl = `/uploads/tags/${req.file.filename}`;
+          return res.json({ ok: true, data: { url: imageUrl } });
+        }
+      });
+    } catch (error) {
+      log.error('Tag image upload error:', error);
+      return res.status(500).json({ ok: false, error: 'Upload fehlgeschlagen' });
+    }
+  });
+
+  // ==================================================================
+  // TAG IMAGE URL UPDATE (set image_url directly, e.g. from Unsplash)
+  // ==================================================================
+  app.patch('/api/admin/tags/:id/image', async (req: Request, res: Response) => {
+    try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
+      const id = req.params.id;
+      const { imageUrl } = req.body;
+
+      const result = await queryDB(
+        'UPDATE tags SET image_url = $1, updated_at = NOW() WHERE id = $2 RETURNING *',
+        [imageUrl || null, id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Tag nicht gefunden' });
+      }
+
+      return res.json({ ok: true, data: mapTagRow(result.rows[0]) });
+    } catch (error) {
+      log.error('Tag image update error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // UNSPLASH SEARCH PROXY
+  // ==================================================================
+  app.get('/api/admin/unsplash/search', async (req: Request, res: Response) => {
+    try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
+      const query = req.query.query as string;
+      const page = parseInt(req.query.page as string) || 1;
+      const perPage = parseInt(req.query.per_page as string) || 12;
+
+      if (!query || !query.trim()) {
+        return res.status(400).json({ ok: false, error: 'Suchbegriff erforderlich' });
+      }
+
+      const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+      if (!accessKey) {
+        return res.status(500).json({ ok: false, error: 'Unsplash API-Key nicht konfiguriert' });
+      }
+
+      const unsplashUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}&orientation=squarish`;
+      const unsplashRes = await fetch(unsplashUrl, {
+        headers: { 'Authorization': `Client-ID ${accessKey}` }
+      });
+
+      if (!unsplashRes.ok) {
+        const errText = await unsplashRes.text();
+        log.error('Unsplash API error:', errText);
+        return res.status(unsplashRes.status).json({ ok: false, error: 'Unsplash-Suche fehlgeschlagen' });
+      }
+
+      const data = await unsplashRes.json();
+
+      const results = (data.results || []).map((photo: any) => ({
+        id: photo.id,
+        description: photo.description || photo.alt_description || '',
+        urls: {
+          thumb: photo.urls?.thumb,
+          small: photo.urls?.small,
+          regular: photo.urls?.regular,
+        },
+        user: {
+          name: photo.user?.name || '',
+          link: photo.user?.links?.html || '',
+        },
+        downloadLink: photo.links?.download_location,
+      }));
+
+      return res.json({
+        ok: true,
+        data: results,
+        total: data.total || 0,
+        totalPages: data.total_pages || 0,
+      });
+    } catch (error) {
+      log.error('Unsplash search error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/unsplash/download', async (req: Request, res: Response) => {
+    try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
+      const { downloadLink, photoId } = req.body;
+
+      const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+      if (!accessKey) {
+        return res.status(500).json({ ok: false, error: 'Unsplash API-Key nicht konfiguriert' });
+      }
+
+      if (downloadLink) {
+        fetch(`${downloadLink}?client_id=${accessKey}`).catch(() => {});
+      }
+
+      const photoRes = await fetch(`https://api.unsplash.com/photos/${photoId}`, {
+        headers: { 'Authorization': `Client-ID ${accessKey}` }
+      });
+
+      if (!photoRes.ok) {
+        return res.status(500).json({ ok: false, error: 'Foto konnte nicht abgerufen werden' });
+      }
+
+      const photoData = await photoRes.json();
+      const imageUrlToDownload = photoData.urls?.regular || photoData.urls?.small;
+
+      if (!imageUrlToDownload) {
+        return res.status(500).json({ ok: false, error: 'Keine Bild-URL gefunden' });
+      }
+
+      const imgResponse = await fetch(imageUrlToDownload);
+      const buffer = Buffer.from(await imgResponse.arrayBuffer());
+
+      const webpFilename = `unsplash-${photoId}-${Date.now()}.webp`;
+      const webpPath = path.join(tagImagesDir, webpFilename);
+
+      await sharp(buffer)
+        .webp({ quality: 85 })
+        .resize({ width: 800, height: 800, fit: 'cover', withoutEnlargement: true })
+        .toFile(webpPath);
+
+      const localUrl = `/uploads/tags/${webpFilename}`;
+      log.info('Unsplash image downloaded & converted:', localUrl);
+
+      return res.json({
+        ok: true,
+        data: {
+          url: localUrl,
+          credit: {
+            name: photoData.user?.name || '',
+            link: photoData.user?.links?.html || '',
+          }
+        }
+      });
+    } catch (error) {
+      log.error('Unsplash download error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
   // HEALTH CHECK
   // ==================================================================
   app.get('/api/health', async (_req: Request, res: Response) => {
@@ -2830,6 +3054,7 @@ export async function registerRoutes(
       displayName: row.name || '',
       type: mappedType,
       onixCode: row.onix_code || '',
+      imageUrl: row.image_url || null,
       visibilityLevel: row.scope === 'book' ? 'prominent' : (row.scope || 'filter'),
     };
   }
@@ -2879,6 +3104,7 @@ export async function registerRoutes(
       const onix_scheme_id = body.onix_scheme_id;
       const onix_heading_text = body.onix_heading_text || body.originalName;
       const display_order = body.display_order || body.displayOrder || 0;
+      const image_url = body.imageUrl || body.image_url || null;
 
       if (!name || !name.trim()) {
         return res.status(400).json({ success: false, error: 'Name is required' });
@@ -2891,10 +3117,10 @@ export async function registerRoutes(
           `UPDATE tags
            SET name = $1, slug = $2, color = $3, tag_type = $4, visible = $5,
                scope = $6, source = $7, onix_code = $8, onix_scheme_id = $9,
-               onix_heading_text = $10, display_order = $11, updated_at = NOW()
-           WHERE id = $12
+               onix_heading_text = $10, display_order = $11, image_url = $12, updated_at = NOW()
+           WHERE id = $13
            RETURNING *`,
-          [name.trim(), slug, color || null, tag_type || null, visible !== false, scope || 'book', source || 'manual', onix_code || null, onix_scheme_id || null, onix_heading_text || null, display_order || 0, id]
+          [name.trim(), slug, color || null, tag_type || null, visible !== false, scope || 'book', source || 'manual', onix_code || null, onix_scheme_id || null, onix_heading_text || null, display_order || 0, image_url, id]
         );
 
         if (result.rows.length === 0) {
@@ -2904,10 +3130,10 @@ export async function registerRoutes(
         return res.json({ success: true, data: mapTagRow(result.rows[0]) });
       } else {
         const result = await queryDB(
-          `INSERT INTO tags (name, slug, color, tag_type, visible, scope, source, onix_code, onix_scheme_id, onix_heading_text, display_order, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+          `INSERT INTO tags (name, slug, color, tag_type, visible, scope, source, onix_code, onix_scheme_id, onix_heading_text, display_order, image_url, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
            RETURNING *`,
-          [name.trim(), slug, color || null, tag_type || null, visible !== false, scope || 'book', source || 'manual', onix_code || null, onix_scheme_id || null, onix_heading_text || null, display_order || 0]
+          [name.trim(), slug, color || null, tag_type || null, visible !== false, scope || 'book', source || 'manual', onix_code || null, onix_scheme_id || null, onix_heading_text || null, display_order || 0, image_url]
         );
         return res.json({ success: true, data: mapTagRow(result.rows[0]) });
       }
@@ -2967,7 +3193,20 @@ export async function registerRoutes(
   app.post('/api/tags', async (req: Request, res: Response) => {
     try {
       const body = req.body;
-      const { id, name, description, category } = body;
+      const name = body.displayName || body.name;
+      const id = body.id;
+      const color = body.color;
+      const description = body.description || null;
+      const category = body.category || null;
+      const tag_type = body.tag_type || 'topic';
+      const visible = body.visible;
+      const scope = body.scope || 'book';
+      const source = body.source || 'editorial';
+      const display_order = body.display_order || body.displayOrder || 0;
+      const image_url = body.image_url || body.imageUrl || null;
+      const onix_scheme_id = body.onix_scheme_id || null;
+      const onix_code = body.onix_code || null;
+      const onix_label = body.onix_label || null;
 
       if (!name) {
         return res.status(400).json({ success: false, error: 'Name is required' });
@@ -2978,10 +3217,14 @@ export async function registerRoutes(
       if (id) {
         const result = await queryDB(
           `UPDATE tags
-           SET name = $1, slug = $2, description = $3, category = $4, updated_at = NOW()
-           WHERE id = $5
+           SET name = $1, slug = $2, color = $3, tag_type = $4, visible = $5,
+               scope = $6, source = $7, display_order = $8, image_url = $9,
+               description = $10, category = $11,
+               onix_scheme_id = $12, onix_code = $13, onix_label = $14,
+               updated_at = NOW()
+           WHERE id = $15
            RETURNING *`,
-          [name, slug, description || null, category || null, id]
+          [name.trim(), slug, color || null, tag_type, visible !== false, scope, source, display_order, image_url, description, category, onix_scheme_id, onix_code, onix_label, id]
         );
 
         if (result.rows.length === 0) {
@@ -2991,10 +3234,10 @@ export async function registerRoutes(
         return res.json({ success: true, data: result.rows[0] });
       } else {
         const result = await queryDB(
-          `INSERT INTO tags (name, slug, description, category, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, NOW(), NOW())
+          `INSERT INTO tags (name, slug, color, tag_type, visible, scope, source, display_order, image_url, description, category, onix_scheme_id, onix_code, onix_label, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
            RETURNING *`,
-          [name, slug, description || null, category || null]
+          [name.trim(), slug, color || null, tag_type, visible !== false, scope, source, display_order, image_url, description, category, onix_scheme_id, onix_code, onix_label]
         );
         return res.json({ success: true, data: result.rows[0] });
       }

@@ -33,7 +33,7 @@ export function TagPage() {
 
   // ✅ PARAM GUARD: If tagSlug is invalid, show 404
   if (!tagSlug) {
-    return <NotFoundState resourceType="Tag" message="Der Tag-Slug ist ungültig." />;
+    return <NotFoundState resourceType="Thema" message="Das Thema wurde nicht gefunden." />;
   }
 
   // Load tag and books
@@ -177,7 +177,7 @@ export function TagPage() {
           <Breadcrumb
             items={[
               { label: 'Home', href: '/' },
-              { label: 'Tags', href: '/tags' },
+              { label: 'Themen', href: '/tags' },
               { label: tag.displayName }
             ]}
           />

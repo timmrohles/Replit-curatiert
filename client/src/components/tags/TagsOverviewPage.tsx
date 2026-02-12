@@ -172,7 +172,7 @@ export function TagsOverviewPage() {
                         {getTypeDisplayName(type)}
                       </h2>
                       <p className="text-sm" style={{ color: '#666666' }}>
-                        {typeTags.length} {typeTags.length === 1 ? 'Tag' : 'Tags'}
+                        {typeTags.length} {typeTags.length === 1 ? 'Thema' : 'Themen'}
                       </p>
                     </div>
                     <div className="text-sm" style={{ color: typeColor }}>

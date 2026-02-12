@@ -18,7 +18,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Plus, Save, X, Search, Tag as TagIcon, Archive, RefreshCw, Filter, AlertCircle, Edit2, Lock, Database, EyeOff, Trash2, RotateCcw } from 'lucide-react';
+import { Plus, Save, X, Search, Tag as TagIcon, Archive, RefreshCw, Filter, AlertCircle, Edit2, Lock, Database, EyeOff, Trash2, RotateCcw, Upload, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { getErrorMessage, logError } from '../../utils/errorHelpers';
 import { FEATURE_FLAGS } from '../../utils/featureFlags';
@@ -43,6 +43,7 @@ interface Tag {
   color?: string;
   visible?: boolean;
   display_order?: number;
+  image_url?: string;
   
   // Stats
   current_usage_count?: number;
@@ -104,7 +105,7 @@ export function AdminTagsNeon() {
       setTags(data.data || data.tags || []);
     } catch (error) {
       console.error('Error loading tags:', error);
-      toast.error('Fehler beim Laden der Tags');
+      toast.error('Fehler beim Laden der Themen');
     } finally {
       setLoading(false);
     }
@@ -123,14 +124,14 @@ export function AdminTagsNeon() {
     }
     
     if (!editingTag.tag_type) {
-      toast.error('Tag-Typ ist ein Pflichtfeld');
+      toast.error('Themen-Typ ist ein Pflichtfeld');
       return;
     }
     
     // ONIX Source Policy
     if (editingTag.source === 'onix') {
       if (!editingTag.onix_scheme_id || !editingTag.onix_code) {
-        toast.error('ONIX-Tags benötigen Scheme ID und Code');
+        toast.error('ONIX-Themen benötigen Scheme ID und Code');
         return;
       }
     }
@@ -152,7 +153,7 @@ export function AdminTagsNeon() {
         throw new Error(error.error || 'Fehler beim Speichern');
       }
       
-      toast.success(editingTag.id ? 'Tag aktualisiert' : 'Tag erstellt');
+      toast.success(editingTag.id ? 'Thema aktualisiert' : 'Thema erstellt');
       setEditingTag(null);
       loadTags();
       
@@ -337,10 +338,10 @@ export function AdminTagsNeon() {
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
             <TagIcon className="w-7 h-7" />
-            Tags
+            Themen
           </h2>
           <p className="text-sm mt-1" style={{ color: '#666' }}>
-            {tags.filter(t => !t.deleted_at).length} aktive Tags · 
+            {tags.filter(t => !t.deleted_at).length} aktive Themen · 
             {tags.filter(t => t.deleted_at).length} archiviert
           </p>
         </div>
@@ -357,7 +358,7 @@ export function AdminTagsNeon() {
           style={{ backgroundColor: '#f25f5c', color: 'white' }}
         >
           <Plus className="w-4 h-4" />
-          Neuer Tag
+          Neues Thema
         </button>
       </div>
 
@@ -369,7 +370,7 @@ export function AdminTagsNeon() {
             <div className="text-sm">
               <p className="font-semibold text-gray-900">ONIX-Features deaktiviert</p>
               <p className="text-gray-600 mt-1">
-                ONIX-Felder werden in Phase 2 aktiviert. Aktuell nur redaktionelle Tags möglich.
+                ONIX-Felder werden in Phase 2 aktiviert. Aktuell nur redaktionelle Themen möglich.
               </p>
             </div>
           </div>
@@ -384,7 +385,7 @@ export function AdminTagsNeon() {
             <div className="text-sm">
               <p className="font-semibold text-blue-900">Soft Delete aktiv</p>
               <p className="text-blue-700 mt-1">
-                Tags werden standardmäßig archiviert (nicht gelöscht). Wiederherstellung ist jederzeit möglich.
+                Themen werden standardmäßig archiviert (nicht gelöscht). Wiederherstellung ist jederzeit möglich.
               </p>
             </div>
           </div>
@@ -446,7 +447,7 @@ export function AdminTagsNeon() {
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block w-8 h-8 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
-          <p className="mt-4" style={{ color: '#666' }}>Lade Tags...</p>
+          <p className="mt-4" style={{ color: '#666' }}>Lade Themen...</p>
         </div>
       ) : filteredTags.length > 0 ? (
         <div className="space-y-2">
@@ -548,7 +549,7 @@ export function AdminTagsNeon() {
       ) : (
         <div className="text-center py-12">
           <TagIcon className="w-12 h-12 mx-auto mb-4" style={{ color: '#CCC' }} />
-          <p style={{ color: '#999' }}>Keine Tags gefunden</p>
+          <p style={{ color: '#999' }}>Keine Themen gefunden</p>
         </div>
       )}
 
@@ -558,7 +559,7 @@ export function AdminTagsNeon() {
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b px-6 py-4 flex items-center justify-between">
               <h3 className="text-xl font-bold" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-                {editingTag.id ? 'Tag bearbeiten' : 'Neuer Tag'}
+                {editingTag.id ? 'Thema bearbeiten' : 'Neues Thema'}
               </h3>
               <button onClick={() => setEditingTag(null)} className="p-2 hover:bg-gray-100 rounded">
                 <X className="w-5 h-5" />
@@ -608,7 +609,7 @@ export function AdminTagsNeon() {
               {/* Tag Type */}
               <div>
                 <label className="block text-sm font-semibold mb-2" style={{ color: '#3A3A3A' }}>
-                  Tag-Typ *
+                  Themen-Typ *
                 </label>
                 <select
                   value={editingTag.tag_type || 'topic'}
@@ -728,6 +729,83 @@ export function AdminTagsNeon() {
                 </div>
               </div>
 
+              {/* Image */}
+              <div>
+                <label className="block text-sm font-semibold mb-2" style={{ color: '#3A3A3A' }}>
+                  Bild / Logo
+                </label>
+                {editingTag.image_url ? (
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={editingTag.image_url}
+                      alt={editingTag.name || 'Thema'}
+                      className="w-20 h-20 object-cover rounded-lg border"
+                      style={{ borderColor: '#E0E0E0' }}
+                    />
+                    <div className="flex flex-col gap-2">
+                      <p className="text-xs text-gray-500 truncate max-w-[200px]">{editingTag.image_url}</p>
+                      <button
+                        type="button"
+                        onClick={() => setEditingTag({ ...editingTag, image_url: undefined })}
+                        className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+                      >
+                        <X className="w-3 h-3" /> Bild entfernen
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <label className="flex items-center gap-2 px-3 py-2 border rounded cursor-pointer hover:bg-gray-50 text-sm" style={{ borderColor: '#E0E0E0' }}>
+                      <Upload className="w-4 h-4" style={{ color: '#666' }} />
+                      Datei hochladen
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const formData = new FormData();
+                          formData.append('image', file);
+                          try {
+                            const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '';
+                            const res = await fetch('/api/admin/upload/tag-image', {
+                              method: 'POST',
+                              headers: { 'X-Admin-Token': token || '' },
+                              body: formData,
+                            });
+                            const data = await res.json();
+                            if (data.ok && data.data?.url) {
+                              setEditingTag({ ...editingTag, image_url: data.data.url });
+                              toast.success('Bild hochgeladen');
+                            } else {
+                              toast.error(data.error || 'Upload fehlgeschlagen');
+                            }
+                          } catch {
+                            toast.error('Upload fehlgeschlagen');
+                          }
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = prompt('Bild-URL eingeben (z.B. von Unsplash):');
+                        if (url && url.trim()) {
+                          setEditingTag({ ...editingTag, image_url: url.trim() });
+                        }
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 border rounded hover:bg-gray-50 text-sm"
+                      style={{ borderColor: '#E0E0E0' }}
+                    >
+                      <ExternalLink className="w-4 h-4" style={{ color: '#666' }} />
+                      URL eingeben
+                    </button>
+                  </div>
+                )}
+                <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP oder GIF. Max 5 MB. Wird automatisch in WebP konvertiert.</p>
+              </div>
+
               {/* Visible */}
               <div className="flex items-center gap-2">
                 <input
@@ -768,7 +846,7 @@ export function AdminTagsNeon() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg max-w-md w-full p-6">
             <h3 className="text-xl font-bold mb-4 text-red-600">
-              Tag endgültig löschen?
+              Thema endgültig löschen?
             </h3>
             
             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
@@ -776,7 +854,7 @@ export function AdminTagsNeon() {
                 ⚠️ Dieser Vorgang kann NICHT rückgängig gemacht werden!
               </p>
               <p className="text-sm text-red-700 mt-2">
-                Tag: <strong>{deletingTag.name}</strong><br />
+                Thema: <strong>{deletingTag.name}</strong><br />
                 Verwendungen: <strong>{deletingTag.current_usage_count || 0}</strong>
               </p>
             </div>
@@ -784,8 +862,8 @@ export function AdminTagsNeon() {
             {(deletingTag.current_usage_count || 0) > 0 && (
               <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-4">
                 <p className="text-sm text-amber-800">
-                  💡 Empfehlung: Verwende stattdessen "Archivieren". 
-                  Das Tag bleibt erhalten und kann wiederhergestellt werden.
+                  Empfehlung: Verwende stattdessen "Archivieren". 
+                  Das Thema bleibt erhalten und kann wiederhergestellt werden.
                 </p>
               </div>
             )}
@@ -800,7 +878,7 @@ export function AdminTagsNeon() {
                 rows={3}
                 className="w-full px-3 py-2 border rounded"
                 style={{ borderColor: '#E0E0E0' }}
-                placeholder="Warum muss dieser Tag endgültig gelöscht werden?"
+                placeholder="Warum muss dieses Thema endgültig gelöscht werden?"
               />
             </div>
             

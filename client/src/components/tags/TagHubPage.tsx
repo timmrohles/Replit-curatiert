@@ -92,7 +92,7 @@ export function TagHubPage() {
   }
 
   const getTypeDisplayName = (type?: string): string => {
-    if (!type) return 'Tags';
+    if (!type) return 'Themen';
     
     const map: Record<string, string> = {
       'auszeichnungen': 'Auszeichnungen',
@@ -187,7 +187,7 @@ export function TagHubPage() {
           <Breadcrumb
             items={[
               { label: 'Home', href: '/' },
-              { label: 'Tags', href: '/tags' },
+              { label: 'Themen', href: '/tags' },
               { label: typeDisplayName }
             ]}
           />
@@ -206,7 +206,7 @@ export function TagHubPage() {
                 {typeDisplayName}
               </h1>
               <p className="text-lg" style={{ color: '#666666' }}>
-                {tags.length} {tags.length === 1 ? 'Tag' : 'Tags'} verfügbar
+                {tags.length} {tags.length === 1 ? 'Thema' : 'Themen'} verfügbar
               </p>
             </div>
           </div>

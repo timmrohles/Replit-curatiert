@@ -572,7 +572,7 @@ export function ContentManager() {
               <h1 className="text-4xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
                 Content Manager
               </h1>
-              <p style={{ color: '#3A3A3A' }}>Verwalte Bücher, Kuratoren, Tags und Navigation</p>
+              <p style={{ color: '#3A3A3A' }}>Verwalte Bücher, Kuratoren, Themen und Navigation</p>
             </div>
           </div>
         </div>
@@ -686,7 +686,7 @@ export function ContentManager() {
               fontFamily: 'Fjalla One'
             }}
           >
-            🏷️ Tags
+            🏷️ Themen
           </button>
           <button
             onClick={() => setActiveTab('persons')}
@@ -825,8 +825,8 @@ export function ContentManager() {
 
           {/* Tags Tab */}
           {activeTab === 'tags' && (
-            <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Tags...</div>}>
-              <TabErrorBoundary tabName="Tags">
+            <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Themen...</div>}>
+              <TabErrorBoundary tabName="Themen">
                 <AdminTagsNeon />
               </TabErrorBoundary>
             </Suspense>

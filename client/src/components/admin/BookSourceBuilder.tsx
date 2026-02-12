@@ -603,9 +603,9 @@ function IncludeSourcesEditor({ config, onChange }: { config: BookSourceConfig; 
         />
       </div>
 
-      {/* Tags */}
+      {/* Themen */}
       <div>
-        <label className="text-sm font-medium mb-2 block">Tags</label>
+        <label className="text-sm font-medium mb-2 block">Themen</label>
         <MultiSelectTags
           selectedIds={config.query?.include?.tagIds || []}
           onChange={(ids) => onChange({
@@ -699,9 +699,9 @@ function ExcludeSourcesEditor({ config, onChange }: { config: BookSourceConfig; 
         />
       </div>
 
-      {/* Tags */}
+      {/* Themen */}
       <div>
-        <label className="text-sm font-medium mb-2 block">Tags</label>
+        <label className="text-sm font-medium mb-2 block">Themen</label>
         <MultiSelectTags
           selectedIds={config.query?.exclude?.tagIds || []}
           onChange={(ids) => onChange({

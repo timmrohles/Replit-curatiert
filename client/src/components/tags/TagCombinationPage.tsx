@@ -127,7 +127,7 @@ export function TagCombinationPage() {
           <Breadcrumb
             items={[
               { label: 'Home', href: '/' },
-              { label: 'Tags', href: '/tags' },
+              { label: 'Themen', href: '/tags' },
               { label: 'Kombination' }
             ]}
           />

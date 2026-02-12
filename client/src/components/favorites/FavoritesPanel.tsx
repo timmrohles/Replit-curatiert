@@ -45,7 +45,7 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
     { id: "author", label: "Autoren", count: favorites.filter((f) => f.type === "author").length },
     { id: "publisher", label: "Verlage", count: favorites.filter((f) => f.type === "publisher").length },
     { id: "category", label: "Kategorien", count: favorites.filter((f) => f.type === "category").length },
-    { id: "tag", label: "Tags", count: favorites.filter((f) => f.type === "tag").length },
+    { id: "tag", label: "Themen", count: favorites.filter((f) => f.type === "tag").length },
     { id: "series", label: "Buchreihen", count: favorites.filter((f) => f.type === "series").length },
     { id: "genre", label: "Genres", count: favorites.filter((f) => f.type === "genre").length },
   ];
