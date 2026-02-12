@@ -24,8 +24,13 @@ import {
   Mail,
   MoreHorizontal,
   Settings,
-  PenTool
+  PenTool,
+  Sun,
+  Moon
 } from 'lucide-react';
+import { useFavorites } from '../components/favorites/FavoritesContext';
+import { FavoritesPanel } from '../components/favorites/FavoritesPanel';
+import { useTheme } from '../utils/ThemeContext';
 import { DashboardHome } from './dashboard/DashboardHome';
 import { DashboardProfile } from './dashboard/Profile';
 import { DashboardRatings } from './dashboard/Ratings';
@@ -107,6 +112,9 @@ export default function ModularUserDashboard() {
   const userId = 'demo-user-123';
   const userName = 'Max Mustermann';
   
+  const { favoriteCount } = useFavorites();
+  const { resolvedTheme, toggleTheme } = useTheme();
+  const [isFavoritesPanelOpen, setIsFavoritesPanelOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<DashboardSection>('home');
   const [userModules, setUserModules] = useState<UserModule[]>([]);
   const [loadingModules, setLoadingModules] = useState(true);
@@ -348,8 +356,7 @@ export default function ModularUserDashboard() {
 
   const renderMobileBottomNav = () => (
     <nav 
-      className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t safe-area-bottom"
-      style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}
+      className="nav-mobile lg:hidden fixed bottom-0 left-0 right-0 z-50 safe-area-bottom"
     >
       <div className="flex items-stretch">
         {mobileTabItems.map(item => {
@@ -360,13 +367,13 @@ export default function ModularUserDashboard() {
               key={item.id}
               data-testid={`mobile-tab-${item.id}`}
               onClick={() => navigateToSection(item.id)}
-              className="flex-1 flex flex-col items-center justify-center py-2 px-1 transition-colors relative"
-              style={{ color: isActive ? '#247ba0' : '#9CA3AF' }}
+              className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors relative"
+              style={{ color: isActive ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
             >
               {isActive && (
                 <div 
                   className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full"
-                  style={{ backgroundColor: '#247ba0' }}
+                  style={{ backgroundColor: '#ffffff' }}
                 />
               )}
               <Icon className="w-5 h-5" />
@@ -375,10 +382,35 @@ export default function ModularUserDashboard() {
           );
         })}
         <button
+          data-testid="mobile-tab-favorites"
+          onClick={() => setIsFavoritesPanelOpen(true)}
+          className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors relative"
+          style={{ color: 'rgba(255,255,255,0.5)' }}
+        >
+          <div className="relative">
+            <Heart className="w-5 h-5" />
+            {favoriteCount > 0 && (
+              <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-red-500 text-white rounded-full text-[9px] flex items-center justify-center font-bold">
+                {favoriteCount}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] mt-0.5 leading-tight">Favoriten</span>
+        </button>
+        <button
+          data-testid="mobile-tab-theme"
+          onClick={toggleTheme}
+          className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
+          style={{ color: 'rgba(255,255,255,0.5)' }}
+        >
+          {resolvedTheme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+          <span className="text-[10px] mt-0.5 leading-tight">{resolvedTheme === 'dark' ? 'Dunkel' : 'Hell'}</span>
+        </button>
+        <button
           data-testid="mobile-tab-more"
           onClick={() => setMobileDrawerOpen(true)}
-          className="flex-1 flex flex-col items-center justify-center py-2 px-1 transition-colors"
-          style={{ color: mobileDrawerOpen ? '#247ba0' : '#9CA3AF' }}
+          className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
+          style={{ color: mobileDrawerOpen ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
         >
           <MoreHorizontal className="w-5 h-5" />
           <span className="text-[10px] mt-0.5 leading-tight">Mehr</span>
@@ -621,6 +653,11 @@ export default function ModularUserDashboard() {
 
       {renderMobileBottomNav()}
       {renderMobileDrawer()}
+
+      <FavoritesPanel
+        isOpen={isFavoritesPanelOpen}
+        onClose={() => setIsFavoritesPanelOpen(false)}
+      />
     </div>
   );
 }

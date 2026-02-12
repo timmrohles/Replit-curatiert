@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import { useSafeNavigate } from "../../utils/routing";
 import { Input } from "../ui/input";
 import { MegaMenu } from "./MegaMenu";
@@ -238,6 +239,8 @@ export function Header({
   textColor,
 }: HeaderProps) {
   const navigate = useSafeNavigate();
+  const location = useLocation();
+  const isDashboard = location.pathname.startsWith('/dashboard');
   const { favoriteCount } = useFavorites();
   const { resolvedTheme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -618,8 +621,8 @@ export function Header({
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation Bar */}
-      <nav className="nav-mobile md:hidden fixed bottom-0 left-0 right-0 z-50">
+      {/* Mobile Bottom Navigation Bar - hidden on dashboard (dashboard has its own) */}
+      <nav className={`nav-mobile md:hidden fixed bottom-0 left-0 right-0 z-50 ${isDashboard ? 'hidden' : ''}`}>
         <div className="flex items-center justify-around px-4 py-3">
           <button
             onClick={() => navigate('/dashboard')}
