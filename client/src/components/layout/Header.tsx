@@ -584,7 +584,7 @@ export function Header({
           </div>
 
           {/* Navigation - Horizontal Scroll on Mobile & Tablet */}
-          <nav className="nav-bar py-1.5 md:py-2 overflow-x-auto lg:overflow-visible scrollbar-hide -mx-3 px-3 lg:mx-0 lg:px-0 relative translate-y-3 md:translate-y-4 lg:translate-y-6 rounded-none md:rounded-2xl shadow-2xl z-[100]">
+          <nav className="nav-bar py-2.5 md:py-2 overflow-x-auto lg:overflow-visible scrollbar-hide -mx-3 px-3 lg:mx-0 lg:px-0 relative translate-y-3 md:translate-y-4 lg:translate-y-6 rounded-none md:rounded-2xl shadow-2xl z-[100]">
             <div className="flex items-center justify-start lg:justify-center gap-0 min-w-max lg:min-w-0">
               {menuItems.map((menuItem) => {
                 if (!menuItem.subcategories || menuItem.subcategories.length === 0) {
@@ -592,7 +592,7 @@ export function Header({
                     <button
                       key={menuItem.id}
                       onClick={() => navigate(menuItem.path)}
-                      className="nav-item px-3 md:px-4 lg:px-5 py-1.5 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
+                      className="nav-item px-3 md:px-4 lg:px-5 py-2 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
                     >
                       {menuItem.name}
                     </button>
