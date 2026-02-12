@@ -38,10 +38,10 @@ export default function Mission() {
       <Section variant="hero" className="bg-hero-blue !py-8">
         <Container>
           <div className="max-w-2xl">
-            <Heading as="h1" variant="h1" className="mb-4 !text-white">
+            <Heading as="h1" variant="h1" className="mb-4 !text-foreground">
               UNSERE MISSION
             </Heading>
-            <Text variant="large" className="!text-white">
+            <Text variant="large" className="!text-foreground">
               Bücher entdecken durch persönliche Empfehlungen statt Algorithmen
             </Text>
           </div>

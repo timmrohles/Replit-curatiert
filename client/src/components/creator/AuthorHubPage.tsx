@@ -544,7 +544,7 @@ export function AuthorHubPage() {
         <Container>
           <div className="-mt-4">
             {/* Autoren-Titel (H1) */}
-            <Heading as="h1" variant="h1" className="mb-4 !text-white">
+            <Heading as="h1" variant="h1" className="mb-4 !text-foreground">
               {author.name}
             </Heading>
             
@@ -555,19 +555,19 @@ export function AuthorHubPage() {
                   <Text 
                     as="span"
                     variant="large" 
-                    className="!text-white"
+                    className="!text-foreground"
                   >
                     {author.professionalPosition}
                   </Text>
                 )}
                 {author.professionalPosition && author.affiliation && (
-                  <Text as="span" variant="large" className="!text-white">·</Text>
+                  <Text as="span" variant="large" className="!text-foreground">·</Text>
                 )}
                 {author.affiliation && (
                   <Text 
                     as="span"
                     variant="large" 
-                    className="!text-white"
+                    className="!text-foreground"
                   >
                     {author.affiliation}
                   </Text>

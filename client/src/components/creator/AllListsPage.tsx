@@ -516,12 +516,12 @@ export function AllListsPage({ onGoBack }: AllListsPageProps) {
             <Heading 
               as="h1" 
               variant="h1" 
-              className="mb-4 !text-white"
+              className="mb-4 !text-foreground"
             >
               Alle Kurationen
             </Heading>
             
-            <Text variant="large" className="max-w-3xl !text-white">
+            <Text variant="large" className="max-w-3xl !text-foreground">
               Entdecke kuratierte Buchsammlungen von Expert*innen zu allen Themen. Von Klassikern bis zu aktuellen Geheimtipps – handverlesen und mit Herz ausgewählt.
             </Text>
           </div>

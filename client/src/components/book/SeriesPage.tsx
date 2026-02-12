@@ -522,14 +522,14 @@ export function SeriesPage() {
         <Container>
           <div className="-mt-4">
             {/* Reihen-Titel (H1) */}
-            <Heading as="h1" variant="h1" className="mb-4 !text-white">
+            <Heading as="h1" variant="h1" className="mb-4 !text-foreground">
               {series.name} von {series.author.name}
             </Heading>
             
             {/* Reihen-Info: Beschreibung (HTML-Support) */}
             {series.descriptionHTML ? (
               <div 
-                className="max-w-3xl text-white"
+                className="max-w-3xl text-foreground"
                 style={{ 
                   fontSize: 'var(--fluid-body)',
                   lineHeight: '1.6' 
@@ -537,7 +537,7 @@ export function SeriesPage() {
                 dangerouslySetInnerHTML={{ __html: series.descriptionHTML }}
               />
             ) : series.description && (
-              <Text variant="large" className="max-w-3xl !text-white">
+              <Text variant="large" className="max-w-3xl !text-foreground">
                 {series.description}
               </Text>
             )}

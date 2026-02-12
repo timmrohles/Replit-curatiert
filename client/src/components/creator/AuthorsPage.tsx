@@ -230,12 +230,12 @@ export function AuthorsPage() {
             <Heading 
               as="h1" 
               variant="h1" 
-              className="mb-4 !text-white"
+              className="mb-4 !text-foreground"
             >
               Autoren entdecken
             </Heading>
             
-            <Text variant="large" className="max-w-3xl !text-white">
+            <Text variant="large" className="max-w-3xl !text-foreground">
               Entdecke die Autoren hinter den Geschichten und folge deinen Lieblingsschriftstellern
             </Text>
           </div>

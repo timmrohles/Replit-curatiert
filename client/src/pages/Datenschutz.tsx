@@ -28,10 +28,10 @@ export default function Datenschutz() {
       <Section variant="hero" className="bg-hero-blue !py-8">
         <Container>
           <div className="max-w-2xl">
-            <Heading as="h1" variant="h1" className="mb-4 !text-white">
+            <Heading as="h1" variant="h1" className="mb-4 !text-foreground">
               DATENSCHUTZERKLÄRUNG
             </Heading>
-            <Text variant="large" className="!text-white">
+            <Text variant="large" className="!text-foreground">
               Informationen zur Verarbeitung Ihrer personenbezogenen Daten gemäß DSGVO
             </Text>
           </div>
