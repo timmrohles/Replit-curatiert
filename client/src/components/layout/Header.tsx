@@ -7,7 +7,7 @@ import { FavoritesPanel } from "../favorites/FavoritesPanel";
 import { useFavorites } from "../favorites/FavoritesContext";
 import { ThemeToggle } from "../common/ThemeToggle";
 import { useTheme } from "../../utils/ThemeContext";
-import { Moon, Sun, Search, Heart, Menu, X, ChevronDown, ShoppingCart, User, Sliders } from "lucide-react";
+import { Moon, Sun, Search, Heart, Menu, X, ChevronDown, ShoppingCart, User, Sliders, Star, Store, Bell, MoreHorizontal } from "lucide-react";
 import { useNavigationV2, FALLBACK_NAVIGATION_V2 } from "../../utils/useNavigation"; // ✅ Clean import (no V2 suffix)
 import { logger } from "../../utils/logger"; // ✅ Add logger for debugging
 
@@ -621,42 +621,69 @@ export function Header({
         </div>
       </header>
 
-      {/* Mobile Bottom Navigation Bar - hidden on dashboard (dashboard has its own) */}
-      <nav className={`nav-mobile md:hidden fixed bottom-0 left-0 right-0 z-[210] ${isDashboard ? 'hidden' : ''}`}>
-        <div className="flex items-center justify-around px-4 py-3">
+      {/* Unified Mobile Bottom Navigation Bar - shown on all pages */}
+      <nav className="nav-mobile md:hidden fixed bottom-0 left-0 right-0 z-[210] safe-area-bottom">
+        <div className="flex items-stretch">
           <button
-            onClick={() => navigate('/dashboard')}
-            className="rounded-xl w-14 h-14 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105"
-            title="Dashboard"
-          >
-            <User className="nav-mobile-icon w-6 h-6" strokeWidth={1.5} />
-            <span className="nav-mobile-label text-[10px]">Profil</span>
-          </button>
-          <button
-            onClick={() => setIsFavoritesPanelOpen(true)}
-            className="rounded-xl relative w-14 h-14 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105"
+            data-testid="mobile-tab-favorites"
+            onClick={() => setIsFavoritesPanelOpen(!isFavoritesPanelOpen)}
+            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors relative"
+            style={{ color: isFavoritesPanelOpen ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
           >
             <div className="relative">
-              <Heart className="nav-mobile-icon w-6 h-6" strokeWidth={1.5} />
+              <Heart className="w-5 h-5" strokeWidth={1.5} />
               {favoriteCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-[11px] flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-2 w-4 h-4 bg-red-500 text-white rounded-full text-[9px] flex items-center justify-center font-bold">
                   {favoriteCount}
                 </span>
               )}
             </div>
-            <span className="nav-mobile-label text-[10px]">Favoriten</span>
+            <span className="text-[10px] mt-0.5 leading-tight">Favoriten</span>
           </button>
           <button
-            onClick={toggleTheme}
-            className="rounded-xl w-14 h-14 flex flex-col items-center justify-center gap-1 transition-all hover:scale-105"
-            aria-label={`Theme: ${resolvedTheme === 'dark' ? 'Dark' : 'Light'}. Klicke um zu wechseln.`}
-            title={`Aktuell: ${resolvedTheme === 'dark' ? 'Dark' : 'Light'} Mode`}
+            data-testid="mobile-tab-ratings"
+            onClick={() => navigate('/dashboard/ratings')}
+            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
+            style={{ color: location.pathname.includes('/dashboard/ratings') ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
           >
-            {resolvedTheme === 'dark' 
-              ? <Moon className="nav-mobile-icon w-6 h-6" strokeWidth={1.5} /> 
-              : <Sun className="nav-mobile-icon w-6 h-6" strokeWidth={1.5} />
-            }
-            <span className="nav-mobile-label text-[10px]">{resolvedTheme === 'dark' ? 'Dunkel' : 'Hell'}</span>
+            <Star className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px] mt-0.5 leading-tight">Bewertungen</span>
+          </button>
+          <button
+            data-testid="mobile-tab-storefront"
+            onClick={() => navigate('/dashboard/creator-storefront')}
+            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
+            style={{ color: location.pathname.includes('/dashboard/creator-storefront') ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
+          >
+            <Store className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px] mt-0.5 leading-tight">Storefront</span>
+          </button>
+          <button
+            data-testid="mobile-tab-notifications"
+            onClick={() => navigate('/dashboard/notifications')}
+            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
+            style={{ color: location.pathname.includes('/dashboard/notifications') ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
+          >
+            <Bell className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px] mt-0.5 leading-tight">Neuigkeiten</span>
+          </button>
+          <button
+            data-testid="mobile-tab-theme"
+            onClick={toggleTheme}
+            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
+            style={{ color: 'rgba(255,255,255,0.5)' }}
+          >
+            {resolvedTheme === 'dark' ? <Moon className="w-5 h-5" strokeWidth={1.5} /> : <Sun className="w-5 h-5" strokeWidth={1.5} />}
+            <span className="text-[10px] mt-0.5 leading-tight">{resolvedTheme === 'dark' ? 'Dunkel' : 'Hell'}</span>
+          </button>
+          <button
+            data-testid="mobile-tab-more"
+            onClick={() => navigate('/dashboard')}
+            className="flex-1 flex flex-col items-center justify-center py-2.5 px-1 transition-colors"
+            style={{ color: isDashboard && !location.pathname.includes('/dashboard/ratings') && !location.pathname.includes('/dashboard/creator-storefront') && !location.pathname.includes('/dashboard/notifications') ? '#ffffff' : 'rgba(255,255,255,0.5)' }}
+          >
+            <MoreHorizontal className="w-5 h-5" strokeWidth={1.5} />
+            <span className="text-[10px] mt-0.5 leading-tight">Mehr</span>
           </button>
         </div>
       </nav>

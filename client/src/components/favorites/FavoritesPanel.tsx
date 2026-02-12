@@ -1,5 +1,6 @@
-import { X, Trash2, Heart } from "lucide-react";
+import { X, Trash2, Heart, Store } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
+import { useSafeNavigate } from "../../utils/routing";
 import { useFavorites } from "./FavoritesContext";
 import { FavoriteCard } from "./FavoriteCard";
 
@@ -10,6 +11,7 @@ interface FavoritesPanelProps {
 
 export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
   const { favorites, removeFavorite } = useFavorites();
+  const navigate = useSafeNavigate();
   const [activeTab, setActiveTab] = useState<string>("all");
   const tabsRef = useRef<HTMLDivElement>(null);
 
@@ -179,6 +181,23 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
               </div>
             )}
           </div>
+
+          {favorites.length > 0 && (
+            <div className="flex-shrink-0 border-t border-border px-4 py-3 md:px-6 md:py-4 bg-card">
+              <button
+                onClick={() => {
+                  onClose();
+                  navigate('/dashboard/creator-storefront');
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                style={{ backgroundColor: 'var(--creator-accent, #10B981)', color: '#ffffff' }}
+                data-testid="button-favorites-to-storefront"
+              >
+                <Store className="w-4 h-4" />
+                Favoriten für Storefront übernehmen
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

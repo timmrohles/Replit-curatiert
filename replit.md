@@ -48,6 +48,14 @@ The platform is built with a modern web stack, featuring a React frontend and an
 -   **Database Tables**: `author_profiles` (user-linked author data), `author_requests` (request workflow with status tracking), `user_modules` (per-user feature access).
 -   **Security Note**: Author request endpoints currently accept userId from the client; proper user authentication is needed before production use.
 
+## Mobile Navigation
+-   **Unified Bottom Nav**: A single dark-themed mobile bottom navigation bar (`.nav-mobile` CSS class) is rendered globally in `Header.tsx` for all pages.
+-   **Nav Items (in order)**: Favoriten (with badge counter), Bewertungen, Storefront, Neuigkeiten, Hell/Dunkel toggle, Mehr (links to /dashboard).
+-   **Active State**: Route-based highlighting using `location.pathname` checks.
+-   **FavoritesPanel**: Opens from the Favoriten nav button. Includes "Favoriten für Storefront übernehmen" action button.
+-   **CSS**: `.nav-mobile` uses CSS variables (`--nav-bg: #2a2a2a`, `--nav-text: #ffffff`). `.favorites-panel-container` has `bottom: 56px` on mobile to keep nav visible.
+-   **Z-index**: Nav at `z-[210]`, FavoritesPanel overlay at `z-[200]`, panel content at `z-[201]`.
+
 ## External Dependencies
 -   **Database**: Neon PostgreSQL (connected via `NEON_DATABASE_URL` secret).
 -   **File Storage**: Local filesystem for avatar uploads (`client/src/public/uploads/avatars/`), served via a static route `/uploads`.
