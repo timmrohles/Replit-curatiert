@@ -142,6 +142,10 @@ interface DraggableItemProps {
   onDelete: (id: number) => void;
   onUpdateForm: (form: Partial<NavigationItem>) => void;
   onMove: (itemId: number, newOrder: number, newParentId: number | null) => void;
+  onMoveUp: (itemId: number) => void;
+  onMoveDown: (itemId: number) => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   saving: boolean;
 }
 
@@ -158,6 +162,10 @@ function DraggableNavigationItem({
   onDelete,
   onUpdateForm,
   onMove,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp,
+  canMoveDown,
   saving
 }: DraggableItemProps) {
   const hasChildren = item.children && item.children.length > 0;
@@ -188,9 +196,24 @@ function DraggableNavigationItem({
           borderWidth: isOver ? '2px' : '1px'
         }}
       >
-        {/* Drag Handle */}
-        <div className="cursor-grab active:cursor-grabbing">
-          <GripVertical className="w-4 h-4 text-gray-400" />
+        {/* Reorder Buttons */}
+        <div className="flex flex-col gap-0.5">
+          <button
+            onClick={() => onMoveUp(item.id)}
+            disabled={!canMoveUp}
+            className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Nach oben"
+          >
+            <ArrowUp className="w-3 h-3 text-gray-500" />
+          </button>
+          <button
+            onClick={() => onMoveDown(item.id)}
+            disabled={!canMoveDown}
+            className="p-0.5 rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Nach unten"
+          >
+            <ArrowDown className="w-3 h-3 text-gray-500" />
+          </button>
         </div>
 
         {/* Expand/Collapse */}
@@ -1302,12 +1325,64 @@ export function AdminNavigationV2() {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      // Refresh data
       await fetchNavigation();
     } catch (err) {
       console.error('Move error:', err);
       alert(`Failed to move: ${err}`);
     }
+  };
+
+  const reorderItems = async (reorderedItems: { id: number; display_order: number; parent_id: number | null }[]) => {
+    try {
+      const response = await fetch(`${getApiBase()}/navigation/admin/items/reorder`, {
+        method: 'POST',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ items: reorderedItems }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      await fetchNavigation();
+    } catch (err) {
+      console.error('Reorder error:', err);
+      alert(`Sortierung fehlgeschlagen: ${err}`);
+    }
+  };
+
+  const moveItemUp = (itemId: number) => {
+    const siblings = items.filter(i => {
+      const item = items.find(x => x.id === itemId);
+      return item && i.parent_id === item.parent_id;
+    });
+    siblings.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    const idx = siblings.findIndex(s => s.id === itemId);
+    if (idx <= 0) return;
+
+    const reordered = siblings.map((s, i) => {
+      if (i === idx - 1) return { id: s.id, display_order: idx, parent_id: s.parent_id };
+      if (i === idx) return { id: s.id, display_order: idx - 1, parent_id: s.parent_id };
+      return { id: s.id, display_order: i, parent_id: s.parent_id };
+    });
+    reorderItems(reordered);
+  };
+
+  const moveItemDown = (itemId: number) => {
+    const siblings = items.filter(i => {
+      const item = items.find(x => x.id === itemId);
+      return item && i.parent_id === item.parent_id;
+    });
+    siblings.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    const idx = siblings.findIndex(s => s.id === itemId);
+    if (idx < 0 || idx >= siblings.length - 1) return;
+
+    const reordered = siblings.map((s, i) => {
+      if (i === idx) return { id: s.id, display_order: idx + 1, parent_id: s.parent_id };
+      if (i === idx + 1) return { id: s.id, display_order: idx, parent_id: s.parent_id };
+      return { id: s.id, display_order: i, parent_id: s.parent_id };
+    });
+    reorderItems(reordered);
   };
 
   // 🐛 TEST BACKEND CONNECTION
@@ -1393,9 +1468,13 @@ export function AdminNavigationV2() {
   // RENDER TREE
   // ==================================================================
 
-  const renderItem = (item: NavigationItem, depth: number = 0) => {
+  const renderItem = (item: NavigationItem, depth: number = 0, siblingItems?: NavigationItem[]) => {
     const isExpanded = expandedIds.has(item.id);
     const hasChildren = item.children && item.children.length > 0;
+
+    const siblings = siblingItems || items.filter(i => i.parent_id === item.parent_id);
+    const sortedSiblings = [...siblings].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+    const siblingIdx = sortedSiblings.findIndex(s => s.id === item.id);
 
     return (
       <div key={item.id}>
@@ -1412,6 +1491,10 @@ export function AdminNavigationV2() {
           onDelete={deleteItem}
           onUpdateForm={setEditForm}
           onMove={moveItem}
+          onMoveUp={moveItemUp}
+          onMoveDown={moveItemDown}
+          canMoveUp={siblingIdx > 0}
+          canMoveDown={siblingIdx < sortedSiblings.length - 1}
           saving={saving}
         />
 

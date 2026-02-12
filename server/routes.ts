@@ -1439,21 +1439,21 @@ export async function registerRoutes(
           `UPDATE menu_items
            SET
              parent_id = $1,
-             name = $2,
-             label = $2,
-             slug = $3,
-             path = $4,
-             href = $4,
-             description = $5,
-             icon = $6,
-             visible = $7,
-             is_active = $7,
-             display_order = $8,
-             sort_order = $8,
-             target_type = $9,
-             target_page_id = $10,
+             name = $2::varchar,
+             label = $3::text,
+             slug = $4,
+             path = $5::varchar,
+             href = $6::text,
+             description = $7,
+             icon = $8,
+             visible = $9,
+             is_active = $10,
+             display_order = $11,
+             sort_order = $12,
+             target_type = $13,
+             target_page_id = $14,
              updated_at = NOW()
-           WHERE id = $11
+           WHERE id = $15
            RETURNING
              id, parent_id,
              COALESCE(name, label) AS name,
@@ -1465,7 +1465,7 @@ export async function registerRoutes(
              target_type,
              target_page_id,
              created_at, updated_at`,
-          [parent_id, nameValue, slug, path, description || '', icon || '', visible !== false, display_order || 0, target_type || null, target_page_id || null, id]
+          [parent_id, nameValue, nameValue, slug, path, path, description || '', icon || '', visible !== false, visible !== false, display_order || 0, display_order || 0, target_type || null, target_page_id || null, id]
         );
 
         if (result.rows.length === 0) {
@@ -1481,7 +1481,7 @@ export async function registerRoutes(
              target_type, target_page_id,
              created_at, updated_at
            )
-           VALUES ($1, $2, $2, $3, $4, $4, $5, $6, $7, $7, $8, $8, $9, $10, NOW(), NOW())
+           VALUES ($1, $2::varchar, $3::text, $4, $5::varchar, $6::text, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW())
            RETURNING
              id, parent_id,
              COALESCE(name, label) AS name,
@@ -1493,12 +1493,33 @@ export async function registerRoutes(
              target_type,
              target_page_id,
              created_at, updated_at`,
-          [parent_id, nameValue, slug, path, description || '', icon || '', visible !== false, display_order || 0, target_type || null, target_page_id || null]
+          [parent_id, nameValue, nameValue, slug, path, path, description || '', icon || '', visible !== false, visible !== false, display_order || 0, display_order || 0, target_type || null, target_page_id || null]
         );
         return res.json({ success: true, data: result.rows[0] });
       }
     } catch (error) {
       log.error('Navigation save error:', error);
+      return res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/navigation/admin/items/reorder', async (req: Request, res: Response) => {
+    try {
+      const { items } = req.body;
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ success: false, error: 'Items array is required' });
+      }
+
+      for (const item of items) {
+        await queryDB(
+          `UPDATE menu_items SET display_order = $1, sort_order = $2, parent_id = $3, updated_at = NOW() WHERE id = $4`,
+          [item.display_order, item.display_order, item.parent_id ?? null, item.id]
+        );
+      }
+
+      return res.json({ success: true });
+    } catch (error) {
+      log.error('Navigation reorder error:', error);
       return res.status(500).json({ success: false, error: String(error) });
     }
   });
