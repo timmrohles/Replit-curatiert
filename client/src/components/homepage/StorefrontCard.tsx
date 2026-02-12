@@ -69,7 +69,7 @@ export const StorefrontCard = memo(function StorefrontCard({
       >
         <ImageWithFallback 
           src={avatar}
-          alt={`${name} Storefront`}
+          alt={`${name} Bookstore`}
           className="w-full h-full object-cover"
         />
         

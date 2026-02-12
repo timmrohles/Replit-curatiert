@@ -159,7 +159,7 @@ export function HomepageSections({
       {storefronts.length > 0 && (
         <ScrollSection
           id="storefronts"
-          title="Creator Storefronts"
+          title="Creator Bookstores"
           subtitle="Entdecke kuratierte Buchläden von Expert*innen"
           carouselRef={refs.storefrontsCarouselRef}
           scrollAmount={SCROLL_AMOUNTS.STOREFRONT}

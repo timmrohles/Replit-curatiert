@@ -50,9 +50,10 @@ The platform is built with a modern web stack, featuring a React frontend and an
 
 ## Mobile Navigation
 -   **Unified Bottom Nav**: A single dark-themed mobile bottom navigation bar (`.nav-mobile` CSS class) is rendered globally in `Header.tsx` for all pages.
--   **Nav Items (in order)**: Favoriten (with badge counter), Bewertungen, Storefront, Neuigkeiten, Hell/Dunkel toggle, Mehr (links to /dashboard).
+-   **Nav Items (in order)**: Favoriten (with badge counter), Bewertungen, Bookstore, Neuigkeiten, Hell/Dunkel toggle, Mehr (links to /dashboard).
 -   **Active State**: Route-based highlighting using `location.pathname` checks.
--   **FavoritesPanel**: Opens from the Favoriten nav button. Includes "Favoriten für Storefront übernehmen" action button.
+-   **FavoritesPanel**: Opens from the Favoriten nav button. Includes "Favoriten für Bookstore übernehmen" action button.
+-   **Terminology**: UI displays "Bookstore" instead of "Storefront" (internal code still uses storefront naming).
 -   **CSS**: `.nav-mobile` uses CSS variables (`--nav-bg: #2a2a2a`, `--nav-text: #ffffff`). `.favorites-panel-container` has `bottom: 56px` on mobile to keep nav visible.
 -   **Z-index**: Nav at `z-[210]`, FavoritesPanel overlay at `z-[200]`, panel content at `z-[201]`.
 

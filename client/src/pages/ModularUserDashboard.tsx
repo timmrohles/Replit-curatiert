@@ -191,7 +191,7 @@ export default function ModularUserDashboard() {
   ];
 
   const creatorNavItems: NavItem[] = [
-    { id: 'creator-storefront', label: 'Storefront', icon: Store, moduleKey: 'creator_storefront', group: 'creator' },
+    { id: 'creator-storefront', label: 'Bookstore', icon: Store, moduleKey: 'creator_storefront', group: 'creator' },
     { id: 'creator-curations', label: 'Kurationen', icon: BookOpen, moduleKey: 'creator_curations', group: 'creator' },
     { id: 'creator-reviews', label: 'Rezensionen', icon: MessageSquare, moduleKey: 'creator_reviews', group: 'creator' },
     { id: 'creator-topics', label: 'Themen', icon: ListChecks, moduleKey: 'creator_topics', group: 'creator' },
@@ -201,7 +201,7 @@ export default function ModularUserDashboard() {
   ];
 
   const authorNavItems: NavItem[] = [
-    { id: 'author-storefront', label: 'Storefront', icon: Store, moduleKey: 'author_storefront', group: 'author' },
+    { id: 'author-storefront', label: 'Bookstore', icon: Store, moduleKey: 'author_storefront', group: 'author' },
     { id: 'author-books', label: 'Bücher', icon: BookOpen, moduleKey: 'author_books', group: 'author' },
     { id: 'author-community', label: 'Community', icon: Users, moduleKey: 'author_community', group: 'author' },
     { id: 'author-bookclub', label: 'Buchklub', icon: Gift, moduleKey: 'author_bookclub', group: 'author' },
@@ -480,7 +480,7 @@ export default function ModularUserDashboard() {
         case 'settings':
           return <DashboardSettings />;
         case 'creator-storefront':
-          return hasModule('creator_storefront') ? <CreatorStorefront /> : <FeatureLockedMessage feature="Storefront" />;
+          return hasModule('creator_storefront') ? <CreatorStorefront /> : <FeatureLockedMessage feature="Bookstore" />;
         case 'creator-curations':
           return hasModule('creator_curations') ? <CreatorCurations /> : <FeatureLockedMessage feature="Kuratierte Inhalte" />;
         case 'creator-reviews':
@@ -496,7 +496,7 @@ export default function ModularUserDashboard() {
         case 'author-request':
           return <AuthorRequest userId={userId} />;
         case 'author-storefront':
-          return hasModule('author_storefront') ? <AuthorStorefront /> : <FeatureLockedMessage feature="Storefront" />;
+          return hasModule('author_storefront') ? <AuthorStorefront /> : <FeatureLockedMessage feature="Bookstore" />;
         case 'author-books':
           return hasModule('author_books') ? <AuthorBooks /> : <FeatureLockedMessage feature="Bücher" />;
         case 'author-community':

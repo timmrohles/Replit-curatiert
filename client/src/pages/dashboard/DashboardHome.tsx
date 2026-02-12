@@ -9,7 +9,7 @@ export function DashboardHome() {
     { label: 'Bewertungen', value: '0', icon: Star, subtitle: 'Noch keine Bewertungen' },
     { label: 'Rezensionen', value: '0', icon: MessageSquare, subtitle: 'Noch keine Rezensionen' },
     { label: 'Favoriten', value: '0', icon: Heart, subtitle: 'Noch keine Favoriten' },
-    { label: 'Storefront', value: '--', icon: Store, subtitle: 'Noch nicht eingerichtet' },
+    { label: 'Bookstore', value: '--', icon: Store, subtitle: 'Noch nicht eingerichtet' },
   ];
 
   return (
@@ -102,7 +102,7 @@ export function DashboardHome() {
           {[
             { icon: User, label: 'Vervollständige dein Profil', section: 'profile' },
             { icon: Star, label: 'Bewerte dein erstes Buch', section: 'ratings' },
-            { icon: Store, label: 'Richte deinen Storefront ein', section: 'creator-storefront' },
+            { icon: Store, label: 'Richte deinen Bookstore ein', section: 'creator-storefront' },
             { icon: Heart, label: 'Folge Autor:innen und Verlagen', section: 'follows' },
           ].map((action, idx) => {
             const Icon = action.icon;

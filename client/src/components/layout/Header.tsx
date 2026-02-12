@@ -653,7 +653,7 @@ export function Header({
             className={`nav-mobile-btn flex flex-col items-center justify-center py-2.5 transition-colors ${location.pathname.includes('/dashboard/creator-storefront') ? 'nav-mobile-active' : ''}`}
           >
             <Store className="w-5 h-5" strokeWidth={1.5} />
-            <span className="text-[10px] mt-0.5 leading-tight">Storefront</span>
+            <span className="text-[10px] mt-0.5 leading-tight">Bookstore</span>
           </button>
           <button
             data-testid="mobile-tab-notifications"

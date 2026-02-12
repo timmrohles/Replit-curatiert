@@ -2,7 +2,7 @@ import { TrendingUp, Eye, ShoppingCart, Euro, BarChart3 } from 'lucide-react';
 
 export function CreatorAnalytics() {
   const kpis = [
-    { label: 'Storefront Views', value: '2,834', icon: Eye, change: '+12%', trend: 'up' },
+    { label: 'Bookstore Views', value: '2,834', icon: Eye, change: '+12%', trend: 'up' },
     { label: 'Buchverkäufe', value: '47', icon: ShoppingCart, change: '+8%', trend: 'up' },
     { label: 'Einnahmen', value: '€142,50', icon: Euro, change: '+15%', trend: 'up' },
     { label: 'Engagement', value: '8.4/10', icon: TrendingUp, change: '+0.3', trend: 'up' },

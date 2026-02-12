@@ -21,7 +21,7 @@ export default function DashboardLanding() {
     <>
       <Helmet>
         <title>Dashboard | coratiert.de</title>
-        <meta name="description" content="Verwalte deine Creator Storefront, Autor-Profile und Verlagsinhalte - alles an einem Ort." />
+        <meta name="description" content="Verwalte deinen Creator Bookstore, Autor-Profile und Verlagsinhalte - alles an einem Ort." />
       </Helmet>
       
       <Header />
@@ -48,7 +48,7 @@ export default function DashboardLanding() {
             </Heading>
             
             <Text variant="large" className="max-w-3xl" style={{ color: 'var(--color-text-secondary, #6B7280)' }}>
-              Erstelle deine eigene Storefront, verwalte deine Bücher als Autor oder präsentiere dein Verlagsprogramm - alles an einem Ort.
+              Erstelle deinen eigenen Bookstore, verwalte deine Bücher als Autor oder präsentiere dein Verlagsprogramm - alles an einem Ort.
             </Text>
           </div>
         </Container>
@@ -63,7 +63,7 @@ export default function DashboardLanding() {
             <div className="rounded-xl shadow-sm border overflow-hidden" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
               <div className="p-6 md:p-8">
                 <h3 className="text-xl md:text-2xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-                  Creator Storefront
+                  Creator Bookstore
                 </h3>
                 
                 <div className="mb-4">
@@ -74,7 +74,7 @@ export default function DashboardLanding() {
                 </div>
 
                 <p className="text-sm md:text-base mb-6" style={{ color: '#6B7280' }}>
-                  Deine persönliche Storefront ist bereits freigeschaltet. Erstelle Reviews, teile Empfehlungen und baue deine Community auf.
+                  Dein persönlicher Bookstore ist bereits freigeschaltet. Erstelle Reviews, teile Empfehlungen und baue deine Community auf.
                 </p>
 
                 <div className="space-y-3 mb-6">
@@ -213,8 +213,8 @@ export default function DashboardLanding() {
                 </h3>
                 <div className="space-y-3 text-sm md:text-base" style={{ color: '#6B7280' }}>
                   <p>
-                    <strong style={{ color: '#3A3A3A' }}>Creator Storefront:</strong> Ist für alle Nutzer sofort verfügbar. 
-                    Du kannst direkt loslegen und deine eigene Storefront erstellen.
+                    <strong style={{ color: '#3A3A3A' }}>Creator Bookstore:</strong> Ist für alle Nutzer sofort verfügbar. 
+                    Du kannst direkt loslegen und deinen eigenen Bookstore erstellen.
                   </p>
                   <p>
                     <strong style={{ color: '#3A3A3A' }}>Autor Dashboard:</strong> Beantrage den Zugang mit einem Klick. 

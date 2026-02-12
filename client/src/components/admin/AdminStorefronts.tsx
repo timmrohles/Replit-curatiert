@@ -175,7 +175,7 @@ export function AdminStorefronts() {
   };
 
   const deleteStorefront = async (id: string) => {
-    if (!confirm('Storefront wirklich löschen?')) return;
+    if (!confirm('Bookstore wirklich löschen?')) return;
     try {
       const response = await fetch(`${API_BASE_URL}/admin/storefronts/${id}`, {
         method: 'DELETE',
@@ -723,10 +723,10 @@ export function AdminStorefronts() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-            Storefronts ({storefronts.length})
+            Bookstores ({storefronts.length})
           </h2>
           <p className="text-sm mt-1" style={{ color: '#666666' }}>
-            Verwalte Kurator:innen-Storefronts und Buchserien
+            Verwalte Kurator:innen-Bookstores und Buchserien
           </p>
         </div>
         <button
@@ -748,7 +748,7 @@ export function AdminStorefronts() {
           style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
         >
           <Plus className="w-4 h-4" />
-          Neuer Storefront
+          Neuer Bookstore
         </button>
       </div>
 
@@ -758,7 +758,7 @@ export function AdminStorefronts() {
           <input
             data-testid="input-search-storefronts"
             type="text"
-            placeholder="Storefronts durchsuchen..."
+            placeholder="Bookstores durchsuchen..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border rounded-lg"
@@ -770,7 +770,7 @@ export function AdminStorefronts() {
       {editingStorefront && (
         <div className="border rounded-lg p-6 mb-6" style={{ borderColor: '#247ba0', backgroundColor: '#F0F9FF' }}>
           <h3 className="text-lg font-bold mb-4" style={{ color: '#3A3A3A' }}>
-            {editingStorefront.id ? 'Storefront bearbeiten' : 'Neuer Storefront'}
+            {editingStorefront.id ? 'Bookstore bearbeiten' : 'Neuer Bookstore'}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
@@ -782,7 +782,7 @@ export function AdminStorefronts() {
                 onChange={(e) => setEditingStorefront({ ...editingStorefront, name: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg text-sm"
                 style={{ borderColor: '#E5E7EB' }}
-                placeholder="Name des Storefronts"
+                placeholder="Name des Bookstore"
               />
             </div>
             <div>
@@ -828,7 +828,7 @@ export function AdminStorefronts() {
               className="w-full px-3 py-2 border rounded-lg text-sm"
               style={{ borderColor: '#E5E7EB' }}
               rows={3}
-              placeholder="Beschreibung des Storefronts..."
+              placeholder="Beschreibung des Bookstore..."
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -900,13 +900,13 @@ export function AdminStorefronts() {
 
       {loading ? (
         <div className="text-center py-8" style={{ color: '#666666' }}>
-          Lade Storefronts...
+          Lade Bookstores...
         </div>
       ) : filteredStorefronts.length === 0 ? (
         <div className="text-center py-12 border rounded-lg" style={{ borderColor: '#E5E7EB', backgroundColor: '#F7F4EF' }}>
           <Store className="w-12 h-12 mx-auto mb-3" style={{ color: '#666666' }} />
           <p style={{ color: '#666666' }}>
-            {searchTerm ? 'Keine Storefronts gefunden' : 'Noch keine Storefronts vorhanden'}
+            {searchTerm ? 'Keine Bookstores gefunden' : 'Noch keine Bookstores vorhanden'}
           </p>
         </div>
       ) : (

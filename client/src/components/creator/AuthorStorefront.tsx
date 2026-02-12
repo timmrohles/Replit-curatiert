@@ -180,7 +180,7 @@ export function AuthorStorefront({ authorId }: { authorId: string }) {
         });
 
         if (!response.ok) {
-          throw new Error('Storefront nicht gefunden');
+          throw new Error('Bookstore nicht gefunden');
         }
 
         const data = await response.json();
@@ -227,7 +227,7 @@ export function AuthorStorefront({ authorId }: { authorId: string }) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center" role="alert">
           <p className="text-xl mb-4" style={{ color: '#3A3A3A' }}>
-            {state.error || 'Storefront nicht gefunden'}
+            {state.error || 'Bookstore nicht gefunden'}
           </p>
           <button
             onClick={() => navigate('/')}

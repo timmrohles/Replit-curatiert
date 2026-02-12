@@ -255,7 +255,7 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          throw new Error('Storefront nicht gefunden');
+          throw new Error('Bookstore nicht gefunden');
         }
 
         const data = await response.json();
@@ -303,17 +303,17 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
           };
           dispatch({ type: 'SET_STOREFRONT', payload: storefront });
         } else {
-          throw new Error('Storefront nicht gefunden');
+          throw new Error('Bookstore nicht gefunden');
         }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
           if (isMounted) {
-            dispatch({ type: 'SET_ERROR', payload: 'Die Storefront lädt zu lange. Bitte versuche es später erneut.' });
+            dispatch({ type: 'SET_ERROR', payload: 'Der Bookstore lädt zu lange. Bitte versuche es später erneut.' });
           }
           return;
         }
         if (isMounted) {
-          dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Fehler beim Laden der Storefront' });
+          dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Fehler beim Laden des Bookstore' });
         }
       } finally {
         if (isMounted) {
@@ -383,7 +383,7 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
       <div className="min-h-screen flex items-center justify-center bg-surface-elevated">
         <div className="text-center">
           <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-teal-light" />
-          <p className="text-foreground">Lade Storefront...</p>
+          <p className="text-foreground">Lade Bookstore...</p>
         </div>
       </div>
     );
@@ -397,10 +397,10 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
             className="text-3xl mb-4"
             style={{ fontFamily: 'Fjalla One', color: 'var(--charcoal)' }}
           >
-            STOREFRONT NICHT GEFUNDEN
+            BOOKSTORE NICHT GEFUNDEN
           </h1>
           <p className="mb-6 text-foreground" style={{ opacity: 0.7 }}>
-            {state.error || 'Diese Storefront existiert nicht oder wurde gelöscht.'}
+            {state.error || 'Dieser Bookstore existiert nicht oder wurde gelöscht.'}
           </p>
           <a 
             href="/"

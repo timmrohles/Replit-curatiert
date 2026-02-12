@@ -228,7 +228,7 @@ export function HeroSection({ section }: HeroSectionProps) {
                   className="text-center px-6"
                   style={{ fontFamily: 'Inter', color: 'var(--color-brand-gray, #888)' }}
                 >
-                  Kurator:innen mit veröffentlichten Storefronts erscheinen hier automatisch.
+                  Kurator:innen mit veröffentlichten Bookstores erscheinen hier automatisch.
                 </p>
               </div>
             )}

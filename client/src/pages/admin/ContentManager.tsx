@@ -615,7 +615,7 @@ export function ContentManager() {
               fontFamily: 'Fjalla One'
             }}
           >
-            Storefronts
+            Bookstores
           </button>
           <button
             onClick={() => setActiveTab('navigation')}
@@ -778,8 +778,8 @@ export function ContentManager() {
 
           {/* Storefronts Tab */}
           {activeTab === 'storefronts' && (
-            <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Storefronts...</div>}>
-              <TabErrorBoundary tabName="Storefronts">
+            <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Bookstores...</div>}>
+              <TabErrorBoundary tabName="Bookstores">
                 <AdminStorefronts />
               </TabErrorBoundary>
             </Suspense>

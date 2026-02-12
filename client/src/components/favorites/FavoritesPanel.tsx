@@ -194,7 +194,7 @@ export function FavoritesPanel({ isOpen, onClose }: FavoritesPanelProps) {
                 data-testid="button-favorites-to-storefront"
               >
                 <Store className="w-4 h-4" />
-                Favoriten für Storefront übernehmen
+                Favoriten für Bookstore übernehmen
               </button>
             </div>
           )}

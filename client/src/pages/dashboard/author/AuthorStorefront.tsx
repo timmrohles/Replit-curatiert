@@ -72,7 +72,7 @@ export function AuthorStorefront() {
   };
 
   const deleteStorefront = (id: string) => {
-    if (confirm('Möchtest du diese Storefront wirklich löschen?')) {
+    if (confirm('Möchtest du diesen Bookstore wirklich löschen?')) {
       setStorefronts(storefronts.filter(s => s.id !== id));
     }
   };
@@ -100,7 +100,7 @@ export function AuthorStorefront() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-            Meine Autoren-Storefront
+            Meine Autoren-Bookstore
           </h1>
           <p className="text-xs md:text-sm" style={{ color: '#6B7280' }}>
             Präsentiere deine Werke und erreiche mehr Leser
@@ -112,7 +112,7 @@ export function AuthorStorefront() {
           style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
         >
           <Plus className="w-5 h-5" />
-          Neue Storefront
+          Neuer Bookstore
         </button>
       </div>
 
@@ -122,7 +122,7 @@ export function AuthorStorefront() {
           <div className="text-2xl md:text-3xl mb-1" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
             {storefronts.length}
           </div>
-          <div className="text-xs" style={{ color: '#6B7280' }}>Storefronts</div>
+          <div className="text-xs" style={{ color: '#6B7280' }}>Bookstores</div>
         </div>
         <div className="rounded-lg p-4 border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
           <div className="text-2xl md:text-3xl mb-1" style={{ fontFamily: 'Fjalla One', color: '#10B981' }}>
@@ -185,17 +185,17 @@ export function AuthorStorefront() {
           <div className="rounded-lg p-12 text-center border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
             <Store className="w-16 h-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
             <h3 className="text-xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-              Keine Storefronts
+              Keine Bookstores
             </h3>
             <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
-              Erstelle deine erste Autoren-Storefront
+              Erstelle deine erste Autoren-Bookstore
             </p>
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 rounded-lg text-sm"
               style={{ backgroundColor: '#F59E0B', color: '#92400e' }}
             >
-              Storefront erstellen
+              Bookstore erstellen
             </button>
           </div>
         ) : (
@@ -321,7 +321,7 @@ export function AuthorStorefront() {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl md:text-2xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-                {editingStorefront ? 'Storefront bearbeiten' : 'Neue Storefront'}
+                {editingStorefront ? 'Bookstore bearbeiten' : 'Neuer Bookstore'}
               </h2>
               <button
                 onClick={() => {
@@ -337,7 +337,7 @@ export function AuthorStorefront() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
-                  Name der Storefront
+                  Name des Bookstore
                 </label>
                 <input
                   type="text"
@@ -373,7 +373,7 @@ export function AuthorStorefront() {
                   rows={4}
                   className="w-full px-4 py-2 rounded-lg border"
                   style={{ borderColor: '#E5E7EB' }}
-                  placeholder="Beschreibe deine Storefront..."
+                  placeholder="Beschreibe deinen Bookstore..."
                 />
               </div>
 

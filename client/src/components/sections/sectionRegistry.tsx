@@ -67,7 +67,7 @@ export const SECTION_TYPES: SectionTypeDefinition[] = [
   },
   { 
     value: 'storefronts', 
-    label: 'Storefronts', 
+    label: 'Bookstores', 
     allowedZones: ['main'],
     description: 'Kuratierte Buchläden von Expert:innen'
   },
@@ -117,10 +117,10 @@ export const SECTION_COMPONENTS: Record<string, React.FC<SectionComponentProps>>
         className="mb-6 text-center leading-tight text-[1.75rem] md:text-[2rem]"
         style={{ fontFamily: 'Fjalla One', color: '#2a2a2a' }}
       >
-        {section.config?.title || 'Storefronts'}
+        {section.config?.title || 'Bookstores'}
       </h2>
       <p className="text-center text-sm" style={{ color: '#555' }}>
-        Storefronts werden geladen…
+        Bookstores werden geladen…
       </p>
     </div>
   ),
