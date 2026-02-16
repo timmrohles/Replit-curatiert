@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -14,14 +14,51 @@ import { LocaleLayout } from './components/layout/LocaleLayout';
 import { DEFAULT_LOCALE } from './utils/LocaleContext';
 
 const CMSHomepage = React.lazy(() => import('./components/cms/CMSHomepage').then(m => ({ default: m.CMSHomepage })));
+const HomepageFeedView = React.lazy(() => import('./pages/dashboard/HomepageFeedView').then(m => ({ default: m.HomepageFeedView })));
 
 function SmartHomepage() {
-  const { locale } = useParams<{ locale: string }>();
-  const feedAsHomepage = localStorage.getItem('coratiert-feed-as-homepage') === 'true';
-  if (feedAsHomepage) {
-    return <Navigate to={`/${locale || DEFAULT_LOCALE}/dashboard`} replace />;
-  }
-  return <Suspense fallback={<div />}><CMSHomepage /></Suspense>;
+  const feedDefault = localStorage.getItem('coratiert-feed-as-homepage') === 'true';
+  const [showFeed, setShowFeed] = useState(feedDefault);
+
+  return (
+    <div>
+      <div className="flex items-center justify-center gap-1 pt-4 pb-2">
+        <button
+          onClick={() => setShowFeed(false)}
+          className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+          style={{
+            backgroundColor: !showFeed ? '#1a1a1a' : 'transparent',
+            color: !showFeed ? '#ffffff' : '#3A3A3A',
+            border: !showFeed ? 'none' : '1px solid #D1D5DB',
+          }}
+          data-testid="button-switch-startseite"
+        >
+          Startseite
+        </button>
+        <button
+          onClick={() => setShowFeed(true)}
+          className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+          style={{
+            backgroundColor: showFeed ? '#1a1a1a' : 'transparent',
+            color: showFeed ? '#ffffff' : '#3A3A3A',
+            border: showFeed ? 'none' : '1px solid #D1D5DB',
+          }}
+          data-testid="button-switch-feed"
+        >
+          Mein Feed
+        </button>
+      </div>
+      {showFeed ? (
+        <Suspense fallback={<div />}>
+          <HomepageFeedView />
+        </Suspense>
+      ) : (
+        <Suspense fallback={<div />}>
+          <CMSHomepage />
+        </Suspense>
+      )}
+    </div>
+  );
 }
 const DataDrivenHomepage = React.lazy(() => import('./components/homepage/DataDrivenHomepage').then(m => ({ default: m.DataDrivenHomepage })));
 const Homepage = React.lazy(() => import('./components/homepage/NewHomepage').then(m => ({ default: m.Homepage })));
