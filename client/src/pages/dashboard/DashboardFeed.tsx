@@ -288,6 +288,22 @@ function mapApiResultToSuggestions(data: unknown, sectionId: string): Suggestion
   return items;
 }
 
+const POPULAR_SUGGESTIONS_ENDPOINTS: Record<string, string> = {
+  favorites: '/api/onix-tags?scope=book&visible=true&limit=8',
+  currently_reading: '/api/books/search?q=bestseller&limit=6',
+  already_read: '/api/books/search?q=roman&limit=6',
+  want_to_read: '/api/books/search?q=neu&limit=6',
+  reading_list: '/api/books/search?q=empfehlung&limit=6',
+  followed_authors: '/api/books/search?q=autor&limit=6',
+  followed_publishers: '/api/books/search?q=verlag&limit=6',
+  followed_categories: '/api/onix-tags?scope=book&tag_type=genre&visible=true&limit=8',
+  followed_tags: '/api/onix-tags?scope=book&tag_type=topic&visible=true&limit=8',
+  followed_media: '/api/onix-tags?scope=book&tag_type=feature&visible=true&limit=8',
+  followed_awards: '/api/awards?limit=8',
+  followed_curators: '/api/curators?limit=6',
+  recommendations: '/api/onix-tags?scope=book&visible=true&limit=8',
+};
+
 function TagPickerDropdown({
   sectionId,
   onAdd,
@@ -300,7 +316,9 @@ function TagPickerDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
+  const [popularItems, setPopularItems] = useState<SuggestionItem[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [popularLoaded, setPopularLoaded] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
@@ -322,6 +340,24 @@ function TagPickerDropdown({
       inputRef.current.focus();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && !popularLoaded) {
+      const endpoint = POPULAR_SUGGESTIONS_ENDPOINTS[sectionId];
+      if (!endpoint) { setPopularLoaded(true); return; }
+      (async () => {
+        try {
+          const res = await fetch(endpoint);
+          if (res.ok) {
+            const data = await res.json();
+            const mapped = mapApiResultToSuggestions(data, sectionId);
+            setPopularItems(mapped.filter((s) => !existingIds.has(s.id)).slice(0, 8));
+          }
+        } catch { /* ignore */ }
+        setPopularLoaded(true);
+      })();
+    }
+  }, [isOpen, popularLoaded, sectionId, existingIds]);
 
   const searchItems = useCallback(async (searchQuery: string) => {
     if (searchQuery.length < 2) {
@@ -363,10 +399,13 @@ function TagPickerDropdown({
       image: item.image,
       color: item.color,
     });
+    setPopularItems((prev) => prev.filter((p) => p.id !== item.id));
     setQuery('');
     setSuggestions([]);
     setIsOpen(false);
   }, [onAdd]);
+
+  const showPopular = isOpen && query.length < 2 && !isSearching && popularItems.length > 0;
 
   return (
     <div className="relative inline-block" ref={dropdownRef}>
@@ -399,6 +438,28 @@ function TagPickerDropdown({
               />
             </div>
           </div>
+          {showPopular && (
+            <div className="px-3 pt-1 pb-1.5">
+              <div className="text-xs font-semibold mb-2" style={{ color: '#9CA3AF' }}>
+                Beliebt bei anderen Nutzer:innen
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {popularItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSelect(item)}
+                    className="px-2.5 py-1 rounded-full text-xs font-medium transition-colors border"
+                    style={{ color: '#3A3A3A', borderColor: '#D1D5DB', backgroundColor: 'rgba(255,255,255,0.6)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#247ba0'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#247ba0'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)'; e.currentTarget.style.color = '#3A3A3A'; e.currentTarget.style.borderColor = '#D1D5DB'; }}
+                    data-testid={`popular-${item.id}`}
+                  >
+                    {item.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {isSearching && (
             <div className="px-3 py-2 text-sm" style={{ color: '#9CA3AF' }}>
               Suche...
