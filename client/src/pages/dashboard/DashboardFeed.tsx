@@ -874,7 +874,7 @@ function FeedToolbar() {
       <button
         onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors"
-        style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
+        style={{ color: '#3A3A3A', borderColor: '#E5E7EB' }}
         data-testid="button-sort-order"
       >
         <ArrowDownUp className="w-4 h-4" />
@@ -885,7 +885,7 @@ function FeedToolbar() {
         <button
           onClick={() => { setJumpOpen(!jumpOpen); setVisibilityOpen(false); }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors"
-          style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
+          style={{ color: '#3A3A3A', borderColor: '#E5E7EB' }}
           data-testid="button-jump-to-section"
         >
           <Hash className="w-4 h-4" />
@@ -918,7 +918,7 @@ function FeedToolbar() {
         <button
           onClick={() => { setVisibilityOpen(!visibilityOpen); setJumpOpen(false); }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors"
-          style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
+          style={{ color: '#3A3A3A', borderColor: '#E5E7EB' }}
           data-testid="button-toggle-sections"
         >
           <Eye className="w-4 h-4" />
@@ -956,7 +956,7 @@ function FeedToolbar() {
         onClick={() => setFeedAsHomepage(!feedAsHomepage)}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors"
         style={{
-          color: feedAsHomepage ? '#ffffff' : '#6B7280',
+          color: feedAsHomepage ? '#ffffff' : '#3A3A3A',
           borderColor: feedAsHomepage ? '#247ba0' : '#E5E7EB',
           backgroundColor: feedAsHomepage ? '#247ba0' : 'transparent',
         }}
@@ -971,7 +971,7 @@ function FeedToolbar() {
           onClick={resetToDefaults}
           data-testid="button-reset-feed"
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border"
-          style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
+          style={{ color: '#3A3A3A', borderColor: '#E5E7EB' }}
         >
           <RotateCcw className="w-4 h-4" />
           Zurücksetzen
