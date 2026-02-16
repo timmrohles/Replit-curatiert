@@ -57,7 +57,6 @@ export function ReadingListButton({
       isActive ? null : selectedStatus,
       { title: bookTitle, author: bookAuthor, coverImage: bookCover }
     );
-    setIsOpen(false);
   }, [bookId, bookTitle, bookAuthor, bookCover, currentEntry, setStatus]);
 
   useEffect(() => {
