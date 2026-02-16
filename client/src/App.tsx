@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -16,10 +16,10 @@ import { DEFAULT_LOCALE } from './utils/LocaleContext';
 const CMSHomepage = React.lazy(() => import('./components/cms/CMSHomepage').then(m => ({ default: m.CMSHomepage })));
 
 function SmartHomepage() {
+  const { locale } = useParams<{ locale: string }>();
   const feedAsHomepage = localStorage.getItem('coratiert-feed-as-homepage') === 'true';
   if (feedAsHomepage) {
-    const locale = window.location.pathname.split('/')[1] || 'de-de';
-    return <Navigate to={`/${locale}/dashboard`} replace />;
+    return <Navigate to={`/${locale || DEFAULT_LOCALE}/dashboard`} replace />;
   }
   return <Suspense fallback={<div />}><CMSHomepage /></Suspense>;
 }

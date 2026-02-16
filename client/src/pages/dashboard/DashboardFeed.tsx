@@ -1011,6 +1011,7 @@ export function DashboardFeed() {
     toggleVisibility,
     togglePublic,
     isEditMode,
+    sortOrder,
   } = useDashboardFeed();
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -1020,9 +1021,13 @@ export function DashboardFeed() {
     }
   };
 
-  const visibleSections = isEditMode
+  const filteredSections = isEditMode
     ? sections
     : sections.filter((s) => s.visible);
+
+  const visibleSections = sortOrder === 'oldest'
+    ? [...filteredSections].reverse()
+    : filteredSections;
 
   return (
     <div className="space-y-8" data-testid="dashboard-feed">
