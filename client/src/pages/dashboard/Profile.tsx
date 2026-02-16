@@ -1,12 +1,15 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { User, Globe, Save, BookOpen, Mail, Phone, Lock, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon } from 'lucide-react';
 
+const CURATOR_STORAGE_KEY = 'coratiert-curator-id';
+
 export function DashboardProfile() {
-  const userName = 'Max Mustermann';
-  const roles = ['Leser:in'];
-  const progress = 35;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [curatorId, setCuratorId] = useState<string | null>(() => localStorage.getItem(CURATOR_STORAGE_KEY));
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const quickStats = [
     { label: 'Bewertungen', value: '0', icon: Star },
@@ -16,10 +19,10 @@ export function DashboardProfile() {
   ];
 
   const [profile, setProfile] = useState({
-    firstName: 'Max',
-    lastName: 'Mustermann',
-    email: 'max.mustermann@example.com',
-    phone: '+49 151 12345678',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
     language: 'de',
     country: 'DE'
   });
@@ -60,9 +63,71 @@ export function DashboardProfile() {
     'Philosophie'
   ];
 
+  const loadCuratorProfile = useCallback(async () => {
+    try {
+      if (!curatorId) {
+        setLoading(false);
+        return;
+      }
+      const resp = await fetch(`/api/user/curator-profile/${curatorId}`);
+      const json = await resp.json();
+      if (json.ok && json.data) {
+        const d = json.data;
+        const nameParts = (d.name || '').split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        setProfile(prev => ({
+          ...prev,
+          firstName: firstName || prev.firstName,
+          lastName: lastName || prev.lastName
+        }));
+        setCuratorProfile({
+          focus: d.focus || '',
+          bio: d.bio || '',
+          avatarUrl: d.avatar || '',
+          socials: {
+            instagram: d.socialMedia?.instagram || '',
+            youtube: d.socialMedia?.youtube || '',
+            tiktok: d.socialMedia?.tiktok || '',
+            podcast: d.socialMedia?.podcast || '',
+            website: d.socialMedia?.website || ''
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load curator profile:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [curatorId]);
+
+  useEffect(() => {
+    loadCuratorProfile();
+  }, [loadCuratorProfile]);
+
   const countWords = (text: string): number => {
     return text.trim().split(/\s+/).filter(w => w.length > 0).length;
   };
+
+  const displayName = `${profile.firstName} ${profile.lastName}`.trim() || 'Benutzername';
+
+  const computeProgress = (): number => {
+    let filled = 0;
+    const total = 7;
+    if (profile.firstName) filled++;
+    if (profile.lastName) filled++;
+    if (profile.email) filled++;
+    if (curatorProfile.avatarUrl) filled++;
+    if (curatorProfile.focus) filled++;
+    if (curatorProfile.bio) filled++;
+    const hasSocial = Object.values(curatorProfile.socials).some(v => v.trim().length > 0);
+    if (hasSocial) filled++;
+    return Math.round((filled / total) * 100);
+  };
+
+  const progress = computeProgress();
+
+  const roles = curatorProfile.focus ? ['Kurator:in'] : ['Leser:in'];
 
   const handleAvatarUpload = async (file: File) => {
     setUploading(true);
@@ -84,9 +149,39 @@ export function DashboardProfile() {
     }
   };
 
-  const handleSave = () => {
-    console.log('Profil gespeichert:', profile, curatorProfile, preferredGenres);
-    alert('Profil gespeichert!');
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveMessage(null);
+    try {
+      const resp = await fetch('/api/user/curator-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          curatorId: curatorId || undefined,
+          name: `${profile.firstName} ${profile.lastName}`.trim(),
+          bio: curatorProfile.bio,
+          focus: curatorProfile.focus,
+          avatar_url: curatorProfile.avatarUrl,
+          socials: curatorProfile.socials
+        })
+      });
+      const json = await resp.json();
+      if (json.ok) {
+        if (json.data?.id && !curatorId) {
+          const newId = String(json.data.id);
+          setCuratorId(newId);
+          localStorage.setItem(CURATOR_STORAGE_KEY, newId);
+        }
+        setSaveMessage({ type: 'success', text: 'Profil erfolgreich gespeichert!' });
+        setTimeout(() => setSaveMessage(null), 3000);
+      } else {
+        setSaveMessage({ type: 'error', text: json.error || 'Fehler beim Speichern' });
+      }
+    } catch {
+      setSaveMessage({ type: 'error', text: 'Verbindungsfehler beim Speichern' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const toggleGenre = (genre: string) => {
@@ -96,6 +191,14 @@ export function DashboardProfile() {
       setPreferredGenres([...preferredGenres, genre]);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-3 rounded-full animate-spin" style={{ borderColor: '#E5E7EB', borderTopColor: '#247ba0' }} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -139,8 +242,13 @@ export function DashboardProfile() {
               style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}
               data-testid="text-username"
             >
-              {userName}
+              {displayName.toUpperCase()}
             </h2>
+            {curatorProfile.focus && (
+              <p className="text-sm mb-1" style={{ color: '#6B7280' }} data-testid="text-curator-focus">
+                {curatorProfile.focus}
+              </p>
+            )}
             <div className="flex flex-wrap gap-2 mb-3">
               {roles.map((role, index) => (
                 <span
@@ -153,6 +261,11 @@ export function DashboardProfile() {
                 </span>
               ))}
             </div>
+            {curatorProfile.bio && (
+              <p className="text-sm mb-3 line-clamp-2" style={{ color: '#4B5563' }} data-testid="text-curator-bio-preview">
+                {curatorProfile.bio}
+              </p>
+            )}
             <div>
               <div className="flex items-center justify-between gap-2 mb-1.5">
                 <span className="text-xs sm:text-sm" style={{ color: '#6B7280' }}>
@@ -839,18 +952,42 @@ export function DashboardProfile() {
         </div>
       </div>
 
+      {saveMessage && (
+        <div
+          className="rounded-lg p-4 text-sm"
+          style={{
+            backgroundColor: saveMessage.type === 'success' ? '#F0FDF4' : '#FEF2F2',
+            color: saveMessage.type === 'success' ? '#166534' : '#991B1B',
+            border: `1px solid ${saveMessage.type === 'success' ? '#BBF7D0' : '#FCA5A5'}`
+          }}
+          data-testid="text-save-message"
+        >
+          {saveMessage.text}
+        </div>
+      )}
+
       <div className="flex justify-end pt-4">
         <button
           onClick={handleSave}
+          disabled={saving}
           data-testid="button-save-profile"
           className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium shadow-sm transition-all duration-200 hover:shadow-md"
           style={{
-            backgroundColor: '#247ba0',
+            backgroundColor: saving ? '#9CA3AF' : '#247ba0',
             color: '#FFFFFF'
           }}
         >
-          <Save className="w-5 h-5" />
-          Änderungen speichern
+          {saving ? (
+            <>
+              <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: '#FFFFFF40', borderTopColor: '#FFFFFF' }} />
+              Wird gespeichert...
+            </>
+          ) : (
+            <>
+              <Save className="w-5 h-5" />
+              Änderungen speichern
+            </>
+          )}
         </button>
       </div>
     </div>

@@ -171,15 +171,17 @@ function mapCuratorRow(row: any) {
       instagram: row.instagram_url || row.instagram || '',
       youtube: row.youtube_url || row.youtube || '',
       tiktok: row.tiktok_url || row.tiktok || '',
+      podcast: row.podcast_url || row.podcast || '',
       website: row.website_url || row.website || '',
     },
     visible: Boolean(row.visible),
-    verified: Boolean(row.visible),
+    verified: Boolean(row.verified),
     display_order: Number(row.display_order) || 0,
     status: row.status || 'draft',
     visibility: row.visibility || 'visible',
     publish_at: row.publish_at || null,
     unpublish_at: row.unpublish_at || null,
+    user_id: row.user_id || null,
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString(),
   };
@@ -565,6 +567,46 @@ export async function registerRoutes(
     log.warn('Could not create author tables:', err);
   }
 
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS curators (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255),
+        bio TEXT DEFAULT '',
+        avatar_url TEXT DEFAULT '',
+        website_url TEXT DEFAULT '',
+        instagram_url TEXT DEFAULT '',
+        tiktok_url TEXT DEFAULT '',
+        youtube_url TEXT DEFAULT '',
+        podcast_url TEXT DEFAULT '',
+        focus TEXT DEFAULT '',
+        visible BOOLEAN DEFAULT true,
+        verified BOOLEAN DEFAULT false,
+        display_order INTEGER DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'draft',
+        visibility VARCHAR(50) DEFAULT 'visible',
+        publish_at TIMESTAMPTZ,
+        unpublish_at TIMESTAMPTZ,
+        user_id UUID,
+        deleted_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_curators_slug ON curators(slug)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_curators_user_id ON curators(user_id)`);
+    try {
+      await queryDB(`ALTER TABLE curators ADD COLUMN IF NOT EXISTS podcast_url TEXT DEFAULT ''`);
+      await queryDB(`ALTER TABLE curators ADD COLUMN IF NOT EXISTS user_id UUID`);
+    } catch (alterErr) {
+      log.warn('Could not alter curators table:', alterErr);
+    }
+    log.info('curators table verified');
+  } catch (err) {
+    log.warn('Could not create curators table:', err);
+  }
+
   // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
@@ -683,6 +725,92 @@ export async function registerRoutes(
     } catch (error) {
       log.error('User avatar upload error:', error);
       return res.status(500).json({ ok: false, error: 'Upload fehlgeschlagen' });
+    }
+  });
+
+  // ==================================================================
+  // USER CURATOR PROFILE (accessible without admin auth)
+  // ==================================================================
+  app.get('/api/user/curator-profile/:curatorId', async (req: Request, res: Response) => {
+    try {
+      const { curatorId } = req.params;
+      const id = parseInt(curatorId, 10);
+      if (isNaN(id)) {
+        return res.status(400).json({ ok: false, error: 'Invalid curator ID' });
+      }
+      const result = await queryDB(
+        `SELECT * FROM curators WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+        [id]
+      );
+      if (result.rows.length === 0) {
+        return res.json({ ok: true, data: null });
+      }
+      return res.json({ ok: true, data: mapCuratorRow(result.rows[0]) });
+    } catch (error) {
+      log.error('Error loading user curator profile:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/user/curator-profile', async (req: Request, res: Response) => {
+    try {
+      const { curatorId, name, bio, focus, avatar_url, socials } = req.body;
+      if (!name || !name.trim()) {
+        return res.status(400).json({ ok: false, error: 'Name is required' });
+      }
+
+      const bioValue = (bio || '').trim();
+      const focusValue = (focus || '').trim();
+      const avatarValue = (avatar_url || '').trim();
+      const instagramValue = (socials?.instagram || '').trim();
+      const youtubeValue = (socials?.youtube || '').trim();
+      const tiktokValue = (socials?.tiktok || '').trim();
+      const podcastValue = (socials?.podcast || '').trim();
+      const websiteValue = (socials?.website || '').trim();
+
+      let result;
+      if (curatorId) {
+        const id = parseInt(curatorId, 10);
+        const slug = await generateUniqueSlug('curators', name.trim(), id);
+        result = await queryDB(
+          `UPDATE curators
+           SET name = $1, slug = $2, bio = $3, avatar_url = $4,
+               instagram_url = $5, youtube_url = $6, tiktok_url = $7,
+               podcast_url = $8, website_url = $9, focus = $10,
+               updated_at = NOW()
+           WHERE id = $11 AND deleted_at IS NULL
+           RETURNING *`,
+          [
+            name.trim(), slug, bioValue, avatarValue,
+            instagramValue, youtubeValue, tiktokValue,
+            podcastValue, websiteValue, focusValue,
+            id
+          ]
+        );
+        if (result.rows.length === 0) {
+          return res.status(404).json({ ok: false, error: 'Curator not found' });
+        }
+      } else {
+        const slug = await generateUniqueSlug('curators', name.trim(), null);
+        result = await queryDB(
+          `INSERT INTO curators (
+            name, slug, bio, avatar_url, instagram_url, youtube_url,
+            tiktok_url, podcast_url, website_url, focus,
+            visible, status, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, 'active', NOW(), NOW())
+           RETURNING *`,
+          [
+            name.trim(), slug, bioValue, avatarValue,
+            instagramValue, youtubeValue, tiktokValue,
+            podcastValue, websiteValue, focusValue
+          ]
+        );
+      }
+
+      return res.json({ ok: true, data: mapCuratorRow(result.rows[0]) });
+    } catch (error) {
+      log.error('Error saving user curator profile:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
     }
   });
 
