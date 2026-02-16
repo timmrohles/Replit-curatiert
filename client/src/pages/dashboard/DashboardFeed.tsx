@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useDashboardFeed, type FeedSectionType } from './DashboardFeedContext';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useDashboardFeed, type FeedSectionType, type ReadingStatus } from './DashboardFeedContext';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -13,6 +13,13 @@ import {
   Globe,
   Lock,
   BadgeCheck,
+  Plus,
+  X,
+  Search,
+  BookOpen,
+  BookMarked,
+  BookCheck,
+  ChevronDown,
 } from 'lucide-react';
 import type { FeedSectionConfig } from './DashboardFeedContext';
 import { BookCarouselItem, type BookCarouselItemData } from '../../components/book/BookCarouselItem';
@@ -126,14 +133,64 @@ const SECTION_TO_ENTITY_TYPES: Record<string, FrontendEntityType[]> = {
   followed_publishers: ['publisher'],
   followed_categories: ['category'],
   followed_tags: ['tag', 'genre', 'topic'],
+  followed_media: ['media'],
+  followed_awards: ['award'],
   followed_curators: ['creator'],
   recommendations: ['book'],
 };
 
+const READING_SECTIONS: ReadingStatus[] = ['currently_reading', 'already_read', 'want_to_read'];
+
+const READING_STATUS_OPTIONS: { id: ReadingStatus; label: string; icon: typeof BookOpen }[] = [
+  { id: 'currently_reading', label: 'Lese ich zurzeit', icon: BookOpen },
+  { id: 'already_read', label: 'Habe ich gelesen', icon: BookCheck },
+  { id: 'want_to_read', label: 'Möchte ich lesen', icon: BookMarked },
+];
+
+const SECTION_SEARCH_ENDPOINTS: Record<string, string> = {
+  favorites: '/api/books/search',
+  currently_reading: '/api/books/search',
+  already_read: '/api/books/search',
+  want_to_read: '/api/books/search',
+  reading_list: '/api/books/search',
+  followed_authors: '/api/books/search',
+  followed_publishers: '/api/books/search',
+  followed_categories: '/api/onix-tags',
+  followed_tags: '/api/onix-tags',
+  followed_media: '/api/onix-tags',
+  followed_awards: '/api/awards',
+  followed_curators: '/api/curators',
+  recommendations: '/api/books/search',
+};
+
+const SECTION_PLACEHOLDER: Record<string, string> = {
+  favorites: 'Buch suchen...',
+  currently_reading: 'Buch suchen...',
+  already_read: 'Buch suchen...',
+  want_to_read: 'Buch suchen...',
+  reading_list: 'Buch suchen...',
+  followed_authors: 'Autor:in suchen...',
+  followed_publishers: 'Verlag suchen...',
+  followed_categories: 'Kategorie suchen...',
+  followed_tags: 'Thema suchen...',
+  followed_media: 'Medienformat suchen...',
+  followed_awards: 'Auszeichnung suchen...',
+  followed_curators: 'Kurator:in suchen...',
+  recommendations: 'Buch suchen...',
+};
+
+interface TagData {
+  label: string;
+  color: string;
+  entityId: string;
+  entityType: FrontendEntityType;
+  image?: string;
+}
+
 function favoritesToTags(
   favorites: FavoriteItem[],
   sectionId: string
-): Array<{ label: string; color: string; entityId: string; entityType: FrontendEntityType; image?: string }> {
+): TagData[] {
   const entityTypes = SECTION_TO_ENTITY_TYPES[sectionId] || [];
   const matched = favorites.filter((fav) => entityTypes.includes(fav.type));
   return matched.map((fav, i) => ({
@@ -143,6 +200,302 @@ function favoritesToTags(
     entityType: fav.type,
     image: fav.image,
   }));
+}
+
+interface SuggestionItem {
+  id: string;
+  title: string;
+  type: FrontendEntityType;
+  subtitle?: string;
+  image?: string;
+  color?: string;
+}
+
+function mapApiResultToSuggestions(data: unknown, sectionId: string): SuggestionItem[] {
+  const items: SuggestionItem[] = [];
+  const list = (data as { data?: unknown[] })?.data || (Array.isArray(data) ? data : []);
+  if (!Array.isArray(list)) return items;
+
+  const entityTypes = SECTION_TO_ENTITY_TYPES[sectionId] || [];
+  const primaryType = entityTypes[0] || 'tag';
+
+  for (const item of list.slice(0, 20)) {
+    const raw = item as Record<string, unknown>;
+    if (primaryType === 'book') {
+      items.push({
+        id: String(raw.id || raw.isbn || ''),
+        title: String(raw.title || raw.name || ''),
+        type: 'book',
+        subtitle: String(raw.author || raw.contributors || ''),
+        image: raw.coverImage as string | undefined,
+      });
+    } else if (primaryType === 'author') {
+      const name = String(raw.contributors || raw.author || raw.name || '');
+      if (name) {
+        items.push({
+          id: `author-${name.toLowerCase().replace(/\s+/g, '-')}`,
+          title: name,
+          type: 'author',
+        });
+      }
+    } else if (primaryType === 'publisher') {
+      const name = String(raw.publisher || raw.name || '');
+      if (name) {
+        items.push({
+          id: `publisher-${name.toLowerCase().replace(/\s+/g, '-')}`,
+          title: name,
+          type: 'publisher',
+        });
+      }
+    } else if (primaryType === 'award') {
+      items.push({
+        id: String(raw.id || ''),
+        title: String(raw.name || raw.title || ''),
+        type: 'award',
+        color: String(raw.color || 'var(--color-saffron, #e8a838)'),
+      });
+    } else if (primaryType === 'creator') {
+      items.push({
+        id: String(raw.id || ''),
+        title: String(raw.name || ''),
+        type: 'creator',
+        subtitle: String(raw.focus || raw.bio || ''),
+        image: raw.avatar as string | undefined,
+      });
+    } else {
+      items.push({
+        id: String(raw.id || ''),
+        title: String(raw.displayName || raw.name || raw.title || ''),
+        type: primaryType,
+        color: String(raw.color || ''),
+      });
+    }
+  }
+  return items;
+}
+
+function TagPickerDropdown({
+  sectionId,
+  onAdd,
+  existingIds,
+}: {
+  sectionId: string;
+  onAdd: (item: FavoriteItem) => void;
+  existingIds: Set<string>;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<SuggestionItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setQuery('');
+        setSuggestions([]);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  const searchItems = useCallback(async (searchQuery: string) => {
+    if (searchQuery.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    setIsSearching(true);
+    const endpoint = SECTION_SEARCH_ENDPOINTS[sectionId] || '/api/onix-tags';
+
+    try {
+      const separator = endpoint.includes('?') ? '&' : '?';
+      const url = `${endpoint}${separator}q=${encodeURIComponent(searchQuery)}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const mapped = mapApiResultToSuggestions(data, sectionId);
+        setSuggestions(mapped.filter((s) => !existingIds.has(s.id)));
+      }
+    } catch {
+      setSuggestions([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [sectionId, existingIds]);
+
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchItems(value), 300);
+  }, [searchItems]);
+
+  const handleSelect = useCallback((item: SuggestionItem) => {
+    onAdd({
+      id: item.id,
+      type: item.type,
+      title: item.title,
+      subtitle: item.subtitle,
+      image: item.image,
+      color: item.color,
+    });
+    setQuery('');
+    setSuggestions([]);
+    setIsOpen(false);
+  }, [onAdd]);
+
+  return (
+    <div className="relative inline-block" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-8 h-8 rounded-full inline-flex items-center justify-center border-2 border-dashed transition-colors"
+        style={{ borderColor: '#9CA3AF', color: '#9CA3AF' }}
+        data-testid={`button-add-tag-${sectionId}`}
+      >
+        <Plus className="w-4 h-4" />
+      </button>
+
+      {isOpen && (
+        <div
+          className="absolute left-0 top-full mt-2 w-72 rounded-lg shadow-xl border z-50"
+          style={{ backgroundColor: 'var(--color-beige, #faf6f1)', borderColor: '#E5E7EB' }}
+        >
+          <div className="p-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9CA3AF' }} />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => handleQueryChange(e.target.value)}
+                placeholder={SECTION_PLACEHOLDER[sectionId] || 'Suchen...'}
+                className="w-full pl-8 pr-3 py-2 rounded-md border text-sm"
+                style={{ borderColor: '#E5E7EB', backgroundColor: 'white' }}
+                data-testid={`input-search-tag-${sectionId}`}
+              />
+            </div>
+          </div>
+          {isSearching && (
+            <div className="px-3 py-2 text-sm" style={{ color: '#9CA3AF' }}>
+              Suche...
+            </div>
+          )}
+          {!isSearching && suggestions.length > 0 && (
+            <div className="max-h-48 overflow-y-auto">
+              {suggestions.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleSelect(item)}
+                  className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 transition-colors"
+                  style={{ color: '#3A3A3A' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  data-testid={`suggestion-${item.id}`}
+                >
+                  {item.image && (
+                    <img src={item.image} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{item.title}</div>
+                    {item.subtitle && (
+                      <div className="truncate text-xs" style={{ color: '#9CA3AF' }}>{item.subtitle}</div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+          {!isSearching && query.length >= 2 && suggestions.length === 0 && (
+            <div className="px-3 py-2 text-sm" style={{ color: '#9CA3AF' }}>
+              Keine Ergebnisse
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReadingStatusDropdown({
+  bookId,
+  bookTitle,
+  currentStatus,
+  onStatusChange,
+}: {
+  bookId: string;
+  bookTitle: string;
+  currentStatus: ReadingStatus;
+  onStatusChange: (bookId: string, bookTitle: string, newStatus: ReadingStatus) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const otherStatuses = READING_STATUS_OPTIONS.filter((s) => s.id !== currentStatus);
+
+  return (
+    <div className="relative inline-block" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-0.5 rounded-full transition-colors"
+        style={{ color: '#ffffff' }}
+        data-testid={`button-reading-status-${bookId}`}
+      >
+        <ChevronDown className="w-3.5 h-3.5" />
+      </button>
+      {isOpen && (
+        <div
+          className="absolute right-0 top-full mt-1 w-52 rounded-lg shadow-xl border z-50"
+          style={{ backgroundColor: 'var(--color-beige, #faf6f1)', borderColor: '#E5E7EB' }}
+        >
+          <div className="py-1">
+            <div className="px-3 py-1.5 text-xs font-semibold" style={{ color: '#9CA3AF' }}>
+              Status ändern
+            </div>
+            {otherStatuses.map((status) => {
+              const StatusIcon = status.icon;
+              return (
+                <button
+                  key={status.id}
+                  onClick={() => {
+                    onStatusChange(bookId, bookTitle, status.id);
+                    setIsOpen(false);
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 transition-colors"
+                  style={{ color: '#3A3A3A' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  data-testid={`reading-status-option-${status.id}-${bookId}`}
+                >
+                  <StatusIcon className="w-4 h-4 flex-shrink-0" style={{ color: '#247ba0' }} />
+                  <span>{status.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 const SORT_OPTIONS = [
@@ -250,12 +603,30 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
   onTogglePublic: () => void;
 }) {
   const [sortBy, setSortBy] = useState('popularity');
-  const { favorites } = useFavorites();
+  const { favorites, removeFavorite, addFavorite } = useFavorites();
   const isCuratorSection = section.id === 'followed_curators';
+  const isReadingSection = READING_SECTIONS.includes(section.id as ReadingStatus);
   const books = useMemo(() => getMockBooksForSection(section.id), [section.id]);
   const tags = useMemo(() => favoritesToTags(favorites, section.id), [favorites, section.id]);
+  const existingIds = useMemo(() => new Set(tags.map((t) => t.entityId)), [tags]);
   const curatorIndex = 0;
   const curator = MOCK_CURATORS[curatorIndex];
+
+  const handleAddTag = useCallback((item: FavoriteItem) => {
+    addFavorite(item);
+  }, [addFavorite]);
+
+  const handleRemoveTag = useCallback((entityId: string) => {
+    removeFavorite(entityId);
+  }, [removeFavorite]);
+
+  const handleReadingStatusChange = useCallback((_bookId: string, bookTitle: string, newStatus: ReadingStatus) => {
+    // Reading status is conceptual - we track it as the section the book tag belongs to
+    // Currently tags are entity-type based, so this is a visual indicator
+    // Future: store reading_status per book in backend
+    void bookTitle;
+    void newStatus;
+  }, []);
 
   return (
     <section
@@ -298,56 +669,66 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </h3>
         </div>
 
-        {tags.length > 0 && (
-          <div className="w-full mt-4 mb-4">
-            <div className="flex gap-2 flex-wrap items-start">
-              {isCuratorSection && curator && (
-                <div
-                  role="group"
-                  className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
-                  style={{ backgroundColor: 'var(--color-saffron, #e8a838)' }}
-                >
-                  <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
-                    {curator.name}
-                  </Text>
-                  <LikeButton
-                    entityId={`curator-${curator.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    entityType="creator"
-                    entityTitle={curator.name}
-                    entityImage={curator.avatar}
-                    variant="minimal"
-                    size="sm"
-                    iconColor="#ffffff"
-                    backgroundColor="var(--color-saffron)"
+        <div className="w-full mt-4 mb-4">
+          <div className="flex gap-2 flex-wrap items-center">
+            {isCuratorSection && curator && (
+              <div
+                role="group"
+                className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
+                style={{ backgroundColor: 'var(--color-saffron, #e8a838)' }}
+              >
+                <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                  {curator.name}
+                </Text>
+                <LikeButton
+                  entityId={`curator-${curator.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  entityType="creator"
+                  entityTitle={curator.name}
+                  entityImage={curator.avatar}
+                  variant="minimal"
+                  size="sm"
+                  iconColor="#ffffff"
+                  backgroundColor="var(--color-saffron)"
+                />
+              </div>
+            )}
+            {tags.map((tag) => (
+              <div
+                role="group"
+                key={tag.entityId}
+                className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg cursor-pointer transition-all duration-200 select-none hover-elevate"
+                style={{ backgroundColor: tag.color }}
+              >
+                <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                  {tag.label}
+                </Text>
+                {isReadingSection && (
+                  <ReadingStatusDropdown
+                    bookId={tag.entityId}
+                    bookTitle={tag.label}
+                    currentStatus={section.id as ReadingStatus}
+                    onStatusChange={handleReadingStatusChange}
                   />
-                </div>
-              )}
-              {tags.map((tag) => (
-                <div
-                  role="group"
-                  key={tag.entityId}
-                  className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg cursor-pointer transition-all duration-200 select-none hover-elevate"
-                  style={{ backgroundColor: tag.color }}
+                )}
+                <button
+                  onClick={() => handleRemoveTag(tag.entityId)}
+                  className="p-0.5 rounded-full transition-colors"
+                  style={{ color: 'rgba(255,255,255,0.7)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                  data-testid={`button-remove-tag-${tag.entityId}`}
                 >
-                  <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
-                    {tag.label}
-                  </Text>
-                  <LikeButton
-                    entityId={tag.entityId}
-                    entityType={tag.entityType}
-                    entityTitle={tag.label}
-                    entityImage={tag.image}
-                    entityColor={tag.color}
-                    variant="minimal"
-                    size="sm"
-                    iconColor="#ffffff"
-                    backgroundColor={tag.color}
-                  />
-                </div>
-              ))}
-            </div>
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+            <TagPickerDropdown
+              sectionId={section.id}
+              onAdd={handleAddTag}
+              existingIds={existingIds}
+            />
           </div>
-        )}
+        </div>
 
         {isCuratorSection && curator && (
           <div className="w-full mt-4 mb-4">
