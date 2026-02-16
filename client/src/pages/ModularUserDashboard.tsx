@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from '../utils/routing';
@@ -13,10 +13,6 @@ import {
   Calendar, 
   BarChart3, 
   BookOpen,
-  LogOut,
-  X,
-  ChevronRight,
-  ChevronDown,
   Home,
   ListChecks,
   Megaphone,
@@ -54,6 +50,8 @@ import { AuthorRequest } from './dashboard/AuthorRequest';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { Breadcrumb } from '../components/layout/Breadcrumb';
+import { DashboardFeedProvider } from './dashboard/DashboardFeedContext';
+import { DashboardFeed } from './dashboard/DashboardFeed';
 
 const API_BASE = '/api';
 
@@ -107,17 +105,12 @@ export default function ModularUserDashboard() {
   
   const userId = 'demo-user-123';
   const userName = 'Max Mustermann';
+  const roles = ['Leser:in'];
+  const progress = 35;
   
   const [activeSection, setActiveSection] = useState<DashboardSection>('home');
   const [userModules, setUserModules] = useState<UserModule[]>([]);
   const [loadingModules, setLoadingModules] = useState(true);
-  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    core: true,
-    creator: false,
-    author: false
-  });
-  const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadUserModules();
@@ -131,15 +124,6 @@ export default function ModularUserDashboard() {
       setActiveSection('home');
     }
   }, [location]);
-
-  useEffect(() => {
-    if (mobileDrawerOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [mobileDrawerOpen]);
 
   const loadUserModules = async () => {
     try {
@@ -169,60 +153,54 @@ export default function ModularUserDashboard() {
 
   const navigateToSection = (section: DashboardSection) => {
     setActiveSection(section);
-    setMobileDrawerOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleLogout = () => {
-    navigate('/');
-  };
-
-  const toggleGroup = (group: string) => {
-    setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
-  };
-
   const coreNavItems: NavItem[] = [
-    { id: 'home', label: t('dashboard.overview'), icon: Home, group: 'core' },
-    { id: 'profile', label: t('dashboard.myData'), icon: User, group: 'core' },
-    { id: 'ratings', label: t('dashboard.ratings'), icon: Star, group: 'core' },
-    { id: 'reviews', label: t('dashboard.reviews'), icon: MessageSquare, group: 'core' },
-    { id: 'follows', label: t('dashboard.favoritesList'), icon: Heart, group: 'core' },
-    { id: 'notifications', label: t('dashboard.notifications'), icon: Bell, group: 'core' },
-    { id: 'privacy', label: t('dashboard.privacy'), icon: Lock, group: 'core' },
-    { id: 'settings', label: t('dashboard.settings'), icon: Settings, group: 'core' },
+    { id: 'home', label: 'Feed', icon: Home, group: 'core' },
+    { id: 'profile', label: 'Profil', icon: User, group: 'core' },
+    { id: 'ratings', label: 'Bewertungen', icon: Star, group: 'core' },
+    { id: 'reviews', label: 'Rezensionen', icon: MessageSquare, group: 'core' },
+    { id: 'follows', label: 'Favoriten', icon: Heart, group: 'core' },
+    { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, group: 'core' },
+    { id: 'settings', label: 'Einstellungen', icon: Settings, group: 'core' },
   ];
 
   const creatorNavItems: NavItem[] = [
-    { id: 'creator-storefront', label: t('dashboard.creatorBookstore'), icon: Store, moduleKey: 'creator_storefront', group: 'creator' },
-    { id: 'creator-curations', label: t('dashboard.creatorCurations'), icon: BookOpen, moduleKey: 'creator_curations', group: 'creator' },
-    { id: 'creator-reviews', label: t('dashboard.creatorReviews'), icon: MessageSquare, moduleKey: 'creator_reviews', group: 'creator' },
-    { id: 'creator-topics', label: t('dashboard.creatorTopics'), icon: ListChecks, moduleKey: 'creator_topics', group: 'creator' },
-    { id: 'creator-campaigns', label: t('dashboard.creatorCampaigns'), icon: Megaphone, moduleKey: 'creator_campaigns', group: 'creator' },
-    { id: 'creator-events', label: t('dashboard.creatorEvents'), icon: Calendar, moduleKey: 'creator_events', group: 'creator' },
-    { id: 'creator-analytics', label: t('dashboard.creatorAnalytics'), icon: BarChart3, moduleKey: 'creator_analytics', group: 'creator' },
+    { id: 'creator-storefront', label: 'Buchhandlung', icon: Store, moduleKey: 'creator_storefront', group: 'creator' },
+    { id: 'creator-curations', label: 'Kurationen', icon: BookOpen, moduleKey: 'creator_curations', group: 'creator' },
+    { id: 'creator-reviews', label: 'Rezensionen', icon: MessageSquare, moduleKey: 'creator_reviews', group: 'creator' },
+    { id: 'creator-topics', label: 'Themen', icon: ListChecks, moduleKey: 'creator_topics', group: 'creator' },
+    { id: 'creator-campaigns', label: 'Kampagnen', icon: Megaphone, moduleKey: 'creator_campaigns', group: 'creator' },
+    { id: 'creator-events', label: 'Events', icon: Calendar, moduleKey: 'creator_events', group: 'creator' },
+    { id: 'creator-analytics', label: 'Statistiken', icon: BarChart3, moduleKey: 'creator_analytics', group: 'creator' },
   ];
 
   const authorNavItems: NavItem[] = [
-    { id: 'author-storefront', label: t('dashboard.authorBookstore'), icon: Store, moduleKey: 'author_storefront', group: 'author' },
-    { id: 'author-books', label: t('dashboard.authorBooks'), icon: BookOpen, moduleKey: 'author_books', group: 'author' },
-    { id: 'author-community', label: t('dashboard.authorCommunity'), icon: Users, moduleKey: 'author_community', group: 'author' },
-    { id: 'author-bookclub', label: t('dashboard.authorBookclub'), icon: Gift, moduleKey: 'author_bookclub', group: 'author' },
-    { id: 'author-members', label: t('dashboard.authorMembers'), icon: Users, moduleKey: 'author_members', group: 'author' },
-    { id: 'author-bonuscontent', label: t('dashboard.authorBonuscontent'), icon: Gift, moduleKey: 'author_bonuscontent', group: 'author' },
-    { id: 'author-newsletter', label: t('dashboard.authorNewsletter'), icon: Mail, moduleKey: 'author_newsletter', group: 'author' },
-    { id: 'author-events', label: t('dashboard.authorEvents'), icon: Calendar, moduleKey: 'author_events', group: 'author' },
-    { id: 'author-statistics', label: t('dashboard.authorStatistics'), icon: BarChart3, moduleKey: 'author_statistics', group: 'author' },
+    { id: 'author-storefront', label: 'Buchhandlung', icon: Store, moduleKey: 'author_storefront', group: 'author' },
+    { id: 'author-books', label: 'Bücher', icon: BookOpen, moduleKey: 'author_books', group: 'author' },
+    { id: 'author-community', label: 'Community', icon: Users, moduleKey: 'author_community', group: 'author' },
+    { id: 'author-bookclub', label: 'Buchklub', icon: Gift, moduleKey: 'author_bookclub', group: 'author' },
+    { id: 'author-members', label: 'Mitglieder', icon: Users, moduleKey: 'author_members', group: 'author' },
+    { id: 'author-bonuscontent', label: 'Bonusinhalte', icon: Gift, moduleKey: 'author_bonuscontent', group: 'author' },
+    { id: 'author-newsletter', label: 'Newsletter', icon: Mail, moduleKey: 'author_newsletter', group: 'author' },
+    { id: 'author-events', label: 'Events', icon: Calendar, moduleKey: 'author_events', group: 'author' },
+    { id: 'author-statistics', label: 'Statistiken', icon: BarChart3, moduleKey: 'author_statistics', group: 'author' },
   ];
 
   const availableCreatorItems = creatorNavItems.filter(item => !item.moduleKey || hasModule(item.moduleKey));
   const availableAuthorItems = authorNavItems.filter(item => !item.moduleKey || hasModule(item.moduleKey));
   const hasAnyAuthorModule = authorNavItems.some(item => item.moduleKey && hasModule(item.moduleKey));
+  const hasAnyCreatorModule = creatorNavItems.some(item => item.moduleKey && hasModule(item.moduleKey));
 
-  const authorRequestItem: NavItem = { id: 'author-request', label: t('dashboard.authorRequest'), icon: PenTool, group: 'author' };
+  const authorRequestItem: NavItem = { id: 'author-request', label: 'Autor:in werden', icon: PenTool, group: 'author' };
 
-  const allNavItems = [...coreNavItems, ...availableCreatorItems, ...(hasAnyAuthorModule ? availableAuthorItems : [authorRequestItem])];
+  const allNavItems = [
+    ...coreNavItems, 
+    ...availableCreatorItems, 
+    ...(hasAnyAuthorModule ? availableAuthorItems : [authorRequestItem])
+  ];
   const currentNavItem = allNavItems.find(item => item.id === activeSection);
-
 
   const getBreadcrumbItems = () => {
     const items: Array<{ label: string; href?: string; onClick?: () => void }> = [
@@ -235,226 +213,12 @@ export default function ModularUserDashboard() {
     return items;
   };
 
-  const renderNavButton = (item: NavItem, accentColor: string) => {
-    const Icon = item.icon;
-    const isActive = activeSection === item.id;
-    return (
-      <button
-        key={item.id}
-        data-testid={`nav-${item.id}`}
-        onClick={() => navigateToSection(item.id)}
-        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 text-left"
-        style={{
-          backgroundColor: isActive ? accentColor : 'transparent',
-          color: isActive ? '#FFFFFF' : '#3A3A3A'
-        }}
-      >
-        <Icon className="w-[18px] h-[18px] flex-shrink-0" />
-        <span className="text-sm truncate">{item.label}</span>
-        {isActive && <ChevronRight className="w-4 h-4 ml-auto flex-shrink-0" />}
-      </button>
-    );
-  };
-
-  const renderNavGroup = (title: string, items: NavItem[], groupKey: string, accentColor: string) => {
-    if (items.length === 0) return null;
-    const isExpanded = expandedGroups[groupKey];
-    const hasActiveChild = items.some(item => item.id === activeSection);
-    const showExpanded = isExpanded || hasActiveChild;
-
-    return (
-      <div className="mb-2" key={groupKey}>
-        <button
-          onClick={() => toggleGroup(groupKey)}
-          className="w-full flex items-center justify-between px-3 py-2 text-xs uppercase tracking-wider rounded-md transition-colors"
-          style={{ color: '#6B7280' }}
-          data-testid={`nav-group-${groupKey}`}
-        >
-          <span>{title}</span>
-          <ChevronDown 
-            className="w-3.5 h-3.5 transition-transform duration-200" 
-            style={{ transform: showExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
-          />
-        </button>
-        {showExpanded && (
-          <div className="mt-1 space-y-0.5">
-            {items.map(item => renderNavButton(item, accentColor))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const renderDesktopSidebar = () => (
-    <aside 
-      className="hidden lg:flex flex-col w-64 border-r flex-shrink-0 sticky top-0 h-screen overflow-hidden"
-      style={{ backgroundColor: '#F9FAFB', borderColor: '#E5E7EB' }}
-    >
-      <div className="p-4 border-b" style={{ borderColor: '#E5E7EB' }}>
-        <div className="flex items-center gap-3">
-          <div 
-            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-          >
-            <User className="w-5 h-5" />
-          </div>
-          <div className="min-w-0">
-            <div className="font-medium text-sm truncate" style={{ color: '#3A3A3A' }}>
-              {userName}
-            </div>
-            <div className="text-xs" style={{ color: '#9CA3AF' }}>
-              {t('dashboard.memberSince', { year: 2024 })}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-3 space-y-1">
-        {renderNavGroup(t('dashboard.groupMyArea'), coreNavItems, 'core', '#247ba0')}
-        {availableCreatorItems.length > 0 && renderNavGroup(t('dashboard.groupCreator'), availableCreatorItems, 'creator', '#10B981')}
-        {hasAnyAuthorModule 
-          ? renderNavGroup(t('dashboard.groupAuthor'), availableAuthorItems, 'author', '#F59E0B')
-          : renderNavGroup(t('dashboard.groupAuthor'), [authorRequestItem], 'author', '#F59E0B')
-        }
-      </div>
-
-      <div className="p-3 border-t" style={{ borderColor: '#E5E7EB' }}>
-        <button
-          onClick={() => navigate('/')}
-          data-testid="nav-back-home"
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 mb-1"
-          style={{ color: '#247ba0' }}
-        >
-          <Home className="w-[18px] h-[18px]" />
-          <span className="text-sm">{t('common.backToHome')}</span>
-        </button>
-        <button
-          onClick={handleLogout}
-          data-testid="button-logout"
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150"
-          style={{ color: '#EF4444' }}
-        >
-          <LogOut className="w-[18px] h-[18px]" />
-          <span className="text-sm">{t('dashboard.logout')}</span>
-        </button>
-      </div>
-    </aside>
-  );
-
-
-  const renderMobileDrawer = () => {
-    if (!mobileDrawerOpen) return null;
-    return (
-      <div className="lg:hidden fixed inset-0 z-[60]">
-        <div 
-          className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-          onClick={() => setMobileDrawerOpen(false)} 
-        />
-        <div 
-          ref={drawerRef}
-          className="absolute bottom-0 left-0 right-0 rounded-t-2xl overflow-hidden animate-slide-up"
-          style={{ backgroundColor: '#FFFFFF', maxHeight: '85vh' }}
-        >
-          <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: '#E5E7EB' }}>
-            <div className="flex items-center gap-3">
-              <div 
-                className="w-9 h-9 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-              >
-                <User className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="font-medium text-sm" style={{ color: '#3A3A3A' }}>{userName}</div>
-                <div className="text-xs" style={{ color: '#9CA3AF' }}>{t('dashboard.memberSince', { year: 2024 })}</div>
-              </div>
-            </div>
-            <button
-              onClick={() => setMobileDrawerOpen(false)}
-              data-testid="button-close-drawer"
-              className="p-2 rounded-full"
-              style={{ backgroundColor: '#F3F4F6' }}
-            >
-              <X className="w-5 h-5" style={{ color: '#6B7280' }} />
-            </button>
-          </div>
-
-          <div className="overflow-y-auto p-3" style={{ maxHeight: 'calc(85vh - 72px)' }}>
-            <div className="mb-3">
-              <div className="px-3 py-1.5 text-xs uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
-                {t('dashboard.groupMyArea')}
-              </div>
-              <div className="space-y-0.5">
-                {coreNavItems.map(item => renderNavButton(item, '#247ba0'))}
-              </div>
-            </div>
-
-            {availableCreatorItems.length > 0 && (
-              <div className="mb-3">
-                <div className="px-3 py-1.5 text-xs uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
-                  {t('dashboard.groupCreator')}
-                </div>
-                <div className="space-y-0.5">
-                  {availableCreatorItems.map(item => renderNavButton(item, '#10B981'))}
-                </div>
-              </div>
-            )}
-
-            <div className="mb-3">
-              <div className="px-3 py-1.5 text-xs uppercase tracking-wider" style={{ color: '#9CA3AF' }}>
-                {t('dashboard.groupAuthor')}
-              </div>
-              <div className="space-y-0.5">
-                {hasAnyAuthorModule
-                  ? availableAuthorItems.map(item => renderNavButton(item, '#F59E0B'))
-                  : renderNavButton(authorRequestItem, '#F59E0B')
-                }
-              </div>
-            </div>
-
-            <div className="pt-3 mt-2 border-t space-y-0.5" style={{ borderColor: '#E5E7EB' }}>
-              <button
-                onClick={() => { setMobileDrawerOpen(false); navigate('/'); }}
-                data-testid="mobile-nav-home"
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg"
-                style={{ color: '#247ba0' }}
-              >
-                <Home className="w-[18px] h-[18px]" />
-                <span className="text-sm">{t('common.backToHome')}</span>
-              </button>
-              <button
-                onClick={handleLogout}
-                data-testid="mobile-logout"
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg"
-                style={{ color: '#EF4444' }}
-              >
-                <LogOut className="w-[18px] h-[18px]" />
-                <span className="text-sm">{t('dashboard.logout')}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderMobileHeader = () => (
-    <div 
-      className="lg:hidden sticky top-0 z-40 border-b px-4 py-3 flex items-center gap-3"
-      style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}
-    >
-      <div 
-        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-      >
-        {currentNavItem ? <currentNavItem.icon className="w-4 h-4" /> : <Home className="w-4 h-4" />}
-      </div>
-      <div className="min-w-0 flex-1">
-        <h1 className="text-base font-semibold truncate" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-          {currentNavItem?.label || 'Dashboard'}
-        </h1>
-      </div>
-    </div>
-  );
+  const quickStats = [
+    { label: 'Bewertungen', value: '0', icon: Star },
+    { label: 'Rezensionen', value: '0', icon: MessageSquare },
+    { label: 'Favoriten', value: '0', icon: Heart },
+    { label: 'Leseliste', value: '0', icon: BookOpen },
+  ];
 
   const FeatureLockedMessage = ({ feature }: { feature: string }) => (
     <div className="p-4 bg-red-50 rounded-lg text-sm text-red-600">
@@ -466,7 +230,7 @@ export default function ModularUserDashboard() {
     try {
       switch (activeSection) {
         case 'home':
-          return <DashboardHome />;
+          return <DashboardFeed />;
         case 'profile':
           return <DashboardProfile />;
         case 'ratings':
@@ -482,7 +246,7 @@ export default function ModularUserDashboard() {
         case 'settings':
           return <DashboardSettings />;
         case 'creator-storefront':
-          return hasModule('creator_storefront') ? <CreatorStorefront /> : <FeatureLockedMessage feature="Bookstore" />;
+          return hasModule('creator_storefront') ? <CreatorStorefront /> : <FeatureLockedMessage feature="Buchhandlung" />;
         case 'creator-curations':
           return hasModule('creator_curations') ? <CreatorCurations /> : <FeatureLockedMessage feature="Kuratierte Inhalte" />;
         case 'creator-reviews':
@@ -494,11 +258,11 @@ export default function ModularUserDashboard() {
         case 'creator-events':
           return hasModule('creator_events') ? <CreatorEvents /> : <FeatureLockedMessage feature="Events" />;
         case 'creator-analytics':
-          return hasModule('creator_analytics') ? <CreatorAnalytics /> : <FeatureLockedMessage feature="Analytics" />;
+          return hasModule('creator_analytics') ? <CreatorAnalytics /> : <FeatureLockedMessage feature="Statistiken" />;
         case 'author-request':
           return <AuthorRequest userId={userId} />;
         case 'author-storefront':
-          return hasModule('author_storefront') ? <AuthorStorefront /> : <FeatureLockedMessage feature="Bookstore" />;
+          return hasModule('author_storefront') ? <AuthorStorefront /> : <FeatureLockedMessage feature="Buchhandlung" />;
         case 'author-books':
           return hasModule('author_books') ? <AuthorBooks /> : <FeatureLockedMessage feature="Bücher" />;
         case 'author-community':
@@ -514,9 +278,13 @@ export default function ModularUserDashboard() {
         case 'author-events':
           return hasModule('author_events') ? <AuthorEvents /> : <FeatureLockedMessage feature="Events" />;
         case 'author-statistics':
-          return hasModule('author_statistics') ? <AuthorStatistics /> : <FeatureLockedMessage feature="Analytics" />;
+          return hasModule('author_statistics') ? <AuthorStatistics /> : <FeatureLockedMessage feature="Statistiken" />;
         default:
-          return <DashboardHome />;
+          return (
+            <div id="feed-container" className="rounded-lg p-6 border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+              <p className="text-sm" style={{ color: '#6B7280' }}>Feed wird geladen...</p>
+            </div>
+          );
       }
     } catch {
       return (
@@ -540,6 +308,39 @@ export default function ModularUserDashboard() {
     }
   };
 
+  const renderTabButton = (item: NavItem, isGroupLabel?: boolean) => {
+    const Icon = item.icon;
+    const isActive = activeSection === item.id;
+    
+    if (isGroupLabel) {
+      return (
+        <span
+          key={`group-${item.group}`}
+          className="flex items-center px-3 py-2 text-xs uppercase tracking-wider whitespace-nowrap flex-shrink-0"
+          style={{ color: '#9CA3AF', fontFamily: 'Inter' }}
+        >
+          {item.label}
+        </span>
+      );
+    }
+
+    return (
+      <button
+        key={item.id}
+        data-testid={`tab-${item.id}`}
+        onClick={() => navigateToSection(item.id)}
+        className="flex items-center gap-1.5 px-3 py-2.5 whitespace-nowrap flex-shrink-0 transition-opacity duration-150 border-b-2"
+        style={{
+          borderColor: isActive ? '#247ba0' : 'transparent',
+          color: isActive ? '#247ba0' : '#6B7280',
+        }}
+      >
+        <Icon className="w-4 h-4 flex-shrink-0" />
+        <span className="text-sm">{item.label}</span>
+      </button>
+    );
+  };
+
   if (loadingModules) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F9FAFB' }}>
@@ -549,32 +350,135 @@ export default function ModularUserDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--header-bg, #F9FAFB)' }}>
-      <Header />
-      
-      <div className="hidden lg:block">
+    <DashboardFeedProvider>
+      <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--header-bg, #F9FAFB)' }}>
+        <Header />
+        
         <Breadcrumb items={getBreadcrumbItems()} />
-      </div>
 
-      <div className="flex flex-1 min-h-0">
-        {renderDesktopSidebar()}
+        <main className="flex-1 pb-20 lg:pb-0">
+          <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
 
-        <div className="flex-1 flex flex-col min-w-0">
-          {renderMobileHeader()}
-          
-          <main className="flex-1 pb-20 lg:pb-0">
-            <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+            <section
+              className="rounded-lg p-5 md:p-6 border"
+              style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}
+              data-testid="hero-profile-card"
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
+                  data-testid="avatar-user"
+                >
+                  <User className="w-7 h-7 md:w-8 md:h-8" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h1
+                    className="text-xl md:text-2xl mb-1"
+                    style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}
+                    data-testid="text-username"
+                  >
+                    {userName}
+                  </h1>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {roles.map((role, index) => (
+                      <span
+                        key={index}
+                        className="px-2.5 py-0.5 rounded-full text-xs text-white"
+                        style={{ backgroundColor: '#247ba0' }}
+                        data-testid={`badge-role-${index}`}
+                      >
+                        {role}
+                      </span>
+                    ))}
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-xs sm:text-sm" style={{ color: '#6B7280' }}>
+                        Profil {progress}% vollständig
+                      </span>
+                      <span className="text-xs sm:text-sm font-medium" style={{ color: '#247ba0' }}>
+                        {progress}%
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#F3F4F6' }}>
+                      <div
+                        className="h-full transition-all duration-500 rounded-full"
+                        style={{
+                          width: `${progress}%`,
+                          background: 'linear-gradient(to right, #247ba0, #70c1b3)'
+                        }}
+                        data-testid="progress-bar"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t" style={{ borderColor: '#E5E7EB' }}>
+                {quickStats.map((stat, index) => {
+                  const StatIcon = stat.icon;
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs"
+                      style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}
+                      data-testid={`stat-pill-${stat.label.toLowerCase()}`}
+                    >
+                      <StatIcon className="w-3.5 h-3.5" style={{ color: '#247ba0' }} />
+                      <span>{stat.value}</span>
+                      <span>{stat.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <nav
+              className="overflow-x-auto border-b scrollbar-hide"
+              style={{ borderColor: '#E5E7EB' }}
+              data-testid="tab-navigation"
+            >
+              <div className="flex items-center min-w-max">
+                {coreNavItems.map(item => renderTabButton(item))}
+
+                {hasAnyCreatorModule && availableCreatorItems.length > 0 && (
+                  <>
+                    <span
+                      className="flex items-center px-3 py-2 text-xs uppercase tracking-wider whitespace-nowrap flex-shrink-0"
+                      style={{ color: '#9CA3AF' }}
+                    >
+                      Kurator:in
+                    </span>
+                    {availableCreatorItems.map(item => renderTabButton(item))}
+                  </>
+                )}
+
+                {hasAnyAuthorModule ? (
+                  <>
+                    <span
+                      className="flex items-center px-3 py-2 text-xs uppercase tracking-wider whitespace-nowrap flex-shrink-0"
+                      style={{ color: '#9CA3AF' }}
+                    >
+                      Autor:in
+                    </span>
+                    {availableAuthorItems.map(item => renderTabButton(item))}
+                  </>
+                ) : (
+                  renderTabButton(authorRequestItem)
+                )}
+              </div>
+            </nav>
+
+            <div data-testid="dashboard-content">
               {renderContent()}
             </div>
-          </main>
-        </div>
-      </div>
-      
-      <div className="hidden lg:block">
+
+          </div>
+        </main>
+
         <Footer />
       </div>
-
-      {renderMobileDrawer()}
-    </div>
+    </DashboardFeedProvider>
   );
 }
