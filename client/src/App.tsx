@@ -65,6 +65,7 @@ const UeberUnsPage = React.lazy(() => import('./pages/UeberUns'));
 const MissionPage = React.lazy(() => import('./pages/Mission'));
 const ModularUserDashboard = React.lazy(() => import('./pages/ModularUserDashboard'));
 const CreatorStorefront = React.lazy(() => import('./pages/CreatorStorefront'));
+const PublicBookstore = React.lazy(() => import('./pages/PublicBookstore').then(m => ({ default: m.PublicBookstore })));
 const DashboardLanding = React.lazy(() => import('./pages/DashboardLanding'));
 
 const SectionIndex = React.lazy(() => import('./pages/sections/SectionIndex'));
@@ -158,6 +159,9 @@ function App() {
                       <Route path=":slug" element={<S><DynamicPage /></S>} />
                       <Route path=":slug/:subslug" element={<S><DynamicPage /></S>} />
                     </Route>
+
+                    {/* Public bookstore - no locale prefix */}
+                    <Route path="/bookstore/:slug" element={<S><PublicBookstore /></S>} />
 
                     {/* Admin routes - no locale prefix */}
                     <Route path="/sys-mgmt-xK9/content-manager" element={<S><AdminContentManager /></S>} />

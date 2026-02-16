@@ -42,6 +42,8 @@ import { AuthorNewsletter } from './dashboard/author/AuthorNewsletter';
 import { AuthorEvents } from './dashboard/author/AuthorEvents';
 import { AuthorStatistics } from './dashboard/author/AuthorStatistics';
 import { AuthorRequest } from './dashboard/AuthorRequest';
+import { UserCurations } from './dashboard/UserCurations';
+import { UserBookstore } from './dashboard/UserBookstore';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { Breadcrumb } from '../components/layout/Breadcrumb';
@@ -63,7 +65,8 @@ type DashboardSection =
   | 'profile' 
   | 'ratings' 
   | 'reviews' 
-  | 'storefront'
+  | 'curations'
+  | 'bookstore'
   | 'notifications' 
   | 'privacy'
   | 'creator-storefront'
@@ -155,7 +158,8 @@ export default function ModularUserDashboard() {
     { id: 'profile', label: 'Profil', icon: User, group: 'core' },
     { id: 'ratings', label: 'Bewertungen', icon: Star, group: 'core' },
     { id: 'reviews', label: 'Rezensionen', icon: MessageSquare, group: 'core' },
-    { id: 'storefront', label: 'Storefront', icon: Store, group: 'core' },
+    { id: 'curations', label: 'Kurationen', icon: BookOpen, group: 'core' },
+    { id: 'bookstore', label: 'Bookstore', icon: Store, group: 'core' },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, group: 'core' },
   ];
 
@@ -223,14 +227,10 @@ export default function ModularUserDashboard() {
           return <DashboardRatings />;
         case 'reviews':
           return <DashboardReviews />;
-        case 'storefront':
-          return (
-            <div className="p-8 md:p-12 text-center">
-              <Store className="w-12 h-12 mx-auto mb-4" style={{ color: '#247ba0' }} />
-              <h2 className="text-xl md:text-2xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>Dein Storefront</h2>
-              <p className="text-sm" style={{ color: '#6B7280' }}>Hier entsteht dein persönlicher Storefront. Inhalte folgen in Kürze.</p>
-            </div>
-          );
+        case 'curations':
+          return <UserCurations />;
+        case 'bookstore':
+          return <UserBookstore />;
         case 'notifications':
           return <DashboardNotifications />;
         case 'privacy':

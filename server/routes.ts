@@ -607,6 +607,96 @@ export async function registerRoutes(
     log.warn('Could not create curators table:', err);
   }
 
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS user_curations (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        tags TEXT[] DEFAULT '{}',
+        is_published BOOLEAN DEFAULT false,
+        display_order INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_user_curations_user ON user_curations(user_id)`);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS curation_books (
+        id SERIAL PRIMARY KEY,
+        curation_id INTEGER REFERENCES user_curations(id) ON DELETE CASCADE,
+        book_id INTEGER NOT NULL,
+        display_order INTEGER DEFAULT 0,
+        added_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(curation_id, book_id)
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_curation_books_curation ON curation_books(curation_id)`);
+    log.info('user_curations and curation_books tables verified');
+  } catch (err) {
+    log.warn('Could not create user_curations tables:', err);
+  }
+
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS bookstore_profiles (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT UNIQUE NOT NULL,
+        slug VARCHAR(255) UNIQUE,
+        display_name VARCHAR(255),
+        tagline VARCHAR(500),
+        description TEXT,
+        avatar_url TEXT,
+        hero_image_url TEXT,
+        social_links JSONB DEFAULT '{}',
+        address TEXT,
+        address_lat DOUBLE PRECISION,
+        address_lng DOUBLE PRECISION,
+        is_published BOOLEAN DEFAULT false,
+        is_physical_store BOOLEAN DEFAULT false,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_bookstore_profiles_slug ON bookstore_profiles(slug)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_bookstore_profiles_user ON bookstore_profiles(user_id)`);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS bookstore_curation_links (
+        id SERIAL PRIMARY KEY,
+        bookstore_id INTEGER REFERENCES bookstore_profiles(id) ON DELETE CASCADE,
+        curation_id INTEGER REFERENCES user_curations(id) ON DELETE CASCADE,
+        display_order INTEGER DEFAULT 0,
+        UNIQUE(bookstore_id, curation_id)
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_bcl_bookstore ON bookstore_curation_links(bookstore_id)`);
+    log.info('bookstore_profiles and bookstore_curation_links tables verified');
+  } catch (err) {
+    log.warn('Could not create bookstore tables:', err);
+  }
+
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS content_reports (
+        id SERIAL PRIMARY KEY,
+        reporter_id TEXT,
+        content_type TEXT NOT NULL,
+        content_id INTEGER NOT NULL,
+        reason TEXT NOT NULL,
+        details TEXT,
+        status TEXT DEFAULT 'open',
+        reviewed_by TEXT,
+        reviewed_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_content_reports_status ON content_reports(status)`);
+    log.info('content_reports table verified');
+  } catch (err) {
+    log.warn('Could not create content_reports table:', err);
+  }
+
   // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
@@ -5666,6 +5756,507 @@ export async function registerRoutes(
     } catch (error) {
       log.error('Get module catalog error:', error);
       return res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // USER CURATIONS CRUD
+  // ==================================================================
+  app.get('/api/user-curations', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ ok: false, error: 'userId is required' });
+      }
+      const result = await queryDB(
+        `SELECT * FROM user_curations WHERE user_id = $1 ORDER BY display_order ASC, created_at DESC`,
+        [userId]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Get user curations error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/user-curations', async (req: Request, res: Response) => {
+    try {
+      const { userId, title, description, tags } = req.body;
+      if (!userId || !title) {
+        return res.status(400).json({ ok: false, error: 'userId and title are required' });
+      }
+      const tagsArray = Array.isArray(tags) ? tags : [];
+      const result = await queryDB(
+        `INSERT INTO user_curations (user_id, title, description, tags)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [userId, title.trim(), description || null, tagsArray]
+      );
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Create user curation error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.put('/api/user-curations/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) {
+        return res.status(400).json({ ok: false, error: 'Invalid curation ID' });
+      }
+      const { title, description, tags, is_published } = req.body;
+      const result = await queryDB(
+        `UPDATE user_curations
+         SET title = COALESCE($1, title),
+             description = COALESCE($2, description),
+             tags = COALESCE($3, tags),
+             is_published = COALESCE($4, is_published),
+             updated_at = NOW()
+         WHERE id = $5
+         RETURNING *`,
+        [
+          title ? title.trim() : null,
+          description !== undefined ? description : null,
+          Array.isArray(tags) ? tags : null,
+          is_published !== undefined ? is_published : null,
+          id
+        ]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Curation not found' });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Update user curation error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/user-curations/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) {
+        return res.status(400).json({ ok: false, error: 'Invalid curation ID' });
+      }
+      const result = await queryDB(
+        `DELETE FROM user_curations WHERE id = $1 RETURNING id`,
+        [id]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Curation not found' });
+      }
+      return res.json({ ok: true, data: { id } });
+    } catch (error) {
+      log.error('Delete user curation error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/user-curations/:id/books', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) {
+        return res.status(400).json({ ok: false, error: 'Invalid curation ID' });
+      }
+      const result = await queryDB(
+        `SELECT cb.*, b.*
+         FROM curation_books cb
+         LEFT JOIN books b ON b.id = cb.book_id
+         WHERE cb.curation_id = $1
+         ORDER BY cb.display_order ASC, cb.added_at ASC`,
+        [id]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Get curation books error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/user-curations/:id/books', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) {
+        return res.status(400).json({ ok: false, error: 'Invalid curation ID' });
+      }
+      const { bookId } = req.body;
+      if (!bookId) {
+        return res.status(400).json({ ok: false, error: 'bookId is required' });
+      }
+      const maxOrder = await queryDB(
+        `SELECT COALESCE(MAX(display_order), -1) + 1 as next_order FROM curation_books WHERE curation_id = $1`,
+        [id]
+      );
+      const nextOrder = maxOrder.rows[0]?.next_order || 0;
+      const result = await queryDB(
+        `INSERT INTO curation_books (curation_id, book_id, display_order)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (curation_id, book_id) DO NOTHING
+         RETURNING *`,
+        [id, bookId, nextOrder]
+      );
+      if (result.rows.length === 0) {
+        return res.json({ ok: true, data: null, message: 'Book already in curation' });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Add curation book error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/user-curations/:id/books/:bookId', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      const bookId = parseIdParam(req.params.bookId);
+      if (!id || !bookId) {
+        return res.status(400).json({ ok: false, error: 'Invalid curation or book ID' });
+      }
+      const result = await queryDB(
+        `DELETE FROM curation_books WHERE curation_id = $1 AND book_id = $2 RETURNING id`,
+        [id, bookId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Book not found in curation' });
+      }
+      return res.json({ ok: true, data: { curationId: id, bookId } });
+    } catch (error) {
+      log.error('Remove curation book error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.put('/api/user-curations/:id/books/reorder', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) {
+        return res.status(400).json({ ok: false, error: 'Invalid curation ID' });
+      }
+      const { bookIds } = req.body;
+      if (!Array.isArray(bookIds)) {
+        return res.status(400).json({ ok: false, error: 'bookIds array is required' });
+      }
+      for (let i = 0; i < bookIds.length; i++) {
+        await queryDB(
+          `UPDATE curation_books SET display_order = $1 WHERE curation_id = $2 AND book_id = $3`,
+          [i, id, bookIds[i]]
+        );
+      }
+      return res.json({ ok: true, data: { reordered: bookIds.length } });
+    } catch (error) {
+      log.error('Reorder curation books error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // BOOKSTORE PROFILE
+  // ==================================================================
+  app.get('/api/bookstore/profile', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ ok: false, error: 'userId is required' });
+      }
+      const result = await queryDB(
+        `SELECT * FROM bookstore_profiles WHERE user_id = $1 LIMIT 1`,
+        [userId]
+      );
+      return res.json({ ok: true, data: result.rows[0] || null });
+    } catch (error) {
+      log.error('Get bookstore profile error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/bookstore/profile', async (req: Request, res: Response) => {
+    try {
+      const { userId, displayName, tagline, description, slug, socialLinks, address, addressLat, addressLng, avatarUrl, heroImageUrl, isPhysicalStore, isPublished } = req.body;
+      if (!userId) {
+        return res.status(400).json({ ok: false, error: 'userId is required' });
+      }
+      const existing = await queryDB(
+        `SELECT id FROM bookstore_profiles WHERE user_id = $1 LIMIT 1`,
+        [userId]
+      );
+      let result;
+      if (existing.rows.length > 0) {
+        const profileId = existing.rows[0].id;
+        const finalSlug = slug ? await generateUniqueSlug('bookstore_profiles', slug, profileId) : null;
+        result = await queryDB(
+          `UPDATE bookstore_profiles
+           SET display_name = COALESCE($1, display_name),
+               tagline = COALESCE($2, tagline),
+               description = COALESCE($3, description),
+               slug = COALESCE($4, slug),
+               social_links = COALESCE($5, social_links),
+               address = COALESCE($6, address),
+               address_lat = COALESCE($7, address_lat),
+               address_lng = COALESCE($8, address_lng),
+               avatar_url = COALESCE($9, avatar_url),
+               hero_image_url = COALESCE($10, hero_image_url),
+               is_physical_store = COALESCE($11, is_physical_store),
+               is_published = COALESCE($12, is_published),
+               updated_at = NOW()
+           WHERE user_id = $13
+           RETURNING *`,
+          [
+            displayName || null, tagline || null, description || null,
+            finalSlug, socialLinks ? JSON.stringify(socialLinks) : null,
+            address || null, addressLat || null, addressLng || null,
+            avatarUrl || null, heroImageUrl || null,
+            isPhysicalStore !== undefined ? isPhysicalStore : null,
+            isPublished !== undefined ? isPublished : null,
+            userId
+          ]
+        );
+      } else {
+        const finalSlug = slug ? await generateUniqueSlug('bookstore_profiles', slug) : await generateUniqueSlug('bookstore_profiles', displayName || userId);
+        result = await queryDB(
+          `INSERT INTO bookstore_profiles (user_id, display_name, tagline, description, slug, social_links, address, address_lat, address_lng, avatar_url, hero_image_url, is_physical_store, is_published)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+           RETURNING *`,
+          [
+            userId, displayName || null, tagline || null, description || null,
+            finalSlug, socialLinks ? JSON.stringify(socialLinks) : '{}',
+            address || null, addressLat || null, addressLng || null,
+            avatarUrl || null, heroImageUrl || null,
+            isPhysicalStore || false, isPublished || false
+          ]
+        );
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Save bookstore profile error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/bookstores', async (_req: Request, res: Response) => {
+    try {
+      const result = await queryDB(
+        `SELECT * FROM bookstore_profiles WHERE is_published = true ORDER BY display_name ASC`
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('List bookstores error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/bookstore/:slug', async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      if (!slug) {
+        return res.status(400).json({ ok: false, error: 'Slug is required' });
+      }
+      const profileResult = await queryDB(
+        `SELECT * FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
+        [slug]
+      );
+      if (profileResult.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Bookstore not found' });
+      }
+      const profile = profileResult.rows[0];
+      const curationsResult = await queryDB(
+        `SELECT uc.*, bcl.display_order as link_order
+         FROM bookstore_curation_links bcl
+         JOIN user_curations uc ON uc.id = bcl.curation_id
+         WHERE bcl.bookstore_id = $1
+         ORDER BY bcl.display_order ASC`,
+        [profile.id]
+      );
+      const curations = [];
+      for (const curation of curationsResult.rows) {
+        const booksResult = await queryDB(
+          `SELECT cb.display_order as curation_book_order, cb.added_at, b.*
+           FROM curation_books cb
+           LEFT JOIN books b ON b.id = cb.book_id
+           WHERE cb.curation_id = $1
+           ORDER BY cb.display_order ASC`,
+          [curation.id]
+        );
+        curations.push({
+          ...curation,
+          books: booksResult.rows
+        });
+      }
+      return res.json({ ok: true, data: { ...profile, curations } });
+    } catch (error) {
+      log.error('Get bookstore by slug error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // BOOKSTORE CURATION LINKS (Sections)
+  // ==================================================================
+  app.get('/api/bookstore/sections', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ ok: false, error: 'userId is required' });
+      }
+      const result = await queryDB(
+        `SELECT bcl.*, uc.title, uc.description, uc.tags, uc.is_published as curation_published
+         FROM bookstore_curation_links bcl
+         JOIN bookstore_profiles bp ON bp.id = bcl.bookstore_id
+         JOIN user_curations uc ON uc.id = bcl.curation_id
+         WHERE bp.user_id = $1
+         ORDER BY bcl.display_order ASC`,
+        [userId]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Get bookstore sections error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/bookstore/sections', async (req: Request, res: Response) => {
+    try {
+      const { userId, curationId } = req.body;
+      if (!userId || !curationId) {
+        return res.status(400).json({ ok: false, error: 'userId and curationId are required' });
+      }
+      const profile = await queryDB(
+        `SELECT id FROM bookstore_profiles WHERE user_id = $1 LIMIT 1`,
+        [userId]
+      );
+      if (profile.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Bookstore profile not found' });
+      }
+      const bookstoreId = profile.rows[0].id;
+      const maxOrder = await queryDB(
+        `SELECT COALESCE(MAX(display_order), -1) + 1 as next_order FROM bookstore_curation_links WHERE bookstore_id = $1`,
+        [bookstoreId]
+      );
+      const nextOrder = maxOrder.rows[0]?.next_order || 0;
+      const result = await queryDB(
+        `INSERT INTO bookstore_curation_links (bookstore_id, curation_id, display_order)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (bookstore_id, curation_id) DO NOTHING
+         RETURNING *`,
+        [bookstoreId, curationId, nextOrder]
+      );
+      if (result.rows.length === 0) {
+        return res.json({ ok: true, data: null, message: 'Curation already linked' });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Link bookstore section error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/bookstore/sections/:linkId', async (req: Request, res: Response) => {
+    try {
+      const linkId = parseIdParam(req.params.linkId);
+      if (!linkId) {
+        return res.status(400).json({ ok: false, error: 'Invalid link ID' });
+      }
+      const result = await queryDB(
+        `DELETE FROM bookstore_curation_links WHERE id = $1 RETURNING id`,
+        [linkId]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Link not found' });
+      }
+      return res.json({ ok: true, data: { id: linkId } });
+    } catch (error) {
+      log.error('Unlink bookstore section error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.put('/api/bookstore/sections/reorder', async (req: Request, res: Response) => {
+    try {
+      const { linkIds } = req.body;
+      if (!Array.isArray(linkIds)) {
+        return res.status(400).json({ ok: false, error: 'linkIds array is required' });
+      }
+      for (let i = 0; i < linkIds.length; i++) {
+        await queryDB(
+          `UPDATE bookstore_curation_links SET display_order = $1 WHERE id = $2`,
+          [i, linkIds[i]]
+        );
+      }
+      return res.json({ ok: true, data: { reordered: linkIds.length } });
+    } catch (error) {
+      log.error('Reorder bookstore sections error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // CONTENT REPORTS
+  // ==================================================================
+  app.post('/api/content-reports', async (req: Request, res: Response) => {
+    try {
+      const { reporterId, contentType, contentId, reason, details } = req.body;
+      if (!contentType || !contentId || !reason) {
+        return res.status(400).json({ ok: false, error: 'contentType, contentId, and reason are required' });
+      }
+      const result = await queryDB(
+        `INSERT INTO content_reports (reporter_id, content_type, content_id, reason, details)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [reporterId || null, contentType, contentId, reason, details || null]
+      );
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Create content report error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/admin/content-reports', async (req: Request, res: Response) => {
+    try {
+      const authorized = await requireAdminGuard(req, res);
+      if (!authorized) return;
+      const status = req.query.status as string;
+      let query = 'SELECT * FROM content_reports';
+      const params: any[] = [];
+      if (status) {
+        query += ' WHERE status = $1';
+        params.push(status);
+      }
+      query += ' ORDER BY created_at DESC';
+      const result = await queryDB(query, params);
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Get content reports error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.put('/api/admin/content-reports/:id', async (req: Request, res: Response) => {
+    try {
+      const authorized = await requireAdminGuard(req, res);
+      if (!authorized) return;
+      const id = parseIdParam(req.params.id);
+      if (!id) {
+        return res.status(400).json({ ok: false, error: 'Invalid report ID' });
+      }
+      const { status, reviewedBy } = req.body;
+      if (!status) {
+        return res.status(400).json({ ok: false, error: 'status is required' });
+      }
+      const result = await queryDB(
+        `UPDATE content_reports
+         SET status = $1, reviewed_by = $2, reviewed_at = NOW()
+         WHERE id = $3
+         RETURNING *`,
+        [status, reviewedBy || null, id]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Report not found' });
+      }
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Update content report error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
     }
   });
 
