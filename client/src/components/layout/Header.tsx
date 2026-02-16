@@ -654,7 +654,7 @@ export function Header({
               })}
               <button
                 onClick={handleFeedToggle}
-                className="ml-2 lg:ml-4 px-4 md:px-5 lg:px-6 py-2 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
+                className="ml-4 lg:ml-8 px-4 md:px-5 lg:px-6 py-2 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
                 style={{
                   backgroundColor: '#e8604c',
                   color: '#ffffff',
