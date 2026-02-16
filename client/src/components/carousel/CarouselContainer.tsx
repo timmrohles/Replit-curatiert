@@ -118,25 +118,24 @@ export function CarouselContainer({
             left: `${buttonOffset}px`,
             top: '50%',
             transform: 'translateY(-50%)',
-            zIndex: 9999, // MASSIVELY INCREASED!
+            zIndex: 9999,
             width: `${BUTTON_SIZE}px`,
             height: `${BUTTON_SIZE}px`,
             borderRadius: '9999px',
-            border: '2px solid',
+            border: 'none',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 0.2s ease',
             cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            backgroundColor: 'var(--carousel-button-bg)',
-            borderColor: 'var(--carousel-button-border)',
-            color: 'var(--carousel-button-icon)',
-            pointerEvents: 'auto', // FORCE clickable!
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+            backgroundColor: '#1a1a1a',
+            color: '#ffffff',
+            pointerEvents: 'auto',
           }}
           className="hidden lg:flex hover:scale-110"
           aria-label="Scroll left"
         >
-          <ChevronLeft style={{ color: 'var(--carousel-button-icon)' }} className="w-6 h-6" />
+          <ChevronLeft className="w-6 h-6" style={{ color: '#ffffff' }} />
         </button>
       )}
 
@@ -149,25 +148,24 @@ export function CarouselContainer({
             right: `${buttonOffset}px`,
             top: '50%',
             transform: 'translateY(-50%)',
-            zIndex: 9999, // MASSIVELY INCREASED!
+            zIndex: 9999,
             width: `${BUTTON_SIZE}px`,
             height: `${BUTTON_SIZE}px`,
             borderRadius: '9999px',
-            border: '2px solid',
+            border: 'none',
             alignItems: 'center',
             justifyContent: 'center',
             transition: 'all 0.2s ease',
             cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            backgroundColor: 'var(--carousel-button-bg)',
-            borderColor: 'var(--carousel-button-border)',
-            color: 'var(--carousel-button-icon)',
-            pointerEvents: 'auto', // FORCE clickable!
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
+            backgroundColor: '#1a1a1a',
+            color: '#ffffff',
+            pointerEvents: 'auto',
           }}
           className="hidden lg:flex hover:scale-110"
           aria-label="Scroll right"
         >
-          <ChevronRight style={{ color: 'var(--carousel-button-icon)' }} className="w-6 h-6" />
+          <ChevronRight className="w-6 h-6" style={{ color: '#ffffff' }} />
         </button>
       )}
 
