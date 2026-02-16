@@ -108,9 +108,12 @@ export default function ModularUserDashboard() {
   }, []);
 
   useEffect(() => {
-    const path = location.pathname.replace('/dashboard/', '').replace('/dashboard', '');
-    if (path && path !== '' && path !== 'dashboard' && path !== 'home') {
-      setActiveSection(path as DashboardSection);
+    const dashboardIndex = location.pathname.indexOf('/dashboard');
+    const afterDashboard = dashboardIndex !== -1
+      ? location.pathname.substring(dashboardIndex + '/dashboard'.length).replace(/^\//, '')
+      : '';
+    if (afterDashboard && afterDashboard !== 'home') {
+      setActiveSection(afterDashboard as DashboardSection);
     } else {
       setActiveSection('home');
     }
