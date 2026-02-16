@@ -55,6 +55,13 @@ const MOCK_CURATORS: MockCurator[] = [
   },
 ];
 
+const MOCK_SPONSOR: MockCurator = {
+  name: 'Klett-Cotta Verlag',
+  avatar: '',
+  focus: 'Literatur, Sachbuch & Fantasy',
+  isVerified: true,
+};
+
 const MOCK_BOOKS: BookCarouselItemData[] = [
   {
     id: 'mock-1',
@@ -668,9 +675,13 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         )}
 
-        {isCuratorSection && curator ? (
+        {(isCuratorSection && curator) ? (
           <div className="w-full mb-4 md:mb-6">
             <CuratorSectionHeader curator={curator} />
+          </div>
+        ) : isSponsoredSection ? (
+          <div className="w-full mb-4 md:mb-6">
+            <CuratorSectionHeader curator={MOCK_SPONSOR} />
           </div>
         ) : null}
 
@@ -713,11 +724,22 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
                 />
               </div>
             )}
+            {isSponsoredSection && (
+              <div
+                role="group"
+                className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
+                style={{ backgroundColor: 'var(--color-saffron, #e8a838)' }}
+              >
+                <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                  {MOCK_SPONSOR.name}
+                </Text>
+              </div>
+            )}
             {tags.map((tag) => (
               <div
                 role="group"
                 key={tag.entityId}
-                className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg cursor-pointer transition-all duration-200 select-none hover-elevate"
+                className={`px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none ${isSponsoredSection ? '' : 'cursor-pointer transition-all duration-200 hover-elevate'}`}
                 style={{ backgroundColor: tag.color }}
               >
                 <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
@@ -731,27 +753,31 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
                     onStatusChange={handleReadingStatusChange}
                   />
                 )}
-                <button
-                  onClick={() => handleRemoveTag(tag)}
-                  className="p-0.5 rounded-full transition-colors"
-                  style={{ color: 'rgba(255,255,255,0.7)' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
-                  data-testid={`button-remove-tag-${tag.entityId}`}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                {!isSponsoredSection && (
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    className="p-0.5 rounded-full transition-colors"
+                    style={{ color: 'rgba(255,255,255,0.7)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                    data-testid={`button-remove-tag-${tag.entityId}`}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             ))}
-            <TagPickerDropdown
-              sectionId={section.id}
-              onAdd={handleAddTag}
-              existingIds={existingIds}
-            />
+            {!isSponsoredSection && (
+              <TagPickerDropdown
+                sectionId={section.id}
+                onAdd={handleAddTag}
+                existingIds={existingIds}
+              />
+            )}
           </div>
         </div>
 
-        {isCuratorSection && curator && (
+        {(isCuratorSection || isSponsoredSection) && (
           <div className="w-full mt-4 mb-4">
             <Text as="div" variant="base" className="leading-relaxed text-black line-clamp-3">
               {section.description}
@@ -759,7 +785,7 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         )}
 
-        {!isCuratorSection && (
+        {!isCuratorSection && !isSponsoredSection && (
           <div className="w-full mt-2 mb-4">
             <Text as="div" variant="base" className="leading-relaxed text-black">
               {section.description}
