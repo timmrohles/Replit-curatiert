@@ -530,7 +530,7 @@ function getMockBooksForSection(sectionId: FeedSectionType): BookCarouselItemDat
   return shuffled;
 }
 
-function CuratorSectionHeader({ curator }: { curator: MockCurator }) {
+function CuratorSectionHeader({ curator, isSponsored }: { curator: MockCurator; isSponsored?: boolean }) {
   return (
     <div className="w-full text-base leading-normal text-left">
       <div className="flex items-center gap-3 md:gap-4 lg:gap-6">
@@ -549,6 +549,14 @@ function CuratorSectionHeader({ curator }: { curator: MockCurator }) {
               {curator.name}
               {curator.isVerified && (
                 <BadgeCheck className="w-5 h-5 flex-shrink-0" style={{ color: '#247ba0' }} />
+              )}
+              {isSponsored && (
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full"
+                  style={{ backgroundColor: 'rgba(232, 168, 56, 0.15)', color: '#c48a1a' }}
+                >
+                  Gesponsert
+                </span>
               )}
             </div>
           </div>
@@ -681,23 +689,15 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         ) : isSponsoredSection ? (
           <div className="w-full mb-4 md:mb-6">
-            <CuratorSectionHeader curator={MOCK_SPONSOR} />
+            <CuratorSectionHeader curator={MOCK_SPONSOR} isSponsored />
           </div>
         ) : null}
 
         <div className="w-full mt-4 md:mt-6 isolate">
           <div className="flex items-center gap-3 mb-4">
             <h3 className="section-title text-foreground">
-              {isCuratorSection ? 'Neue Bücher für Leseratten' : section.label}
+              {isSponsoredSection ? section.description : isCuratorSection ? 'Neue Bücher für Leseratten' : section.label}
             </h3>
-            {isSponsoredSection && (
-              <span
-                className="text-xs px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: 'rgba(232, 168, 56, 0.15)', color: '#c48a1a' }}
-              >
-                Gesponsert
-              </span>
-            )}
           </div>
         </div>
 

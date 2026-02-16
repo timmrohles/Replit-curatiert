@@ -55,7 +55,7 @@ const DEFAULT_SECTIONS: FeedSectionConfig[] = [
   {
     id: 'sponsored',
     label: 'Anzeigen',
-    description: 'Gesponserte Bücher und Kurationen von Verlagen und Autor:innen.',
+    description: 'Unsere Empfehlungen für dich',
     visible: true,
     isPublic: true,
   },
