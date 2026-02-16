@@ -80,7 +80,8 @@ export function DashboardProfile() {
         setProfile(prev => ({
           ...prev,
           firstName: firstName || prev.firstName,
-          lastName: lastName || prev.lastName
+          lastName: lastName || prev.lastName,
+          email: d.email || prev.email
         }));
         setCuratorProfile({
           focus: d.focus || '',
@@ -164,6 +165,7 @@ export function DashboardProfile() {
         body: JSON.stringify({
           curatorId: curatorId || undefined,
           name: `${profile.firstName} ${profile.lastName}`.trim(),
+          email: profile.email,
           bio: curatorProfile.bio,
           focus: curatorProfile.focus,
           avatar_url: curatorProfile.avatarUrl,

@@ -163,6 +163,7 @@ function mapCuratorRow(row: any) {
     id: String(row.id),
     name: row.name || '',
     slug: row.slug || '',
+    email: row.email || '',
     avatar: row.avatar_url || row.avatar || '',
     bio: row.bio || '',
     focus: row.focus || '',
@@ -599,6 +600,7 @@ export async function registerRoutes(
     try {
       await queryDB(`ALTER TABLE curators ADD COLUMN IF NOT EXISTS podcast_url TEXT DEFAULT ''`);
       await queryDB(`ALTER TABLE curators ADD COLUMN IF NOT EXISTS user_id UUID`);
+      await queryDB(`ALTER TABLE curators ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT ''`);
     } catch (alterErr) {
       log.warn('Could not alter curators table:', alterErr);
     }
@@ -844,11 +846,12 @@ export async function registerRoutes(
 
   app.post('/api/user/curator-profile', async (req: Request, res: Response) => {
     try {
-      const { curatorId, name, bio, focus, avatar_url, socials } = req.body;
+      const { curatorId, name, email, bio, focus, avatar_url, socials } = req.body;
       if (!name || !name.trim()) {
         return res.status(400).json({ ok: false, error: 'Name is required' });
       }
 
+      const emailValue = (email || '').trim();
       const bioValue = (bio || '').trim();
       const focusValue = (focus || '').trim();
       const avatarValue = (avatar_url || '').trim();
@@ -867,14 +870,14 @@ export async function registerRoutes(
            SET name = $1, slug = $2, bio = $3, avatar_url = $4,
                instagram_url = $5, youtube_url = $6, tiktok_url = $7,
                podcast_url = $8, website_url = $9, focus = $10,
-               updated_at = NOW()
-           WHERE id = $11 AND deleted_at IS NULL
+               email = $11, updated_at = NOW()
+           WHERE id = $12 AND deleted_at IS NULL
            RETURNING *`,
           [
             name.trim(), slug, bioValue, avatarValue,
             instagramValue, youtubeValue, tiktokValue,
             podcastValue, websiteValue, focusValue,
-            id
+            emailValue, id
           ]
         );
         if (result.rows.length === 0) {
@@ -886,13 +889,14 @@ export async function registerRoutes(
           `INSERT INTO curators (
             name, slug, bio, avatar_url, instagram_url, youtube_url,
             tiktok_url, podcast_url, website_url, focus,
-            visible, status, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, 'active', NOW(), NOW())
+            email, visible, status, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, 'active', NOW(), NOW())
            RETURNING *`,
           [
             name.trim(), slug, bioValue, avatarValue,
             instagramValue, youtubeValue, tiktokValue,
-            podcastValue, websiteValue, focusValue
+            podcastValue, websiteValue, focusValue,
+            emailValue
           ]
         );
       }
