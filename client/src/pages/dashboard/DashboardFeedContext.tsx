@@ -1,20 +1,22 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
 
 export type FeedSectionType = 
-  | 'reading_list'
-  | 'favorites' 
-  | 'followed_authors'
   | 'followed_curators'
+  | 'favorites' 
+  | 'reading_list'
+  | 'currently_reading'
+  | 'already_read'
+  | 'want_to_read'
+  | 'followed_authors'
   | 'followed_publishers'
   | 'followed_categories'
   | 'followed_tags'
-  | 'recent_ratings'
   | 'recommendations';
 
 export interface FeedSectionConfig {
   id: FeedSectionType;
   label: string;
-  icon: string;
+  description: string;
   visible: boolean;
   isPublic: boolean;
 }
@@ -37,65 +39,79 @@ interface DashboardFeedContextType {
 
 const DEFAULT_SECTIONS: FeedSectionConfig[] = [
   {
-    id: 'reading_list',
-    label: 'Meine Leseliste',
-    icon: 'BookOpen',
+    id: 'followed_curators',
+    label: 'Meine Kurator:innen',
+    description: 'Entdecke die neuesten Empfehlungen der Kurator:innen, denen du folgst.',
     visible: true,
-    isPublic: false,
+    isPublic: true,
   },
   {
     id: 'favorites',
     label: 'Meine Favoriten',
-    icon: 'Heart',
+    description: 'Deine persönliche Sammlung von Büchern, die du besonders magst.',
     visible: true,
     isPublic: true,
+  },
+  {
+    id: 'currently_reading',
+    label: 'Lese ich zurzeit',
+    description: 'Bücher, die du gerade liest und in denen du mittendrin steckst.',
+    visible: true,
+    isPublic: true,
+  },
+  {
+    id: 'already_read',
+    label: 'Habe ich gelesen',
+    description: 'Bücher, die du bereits gelesen hast. Dein persönliches Lese-Archiv.',
+    visible: true,
+    isPublic: true,
+  },
+  {
+    id: 'want_to_read',
+    label: 'Möchte ich lesen',
+    description: 'Bücher auf deiner Wunschliste, die du als nächstes lesen möchtest.',
+    visible: true,
+    isPublic: false,
+  },
+  {
+    id: 'reading_list',
+    label: 'Meine Leseliste',
+    description: 'Deine kuratierte Leseliste mit Büchern, die du dir vorgemerkt hast.',
+    visible: true,
+    isPublic: false,
   },
   {
     id: 'followed_authors',
-    label: 'Autor:innen',
-    icon: 'PenTool',
-    visible: true,
-    isPublic: true,
-  },
-  {
-    id: 'followed_curators',
-    label: 'Kurator:innen',
-    icon: 'Users',
+    label: 'Meine Autor:innen',
+    description: 'Neue Veröffentlichungen und Empfehlungen der Autor:innen, denen du folgst.',
     visible: true,
     isPublic: true,
   },
   {
     id: 'followed_publishers',
-    label: 'Verlage',
-    icon: 'Building2',
+    label: 'Meine Verlage',
+    description: 'Aktuelle Neuerscheinungen und Highlights deiner Lieblingsverlage.',
     visible: true,
     isPublic: true,
   },
   {
     id: 'followed_categories',
-    label: 'Kategorien',
-    icon: 'Tag',
+    label: 'Meine Kategorien',
+    description: 'Bücher aus den Kategorien und Genres, die dich am meisten interessieren.',
     visible: true,
     isPublic: false,
   },
   {
     id: 'followed_tags',
-    label: 'Themen & Tags',
-    icon: 'Hash',
+    label: 'Meine Themen & Tags',
+    description: 'Empfehlungen basierend auf deinen bevorzugten Themen und Schlagwörtern.',
     visible: true,
     isPublic: false,
   },
   {
-    id: 'recent_ratings',
-    label: 'Meine Bewertungen',
-    icon: 'Star',
-    visible: true,
-    isPublic: true,
-  },
-  {
     id: 'recommendations',
     label: 'Empfehlungen für dich',
-    icon: 'Sparkles',
+    description: 'Personalisierte Buchempfehlungen basierend auf deinem Leseverhalten.',
     visible: true,
     isPublic: false,
   },
@@ -110,20 +126,21 @@ function loadFromStorage(): StoredState {
     
     const parsed = JSON.parse(raw) as StoredState;
     
-    const storedIds = new Set(parsed.order);
-    const defaultIds = DEFAULT_SECTIONS.map(s => s.id);
-    const allIds = [...parsed.order, ...defaultIds.filter(id => !storedIds.has(id))];
+    const validIds = new Set(DEFAULT_SECTIONS.map(s => s.id));
+    const filteredOrder = parsed.order.filter(id => validIds.has(id));
+    const missingIds = DEFAULT_SECTIONS.map(s => s.id).filter(id => !filteredOrder.includes(id));
+    const allIds = [...filteredOrder, ...missingIds];
     
     return {
       order: allIds,
       visibility: {
         ...Object.fromEntries(DEFAULT_SECTIONS.map(s => [s.id, s.visible])),
-        ...parsed.visibility,
-      },
+        ...Object.fromEntries(Object.entries(parsed.visibility || {}).filter(([k]) => validIds.has(k as FeedSectionType))),
+      } as Record<FeedSectionType, boolean>,
       publicState: {
         ...Object.fromEntries(DEFAULT_SECTIONS.map(s => [s.id, s.isPublic])),
-        ...parsed.publicState,
-      },
+        ...Object.fromEntries(Object.entries(parsed.publicState || {}).filter(([k]) => validIds.has(k as FeedSectionType))),
+      } as Record<FeedSectionType, boolean>,
     };
   } catch {
     return getDefaultState();
