@@ -107,6 +107,18 @@ The platform is built with a modern web stack, featuring a React frontend and an
 3. Set `is_active = true` in regions table
 4. Region switcher auto-displays active regions
 
+## Dashboard & Feed System
+-   **Layout**: Hero profile card at top with avatar, name, role badges, profile completion bar, and quick stat pills. Horizontal scrollable tab navigation replaces the old sidebar.
+-   **Feed-first design**: Default dashboard view is the personalized feed (`DashboardFeed.tsx`), accessible via "Feed" tab (Home icon).
+-   **Feed sections** (9 types): reading_list, favorites, followed_authors, followed_curators, followed_publishers, followed_categories, followed_tags, recent_ratings, recommendations.
+-   **Customization**: Users can reorder sections via drag-and-drop (@dnd-kit), toggle visibility (Eye/EyeOff), and toggle public/private (Globe/Lock) in edit mode.
+-   **Persistence**: Feed section order, visibility, and public state stored in localStorage key `coratiert-dashboard-feed`.
+-   **Context**: `DashboardFeedContext.tsx` provides `useDashboardFeed()` hook with `sections`, `reorderSections`, `toggleVisibility`, `togglePublic`, `resetToDefaults`, `isEditMode`, `setEditMode`.
+-   **Key Files**:
+    -   `client/src/pages/dashboard/DashboardFeedContext.tsx`: Feed state management
+    -   `client/src/pages/dashboard/DashboardFeed.tsx`: Feed UI with drag-and-drop
+    -   `client/src/pages/ModularUserDashboard.tsx`: Main dashboard layout with hero card + tabs
+
 ## External Dependencies
 -   **Database**: Neon PostgreSQL (connected via `NEON_DATABASE_URL` secret).
 -   **File Storage**: Local filesystem for avatar uploads (`client/src/public/uploads/avatars/`), served via a static route `/uploads`.
