@@ -6045,52 +6045,8 @@ export async function registerRoutes(
     }
   });
 
-  app.get('/api/bookstore/:slug', async (req: Request, res: Response) => {
-    try {
-      const { slug } = req.params;
-      if (!slug) {
-        return res.status(400).json({ ok: false, error: 'Slug is required' });
-      }
-      const profileResult = await queryDB(
-        `SELECT * FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
-        [slug]
-      );
-      if (profileResult.rows.length === 0) {
-        return res.status(404).json({ ok: false, error: 'Bookstore not found' });
-      }
-      const profile = profileResult.rows[0];
-      const curationsResult = await queryDB(
-        `SELECT uc.*, bcl.display_order as link_order
-         FROM bookstore_curation_links bcl
-         JOIN user_curations uc ON uc.id = bcl.curation_id
-         WHERE bcl.bookstore_id = $1
-         ORDER BY bcl.display_order ASC`,
-        [profile.id]
-      );
-      const curations = [];
-      for (const curation of curationsResult.rows) {
-        const booksResult = await queryDB(
-          `SELECT cb.display_order as curation_book_order, cb.added_at, b.*
-           FROM curation_books cb
-           LEFT JOIN books b ON b.id = cb.book_id
-           WHERE cb.curation_id = $1
-           ORDER BY cb.display_order ASC`,
-          [curation.id]
-        );
-        curations.push({
-          ...curation,
-          books: booksResult.rows
-        });
-      }
-      return res.json({ ok: true, data: { ...profile, curations } });
-    } catch (error) {
-      log.error('Get bookstore by slug error:', error);
-      return res.status(500).json({ ok: false, error: String(error) });
-    }
-  });
-
   // ==================================================================
-  // BOOKSTORE CURATION LINKS (Sections)
+  // BOOKSTORE CURATION LINKS (Sections) - must be BEFORE :slug route
   // ==================================================================
   app.get('/api/bookstore/sections', async (req: Request, res: Response) => {
     try {
@@ -6185,6 +6141,51 @@ export async function registerRoutes(
       return res.json({ ok: true, data: { reordered: linkIds.length } });
     } catch (error) {
       log.error('Reorder bookstore sections error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Public bookstore page by slug (must be AFTER /sections, /profile routes)
+  app.get('/api/bookstore/:slug', async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      if (!slug) {
+        return res.status(400).json({ ok: false, error: 'Slug is required' });
+      }
+      const profileResult = await queryDB(
+        `SELECT * FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
+        [slug]
+      );
+      if (profileResult.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Bookstore not found' });
+      }
+      const profile = profileResult.rows[0];
+      const curationsResult = await queryDB(
+        `SELECT uc.*, bcl.display_order as link_order
+         FROM bookstore_curation_links bcl
+         JOIN user_curations uc ON uc.id = bcl.curation_id
+         WHERE bcl.bookstore_id = $1
+         ORDER BY bcl.display_order ASC`,
+        [profile.id]
+      );
+      const curations = [];
+      for (const curation of curationsResult.rows) {
+        const booksResult = await queryDB(
+          `SELECT cb.display_order as curation_book_order, cb.added_at, b.*
+           FROM curation_books cb
+           LEFT JOIN books b ON b.id = cb.book_id
+           WHERE cb.curation_id = $1
+           ORDER BY cb.display_order ASC`,
+          [curation.id]
+        );
+        curations.push({
+          ...curation,
+          books: booksResult.rows
+        });
+      }
+      return res.json({ ok: true, data: { profile, curations } });
+    } catch (error) {
+      log.error('Get bookstore by slug error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });
