@@ -19,7 +19,9 @@ export type FrontendEntityType =
   | "series" 
   | "genre"        // UI: "Genre" (wird als tag gespeichert)
   | "storefront"
-  | "topic";
+  | "topic"
+  | "award"        // UI: "Auszeichnung"
+  | "media";       // UI: "Medienformat" (Hörbuch, E-Book, etc.)
 
 /**
  * Backend Entity Types (Database-facing)
@@ -41,15 +43,17 @@ export type BackendEntityType =
  */
 const ENTITY_TYPE_MAP: Record<FrontendEntityType, BackendEntityType> = {
   book: "book",
-  creator: "user",      // ✅ Normalisierung
+  creator: "user",
   publisher: "publisher",
-  author: "person",     // ✅ Normalisierung
+  author: "person",
   category: "category",
   tag: "tag",
   series: "series",
-  genre: "tag",         // ✅ Genre ist ein Tag (z.B. "Genre: Fantasy")
-  storefront: "user",   // ✅ Storefront = User/Creator
-  topic: "tag",         // ✅ Topic = Tag
+  genre: "tag",
+  storefront: "user",
+  topic: "tag",
+  award: "award",
+  media: "tag",
 };
 
 /**

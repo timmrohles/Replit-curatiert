@@ -11,7 +11,11 @@ export type FeedSectionType =
   | 'followed_publishers'
   | 'followed_categories'
   | 'followed_tags'
+  | 'followed_media'
+  | 'followed_awards'
   | 'recommendations';
+
+export type ReadingStatus = 'currently_reading' | 'already_read' | 'want_to_read';
 
 export interface FeedSectionConfig {
   id: FeedSectionType;
@@ -105,6 +109,20 @@ const DEFAULT_SECTIONS: FeedSectionConfig[] = [
     id: 'followed_tags',
     label: 'Meine Themen & Tags',
     description: 'Empfehlungen basierend auf deinen bevorzugten Themen und Schlagwörtern.',
+    visible: true,
+    isPublic: false,
+  },
+  {
+    id: 'followed_media',
+    label: 'Meine Medien',
+    description: 'Deine bevorzugten Medienformate – Hörbücher, E-Books, Taschenbücher und mehr.',
+    visible: true,
+    isPublic: false,
+  },
+  {
+    id: 'followed_awards',
+    label: 'Meine Auszeichnungen',
+    description: 'Bücher mit den Literaturpreisen und Auszeichnungen, die dich interessieren.',
     visible: true,
     isPublic: false,
   },
