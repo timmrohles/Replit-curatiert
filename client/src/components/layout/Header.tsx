@@ -654,15 +654,14 @@ export function Header({
               })}
               <button
                 onClick={handleFeedToggle}
-                className="px-4 md:px-5 lg:px-6 py-2 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
+                className="ml-2 lg:ml-4 px-4 md:px-5 lg:px-6 py-2 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
                 style={{
-                  backgroundColor: (isOnHomepage && feedViewActive) ? '#ffffff' : '#e8604c',
-                  color: (isOnHomepage && feedViewActive) ? '#e8604c' : '#ffffff',
-                  border: (isOnHomepage && feedViewActive) ? '2px solid #e8604c' : '2px solid transparent',
+                  backgroundColor: '#e8604c',
+                  color: '#ffffff',
                 }}
                 data-testid="button-nav-mein-feed"
               >
-                Mein Feed
+                {(isOnHomepage && feedViewActive) ? 'Startseite' : 'Mein Feed'}
               </button>
             </div>
           </nav>
