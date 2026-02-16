@@ -4,6 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 import { FavoritesProvider } from './components/favorites/FavoritesContext';
+import { ReadingListProvider } from './components/reading-list/ReadingListContext';
 import { CartProvider } from './components/shop/CartContext';
 import { ThemeProvider } from './utils/ThemeContext';
 import { ThemeScript } from './components/seo/ThemeScript';
@@ -81,6 +82,7 @@ function App() {
         <ThemeProvider>
           <QueryClientProvider client={queryClient}>
             <FavoritesProvider>
+              <ReadingListProvider>
               <CartProvider>
                 <BrowserRouter>
                   <ScrollToTop />
@@ -146,6 +148,7 @@ function App() {
                   </Routes>
                 </BrowserRouter>
               </CartProvider>
+            </ReadingListProvider>
             </FavoritesProvider>
           </QueryClientProvider>
         </ThemeProvider>

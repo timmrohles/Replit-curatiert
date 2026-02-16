@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useMemo, useCallback } from 'react';
 import { useSafeNavigate, buildBookUrl } from '../../utils/routing';
-import { Info, Tags, Quote, Award, ArrowRight, Share2, ShoppingCart } from 'lucide-react';
+import { Info, Tags, Quote, Award, ArrowRight, ShoppingCart } from 'lucide-react';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -9,6 +9,7 @@ import { getAllONIXTags, ONIXTag, Book } from '../../utils/api';
 import { ONIX_TAG_COLORS, ONIX_TAG_ICONS } from '../../utils/tag-colors';
 import { OptimizedImage } from '../common/OptimizedImage';
 import { LikeButton } from '../favorites/LikeButton';
+import { ReadingListButton } from '../reading-list/ReadingListButton';
 import { SerieBadgeComponent } from '../common/SerieBadge';
 
 interface ActiveAffiliate {
@@ -560,32 +561,14 @@ export const BookCard = memo(function BookCard({
               iconColor="#3A3A3A"
             />
             
-            {/* Share Button */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`${viewMode === 'compact' ? 'h-8 w-8 md:h-9 md:w-9' : 'h-10 w-10 md:h-11 md:w-11'} shadow-none`}
-              onClick={(e) => {
-                e.stopPropagation();
-                const shareUrl = window.location.origin + (book ? getBookUrl(book) : `/book/${bookId}`);
-                if (navigator.share) {
-                  navigator.share({
-                    title: title,
-                    text: `${title} von ${author}`,
-                    url: shareUrl
-                  }).catch(() => {});
-                } else {
-                  navigator.clipboard.writeText(shareUrl);
-                  // Optional: Toast notification hier
-                }
-              }}
-              title="Teilen"
-            >
-              <Share2 
-                className={viewMode === 'compact' ? 'w-4 h-4' : 'w-5 h-5'} 
-                style={{ strokeWidth: 1.5, color: '#3A3A3A' }} 
-              />
-            </Button>
+            <ReadingListButton
+              bookId={bookId}
+              bookTitle={title}
+              bookAuthor={author}
+              bookCover={cover}
+              size={viewMode === 'compact' ? 'sm' : 'md'}
+              iconColor="#3A3A3A"
+            />
             
             {/* Affiliate Buttons - dynamisch aus DB */}
             {book?.isbn && affiliates.length > 0 && (

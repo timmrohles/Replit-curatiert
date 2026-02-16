@@ -1,6 +1,6 @@
 import React, { useState, memo, useEffect, useMemo, useCallback } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, ShoppingCart, Share2, Award } from 'lucide-react';
+import { Tags, ArrowRight, Quote, ShoppingCart, Award } from 'lucide-react';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -9,6 +9,7 @@ import { getAllONIXTags, ONIXTag } from '../../utils/api';
 import { ONIX_TAG_COLORS, ONIX_TAG_ICONS } from '../../utils/tag-colors';
 import { OptimizedImage } from '../common/OptimizedImage';
 import { LikeButton } from '../favorites/LikeButton';
+import { ReadingListButton } from '../reading-list/ReadingListButton';
 import { SerieBadgeComponent } from '../common/SerieBadge';
 
 interface ActiveAffiliate {
@@ -152,26 +153,6 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
     navigate(getBookUrl(book));
   }, [navigate, book]);
 
-  const handleShare = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const bookUrl = `${window.location.origin}${getBookUrl(book)}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: book.title,
-          text: `${book.title} von ${book.author}`,
-          url: bookUrl,
-        });
-      } catch (err) {
-        // User cancelled or error occurred
-      }
-    } else {
-      // Fallback: Copy to clipboard
-      navigator.clipboard.writeText(bookUrl);
-      // TODO: Show toast notification
-    }
-  }, [book]);
 
   // Size variants - matches BookCard sizing
   const sizeClasses = {
@@ -554,19 +535,14 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
               iconColor="#3A3A3A"
             />
             
-            {/* Share Button */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-10 w-10 md:h-11 md:w-11 shadow-none"
-              onClick={handleShare}
-              title="Teilen"
-            >
-              <Share2 
-                className="w-5 h-5"
-                aria-hidden="true"
-              />
-            </Button>
+            <ReadingListButton
+              bookId={`book-${book.id}`}
+              bookTitle={book.title}
+              bookAuthor={book.author}
+              bookCover={book.coverImage}
+              size="md"
+              iconColor="#3A3A3A"
+            />
             
             {/* Affiliate Buttons - dynamisch aus DB */}
             {book.isbn && affiliates.length > 0 && (
