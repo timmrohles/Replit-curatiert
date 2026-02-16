@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { useDashboardFeed, type FeedSectionType, type ReadingStatus } from './DashboardFeedContext';
+import { useDashboardFeed, type FeedSectionType, type ReadingStatus, type FeedSortOrder } from './DashboardFeedContext';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -20,6 +20,10 @@ import {
   BookMarked,
   BookCheck,
   ChevronDown,
+  ArrowDownUp,
+  Hash,
+  Home,
+  Megaphone,
 } from 'lucide-react';
 import type { FeedSectionConfig } from './DashboardFeedContext';
 import { BookCarouselItem, type BookCarouselItemData } from '../../components/book/BookCarouselItem';
@@ -124,6 +128,7 @@ const TAG_COLORS = [
 ];
 
 const SECTION_TO_ENTITY_TYPES: Record<string, FrontendEntityType[]> = {
+  sponsored: ['book'],
   favorites: ['book'],
   currently_reading: ['book'],
   already_read: ['book'],
@@ -148,6 +153,7 @@ const READING_STATUS_OPTIONS: { id: ReadingStatus; label: string; icon: typeof B
 ];
 
 const SECTION_SEARCH_ENDPOINTS: Record<string, string> = {
+  sponsored: '/api/books/search',
   favorites: '/api/books/search',
   currently_reading: '/api/books/search',
   already_read: '/api/books/search',
@@ -164,6 +170,7 @@ const SECTION_SEARCH_ENDPOINTS: Record<string, string> = {
 };
 
 const SECTION_PLACEHOLDER: Record<string, string> = {
+  sponsored: 'Buch suchen...',
   favorites: 'Buch suchen...',
   currently_reading: 'Buch suchen...',
   already_read: 'Buch suchen...',
@@ -605,6 +612,7 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
   const [sortBy, setSortBy] = useState('popularity');
   const { favorites, toggleFavorite } = useFavorites();
   const isCuratorSection = section.id === 'followed_curators';
+  const isSponsoredSection = section.id === 'sponsored';
   const isReadingSection = READING_SECTIONS.includes(section.id as ReadingStatus);
   const books = useMemo(() => getMockBooksForSection(section.id), [section.id]);
   const tags = useMemo(() => favoritesToTags(favorites, section.id), [favorites, section.id]);
@@ -667,9 +675,22 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
         ) : null}
 
         <div className="w-full mt-4 md:mt-6 isolate">
-          <h3 className="section-title mb-4 text-foreground">
-            {isCuratorSection ? 'Neue Bücher für Leseratten' : section.label}
-          </h3>
+          <div className="flex items-center gap-3 mb-4">
+            {isSponsoredSection && (
+              <Megaphone className="w-5 h-5 flex-shrink-0" style={{ color: '#e8a838' }} />
+            )}
+            <h3 className="section-title text-foreground">
+              {isCuratorSection ? 'Neue Bücher für Leseratten' : section.label}
+            </h3>
+            {isSponsoredSection && (
+              <span
+                className="text-xs px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: 'rgba(232, 168, 56, 0.15)', color: '#c48a1a' }}
+              >
+                Gesponsert
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="w-full mt-4 mb-4">
@@ -814,6 +835,175 @@ function SortableFeedSection({
   );
 }
 
+function FeedToolbar() {
+  const {
+    sections,
+    toggleVisibility,
+    scrollToSection,
+    sortOrder,
+    setSortOrder,
+    feedAsHomepage,
+    setFeedAsHomepage,
+    isEditMode,
+    setEditMode,
+    resetToDefaults,
+  } = useDashboardFeed();
+
+  const [jumpOpen, setJumpOpen] = useState(false);
+  const [visibilityOpen, setVisibilityOpen] = useState(false);
+  const jumpRef = useRef<HTMLDivElement>(null);
+  const visibilityRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (jumpRef.current && !jumpRef.current.contains(e.target as Node)) {
+        setJumpOpen(false);
+      }
+      if (visibilityRef.current && !visibilityRef.current.contains(e.target as Node)) {
+        setVisibilityOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const visibleSections = sections.filter((s) => s.visible);
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2" data-testid="feed-toolbar">
+      <button
+        onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors"
+        style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
+        data-testid="button-sort-order"
+      >
+        <ArrowDownUp className="w-4 h-4" />
+        {sortOrder === 'newest' ? 'Neueste zuerst' : 'Älteste zuerst'}
+      </button>
+
+      <div className="relative" ref={jumpRef}>
+        <button
+          onClick={() => { setJumpOpen(!jumpOpen); setVisibilityOpen(false); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors"
+          style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
+          data-testid="button-jump-to-section"
+        >
+          <Hash className="w-4 h-4" />
+          Springen
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+        {jumpOpen && (
+          <div
+            className="absolute left-0 top-full mt-1 w-56 rounded-lg shadow-xl border z-50 py-1"
+            style={{ backgroundColor: 'var(--color-beige, #faf6f1)', borderColor: '#E5E7EB' }}
+          >
+            {visibleSections.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => { scrollToSection(s.id); setJumpOpen(false); }}
+                className="w-full px-3 py-2 text-left text-sm transition-colors"
+                style={{ color: '#3A3A3A' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                data-testid={`jump-to-${s.id}`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="relative" ref={visibilityRef}>
+        <button
+          onClick={() => { setVisibilityOpen(!visibilityOpen); setJumpOpen(false); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors"
+          style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
+          data-testid="button-toggle-sections"
+        >
+          <Eye className="w-4 h-4" />
+          Sektionen
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+        {visibilityOpen && (
+          <div
+            className="absolute left-0 top-full mt-1 w-64 rounded-lg shadow-xl border z-50 py-1"
+            style={{ backgroundColor: 'var(--color-beige, #faf6f1)', borderColor: '#E5E7EB' }}
+          >
+            {sections.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => toggleVisibility(s.id)}
+                className="w-full px-3 py-2 text-left text-sm flex items-center justify-between gap-2 transition-colors"
+                style={{ color: s.visible ? '#3A3A3A' : '#9CA3AF' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                data-testid={`section-toggle-${s.id}`}
+              >
+                <span className="truncate">{s.label}</span>
+                {s.visible ? (
+                  <Eye className="w-4 h-4 flex-shrink-0" style={{ color: '#247ba0' }} />
+                ) : (
+                  <EyeOff className="w-4 h-4 flex-shrink-0" style={{ color: '#9CA3AF' }} />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={() => setFeedAsHomepage(!feedAsHomepage)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors"
+        style={{
+          color: feedAsHomepage ? '#ffffff' : '#6B7280',
+          borderColor: feedAsHomepage ? '#247ba0' : '#E5E7EB',
+          backgroundColor: feedAsHomepage ? '#247ba0' : 'transparent',
+        }}
+        data-testid="button-feed-as-homepage"
+      >
+        <Home className="w-4 h-4" />
+        {feedAsHomepage ? 'Startseite: Feed' : 'Als Startseite'}
+      </button>
+
+      {isEditMode && (
+        <button
+          onClick={resetToDefaults}
+          data-testid="button-reset-feed"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border"
+          style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
+        >
+          <RotateCcw className="w-4 h-4" />
+          Zurücksetzen
+        </button>
+      )}
+
+      <button
+        onClick={() => setEditMode(!isEditMode)}
+        data-testid="button-toggle-edit-mode"
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm"
+        style={{
+          backgroundColor: isEditMode ? '#247ba0' : 'transparent',
+          color: isEditMode ? '#FFFFFF' : '#247ba0',
+          border: isEditMode ? 'none' : '1px solid #E5E7EB',
+        }}
+      >
+        {isEditMode ? (
+          <>
+            <Check className="w-4 h-4" />
+            Fertig
+          </>
+        ) : (
+          <>
+            <Pencil className="w-4 h-4" />
+            Anpassen
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
 export function DashboardFeed() {
   const {
     sections,
@@ -821,8 +1011,6 @@ export function DashboardFeed() {
     toggleVisibility,
     togglePublic,
     isEditMode,
-    setEditMode,
-    resetToDefaults,
   } = useDashboardFeed();
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -846,40 +1034,8 @@ export function DashboardFeed() {
         >
           Mein Feed
         </h1>
-        <div className="flex items-center justify-center gap-2 mt-3">
-          {isEditMode && (
-            <button
-              onClick={resetToDefaults}
-              data-testid="button-reset-feed"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border"
-              style={{ color: '#6B7280', borderColor: '#E5E7EB' }}
-            >
-              <RotateCcw className="w-4 h-4" />
-              Zurücksetzen
-            </button>
-          )}
-          <button
-            onClick={() => setEditMode(!isEditMode)}
-            data-testid="button-toggle-edit-mode"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm"
-            style={{
-              backgroundColor: isEditMode ? '#247ba0' : 'transparent',
-              color: isEditMode ? '#FFFFFF' : '#247ba0',
-              border: isEditMode ? 'none' : '1px solid #E5E7EB',
-            }}
-          >
-            {isEditMode ? (
-              <>
-                <Check className="w-4 h-4" />
-                Fertig
-              </>
-            ) : (
-              <>
-                <Pencil className="w-4 h-4" />
-                Anpassen
-              </>
-            )}
-          </button>
+        <div className="mt-3">
+          <FeedToolbar />
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, ReactNode } from 'react';
 
 export type FeedSectionType = 
+  | 'sponsored'
   | 'followed_curators'
   | 'favorites' 
   | 'reading_list'
@@ -17,6 +18,8 @@ export type FeedSectionType =
 
 export type ReadingStatus = 'currently_reading' | 'already_read' | 'want_to_read';
 
+export type FeedSortOrder = 'newest' | 'oldest';
+
 export interface FeedSectionConfig {
   id: FeedSectionType;
   label: string;
@@ -29,6 +32,8 @@ interface StoredState {
   order: FeedSectionType[];
   visibility: Record<FeedSectionType, boolean>;
   publicState: Record<FeedSectionType, boolean>;
+  feedAsHomepage: boolean;
+  sortOrder: FeedSortOrder;
 }
 
 interface DashboardFeedContextType {
@@ -39,9 +44,21 @@ interface DashboardFeedContextType {
   resetToDefaults: () => void;
   isEditMode: boolean;
   setEditMode: (mode: boolean) => void;
+  feedAsHomepage: boolean;
+  setFeedAsHomepage: (value: boolean) => void;
+  sortOrder: FeedSortOrder;
+  setSortOrder: (order: FeedSortOrder) => void;
+  scrollToSection: (sectionId: FeedSectionType) => void;
 }
 
 const DEFAULT_SECTIONS: FeedSectionConfig[] = [
+  {
+    id: 'sponsored',
+    label: 'Anzeigen',
+    description: 'Gesponserte Bücher und Kurationen von Verlagen und Autor:innen.',
+    visible: true,
+    isPublic: true,
+  },
   {
     id: 'followed_curators',
     label: 'Meine Kurator:innen',
@@ -136,16 +153,18 @@ const DEFAULT_SECTIONS: FeedSectionConfig[] = [
 ];
 
 const STORAGE_KEY = 'coratiert-dashboard-feed';
+const HOMEPAGE_KEY = 'coratiert-feed-as-homepage';
 
 function loadFromStorage(): StoredState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return getDefaultState();
+    const homepagePref = localStorage.getItem(HOMEPAGE_KEY);
+    if (!raw) return { ...getDefaultState(), feedAsHomepage: homepagePref === 'true' };
     
-    const parsed = JSON.parse(raw) as StoredState;
+    const parsed = JSON.parse(raw) as Partial<StoredState>;
     
     const validIds = new Set(DEFAULT_SECTIONS.map(s => s.id));
-    const filteredOrder = parsed.order.filter(id => validIds.has(id));
+    const filteredOrder = (parsed.order || []).filter(id => validIds.has(id));
     const missingIds = DEFAULT_SECTIONS.map(s => s.id).filter(id => !filteredOrder.includes(id));
     const allIds = [...filteredOrder, ...missingIds];
     
@@ -159,6 +178,8 @@ function loadFromStorage(): StoredState {
         ...Object.fromEntries(DEFAULT_SECTIONS.map(s => [s.id, s.isPublic])),
         ...Object.fromEntries(Object.entries(parsed.publicState || {}).filter(([k]) => validIds.has(k as FeedSectionType))),
       } as Record<FeedSectionType, boolean>,
+      feedAsHomepage: homepagePref === 'true',
+      sortOrder: parsed.sortOrder || 'newest',
     };
   } catch {
     return getDefaultState();
@@ -170,12 +191,15 @@ function getDefaultState(): StoredState {
     order: DEFAULT_SECTIONS.map(s => s.id),
     visibility: Object.fromEntries(DEFAULT_SECTIONS.map(s => [s.id, s.visible])) as Record<FeedSectionType, boolean>,
     publicState: Object.fromEntries(DEFAULT_SECTIONS.map(s => [s.id, s.isPublic])) as Record<FeedSectionType, boolean>,
+    feedAsHomepage: false,
+    sortOrder: 'newest',
   };
 }
 
 function saveToStorage(state: StoredState) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(HOMEPAGE_KEY, state.feedAsHomepage ? 'true' : 'false');
   } catch {
   }
 }
@@ -249,6 +273,21 @@ export function DashboardFeedProvider({ children }: { children: ReactNode }) {
     setStored(getDefaultState());
   }, []);
 
+  const setFeedAsHomepage = useCallback((value: boolean) => {
+    setStored(prev => ({ ...prev, feedAsHomepage: value }));
+  }, []);
+
+  const setSortOrder = useCallback((order: FeedSortOrder) => {
+    setStored(prev => ({ ...prev, sortOrder: order }));
+  }, []);
+
+  const scrollToSection = useCallback((sectionId: FeedSectionType) => {
+    const el = document.querySelector(`[data-testid="feed-section-${sectionId}"]`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       sections,
@@ -258,8 +297,13 @@ export function DashboardFeedProvider({ children }: { children: ReactNode }) {
       resetToDefaults,
       isEditMode,
       setEditMode,
+      feedAsHomepage: stored.feedAsHomepage,
+      setFeedAsHomepage,
+      sortOrder: stored.sortOrder,
+      setSortOrder,
+      scrollToSection,
     }),
-    [sections, reorderSections, toggleVisibility, togglePublic, resetToDefaults, isEditMode]
+    [sections, reorderSections, toggleVisibility, togglePublic, resetToDefaults, isEditMode, stored.feedAsHomepage, stored.sortOrder, setFeedAsHomepage, setSortOrder, scrollToSection]
   );
 
   return (
@@ -277,6 +321,11 @@ const defaultContext: DashboardFeedContextType = {
   resetToDefaults: () => {},
   isEditMode: false,
   setEditMode: () => {},
+  feedAsHomepage: false,
+  setFeedAsHomepage: () => {},
+  sortOrder: 'newest',
+  setSortOrder: () => {},
+  scrollToSection: () => {},
 };
 
 export function useDashboardFeed() {

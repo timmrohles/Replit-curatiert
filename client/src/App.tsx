@@ -14,6 +14,15 @@ import { LocaleLayout } from './components/layout/LocaleLayout';
 import { DEFAULT_LOCALE } from './utils/LocaleContext';
 
 const CMSHomepage = React.lazy(() => import('./components/cms/CMSHomepage').then(m => ({ default: m.CMSHomepage })));
+
+function SmartHomepage() {
+  const feedAsHomepage = localStorage.getItem('coratiert-feed-as-homepage') === 'true';
+  if (feedAsHomepage) {
+    const locale = window.location.pathname.split('/')[1] || 'de-de';
+    return <Navigate to={`/${locale}/dashboard`} replace />;
+  }
+  return <Suspense fallback={<div />}><CMSHomepage /></Suspense>;
+}
 const DataDrivenHomepage = React.lazy(() => import('./components/homepage/DataDrivenHomepage').then(m => ({ default: m.DataDrivenHomepage })));
 const Homepage = React.lazy(() => import('./components/homepage/NewHomepage').then(m => ({ default: m.Homepage })));
 const BookDetailPage = React.lazy(() => import('./components/book/BookDetailPage').then(m => ({ default: m.BookDetailPage })));
@@ -92,7 +101,7 @@ function App() {
 
                     {/* All public routes under /:locale */}
                     <Route path="/:locale" element={<LocaleLayout />}>
-                      <Route index element={<S><CMSHomepage /></S>} />
+                      <Route index element={<SmartHomepage />} />
                       <Route path="data-driven-homepage" element={<S><DataDrivenHomepage /></S>} />
                       <Route path="old-homepage" element={<S><Homepage /></S>} />
 
