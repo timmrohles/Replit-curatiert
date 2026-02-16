@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Globe, Save, BookOpen, Mail, Phone, Lock } from 'lucide-react';
+import { User, Globe, Save, BookOpen, Mail, Phone, Lock, AlertTriangle } from 'lucide-react';
 
 export function DashboardProfile() {
   const [profile, setProfile] = useState({
@@ -49,7 +49,6 @@ export function DashboardProfile() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-3xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
           Meine Daten
@@ -59,7 +58,6 @@ export function DashboardProfile() {
         </p>
       </div>
 
-      {/* Personal Information Card */}
       <div 
         className="rounded-lg p-6"
         style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
@@ -74,7 +72,6 @@ export function DashboardProfile() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Vorname */}
           <div>
             <label 
               htmlFor="firstName" 
@@ -97,7 +94,6 @@ export function DashboardProfile() {
             />
           </div>
 
-          {/* Nachname */}
           <div>
             <label 
               htmlFor="lastName" 
@@ -120,7 +116,6 @@ export function DashboardProfile() {
             />
           </div>
 
-          {/* E-Mail */}
           <div>
             <label 
               htmlFor="email" 
@@ -146,7 +141,6 @@ export function DashboardProfile() {
             </div>
           </div>
 
-          {/* Telefon */}
           <div>
             <label 
               htmlFor="phone" 
@@ -174,7 +168,6 @@ export function DashboardProfile() {
         </div>
       </div>
 
-      {/* Sprache & Region Card */}
       <div 
         className="rounded-lg p-6"
         style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
@@ -189,7 +182,6 @@ export function DashboardProfile() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Sprache */}
           <div>
             <label 
               htmlFor="language" 
@@ -214,7 +206,6 @@ export function DashboardProfile() {
             </select>
           </div>
 
-          {/* Land */}
           <div>
             <label 
               htmlFor="country" 
@@ -242,7 +233,6 @@ export function DashboardProfile() {
         </div>
       </div>
 
-      {/* Genre Preferences Card */}
       <div 
         className="rounded-lg p-6"
         style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
@@ -285,7 +275,6 @@ export function DashboardProfile() {
         </p>
       </div>
 
-      {/* Password Section */}
       <div 
         className="rounded-lg p-6"
         style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
@@ -313,7 +302,6 @@ export function DashboardProfile() {
 
         {showPasswordSection && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Aktuelles Passwort */}
             <div>
               <label 
                 htmlFor="currentPassword" 
@@ -336,7 +324,6 @@ export function DashboardProfile() {
               />
             </div>
 
-            {/* Neues Passwort */}
             <div>
               <label 
                 htmlFor="newPassword" 
@@ -359,7 +346,6 @@ export function DashboardProfile() {
               />
             </div>
 
-            {/* Passwort bestätigen */}
             <div className="md:col-span-2">
               <label 
                 htmlFor="confirmPassword" 
@@ -394,7 +380,70 @@ export function DashboardProfile() {
         )}
       </div>
 
-      {/* Save Button */}
+      <div className="rounded-lg p-4 md:p-6 shadow-sm border" style={{ backgroundColor: '#FEF2F2', borderColor: '#FCA5A5' }}>
+        <div className="flex items-center gap-3 mb-4 md:mb-6">
+          <AlertTriangle className="w-5 h-5" style={{ color: '#EF4444' }} />
+          <h2 className="text-lg md:text-xl" style={{ fontFamily: 'Fjalla One', color: '#991B1B' }}>
+            Gefahrenbereich
+          </h2>
+        </div>
+        
+        <div className="space-y-3 md:space-y-4">
+          <div className="p-3 md:p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF' }}>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <div className="font-medium mb-1 text-sm md:text-base" style={{ color: '#991B1B' }}>
+                  Account deaktivieren
+                </div>
+                <div className="text-xs md:text-sm" style={{ color: '#6B7280' }}>
+                  Dein Account wird vorübergehend deaktiviert und kann später wiederhergestellt werden
+                </div>
+              </div>
+              <button
+                data-testid="button-deactivate-account"
+                className="px-4 py-2 rounded-lg text-xs md:text-sm border whitespace-nowrap"
+                style={{ borderColor: '#EF4444', color: '#EF4444' }}
+              >
+                Deaktivieren
+              </button>
+            </div>
+          </div>
+
+          <div className="p-3 md:p-4 rounded-lg" style={{ backgroundColor: '#FFFFFF' }}>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div>
+                <div className="font-medium mb-1 text-sm md:text-base" style={{ color: '#991B1B' }}>
+                  Account löschen
+                </div>
+                <div className="text-xs md:text-sm" style={{ color: '#6B7280' }}>
+                  Alle deine Daten werden unwiderruflich gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.
+                </div>
+              </div>
+              <button
+                data-testid="button-delete-account"
+                className="px-4 py-2 rounded-lg text-xs md:text-sm text-white whitespace-nowrap"
+                style={{ backgroundColor: '#EF4444' }}
+                onClick={() => {
+                  if (confirm('Möchtest du deinen Account wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden!')) {
+                    alert('Account-Löschung würde hier ausgeführt werden');
+                  }
+                }}
+              >
+                Löschen
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 p-3 rounded-lg" style={{ backgroundColor: '#EFF6FF', borderLeft: '4px solid #3B82F6' }}>
+          <p className="text-xs" style={{ color: '#1E40AF' }}>
+            <strong>Deine Rechte:</strong> Nach DSGVO hast du das Recht auf Auskunft, Berichtigung und Löschung deiner Daten. 
+            Weitere Informationen findest du in unserer{' '}
+            <a href="/datenschutz" className="underline hover:no-underline" data-testid="link-datenschutz">Datenschutzerklärung</a>.
+          </p>
+        </div>
+      </div>
+
       <div className="flex justify-end pt-4">
         <button
           onClick={handleSave}

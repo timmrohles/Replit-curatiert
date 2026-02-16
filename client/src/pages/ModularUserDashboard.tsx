@@ -8,7 +8,6 @@ import {
   MessageSquare, 
   Heart, 
   Bell, 
-  Lock, 
   Store, 
   Calendar, 
   BarChart3, 
@@ -19,17 +18,14 @@ import {
   Users,
   Gift,
   Mail,
-  Settings,
   PenTool
 } from 'lucide-react';
 import { DashboardHome } from './dashboard/DashboardHome';
 import { DashboardProfile } from './dashboard/Profile';
 import { DashboardRatings } from './dashboard/Ratings';
 import { DashboardReviews } from './dashboard/Reviews';
-import { DashboardFollows } from './dashboard/Follows';
 import { DashboardNotifications } from './dashboard/Notifications';
 import { DashboardPrivacy } from './dashboard/Privacy';
-import { DashboardSettings } from './dashboard/Settings';
 import { CreatorStorefront } from './dashboard/creator/CreatorStorefront';
 import { CreatorCurations } from './dashboard/creator/CreatorCurations';
 import { CreatorReviews } from './dashboard/creator/CreatorReviews';
@@ -68,10 +64,9 @@ type DashboardSection =
   | 'profile' 
   | 'ratings' 
   | 'reviews' 
-  | 'follows' 
+  | 'storefront'
   | 'notifications' 
   | 'privacy'
-  | 'settings'
   | 'creator-storefront'
   | 'creator-curations'
   | 'creator-reviews'
@@ -161,9 +156,8 @@ export default function ModularUserDashboard() {
     { id: 'profile', label: 'Profil', icon: User, group: 'core' },
     { id: 'ratings', label: 'Bewertungen', icon: Star, group: 'core' },
     { id: 'reviews', label: 'Rezensionen', icon: MessageSquare, group: 'core' },
-    { id: 'follows', label: 'Favoriten', icon: Heart, group: 'core' },
+    { id: 'storefront', label: 'Storefront', icon: Store, group: 'core' },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, group: 'core' },
-    { id: 'settings', label: 'Einstellungen', icon: Settings, group: 'core' },
   ];
 
   const creatorNavItems: NavItem[] = [
@@ -237,14 +231,18 @@ export default function ModularUserDashboard() {
           return <DashboardRatings />;
         case 'reviews':
           return <DashboardReviews />;
-        case 'follows':
-          return <DashboardFollows />;
+        case 'storefront':
+          return (
+            <div className="rounded-lg p-8 md:p-12 border text-center" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+              <Store className="w-12 h-12 mx-auto mb-4" style={{ color: '#247ba0' }} />
+              <h2 className="text-xl md:text-2xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>Dein Storefront</h2>
+              <p className="text-sm" style={{ color: '#6B7280' }}>Hier entsteht dein persönlicher Storefront. Inhalte folgen in Kürze.</p>
+            </div>
+          );
         case 'notifications':
           return <DashboardNotifications />;
         case 'privacy':
           return <DashboardPrivacy />;
-        case 'settings':
-          return <DashboardSettings />;
         case 'creator-storefront':
           return hasModule('creator_storefront') ? <CreatorStorefront /> : <FeatureLockedMessage feature="Buchhandlung" />;
         case 'creator-curations':
@@ -357,7 +355,7 @@ export default function ModularUserDashboard() {
         <Breadcrumb items={getBreadcrumbItems()} />
 
         <main className="flex-1 pb-20 lg:pb-0">
-          <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
+          <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-4 md:py-6 space-y-4">
 
             <section
               className="rounded-lg p-5 md:p-6 border"
