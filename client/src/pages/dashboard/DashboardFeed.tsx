@@ -18,6 +18,7 @@ import type { FeedSectionConfig } from './DashboardFeedContext';
 import { BookCarouselItem, type BookCarouselItemData } from '../../components/book/BookCarouselItem';
 import { CarouselContainer } from '../../components/carousel/CarouselContainer';
 import { LikeButton } from '../../components/favorites/LikeButton';
+import { useFavorites, type FavoriteItem, type FrontendEntityType } from '../../components/favorites/FavoritesContext';
 import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 import { Text } from '../../components/ui/typography';
 
@@ -106,51 +107,43 @@ const MOCK_BOOKS: BookCarouselItemData[] = [
   },
 ];
 
-const MOCK_TAGS_BY_SECTION: Record<string, Array<{ label: string; color: string }>> = {
-  favorites: [
-    { label: 'Belletristik', color: 'var(--vibrant-coral, #f25f5c)' },
-    { label: 'Krimi & Thriller', color: 'var(--color-saffron, #e8a838)' },
-    { label: 'Sachbuch', color: 'var(--color-teal, #70c1b3)' },
-  ],
-  currently_reading: [
-    { label: 'Roman', color: 'var(--vibrant-coral, #f25f5c)' },
-    { label: 'Biografie', color: 'var(--color-teal, #70c1b3)' },
-  ],
-  already_read: [
-    { label: 'Klassiker', color: 'var(--color-saffron, #e8a838)' },
-    { label: 'Fantasy', color: 'var(--vibrant-coral, #f25f5c)' },
-    { label: 'Sachbuch', color: 'var(--color-teal, #70c1b3)' },
-  ],
-  want_to_read: [
-    { label: 'Neuerscheinungen', color: 'var(--vibrant-coral, #f25f5c)' },
-    { label: 'Empfohlen', color: 'var(--color-saffron, #e8a838)' },
-  ],
-  reading_list: [
-    { label: 'Vorgemerkt', color: 'var(--color-teal, #70c1b3)' },
-    { label: 'Geschenk-Ideen', color: 'var(--color-saffron, #e8a838)' },
-  ],
-  followed_authors: [
-    { label: 'Kazuo Ishiguro', color: 'var(--color-saffron, #e8a838)' },
-    { label: 'Walter Moers', color: 'var(--vibrant-coral, #f25f5c)' },
-  ],
-  followed_publishers: [
-    { label: 'Suhrkamp', color: 'var(--color-teal, #70c1b3)' },
-    { label: 'Diogenes', color: 'var(--color-saffron, #e8a838)' },
-  ],
-  followed_categories: [
-    { label: 'Belletristik', color: 'var(--vibrant-coral, #f25f5c)' },
-    { label: 'Sachbuch', color: 'var(--color-teal, #70c1b3)' },
-  ],
-  followed_tags: [
-    { label: 'Achtsamkeit', color: 'var(--color-saffron, #e8a838)' },
-    { label: 'Feminismus', color: 'var(--vibrant-coral, #f25f5c)' },
-  ],
-  recommendations: [
-    { label: 'Basierend auf Favoriten', color: 'var(--color-teal, #70c1b3)' },
-    { label: 'Trending', color: 'var(--vibrant-coral, #f25f5c)' },
-  ],
-  followed_curators: [],
+const TAG_COLORS = [
+  'var(--vibrant-coral, #f25f5c)',
+  'var(--color-saffron, #e8a838)',
+  'var(--color-teal, #70c1b3)',
+  'var(--color-cerulean, #247ba0)',
+  '#8b5cf6',
+  '#ec4899',
+];
+
+const SECTION_TO_ENTITY_TYPES: Record<string, FrontendEntityType[]> = {
+  favorites: ['book'],
+  currently_reading: ['book'],
+  already_read: ['book'],
+  want_to_read: ['book'],
+  reading_list: ['book'],
+  followed_authors: ['author'],
+  followed_publishers: ['publisher'],
+  followed_categories: ['category'],
+  followed_tags: ['tag', 'genre', 'topic'],
+  followed_curators: ['creator'],
+  recommendations: ['book'],
 };
+
+function favoritesToTags(
+  favorites: FavoriteItem[],
+  sectionId: string
+): Array<{ label: string; color: string; entityId: string; entityType: FrontendEntityType; image?: string }> {
+  const entityTypes = SECTION_TO_ENTITY_TYPES[sectionId] || [];
+  const matched = favorites.filter((fav) => entityTypes.includes(fav.type));
+  return matched.map((fav, i) => ({
+    label: fav.title,
+    color: fav.color || TAG_COLORS[i % TAG_COLORS.length],
+    entityId: fav.id,
+    entityType: fav.type,
+    image: fav.image,
+  }));
+}
 
 const SORT_OPTIONS = [
   { id: 'popularity', label: 'Beliebtheit' },
@@ -257,9 +250,10 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
   onTogglePublic: () => void;
 }) {
   const [sortBy, setSortBy] = useState('popularity');
+  const { favorites } = useFavorites();
   const isCuratorSection = section.id === 'followed_curators';
   const books = useMemo(() => getMockBooksForSection(section.id), [section.id]);
-  const tags = MOCK_TAGS_BY_SECTION[section.id] || [];
+  const tags = useMemo(() => favoritesToTags(favorites, section.id), [favorites, section.id]);
   const curatorIndex = 0;
   const curator = MOCK_CURATORS[curatorIndex];
 
@@ -331,7 +325,7 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
               {tags.map((tag) => (
                 <div
                   role="group"
-                  key={tag.label}
+                  key={tag.entityId}
                   className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg cursor-pointer transition-all duration-200 select-none hover-elevate"
                   style={{ backgroundColor: tag.color }}
                 >
@@ -339,9 +333,11 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
                     {tag.label}
                   </Text>
                   <LikeButton
-                    entityId={`tag-${tag.label.toLowerCase().replace(/\s+/g, '-')}`}
-                    entityType="tag"
+                    entityId={tag.entityId}
+                    entityType={tag.entityType}
                     entityTitle={tag.label}
+                    entityImage={tag.image}
+                    entityColor={tag.color}
                     variant="minimal"
                     size="sm"
                     iconColor="#ffffff"
