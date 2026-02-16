@@ -1,5 +1,5 @@
-import React, { Suspense, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import React, { Suspense, useState, useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -20,44 +20,27 @@ function SmartHomepage() {
   const feedDefault = localStorage.getItem('coratiert-feed-as-homepage') === 'true';
   const [showFeed, setShowFeed] = useState(feedDefault);
 
-  return (
-    <div>
-      <div className="flex items-center justify-center gap-1 pt-4 pb-2">
-        <button
-          onClick={() => setShowFeed(false)}
-          className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-          style={{
-            backgroundColor: !showFeed ? '#1a1a1a' : 'transparent',
-            color: !showFeed ? '#ffffff' : '#3A3A3A',
-            border: !showFeed ? 'none' : '1px solid #D1D5DB',
-          }}
-          data-testid="button-switch-startseite"
-        >
-          Startseite
-        </button>
-        <button
-          onClick={() => setShowFeed(true)}
-          className="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-          style={{
-            backgroundColor: showFeed ? '#1a1a1a' : 'transparent',
-            color: showFeed ? '#ffffff' : '#3A3A3A',
-            border: showFeed ? 'none' : '1px solid #D1D5DB',
-          }}
-          data-testid="button-switch-feed"
-        >
-          Mein Feed
-        </button>
-      </div>
-      {showFeed ? (
-        <Suspense fallback={<div />}>
-          <HomepageFeedView />
-        </Suspense>
-      ) : (
-        <Suspense fallback={<div />}>
-          <CMSHomepage />
-        </Suspense>
-      )}
-    </div>
+  useEffect(() => {
+    const handler = () => {
+      setShowFeed(prev => {
+        const next = !prev;
+        localStorage.setItem('coratiert-feed-as-homepage', next ? 'true' : 'false');
+        window.dispatchEvent(new CustomEvent('feed-view-changed', { detail: { active: next } }));
+        return next;
+      });
+    };
+    window.addEventListener('toggle-feed-view', handler);
+    return () => window.removeEventListener('toggle-feed-view', handler);
+  }, []);
+
+  return showFeed ? (
+    <Suspense fallback={<div />}>
+      <HomepageFeedView />
+    </Suspense>
+  ) : (
+    <Suspense fallback={<div />}>
+      <CMSHomepage />
+    </Suspense>
   );
 }
 const DataDrivenHomepage = React.lazy(() => import('./components/homepage/DataDrivenHomepage').then(m => ({ default: m.DataDrivenHomepage })));

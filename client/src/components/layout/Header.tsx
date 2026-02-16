@@ -322,6 +322,31 @@ export function Header({
     }
   }, [navDataV2, navErrorV2]);
 
+  const [feedViewActive, setFeedViewActive] = useState(() => 
+    localStorage.getItem('coratiert-feed-as-homepage') === 'true'
+  );
+
+  const isOnHomepage = location.pathname === '/' || /^\/[a-z]{2}-[a-z]{2}\/?$/.test(location.pathname);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail) setFeedViewActive(detail.active);
+    };
+    window.addEventListener('feed-view-changed', handler);
+    return () => window.removeEventListener('feed-view-changed', handler);
+  }, []);
+
+  const handleFeedToggle = () => {
+    if (isOnHomepage) {
+      window.dispatchEvent(new CustomEvent('toggle-feed-view'));
+    } else {
+      localStorage.setItem('coratiert-feed-as-homepage', 'true');
+      setFeedViewActive(true);
+      navigate('/');
+    }
+  };
+
   const formatKeys = ['hardcover', 'softcover', 'ebook', 'audiobook', 'game'] as const;
   const formatLabels: Record<string, string> = {
     hardcover: t('header.hardcover'),
@@ -614,7 +639,6 @@ export function Header({
                   );
                 }
 
-                // Determine columns based on subcategories count
                 const columnCount = menuItem.subcategories.length <= 1 ? 1 : 2;
 
                 return (
@@ -628,6 +652,18 @@ export function Header({
                   />
                 );
               })}
+              <button
+                onClick={handleFeedToggle}
+                className="px-4 md:px-5 lg:px-6 py-2 md:py-2 lg:py-2.5 rounded-full transition-all text-xs md:text-sm lg:text-base font-medium whitespace-nowrap hover:scale-105 flex items-center gap-1.5"
+                style={{
+                  backgroundColor: (isOnHomepage && feedViewActive) ? '#ffffff' : '#e8604c',
+                  color: (isOnHomepage && feedViewActive) ? '#e8604c' : '#ffffff',
+                  border: (isOnHomepage && feedViewActive) ? '2px solid #e8604c' : '2px solid transparent',
+                }}
+                data-testid="button-nav-mein-feed"
+              >
+                Mein Feed
+              </button>
             </div>
           </nav>
         </div>
