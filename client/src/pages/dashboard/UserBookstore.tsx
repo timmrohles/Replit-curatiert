@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Store, Save, Eye, GripVertical, Globe, ExternalLink,
-  Instagram, Twitter, Youtube, MapPin, BookOpen
+  Instagram, Twitter, Youtube, MapPin, BookOpen, AlertTriangle, User
 } from 'lucide-react';
 
 const API_BASE = '/api';
 const USER_ID = 'demo-user-123';
+const CURATOR_STORAGE_KEY = 'coratiert-curator-id';
 
 interface SocialLinks {
   website: string;
@@ -51,12 +52,25 @@ function generateSlug(name: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+interface ProfileCheck {
+  hasName: boolean;
+  hasEmail: boolean;
+  hasFocus: boolean;
+  hasBio: boolean;
+  isComplete: boolean;
+  missing: string[];
+}
+
 export function UserBookstore() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [savedSlug, setSavedSlug] = useState<string | null>(null);
+  const [profileCheck, setProfileCheck] = useState<ProfileCheck>({
+    hasName: false, hasEmail: false, hasFocus: false, hasBio: false,
+    isComplete: false, missing: [],
+  });
 
   const [profile, setProfile] = useState<BookstoreProfile>({
     userId: USER_ID,
@@ -135,10 +149,41 @@ export function UserBookstore() {
     }
   }, []);
 
+  const checkProfileCompleteness = useCallback(async () => {
+    const missing: string[] = [];
+    let hasName = false, hasEmail = false, hasFocus = false, hasBio = false;
+    try {
+      const curatorId = localStorage.getItem(CURATOR_STORAGE_KEY);
+      if (curatorId) {
+        const res = await fetch(`${API_BASE}/user/curator-profile/${curatorId}`);
+        const json = await res.json();
+        if (json.ok && json.data) {
+          const d = json.data;
+          const name = (d.name || '').trim();
+          const nameParts = name.split(' ').filter((p: string) => p.length > 0);
+          hasName = nameParts.length >= 2;
+          hasEmail = !!(d.email && d.email.trim().length > 0);
+          hasFocus = !!(d.focus && d.focus.trim().length > 0);
+          hasBio = !!(d.bio && d.bio.trim().length > 0);
+        }
+      }
+    } catch {}
+    if (!hasName) missing.push('Vor- und Nachname');
+    if (!hasEmail) missing.push('E-Mail-Adresse');
+    if (!hasFocus) missing.push('Kurator*in Fokus / Thema');
+    if (!hasBio) missing.push('Kurator*in Biografie');
+    setProfileCheck({
+      hasName, hasEmail, hasFocus, hasBio,
+      isComplete: missing.length === 0,
+      missing,
+    });
+  }, []);
+
   useEffect(() => {
     fetchProfile();
     fetchCurations();
-  }, [fetchProfile, fetchCurations]);
+    checkProfileCompleteness();
+  }, [fetchProfile, fetchCurations, checkProfileCompleteness]);
 
   const handleDisplayNameChange = (value: string) => {
     setProfile(prev => ({
@@ -279,14 +324,44 @@ export function UserBookstore() {
         </div>
       )}
 
+      {!profileCheck.isComplete && (
+        <div
+          className="p-4 rounded-lg flex items-start gap-3"
+          style={{ backgroundColor: '#FFF7ED', border: '1px solid #FDBA74' }}
+          data-testid="warning-profile-incomplete"
+        >
+          <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#EA580C' }} />
+          <div>
+            <p className="text-sm font-medium mb-1" style={{ color: '#9A3412' }}>
+              Profil unvollständig
+            </p>
+            <p className="text-sm mb-2" style={{ color: '#C2410C' }}>
+              Dein Bookstore kann erst veröffentlicht werden, wenn du dein Profil vollständig ausgefüllt hast. Bitte ergänze folgende Angaben im Tab "Profil":
+            </p>
+            <ul className="text-sm list-disc pl-5 space-y-0.5" style={{ color: '#C2410C' }}>
+              {profileCheck.missing.map((item, i) => (
+                <li key={i}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium" style={{ color: '#3A3A3A' }}>Status:</span>
-          <label className="relative inline-flex items-center cursor-pointer" data-testid="toggle-published">
+          <label
+            className={`relative inline-flex items-center ${profileCheck.isComplete ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`}
+            data-testid="toggle-published"
+          >
             <input
               type="checkbox"
               checked={profile.isPublished}
-              onChange={e => setProfile(prev => ({ ...prev, isPublished: e.target.checked }))}
+              onChange={e => {
+                if (!profileCheck.isComplete && e.target.checked) return;
+                setProfile(prev => ({ ...prev, isPublished: e.target.checked }));
+              }}
+              disabled={!profileCheck.isComplete && !profile.isPublished}
               className="sr-only peer"
               data-testid="input-published"
             />
