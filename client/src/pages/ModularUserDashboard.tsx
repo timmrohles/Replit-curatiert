@@ -319,14 +319,14 @@ export default function ModularUserDashboard() {
         key={item.id}
         data-testid={`tab-${item.id}`}
         onClick={() => navigateToSection(item.id)}
-        className="flex items-center gap-1.5 px-3 py-2.5 whitespace-nowrap flex-shrink-0 transition-opacity duration-150 border-b-2"
+        className="flex items-center gap-1.5 px-4 py-2.5 whitespace-nowrap flex-shrink-0 transition-opacity duration-150 border-b-2"
         style={{
           borderColor: isActive ? '#247ba0' : 'transparent',
-          color: isActive ? '#247ba0' : '#6B7280',
+          color: isActive ? '#247ba0' : '#1a1a1a',
         }}
       >
         <Icon className="w-4 h-4 flex-shrink-0" />
-        <span className="text-sm">{item.label}</span>
+        <span className="text-base">{item.label}</span>
       </button>
     );
   };
@@ -354,7 +354,7 @@ export default function ModularUserDashboard() {
               style={{ borderColor: '#E5E7EB' }}
               data-testid="tab-navigation"
             >
-              <div className="flex items-center min-w-max">
+              <div className="flex items-center justify-center min-w-max">
                 {coreNavItems.map(item => renderTabButton(item))}
 
                 {hasAnyCreatorModule && availableCreatorItems.length > 0 && (
