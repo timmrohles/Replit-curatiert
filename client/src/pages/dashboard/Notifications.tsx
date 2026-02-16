@@ -83,7 +83,7 @@ export function DashboardNotifications() {
       </div>
 
       {/* Actions */}
-      <div className="rounded-lg p-6 shadow-sm border flex items-center justify-between" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+      <div className="p-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Bell className="w-5 h-5" style={{ color: '#247ba0' }} />
           <span className="text-sm font-medium" style={{ color: '#3A3A3A' }}>
@@ -114,7 +114,7 @@ export function DashboardNotifications() {
       {/* Notifications List */}
       <div className="space-y-3">
         {notifications.length === 0 ? (
-          <div className="rounded-lg p-12 shadow-sm border text-center" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+          <div className="p-12 text-center">
             <Bell className="w-16 h-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
             <h3 className="text-xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
               Keine Benachrichtigungen
@@ -129,10 +129,9 @@ export function DashboardNotifications() {
             return (
               <div 
                 key={notification.id} 
-                className="rounded-lg p-4 shadow-sm border hover:shadow-md transition-shadow duration-200"
+                className="rounded-lg p-4"
                 style={{ 
-                  backgroundColor: notification.read ? '#FFFFFF' : '#F0F9FF',
-                  borderColor: notification.read ? '#E5E7EB' : '#BFDBFE'
+                  backgroundColor: notification.read ? 'transparent' : '#F0F9FF'
                 }}
               >
                 <div className="flex items-start gap-4">
@@ -183,7 +182,7 @@ export function DashboardNotifications() {
       </div>
 
       {/* Settings Card */}
-      <div className="rounded-lg p-4 md:p-6 shadow-sm border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+      <div className="p-4 md:p-6">
         <div className="flex items-center gap-3 mb-4 md:mb-6">
           <Settings className="w-5 h-5" style={{ color: '#247ba0' }} />
           <h2 className="text-lg md:text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
@@ -212,7 +211,7 @@ export function DashboardNotifications() {
       </div>
 
       {/* Newsletter Settings */}
-      <div className="rounded-lg p-4 md:p-6 shadow-sm border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+      <div className="p-4 md:p-6">
         <div className="flex items-center gap-3 mb-4 md:mb-6">
           <Mail className="w-5 h-5" style={{ color: '#F59E0B' }} />
           <h2 className="text-lg md:text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>

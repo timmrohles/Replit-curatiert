@@ -212,8 +212,7 @@ export function DashboardProfile() {
       </div>
 
       <section
-        className="rounded-lg p-5 md:p-6 border"
-        style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}
+        className="p-5 md:p-6"
         data-testid="hero-profile-card"
       >
         <div className="flex items-start gap-4">
@@ -309,8 +308,7 @@ export function DashboardProfile() {
       </section>
 
       <div 
-        className="rounded-lg p-6"
-        style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
+        className="p-6"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg" style={{ backgroundColor: '#EEF2FF' }}>
@@ -423,8 +421,7 @@ export function DashboardProfile() {
       </div>
 
       <div 
-        className="rounded-lg p-6"
-        style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
+        className="p-6"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
@@ -670,8 +667,7 @@ export function DashboardProfile() {
       </div>
 
       <div 
-        className="rounded-lg p-6"
-        style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
+        className="p-6"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg" style={{ backgroundColor: '#FEF3C7' }}>
@@ -737,8 +733,7 @@ export function DashboardProfile() {
       </div>
 
       <div 
-        className="rounded-lg p-6"
-        style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
+        className="p-6"
       >
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
@@ -780,8 +775,7 @@ export function DashboardProfile() {
       </div>
 
       <div 
-        className="rounded-lg p-6"
-        style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
+        className="p-6"
       >
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

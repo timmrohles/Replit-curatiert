@@ -225,7 +225,7 @@ export default function ModularUserDashboard() {
           return <DashboardReviews />;
         case 'storefront':
           return (
-            <div className="rounded-lg p-8 md:p-12 border text-center" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+            <div className="p-8 md:p-12 text-center">
               <Store className="w-12 h-12 mx-auto mb-4" style={{ color: '#247ba0' }} />
               <h2 className="text-xl md:text-2xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>Dein Storefront</h2>
               <p className="text-sm" style={{ color: '#6B7280' }}>Hier entsteht dein persönlicher Storefront. Inhalte folgen in Kürze.</p>
@@ -271,7 +271,7 @@ export default function ModularUserDashboard() {
           return hasModule('author_statistics') ? <AuthorStatistics /> : <FeatureLockedMessage feature="Statistiken" />;
         default:
           return (
-            <div id="feed-container" className="rounded-lg p-6 border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+            <div id="feed-container" className="p-6">
               <p className="text-sm" style={{ color: '#6B7280' }}>Feed wird geladen...</p>
             </div>
           );

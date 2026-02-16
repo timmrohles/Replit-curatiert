@@ -52,7 +52,7 @@ export function DashboardPrivacy() {
       </div>
 
       {/* Privacy Settings */}
-      <div className="rounded-lg p-4 md:p-6 shadow-sm border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+      <div className="p-4 md:p-6">
         <div className="flex items-center gap-3 mb-4 md:mb-6">
           <div className="p-2 rounded-lg" style={{ backgroundColor: '#EEF2FF' }}>
             <Eye className="w-5 h-5" style={{ color: '#247ba0' }} />
@@ -168,7 +168,7 @@ export function DashboardPrivacy() {
       </div>
 
       {/* Data Collection & Cookies */}
-      <div className="rounded-lg p-4 md:p-6 shadow-sm border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+      <div className="p-4 md:p-6">
         <div className="flex items-center gap-3 mb-4 md:mb-6">
           <div className="p-2 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
             <Shield className="w-5 h-5" style={{ color: '#3B82F6' }} />
@@ -233,7 +233,7 @@ export function DashboardPrivacy() {
       </div>
 
       {/* Data Management */}
-      <div className="rounded-lg p-4 md:p-6 shadow-sm border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+      <div className="p-4 md:p-6">
         <div className="flex items-center gap-3 mb-4 md:mb-6">
           <div className="p-2 rounded-lg" style={{ backgroundColor: '#FEF3C7' }}>
             <Lock className="w-5 h-5" style={{ color: '#F59E0B' }} />

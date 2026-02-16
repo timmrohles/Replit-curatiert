@@ -116,25 +116,25 @@ export function DashboardRatings() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        <div className="rounded-lg p-4 border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+        <div className="p-4">
           <div className="text-2xl md:text-3xl mb-1" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
             {ratings.length}
           </div>
           <div className="text-xs" style={{ color: '#6B7280' }}>Gesamt</div>
         </div>
-        <div className="rounded-lg p-4 border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+        <div className="p-4">
           <div className="text-2xl md:text-3xl mb-1" style={{ fontFamily: 'Fjalla One', color: '#10B981' }}>
             {ratings.filter(r => r.status === 'published').length}
           </div>
           <div className="text-xs" style={{ color: '#6B7280' }}>Veröffentlicht</div>
         </div>
-        <div className="rounded-lg p-4 border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+        <div className="p-4">
           <div className="text-2xl md:text-3xl mb-1" style={{ fontFamily: 'Fjalla One', color: '#F59E0B' }}>
             {ratings.filter(r => r.status === 'draft').length}
           </div>
           <div className="text-xs" style={{ color: '#6B7280' }}>Entwürfe</div>
         </div>
-        <div className="rounded-lg p-4 border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+        <div className="p-4">
           <div className="flex items-center gap-1 text-2xl md:text-3xl mb-1" style={{ fontFamily: 'Fjalla One', color: '#F59E0B' }}>
             <Star className="w-6 h-6 md:w-7 md:h-7 fill-current" />
             {avgRating}
@@ -181,7 +181,7 @@ export function DashboardRatings() {
       {/* Ratings List */}
       <div className="space-y-3">
         {filteredRatings.length === 0 ? (
-          <div className="rounded-lg p-12 text-center border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+          <div className="p-12 text-center">
             <Book className="w-16 h-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
             <h3 className="text-xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
               Keine Bewertungen
@@ -203,8 +203,7 @@ export function DashboardRatings() {
           filteredRatings.map((rating) => (
             <div 
               key={rating.id}
-              className="rounded-lg p-4 md:p-6 border hover:shadow-md transition-all duration-200"
-              style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}
+              className="p-4 md:p-6 transition-all duration-200"
             >
               <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                 <div className="flex-1">

@@ -72,7 +72,7 @@ export function DashboardReviews() {
       </div>
 
       {/* Action Card */}
-      <div className="rounded-lg p-4 md:p-6 shadow-sm border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+      <div className="p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-lg md:text-xl mb-1" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
             Neue Rezension schreiben
@@ -93,7 +93,7 @@ export function DashboardReviews() {
 
       {/* Reviews List */}
       {mockReviews.length === 0 ? (
-        <div className="rounded-lg p-12 shadow-sm border text-center" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+        <div className="p-12 text-center">
           <div className="max-w-md mx-auto">
             <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: '#EEF2FF' }}>
               <Star className="w-8 h-8" style={{ color: '#247ba0' }} />
@@ -116,7 +116,7 @@ export function DashboardReviews() {
       ) : (
         <div className="space-y-4">
           {mockReviews.map((review) => (
-            <div key={review.id} className="rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow duration-200" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+            <div key={review.id} className="p-6 transition-shadow duration-200">
               <div className="flex gap-4">
                 {/* Book Cover */}
                 <img 
