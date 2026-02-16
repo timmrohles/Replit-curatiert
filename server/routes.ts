@@ -6149,6 +6149,22 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/api/bookstore/exists/:slug', async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      if (!slug) {
+        return res.json({ exists: false });
+      }
+      const result = await queryDB(
+        `SELECT 1 FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
+        [slug]
+      );
+      return res.json({ exists: result.rows.length > 0 });
+    } catch {
+      return res.json({ exists: false });
+    }
+  });
+
   // Public bookstore page by slug (must be AFTER /sections, /profile routes)
   app.get('/api/bookstore/:slug', async (req: Request, res: Response) => {
     try {

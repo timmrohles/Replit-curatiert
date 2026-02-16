@@ -11,7 +11,8 @@ import { ThemeScript } from './components/seo/ThemeScript';
 import { ScrollToTop } from './components/layout/ScrollToTop';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { LocaleLayout } from './components/layout/LocaleLayout';
-import { DEFAULT_LOCALE } from './utils/LocaleContext';
+import { DEFAULT_LOCALE, isValidLocale, LocaleProvider } from './utils/LocaleContext';
+import { Loader2 } from 'lucide-react';
 
 const CMSHomepage = React.lazy(() => import('./components/cms/CMSHomepage').then(m => ({ default: m.CMSHomepage })));
 const HomepageFeedView = React.lazy(() => import('./pages/dashboard/HomepageFeedView').then(m => ({ default: m.HomepageFeedView })));
@@ -81,6 +82,84 @@ const HealthCheck = React.lazy(() => import('./pages/admin/HealthCheck').then(m 
 const ApiHealthCheck = React.lazy(() => import('./pages/admin/ApiHealthCheck').then(m => ({ default: m.ApiHealthCheck })));
 const Setup = React.lazy(() => import('./pages/admin/Setup').then(m => ({ default: m.Setup })));
 const PublishControlPanel = React.lazy(() => import('./pages/admin/PublishControlPanel'));
+const PublicBookstore = React.lazy(() => import('./pages/PublicBookstore').then(m => ({ default: m.PublicBookstore })));
+
+const RESERVED_ROOT_PREFIXES = [
+  'api', 'sys-mgmt-xK9', 'de-de', 'de-at', 'de-ch', 'uploads', 'assets', 'src', 'vite-hmr', '@',
+];
+
+function isBookstoreCandidate(pathname: string): boolean {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.length !== 1) return false;
+  const slug = segments[0];
+  if (RESERVED_ROOT_PREFIXES.includes(slug.toLowerCase())) return false;
+  if (isValidLocale(slug)) return false;
+  if (slug.includes('.')) return false;
+  return true;
+}
+
+function BookstoreRouteGuard({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const [bookstoreState, setBookstoreState] = useState<'checking' | 'found' | 'not_bookstore'>('not_bookstore');
+  const [bookstoreSlug, setBookstoreSlug] = useState<string | null>(null);
+  const candidateSlug = isBookstoreCandidate(location.pathname) ? location.pathname.split('/').filter(Boolean)[0] : null;
+
+  useEffect(() => {
+    if (!candidateSlug) {
+      setBookstoreState('not_bookstore');
+      setBookstoreSlug(null);
+      return;
+    }
+
+    let cancelled = false;
+    setBookstoreState('checking');
+
+    fetch(`/api/bookstore/exists/${candidateSlug}`)
+      .then(res => res.json())
+      .then(data => {
+        if (cancelled) return;
+        if (data?.exists) {
+          setBookstoreSlug(candidateSlug);
+          setBookstoreState('found');
+        } else {
+          setBookstoreState('not_bookstore');
+          setBookstoreSlug(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setBookstoreState('not_bookstore');
+          setBookstoreSlug(null);
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [candidateSlug]);
+
+  if (candidateSlug && bookstoreState === 'checking') {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (bookstoreState === 'found' && bookstoreSlug) {
+    return (
+      <Suspense fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      }>
+        <LocaleProvider>
+          <PublicBookstore overrideSlug={bookstoreSlug} />
+        </LocaleProvider>
+      </Suspense>
+    );
+  }
+
+  return <>{children}</>;
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -116,6 +195,7 @@ function App() {
               <CartProvider>
                 <BrowserRouter>
                   <ScrollToTop />
+                  <BookstoreRouteGuard>
                   <Routes>
                     {/* Root redirect to default locale */}
                     <Route path="/" element={<Navigate to={`/${DEFAULT_LOCALE}/`} replace />} />
@@ -176,6 +256,7 @@ function App() {
                     {/* Fallback */}
                     <Route path="*" element={<Navigate to={`/${DEFAULT_LOCALE}/`} replace />} />
                   </Routes>
+                  </BookstoreRouteGuard>
                 </BrowserRouter>
               </CartProvider>
             </ReadingListProvider>
