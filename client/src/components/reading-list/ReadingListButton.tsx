@@ -32,27 +32,23 @@ export function ReadingListButton({
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   const currentEntry = getStatus(bookId);
   const hasStatus = currentEntry !== null;
 
-  const updatePosition = useCallback(() => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    setPopoverPos({
-      top: rect.top + window.scrollY,
-      left: rect.left + rect.width / 2 + window.scrollX,
-    });
-  }, []);
-
   const handleToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isOpen) {
-      updatePosition();
+    e.preventDefault();
+    if (!isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopoverPos({
+        top: rect.top - 8,
+        left: rect.left + rect.width / 2,
+      });
     }
     setIsOpen(prev => !prev);
-  }, [isOpen, updatePosition]);
+  }, [isOpen]);
 
   const handleSelect = useCallback((selectedStatus: ReadingListStatus) => {
     const isActive = currentEntry?.status === selectedStatus;
@@ -76,13 +72,13 @@ export function ReadingListButton({
       }
     };
 
-    const handleScroll = () => setIsOpen(false);
+    const timerId = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 10);
 
-    document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('scroll', handleScroll, true);
     return () => {
+      clearTimeout(timerId);
       document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('scroll', handleScroll, true);
     };
   }, [isOpen]);
 
@@ -105,17 +101,21 @@ export function ReadingListButton({
         />
       </Button>
 
-      {isOpen && popoverPos && createPortal(
+      {isOpen && createPortal(
         <div
           ref={popoverRef}
-          className="fixed bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-[9999]"
+          className="rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-1"
           style={{
-            top: popoverPos.top - 8,
+            position: 'fixed',
+            top: popoverPos.top,
             left: popoverPos.left,
             transform: 'translate(-50%, -100%)',
             minWidth: '200px',
+            zIndex: 9999,
+            backgroundColor: '#ffffff',
           }}
           onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
         >
           {STATUS_OPTIONS.map(({ status, label, icon: StatusIcon }) => {
             const isActive = currentEntry?.status === status;
