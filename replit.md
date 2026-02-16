@@ -119,6 +119,19 @@ The platform is built with a modern web stack, featuring a React frontend and an
     -   `client/src/pages/dashboard/DashboardFeed.tsx`: Feed UI with drag-and-drop
     -   `client/src/pages/ModularUserDashboard.tsx`: Main dashboard layout with hero card + tabs
 
+## User Bookstore & Curations System
+-   **Curations**: Users create thematic book collections (Kurationen) from the dashboard "Kurationen" tab. Each curation has a title, description, tags, and a curated list of books (searchable, reorderable).
+-   **Bookstore Profile**: Users set up a public bookstore profile in the "Bookstore" tab with display name, slug, tagline, description, social links (website, Instagram, YouTube, TikTok, Twitter), and optional physical store address.
+-   **Public Page**: Each bookstore is publicly accessible at `/bookstore/:slug`. Shows hero profile + curations as horizontal book rows, a disclaimer, and a "Inhalt melden" (report content) button.
+-   **Content Reports**: Users can report bookstore content. Admins review reports in Content Manager under "Meldungen" tab.
+-   **Database Tables**: `user_curations`, `curation_books`, `bookstore_profiles`, `bookstore_curation_links`, `content_reports`.
+-   **Key Files**:
+    -   `client/src/pages/dashboard/UserCurations.tsx`: Curations management dashboard tab
+    -   `client/src/pages/dashboard/UserBookstore.tsx`: Bookstore profile setup dashboard tab
+    -   `client/src/pages/PublicBookstore.tsx`: Public bookstore page
+    -   `client/src/components/admin/ContentReportsTab.tsx`: Admin content reports management
+-   **Security Note**: Endpoints currently accept userId from the client (hardcoded as 'demo-user-123'). Proper user authentication needed before production.
+
 ## External Dependencies
 -   **Database**: Neon PostgreSQL (connected via `NEON_DATABASE_URL` secret).
 -   **File Storage**: Local filesystem for avatar uploads (`client/src/public/uploads/avatars/`), served via a static route `/uploads`.
