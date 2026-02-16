@@ -21,10 +21,10 @@ export function DashboardPrivacy() {
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl md:text-3xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+        <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
           Datenschutz
         </h1>
-        <p className="text-xs md:text-sm" style={{ color: '#6B7280' }}>
+        <p className="text-xs md:text-sm text-center" style={{ color: '#6B7280' }}>
           Verwalte deine Privatsphäre-Einstellungen und Daten
         </p>
       </div>

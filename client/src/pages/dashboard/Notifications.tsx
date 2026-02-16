@@ -74,10 +74,10 @@ export function DashboardNotifications() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+        <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
           Benachrichtigungen
         </h1>
-        <p className="text-sm" style={{ color: '#6B7280' }}>
+        <p className="text-sm text-center" style={{ color: '#6B7280' }}>
           {unreadCount} ungelesene Benachrichtigung{unreadCount !== 1 ? 'en' : ''}
         </p>
       </div>

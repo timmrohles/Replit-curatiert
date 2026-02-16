@@ -97,10 +97,10 @@ export function DashboardRatings() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+          <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
             Meine Bewertungen
           </h1>
-          <p className="text-xs md:text-sm" style={{ color: '#6B7280' }}>
+          <p className="text-xs md:text-sm text-center" style={{ color: '#6B7280' }}>
             Verwalte deine Buchbewertungen und Rezensionen
           </p>
         </div>

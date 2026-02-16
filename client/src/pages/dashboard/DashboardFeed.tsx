@@ -458,14 +458,15 @@ export function DashboardFeed() {
 
   return (
     <div className="space-y-8" data-testid="dashboard-feed">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h2
-          className="section-title text-foreground"
+      <div className="text-center">
+        <h1
+          className="text-2xl md:text-3xl mb-2"
+          style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}
           data-testid="text-feed-heading"
         >
           Mein Feed
-        </h2>
-        <div className="flex items-center gap-2">
+        </h1>
+        <div className="flex items-center justify-center gap-2 mt-3">
           {isEditMode && (
             <button
               onClick={resetToDefaults}
