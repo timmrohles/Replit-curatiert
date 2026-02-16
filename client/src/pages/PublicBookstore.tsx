@@ -52,8 +52,9 @@ interface BookstoreData {
   curations: Curation[];
 }
 
-export function PublicBookstore() {
-  const { slug } = useParams<{ slug: string }>();
+export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}) {
+  const { slug: paramSlug } = useParams<{ slug: string }>();
+  const slug = overrideSlug || paramSlug;
   const navigate = useSafeNavigate();
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');

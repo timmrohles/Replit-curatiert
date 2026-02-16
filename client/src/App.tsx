@@ -65,7 +65,7 @@ const UeberUnsPage = React.lazy(() => import('./pages/UeberUns'));
 const MissionPage = React.lazy(() => import('./pages/Mission'));
 const ModularUserDashboard = React.lazy(() => import('./pages/ModularUserDashboard'));
 const CreatorStorefront = React.lazy(() => import('./pages/CreatorStorefront'));
-const PublicBookstore = React.lazy(() => import('./pages/PublicBookstore').then(m => ({ default: m.PublicBookstore })));
+
 const DashboardLanding = React.lazy(() => import('./pages/DashboardLanding'));
 
 const SectionIndex = React.lazy(() => import('./pages/sections/SectionIndex'));
@@ -119,9 +119,6 @@ function App() {
                   <Routes>
                     {/* Root redirect to default locale */}
                     <Route path="/" element={<Navigate to={`/${DEFAULT_LOCALE}/`} replace />} />
-
-                    {/* Public bookstore - before locale routes to prevent /:locale from capturing /bookstore */}
-                    <Route path="/bookstore/:slug" element={<S><PublicBookstore /></S>} />
 
                     {/* All public routes under /:locale */}
                     <Route path="/:locale" element={<LocaleLayout />}>
