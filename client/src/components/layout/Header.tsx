@@ -281,7 +281,7 @@ export function Header({
           path: raw.href || item.path || '/',
           subcategories: item.children.length > 0 ? [
             {
-              title: 'Unterkategorien',
+              title: '',
               items: item.children.map(child => {
                 const rawChild = child as any;
                 return rawChild.label || child.name || child.slug;
