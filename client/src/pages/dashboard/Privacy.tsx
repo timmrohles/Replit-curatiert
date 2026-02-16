@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Eye, Lock, Download, AlertCircle } from 'lucide-react';
+import { Shield, Download, AlertCircle } from 'lucide-react';
 
 export function DashboardPrivacy() {
   const [settings, setSettings] = useState({
@@ -53,14 +53,9 @@ export function DashboardPrivacy() {
 
       {/* Privacy Settings */}
       <div className="p-4 md:p-6">
-        <div className="flex items-center gap-3 mb-4 md:mb-6">
-          <div className="p-2 rounded-lg" style={{ backgroundColor: '#EEF2FF' }}>
-            <Eye className="w-5 h-5" style={{ color: '#247ba0' }} />
-          </div>
-          <h2 className="text-lg md:text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-            Profil-Sichtbarkeit
-          </h2>
-        </div>
+        <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+          Profil-Sichtbarkeit
+        </h2>
 
         <div className="space-y-3">
           <label className="flex items-start md:items-center justify-between p-3 md:p-4 rounded-lg cursor-pointer border touch-manipulation" style={{ backgroundColor: '#F9FAFB', borderColor: '#E5E7EB' }}>
@@ -169,14 +164,9 @@ export function DashboardPrivacy() {
 
       {/* Data Collection & Cookies */}
       <div className="p-4 md:p-6">
-        <div className="flex items-center gap-3 mb-4 md:mb-6">
-          <div className="p-2 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
-            <Shield className="w-5 h-5" style={{ color: '#3B82F6' }} />
-          </div>
-          <h2 className="text-lg md:text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-            Datenerfassung & Cookies
-          </h2>
-        </div>
+        <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+          Datenerfassung & Cookies
+        </h2>
 
         <div className="space-y-3">
           <label className="flex items-start md:items-center justify-between p-3 md:p-4 rounded-lg cursor-pointer border touch-manipulation" style={{ backgroundColor: '#F9FAFB', borderColor: '#E5E7EB' }}>
@@ -234,14 +224,9 @@ export function DashboardPrivacy() {
 
       {/* Data Management */}
       <div className="p-4 md:p-6">
-        <div className="flex items-center gap-3 mb-4 md:mb-6">
-          <div className="p-2 rounded-lg" style={{ backgroundColor: '#FEF3C7' }}>
-            <Lock className="w-5 h-5" style={{ color: '#F59E0B' }} />
-          </div>
-          <h2 className="text-lg md:text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-            Daten-Management (DSGVO)
-          </h2>
-        </div>
+        <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+          Daten-Management (DSGVO)
+        </h2>
 
         <div className="space-y-3">
           <button

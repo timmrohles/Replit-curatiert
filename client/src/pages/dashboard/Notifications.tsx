@@ -84,12 +84,9 @@ export function DashboardNotifications() {
 
       {/* Actions */}
       <div className="p-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Bell className="w-5 h-5" style={{ color: '#247ba0' }} />
-          <span className="text-sm font-medium" style={{ color: '#3A3A3A' }}>
-            Alle Benachrichtigungen
-          </span>
-        </div>
+        <span className="text-sm font-medium" style={{ color: '#3A3A3A' }}>
+          Alle Benachrichtigungen
+        </span>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <button

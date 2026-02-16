@@ -95,18 +95,16 @@ export function DashboardRatings() {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-            Meine Bewertungen
-          </h1>
-          <p className="text-xs md:text-sm text-center" style={{ color: '#6B7280' }}>
-            Verwalte deine Buchbewertungen und Rezensionen
-          </p>
-        </div>
+      <div className="text-center">
+        <h1 className="text-2xl md:text-3xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+          Meine Bewertungen
+        </h1>
+        <p className="text-xs md:text-sm mb-4" style={{ color: '#6B7280' }}>
+          Verwalte deine Buchbewertungen und Rezensionen
+        </p>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg touch-manipulation"
+          className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg touch-manipulation"
           style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
         >
           <Plus className="w-5 h-5" />

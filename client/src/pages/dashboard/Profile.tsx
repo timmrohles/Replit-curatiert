@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Globe, Save, BookOpen, Mail, Phone, Lock, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon } from 'lucide-react';
+import { User, Save, BookOpen, Mail, Phone, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon } from 'lucide-react';
 
 const CURATOR_STORAGE_KEY = 'coratiert-curator-id';
 
@@ -310,14 +310,9 @@ export function DashboardProfile() {
       <div 
         className="p-6"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg" style={{ backgroundColor: '#EEF2FF' }}>
-            <User className="w-5 h-5" style={{ color: '#247ba0' }} />
-          </div>
-          <h2 className="text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+        <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
             Persönliche Informationen
-          </h2>
-        </div>
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -423,14 +418,9 @@ export function DashboardProfile() {
       <div 
         className="p-6"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
-            <BookOpen className="w-5 h-5" style={{ color: '#247ba0' }} />
-          </div>
-          <h2 className="text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+        <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
             Kurator:in-Profil
-          </h2>
-        </div>
+        </h2>
 
         <div className="space-y-4">
           <div>
@@ -669,14 +659,9 @@ export function DashboardProfile() {
       <div 
         className="p-6"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg" style={{ backgroundColor: '#FEF3C7' }}>
-            <Globe className="w-5 h-5" style={{ color: '#F59E0B' }} />
-          </div>
-          <h2 className="text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+        <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
             Sprache & Region
-          </h2>
-        </div>
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -735,14 +720,9 @@ export function DashboardProfile() {
       <div 
         className="p-6"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
-            <BookOpen className="w-5 h-5" style={{ color: '#247ba0' }} />
-          </div>
-          <h2 className="text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+        <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
             Lieblingsgenres
-          </h2>
-        </div>
+        </h2>
 
         <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
           Wähle deine bevorzugten Genres aus, um personalisierte Empfehlungen zu erhalten.
@@ -778,14 +758,9 @@ export function DashboardProfile() {
         className="p-6"
       >
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg" style={{ backgroundColor: '#FEE2E2' }}>
-              <Lock className="w-5 h-5" style={{ color: '#EF4444' }} />
-            </div>
-            <h2 className="text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-              Passwort ändern
-            </h2>
-          </div>
+          <h2 className="text-lg md:text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+            Passwort ändern
+          </h2>
           <button
             onClick={() => setShowPasswordSection(!showPasswordSection)}
             data-testid="button-toggle-password"
