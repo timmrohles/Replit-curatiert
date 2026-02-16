@@ -676,9 +676,6 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
 
         <div className="w-full mt-4 md:mt-6 isolate">
           <div className="flex items-center gap-3 mb-4">
-            {isSponsoredSection && (
-              <Megaphone className="w-5 h-5 flex-shrink-0" style={{ color: '#e8a838' }} />
-            )}
             <h3 className="section-title text-foreground">
               {isCuratorSection ? 'Neue Bücher für Leseratten' : section.label}
             </h3>
