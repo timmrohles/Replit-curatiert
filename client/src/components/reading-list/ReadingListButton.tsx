@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { ListPlus, List, CheckCircle, BookOpen, Bookmark } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Text } from '../ui/typography';
@@ -31,14 +32,27 @@ export function ReadingListButton({
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; left: number } | null>(null);
 
   const currentEntry = getStatus(bookId);
   const hasStatus = currentEntry !== null;
 
+  const updatePosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    setPopoverPos({
+      top: rect.top + window.scrollY,
+      left: rect.left + rect.width / 2 + window.scrollX,
+    });
+  }, []);
+
   const handleToggle = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isOpen) {
+      updatePosition();
+    }
     setIsOpen(prev => !prev);
-  }, []);
+  }, [isOpen, updatePosition]);
 
   const handleSelect = useCallback((selectedStatus: ReadingListStatus) => {
     const isActive = currentEntry?.status === selectedStatus;
@@ -62,14 +76,20 @@ export function ReadingListButton({
       }
     };
 
+    const handleScroll = () => setIsOpen(false);
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
   }, [isOpen]);
 
   const IconComponent = hasStatus ? List : ListPlus;
 
   return (
-    <div className="relative">
+    <>
       <Button
         ref={buttonRef}
         variant="ghost"
@@ -85,11 +105,16 @@ export function ReadingListButton({
         />
       </Button>
 
-      {isOpen && (
+      {isOpen && popoverPos && createPortal(
         <div
           ref={popoverRef}
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-[200]"
-          style={{ minWidth: '200px' }}
+          className="fixed bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-[9999]"
+          style={{
+            top: popoverPos.top - 8,
+            left: popoverPos.left,
+            transform: 'translate(-50%, -100%)',
+            minWidth: '200px',
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {STATUS_OPTIONS.map(({ status, label, icon: StatusIcon }) => {
@@ -123,8 +148,9 @@ export function ReadingListButton({
               </button>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
