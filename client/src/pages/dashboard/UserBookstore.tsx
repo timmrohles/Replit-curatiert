@@ -56,6 +56,7 @@ export function UserBookstore() {
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  const [savedSlug, setSavedSlug] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<BookstoreProfile>({
     userId: USER_ID,
@@ -97,7 +98,10 @@ export function UserBookstore() {
           isPhysicalStore: d.isPhysicalStore ?? d.is_physical_store ?? false,
           isPublished: d.isPublished ?? d.is_published ?? false,
         });
-        if (d.slug) setSlugManuallyEdited(true);
+        if (d.slug) {
+          setSlugManuallyEdited(true);
+          setSavedSlug(d.slug);
+        }
       }
     } catch {
       console.error('Failed to load bookstore profile');
@@ -160,6 +164,8 @@ export function UserBookstore() {
       });
       const data = await res.json();
       if (data.ok) {
+        const returnedSlug = data.data?.slug || profile.slug;
+        if (returnedSlug) setSavedSlug(returnedSlug);
         setSaveMessage({ type: 'success', text: 'Bookstore-Profil gespeichert!' });
         setTimeout(() => setSaveMessage(null), 3000);
       } else {
@@ -293,18 +299,21 @@ export function UserBookstore() {
             </span>
           </label>
         </div>
-        {profile.slug && (
+        {savedSlug ? (
           <button
-            onClick={() => window.open(`/bookstore/${profile.slug}`, '_blank')}
-            data-testid="button-preview"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all"
-            style={{ backgroundColor: '#F3F4F6', color: '#3A3A3A' }}
+            onClick={() => window.open(`/bookstore/${savedSlug}`, '_blank')}
+            data-testid="button-open-bookstore"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all"
+            style={{ backgroundColor: '#247ba0', color: '#ffffff' }}
           >
-            <Eye className="w-4 h-4" />
-            Vorschau
-            <ExternalLink className="w-3.5 h-3.5" />
+            <ExternalLink className="w-4 h-4" />
+            Bookstore öffnen
           </button>
-        )}
+        ) : profile.slug ? (
+          <span className="text-xs" style={{ color: '#9CA3AF' }}>
+            Speichere zuerst, um die Vorschau zu sehen
+          </span>
+        ) : null}
       </div>
 
       <div className="p-6">

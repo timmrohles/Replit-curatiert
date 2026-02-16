@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Save, BookOpen, Mail, Phone, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon } from 'lucide-react';
+import { User, Save, BookOpen, Mail, Phone, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon, ExternalLink } from 'lucide-react';
 
 const CURATOR_STORAGE_KEY = 'coratiert-curator-id';
 
@@ -49,6 +49,7 @@ export function DashboardProfile() {
   });
 
   const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [bookstoreSlug, setBookstoreSlug] = useState<string | null>(null);
 
   const availableGenres = [
     'Belletristik',
@@ -103,6 +104,10 @@ export function DashboardProfile() {
 
   useEffect(() => {
     loadCuratorProfile();
+    fetch('/api/bookstore/profile?userId=demo-user-123')
+      .then(r => r.json())
+      .then(d => { if (d.ok && d.data?.slug) setBookstoreSlug(d.data.slug); })
+      .catch(() => {});
   }, [loadCuratorProfile]);
 
   const countWords = (text: string): number => {
@@ -305,6 +310,19 @@ export function DashboardProfile() {
             );
           })}
         </div>
+        {bookstoreSlug && (
+          <div className="mt-4 pt-4 border-t flex justify-center" style={{ borderColor: '#E5E7EB' }}>
+            <button
+              onClick={() => window.open(`/bookstore/${bookstoreSlug}`, '_blank')}
+              data-testid="button-open-profile"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all"
+              style={{ backgroundColor: '#247ba0', color: '#ffffff' }}
+            >
+              <ExternalLink className="w-4 h-4" />
+              Öffentliches Profil ansehen
+            </button>
+          </div>
+        )}
       </section>
 
       <div 
