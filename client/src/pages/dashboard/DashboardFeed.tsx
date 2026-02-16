@@ -603,7 +603,7 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
   onTogglePublic: () => void;
 }) {
   const [sortBy, setSortBy] = useState('popularity');
-  const { favorites, removeFavorite, addFavorite } = useFavorites();
+  const { favorites, toggleFavorite } = useFavorites();
   const isCuratorSection = section.id === 'followed_curators';
   const isReadingSection = READING_SECTIONS.includes(section.id as ReadingStatus);
   const books = useMemo(() => getMockBooksForSection(section.id), [section.id]);
@@ -613,19 +613,22 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
   const curator = MOCK_CURATORS[curatorIndex];
 
   const handleAddTag = useCallback((item: FavoriteItem) => {
-    addFavorite(item);
-  }, [addFavorite]);
+    toggleFavorite(item);
+  }, [toggleFavorite]);
 
-  const handleRemoveTag = useCallback((entityId: string) => {
-    removeFavorite(entityId);
-  }, [removeFavorite]);
+  const handleRemoveTag = useCallback((tag: TagData) => {
+    toggleFavorite({
+      id: tag.entityId,
+      type: tag.entityType,
+      title: tag.label,
+      image: tag.image,
+      color: tag.color,
+    });
+  }, [toggleFavorite]);
 
-  const handleReadingStatusChange = useCallback((_bookId: string, bookTitle: string, newStatus: ReadingStatus) => {
-    // Reading status is conceptual - we track it as the section the book tag belongs to
-    // Currently tags are entity-type based, so this is a visual indicator
-    // Future: store reading_status per book in backend
-    void bookTitle;
-    void newStatus;
+  const handleReadingStatusChange = useCallback((_bookId: string, _bookTitle: string, _newStatus: ReadingStatus) => {
+    // Reading status is conceptual - books in reading sections are tracked by section membership
+    // Future: implement backend reading_status per book and move between sections
   }, []);
 
   return (
@@ -711,7 +714,7 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
                   />
                 )}
                 <button
-                  onClick={() => handleRemoveTag(tag.entityId)}
+                  onClick={() => handleRemoveTag(tag)}
                   className="p-0.5 rounded-full transition-colors"
                   style={{ color: 'rgba(255,255,255,0.7)' }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}

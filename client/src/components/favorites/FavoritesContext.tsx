@@ -68,7 +68,7 @@ const REVERSE_ENTITY_TYPE_MAP: Record<BackendEntityType, FrontendEntityType> = {
   person: "author",
   category: "category",
   tag: "tag",          // Default: tag (genre detection später)
-  award: "tag",        // Awards werden auch als tags behandelt
+  award: "award",      // Awards behalten ihren eigenen Typ
   series: "series",
 };
 
@@ -212,7 +212,7 @@ const API_BASE = '/api';
 
 async function hydrateFavorites(items: FavoriteItem[]): Promise<FavoriteItem[]> {
   const needsCurators = items.some((f) => (f.type === 'creator' || f.type === 'author') && !f.image);
-  const needsTags = items.some((f) => f.type === 'tag' && (!f.image || !f.color));
+  const needsTags = items.some((f) => (f.type === 'tag' || f.type === 'award' || f.type === 'media') && (!f.image || !f.color));
 
   if (!needsCurators && !needsTags) return items;
 
@@ -268,7 +268,7 @@ async function hydrateFavorites(items: FavoriteItem[]): Promise<FavoriteItem[]> 
         return { ...item, image: match.avatar };
       }
     }
-    if (item.type === 'tag' && (!item.image || !item.color)) {
+    if ((item.type === 'tag' || item.type === 'award' || item.type === 'media') && (!item.image || !item.color)) {
       const match = tagMap.get(item.id);
       if (match) {
         return {
