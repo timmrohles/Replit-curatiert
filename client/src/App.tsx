@@ -120,6 +120,9 @@ function App() {
                     {/* Root redirect to default locale */}
                     <Route path="/" element={<Navigate to={`/${DEFAULT_LOCALE}/`} replace />} />
 
+                    {/* Public bookstore - before locale routes to prevent /:locale from capturing /bookstore */}
+                    <Route path="/bookstore/:slug" element={<S><PublicBookstore /></S>} />
+
                     {/* All public routes under /:locale */}
                     <Route path="/:locale" element={<LocaleLayout />}>
                       <Route index element={<SmartHomepage />} />
@@ -159,9 +162,6 @@ function App() {
                       <Route path=":slug" element={<S><DynamicPage /></S>} />
                       <Route path=":slug/:subslug" element={<S><DynamicPage /></S>} />
                     </Route>
-
-                    {/* Public bookstore - no locale prefix */}
-                    <Route path="/bookstore/:slug" element={<S><PublicBookstore /></S>} />
 
                     {/* Admin routes - no locale prefix */}
                     <Route path="/sys-mgmt-xK9/content-manager" element={<S><AdminContentManager /></S>} />
