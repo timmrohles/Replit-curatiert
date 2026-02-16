@@ -644,6 +644,48 @@ export async function registerRoutes(
     }
   });
 
+  app.post('/api/upload/avatar', async (req: Request, res: Response) => {
+    try {
+      avatarUpload.single('avatar')(req, res, async (err: any) => {
+        if (err) {
+          log.error('Multer error:', err);
+          return res.status(400).json({ ok: false, error: err.message || 'Upload fehlgeschlagen' });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({ ok: false, error: 'Keine Datei hochgeladen' });
+        }
+
+        try {
+          const originalPath = req.file.path;
+          const webpFilename = req.file.filename.replace(/\.[^.]+$/, '.webp');
+          const webpPath = path.join(uploadsDir, webpFilename);
+
+          await sharp(originalPath)
+            .webp({ quality: 82 })
+            .resize({ width: 512, height: 512, fit: 'cover' })
+            .toFile(webpPath);
+
+          if (originalPath !== webpPath) {
+            fs.unlinkSync(originalPath);
+          }
+
+          const avatarUrl = `/uploads/avatars/${webpFilename}`;
+          log.info('User avatar uploaded & converted to WebP:', avatarUrl);
+
+          return res.json({ ok: true, data: { url: avatarUrl } });
+        } catch (convErr) {
+          log.error('WebP conversion error:', convErr);
+          const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+          return res.json({ ok: true, data: { url: avatarUrl } });
+        }
+      });
+    } catch (error) {
+      log.error('User avatar upload error:', error);
+      return res.status(500).json({ ok: false, error: 'Upload fehlgeschlagen' });
+    }
+  });
+
   // ==================================================================
   // TAG IMAGE UPLOAD
   // ==================================================================

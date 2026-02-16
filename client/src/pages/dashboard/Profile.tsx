@@ -1,14 +1,40 @@
-import { useState } from 'react';
-import { User, Globe, Save, BookOpen, Mail, Phone, Lock, AlertTriangle } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { User, Globe, Save, BookOpen, Mail, Phone, Lock, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon } from 'lucide-react';
 
 export function DashboardProfile() {
+  const userName = 'Max Mustermann';
+  const roles = ['Leser:in'];
+  const progress = 35;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const quickStats = [
+    { label: 'Bewertungen', value: '0', icon: Star },
+    { label: 'Rezensionen', value: '0', icon: MessageSquare },
+    { label: 'Favoriten', value: '0', icon: Heart },
+    { label: 'Leseliste', value: '0', icon: BookOpen },
+  ];
+
   const [profile, setProfile] = useState({
-    firstName: 'Anna',
-    lastName: 'Müller',
-    email: 'anna.mueller@example.com',
+    firstName: 'Max',
+    lastName: 'Mustermann',
+    email: 'max.mustermann@example.com',
     phone: '+49 151 12345678',
     language: 'de',
     country: 'DE'
+  });
+
+  const [curatorProfile, setCuratorProfile] = useState({
+    focus: '',
+    bio: '',
+    avatarUrl: '',
+    socials: {
+      instagram: '',
+      youtube: '',
+      tiktok: '',
+      podcast: '',
+      website: ''
+    }
   });
 
   const [preferredGenres, setPreferredGenres] = useState<string[]>(['Belletristik', 'Sachbuch', 'Politik']);
@@ -34,8 +60,32 @@ export function DashboardProfile() {
     'Philosophie'
   ];
 
+  const countWords = (text: string): number => {
+    return text.trim().split(/\s+/).filter(w => w.length > 0).length;
+  };
+
+  const handleAvatarUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const response = await fetch('/api/upload/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+      if (data.ok && data.data?.url) {
+        setCuratorProfile(prev => ({ ...prev, avatarUrl: data.data.url }));
+      }
+    } catch {
+      console.error('Avatar upload fehlgeschlagen');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSave = () => {
-    console.log('Profil gespeichert:', profile, preferredGenres);
+    console.log('Profil gespeichert:', profile, curatorProfile, preferredGenres);
     alert('Profil gespeichert!');
   };
 
@@ -57,6 +107,93 @@ export function DashboardProfile() {
           Verwalte deine persönlichen Informationen und Einstellungen
         </p>
       </div>
+
+      <section
+        className="rounded-lg p-5 md:p-6 border"
+        style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}
+        data-testid="hero-profile-card"
+      >
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0">
+            {curatorProfile.avatarUrl ? (
+              <img
+                src={curatorProfile.avatarUrl}
+                alt="Avatar"
+                className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover border-2"
+                style={{ borderColor: '#E5E7EB' }}
+                data-testid="avatar-user-image"
+              />
+            ) : (
+              <div
+                className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
+                data-testid="avatar-user"
+              >
+                <User className="w-7 h-7 md:w-8 md:h-8" />
+              </div>
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2
+              className="text-xl md:text-2xl mb-1"
+              style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}
+              data-testid="text-username"
+            >
+              {userName}
+            </h2>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {roles.map((role, index) => (
+                <span
+                  key={index}
+                  className="px-2.5 py-0.5 rounded-full text-xs text-white"
+                  style={{ backgroundColor: '#247ba0' }}
+                  data-testid={`badge-role-${index}`}
+                >
+                  {role}
+                </span>
+              ))}
+            </div>
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <span className="text-xs sm:text-sm" style={{ color: '#6B7280' }}>
+                  Profil {progress}% vollständig
+                </span>
+                <span className="text-xs sm:text-sm font-medium" style={{ color: '#247ba0' }}>
+                  {progress}%
+                </span>
+              </div>
+              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#F3F4F6' }}>
+                <div
+                  className="h-full transition-all duration-500 rounded-full"
+                  style={{
+                    width: `${progress}%`,
+                    background: 'linear-gradient(to right, #247ba0, #70c1b3)'
+                  }}
+                  data-testid="progress-bar"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t" style={{ borderColor: '#E5E7EB' }}>
+          {quickStats.map((stat, index) => {
+            const StatIcon = stat.icon;
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs"
+                style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}
+                data-testid={`stat-pill-${stat.label.toLowerCase()}`}
+              >
+                <StatIcon className="w-3.5 h-3.5" style={{ color: '#247ba0' }} />
+                <span>{stat.value}</span>
+                <span>{stat.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <div 
         className="rounded-lg p-6"
@@ -86,6 +223,7 @@ export function DashboardProfile() {
               value={profile.firstName}
               onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
               className="w-full px-4 py-2 rounded-lg border transition-colors"
+              data-testid="input-firstname"
               style={{ 
                 backgroundColor: '#FFFFFF',
                 borderColor: '#D1D5DB',
@@ -108,6 +246,7 @@ export function DashboardProfile() {
               value={profile.lastName}
               onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
               className="w-full px-4 py-2 rounded-lg border transition-colors"
+              data-testid="input-lastname"
               style={{ 
                 backgroundColor: '#FFFFFF',
                 borderColor: '#D1D5DB',
@@ -131,6 +270,7 @@ export function DashboardProfile() {
                 value={profile.email}
                 onChange={(e) => setProfile({ ...profile, email: e.target.value })}
                 className="w-full px-4 py-2 pl-10 rounded-lg border transition-colors"
+                data-testid="input-email"
                 style={{ 
                   backgroundColor: '#FFFFFF',
                   borderColor: '#D1D5DB',
@@ -156,6 +296,7 @@ export function DashboardProfile() {
                 value={profile.phone}
                 onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                 className="w-full px-4 py-2 pl-10 rounded-lg border transition-colors"
+                data-testid="input-phone"
                 style={{ 
                   backgroundColor: '#FFFFFF',
                   borderColor: '#D1D5DB',
@@ -163,6 +304,253 @@ export function DashboardProfile() {
                 }}
               />
               <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#9CA3AF' }} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div 
+        className="rounded-lg p-6"
+        style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2 rounded-lg" style={{ backgroundColor: '#DBEAFE' }}>
+            <BookOpen className="w-5 h-5" style={{ color: '#247ba0' }} />
+          </div>
+          <h2 className="text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+            Kurator:in-Profil
+          </h2>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label 
+              htmlFor="focus" 
+              className="block text-sm font-medium mb-2"
+              style={{ color: '#3A3A3A' }}
+            >
+              Fokus / Thema
+            </label>
+            <input
+              id="focus"
+              type="text"
+              value={curatorProfile.focus}
+              onChange={(e) => setCuratorProfile({ ...curatorProfile, focus: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg border transition-colors"
+              data-testid="input-focus"
+              style={{ 
+                backgroundColor: '#FFFFFF',
+                borderColor: '#D1D5DB',
+                color: '#3A3A3A'
+              }}
+              placeholder="z.B. Krimis & Thriller, Fantasy, Klassiker"
+            />
+          </div>
+
+          <div>
+            <label 
+              htmlFor="bio" 
+              className="block text-sm font-medium mb-2"
+              style={{ color: '#3A3A3A' }}
+            >
+              Biografie
+            </label>
+            <textarea
+              id="bio"
+              value={curatorProfile.bio}
+              onChange={(e) => {
+                const words = countWords(e.target.value);
+                if (words <= 100 || e.target.value.length < curatorProfile.bio.length) {
+                  setCuratorProfile({ ...curatorProfile, bio: e.target.value });
+                }
+              }}
+              rows={4}
+              className="w-full px-4 py-2 rounded-lg border transition-colors"
+              data-testid="input-bio"
+              style={{ 
+                backgroundColor: '#FFFFFF',
+                borderColor: countWords(curatorProfile.bio) >= 90 ? '#f25f5c' : '#D1D5DB',
+                color: '#3A3A3A'
+              }}
+              placeholder="Kurze Beschreibung (max. 100 Wörter)..."
+            />
+            <div className="flex justify-end mt-1">
+              <span
+                className="text-xs"
+                style={{ color: countWords(curatorProfile.bio) > 100 ? '#f25f5c' : '#9CA3AF' }}
+                data-testid="text-bio-wordcount"
+              >
+                {countWords(curatorProfile.bio)} / 100 Wörter
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
+              Avatar
+            </label>
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0">
+                {curatorProfile.avatarUrl ? (
+                  <img
+                    src={curatorProfile.avatarUrl}
+                    alt="Avatar"
+                    className="w-20 h-20 rounded-full object-cover border-2"
+                    style={{ borderColor: '#E5E7EB' }}
+                    data-testid="img-avatar-preview"
+                  />
+                ) : (
+                  <div
+                    className="w-20 h-20 rounded-full flex items-center justify-center border-2 border-dashed"
+                    style={{ borderColor: '#9CA3AF', backgroundColor: '#F9FAFB' }}
+                  >
+                    <User className="w-8 h-8" style={{ color: '#9CA3AF' }} />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 space-y-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  data-testid="input-avatar-file"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleAvatarUpload(file);
+                    e.target.value = '';
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  data-testid="button-upload-avatar"
+                  className="w-full px-4 py-2 border rounded-lg flex items-center justify-center gap-2 text-sm transition-colors"
+                  style={{ borderColor: '#D1D5DB', color: '#3A3A3A' }}
+                >
+                  {uploading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: '#D1D5DB', borderTopColor: '#247ba0' }} />
+                      Wird hochgeladen...
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-4 h-4" />
+                      Bild hochladen
+                    </>
+                  )}
+                </button>
+                <div className="text-xs" style={{ color: '#9CA3AF' }}>
+                  JPG, PNG, WebP oder GIF (max. 5 MB)
+                </div>
+                <input
+                  type="text"
+                  value={curatorProfile.avatarUrl}
+                  onChange={(e) => setCuratorProfile({ ...curatorProfile, avatarUrl: e.target.value })}
+                  className="w-full px-3 py-1.5 border rounded-lg text-sm"
+                  data-testid="input-avatar-url"
+                  style={{ borderColor: '#D1D5DB', color: '#3A3A3A' }}
+                  placeholder="oder URL eingeben: https://..."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-3" style={{ color: '#3A3A3A' }}>
+              Social Media Präsenzen
+            </label>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs mb-1" style={{ color: '#6B7280' }}>
+                  Instagram
+                </label>
+                <input
+                  type="text"
+                  value={curatorProfile.socials.instagram}
+                  onChange={(e) => setCuratorProfile({
+                    ...curatorProfile,
+                    socials: { ...curatorProfile.socials, instagram: e.target.value }
+                  })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  data-testid="input-social-instagram"
+                  style={{ borderColor: '#D1D5DB', color: '#3A3A3A' }}
+                  placeholder="@username oder https://instagram.com/username"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs mb-1" style={{ color: '#6B7280' }}>
+                  YouTube
+                </label>
+                <input
+                  type="text"
+                  value={curatorProfile.socials.youtube}
+                  onChange={(e) => setCuratorProfile({
+                    ...curatorProfile,
+                    socials: { ...curatorProfile.socials, youtube: e.target.value }
+                  })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  data-testid="input-social-youtube"
+                  style={{ borderColor: '#D1D5DB', color: '#3A3A3A' }}
+                  placeholder="@channel oder https://youtube.com/@channel"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs mb-1" style={{ color: '#6B7280' }}>
+                  TikTok
+                </label>
+                <input
+                  type="text"
+                  value={curatorProfile.socials.tiktok}
+                  onChange={(e) => setCuratorProfile({
+                    ...curatorProfile,
+                    socials: { ...curatorProfile.socials, tiktok: e.target.value }
+                  })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  data-testid="input-social-tiktok"
+                  style={{ borderColor: '#D1D5DB', color: '#3A3A3A' }}
+                  placeholder="@username oder https://tiktok.com/@username"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs mb-1" style={{ color: '#6B7280' }}>
+                  Podcast
+                </label>
+                <input
+                  type="text"
+                  value={curatorProfile.socials.podcast}
+                  onChange={(e) => setCuratorProfile({
+                    ...curatorProfile,
+                    socials: { ...curatorProfile.socials, podcast: e.target.value }
+                  })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  data-testid="input-social-podcast"
+                  style={{ borderColor: '#D1D5DB', color: '#3A3A3A' }}
+                  placeholder="Podcast Name oder URL"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs mb-1" style={{ color: '#6B7280' }}>
+                  Website
+                </label>
+                <input
+                  type="text"
+                  value={curatorProfile.socials.website}
+                  onChange={(e) => setCuratorProfile({
+                    ...curatorProfile,
+                    socials: { ...curatorProfile.socials, website: e.target.value }
+                  })}
+                  className="w-full px-3 py-2 border rounded-lg text-sm"
+                  data-testid="input-social-website"
+                  style={{ borderColor: '#D1D5DB', color: '#3A3A3A' }}
+                  placeholder="https://example.com"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -195,6 +583,7 @@ export function DashboardProfile() {
               value={profile.language}
               onChange={(e) => setProfile({ ...profile, language: e.target.value })}
               className="w-full px-4 py-2 rounded-lg border transition-colors"
+              data-testid="select-language"
               style={{ 
                 backgroundColor: '#FFFFFF',
                 borderColor: '#D1D5DB',
@@ -219,6 +608,7 @@ export function DashboardProfile() {
               value={profile.country}
               onChange={(e) => setProfile({ ...profile, country: e.target.value })}
               className="w-full px-4 py-2 rounded-lg border transition-colors"
+              data-testid="select-country"
               style={{ 
                 backgroundColor: '#FFFFFF',
                 borderColor: '#D1D5DB',
@@ -257,6 +647,7 @@ export function DashboardProfile() {
               <button
                 key={genre}
                 onClick={() => toggleGenre(genre)}
+                data-testid={`button-genre-${genre.toLowerCase().replace(/\s+/g, '-')}`}
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                 style={{
                   backgroundColor: isSelected ? '#247ba0' : '#F3F4F6',
@@ -290,6 +681,7 @@ export function DashboardProfile() {
           </div>
           <button
             onClick={() => setShowPasswordSection(!showPasswordSection)}
+            data-testid="button-toggle-password"
             className="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
               backgroundColor: showPasswordSection ? '#F3F4F6' : '#247ba0',
@@ -316,6 +708,7 @@ export function DashboardProfile() {
                 value={passwords.currentPassword}
                 onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
                 className="w-full px-4 py-2 rounded-lg border transition-colors"
+                data-testid="input-current-password"
                 style={{ 
                   backgroundColor: '#FFFFFF',
                   borderColor: '#D1D5DB',
@@ -338,6 +731,7 @@ export function DashboardProfile() {
                 value={passwords.newPassword}
                 onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
                 className="w-full px-4 py-2 rounded-lg border transition-colors"
+                data-testid="input-new-password"
                 style={{ 
                   backgroundColor: '#FFFFFF',
                   borderColor: '#D1D5DB',
@@ -360,6 +754,7 @@ export function DashboardProfile() {
                 value={passwords.confirmPassword}
                 onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
                 className="w-full px-4 py-2 rounded-lg border transition-colors"
+                data-testid="input-confirm-password"
                 style={{ 
                   backgroundColor: '#FFFFFF',
                   borderColor: '#D1D5DB',
@@ -447,6 +842,7 @@ export function DashboardProfile() {
       <div className="flex justify-end pt-4">
         <button
           onClick={handleSave}
+          data-testid="button-save-profile"
           className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium shadow-sm transition-all duration-200 hover:shadow-md"
           style={{
             backgroundColor: '#247ba0',
