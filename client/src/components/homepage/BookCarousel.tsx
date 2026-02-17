@@ -23,7 +23,7 @@ export function BookCarousel({ books }: BookCarouselProps) {
       {/* Left Arrow */}
       <button
         onClick={() => scroll('left')}
-        className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-surface shadow-lg rounded-full p-3 transition-opacity hover:bg-[var(--color-brand-beige)] dark:hover:bg-surface-elevated items-center justify-center opacity-90 hover:opacity-100"
+        className="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 z-[2] bg-white dark:bg-surface shadow-lg rounded-full p-3 transition-opacity hover:bg-[var(--color-brand-beige)] dark:hover:bg-surface-elevated items-center justify-center opacity-90 hover:opacity-100"
         aria-label="Nach links scrollen"
       >
         <ChevronLeft className="w-6 h-6 text-foreground" />
@@ -51,7 +51,7 @@ export function BookCarousel({ books }: BookCarouselProps) {
       {/* Right Arrow */}
       <button
         onClick={() => scroll('right')}
-        className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white dark:bg-surface shadow-lg rounded-full p-3 transition-opacity hover:bg-[var(--color-brand-beige)] dark:hover:bg-surface-elevated items-center justify-center opacity-90 hover:opacity-100"
+        className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 z-[2] bg-white dark:bg-surface shadow-lg rounded-full p-3 transition-opacity hover:bg-[var(--color-brand-beige)] dark:hover:bg-surface-elevated items-center justify-center opacity-90 hover:opacity-100"
         aria-label="Nach rechts scrollen"
       >
         <ChevronRight className="w-6 h-6 text-foreground" />

@@ -92,7 +92,7 @@ export function DSCarousel({
         <button
           onClick={() => scroll('left')}
           disabled={!canScrollLeft}
-          className={`hidden lg:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full transition-all duration-300 ${
+          className={`hidden lg:flex absolute left-2 top-1/2 -translate-y-1/2 z-[2] p-3 rounded-full transition-all duration-300 ${
             !canScrollLeft ? 'opacity-0 pointer-events-none' : 'opacity-100 hover:bg-gray-100'
           } bg-surface items-center justify-center`}
           style={{ 
@@ -108,7 +108,7 @@ export function DSCarousel({
         <button
           onClick={() => scroll('right')}
           disabled={!canScrollRight}
-          className={`hidden lg:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full transition-all duration-300 ${
+          className={`hidden lg:flex absolute right-2 top-1/2 -translate-y-1/2 z-[2] p-3 rounded-full transition-all duration-300 ${
             !canScrollRight ? 'opacity-0 pointer-events-none' : 'opacity-100 hover:bg-gray-100'
           } bg-surface items-center justify-center`}
           style={{ 

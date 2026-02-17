@@ -228,7 +228,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
 
   return (
     <div 
-      className="bg-transparent flex-shrink-0 flex flex-col group relative z-10"
+      className="bg-transparent flex-shrink-0 flex flex-col group relative z-[1]"
       style={{ pointerEvents: 'auto' }}
     >
       <div className="pl-2 pb-2 pt-1 pr-1 md:pl-3 md:pb-3 md:pt-2 md:pr-2 relative">
