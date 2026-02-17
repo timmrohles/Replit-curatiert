@@ -40,6 +40,7 @@ interface UserEvent {
   max_participants: number | null;
   is_recurring: boolean;
   recurrence_rule: string | null;
+  event_page_url: string | null;
   is_published: boolean;
   participant_count: string;
   created_at: string;
@@ -91,6 +92,7 @@ export function UserEvents() {
   const [formMaxParticipants, setFormMaxParticipants] = useState('');
   const [formIsRecurring, setFormIsRecurring] = useState(false);
   const [formRecurrenceRule, setFormRecurrenceRule] = useState('');
+  const [formEventPageUrl, setFormEventPageUrl] = useState('');
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -121,6 +123,7 @@ export function UserEvents() {
     setFormMaxParticipants('');
     setFormIsRecurring(false);
     setFormRecurrenceRule('');
+    setFormEventPageUrl('');
     setEditingEvent(null);
   };
 
@@ -140,6 +143,7 @@ export function UserEvents() {
     setFormMaxParticipants(event.max_participants ? String(event.max_participants) : '');
     setFormIsRecurring(event.is_recurring);
     setFormRecurrenceRule(event.recurrence_rule || '');
+    setFormEventPageUrl(event.event_page_url || '');
     setShowForm(true);
   };
 
@@ -163,6 +167,7 @@ export function UserEvents() {
         max_participants: formMaxParticipants ? parseInt(formMaxParticipants) : null,
         is_recurring: formIsRecurring,
         recurrence_rule: formIsRecurring ? formRecurrenceRule : null,
+        event_page_url: formEventPageUrl.trim() || null,
       };
 
       const url = editingEvent ? `${API_BASE}/user-events/${editingEvent.id}` : `${API_BASE}/user-events`;
@@ -414,9 +419,23 @@ export function UserEvents() {
                 </div>
               )}
 
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: '#3A3A3A' }}>Link zur Veranstaltungsseite</label>
+                <input
+                  type="url"
+                  value={formEventPageUrl}
+                  onChange={e => setFormEventPageUrl(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                  style={{ borderColor: '#E5E7EB' }}
+                  placeholder="https://www.beispiel.de/mein-event"
+                  data-testid="input-event-page-url"
+                />
+                <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Externe Seite mit weiteren Infos oder Ticketverkauf</p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1.5" style={{ color: '#3A3A3A' }}>Eintritt (EUR)</label>
+                  <label className="block text-sm font-medium mb-1.5" style={{ color: '#3A3A3A' }}>Eintritt inkl. Steuern und Gebühren (EUR)</label>
                   <input
                     type="number"
                     min="0"
@@ -609,7 +628,7 @@ function EventCard({
               )}
               {parseFloat(String(event.entry_fee)) > 0 && (
                 <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(232, 168, 56, 0.15)', color: '#c48a1a' }}>
-                  {parseFloat(String(event.entry_fee)).toFixed(2).replace('.', ',')} {event.entry_fee_currency}
+                  {parseFloat(String(event.entry_fee)).toFixed(2).replace('.', ',')} {event.entry_fee_currency} inkl. Steuern und Gebühren
                 </span>
               )}
               {parseFloat(String(event.entry_fee)) === 0 && (
@@ -656,6 +675,20 @@ function EventCard({
               <Text as="p" variant="small" className="mt-2 line-clamp-2" style={{ color: '#6B7280' }}>
                 {event.description}
               </Text>
+            )}
+
+            {event.event_page_url && (
+              <a
+                href={event.event_page_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-2 text-xs font-medium transition-colors"
+                style={{ color: '#247ba0' }}
+                data-testid={`event-page-link-${event.id}`}
+              >
+                <ExternalLink className="w-3 h-3" />
+                Veranstaltungsseite
+              </a>
             )}
           </div>
 

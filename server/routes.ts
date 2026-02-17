@@ -774,6 +774,7 @@ export async function registerRoutes(
         recurrence_rule VARCHAR(50),
         recurrence_parent_id INTEGER REFERENCES user_events(id) ON DELETE SET NULL,
         rss_source_url TEXT,
+        event_page_url TEXT,
         is_published BOOLEAN DEFAULT true,
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -6761,15 +6762,15 @@ export async function registerRoutes(
   // Create event
   app.post('/api/user-events', async (req: Request, res: Response) => {
     try {
-      const { userId, title, description, event_type, location_type, location_name, location_address, event_date, event_end_date, background_image_url, video_link, video_link_public, entry_fee, max_participants, is_recurring, recurrence_rule } = req.body;
+      const { userId, title, description, event_type, location_type, location_name, location_address, event_date, event_end_date, background_image_url, video_link, video_link_public, entry_fee, max_participants, is_recurring, recurrence_rule, event_page_url } = req.body;
       if (!userId || !title || !event_date) {
         return res.status(400).json({ ok: false, error: 'userId, title, and event_date are required' });
       }
       const result = await queryDB(
-        `INSERT INTO user_events (user_id, title, description, event_type, location_type, location_name, location_address, event_date, event_end_date, background_image_url, video_link, video_link_public, entry_fee, max_participants, is_recurring, recurrence_rule)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        `INSERT INTO user_events (user_id, title, description, event_type, location_type, location_name, location_address, event_date, event_end_date, background_image_url, video_link, video_link_public, entry_fee, max_participants, is_recurring, recurrence_rule, event_page_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
          RETURNING *`,
-        [userId, title.trim(), description || null, event_type || 'lesung', location_type || 'vor_ort', location_name || null, location_address || null, event_date, event_end_date || null, background_image_url || null, video_link || null, video_link_public || false, entry_fee || 0, max_participants || null, is_recurring || false, recurrence_rule || null]
+        [userId, title.trim(), description || null, event_type || 'lesung', location_type || 'vor_ort', location_name || null, location_address || null, event_date, event_end_date || null, background_image_url || null, video_link || null, video_link_public || false, entry_fee || 0, max_participants || null, is_recurring || false, recurrence_rule || null, event_page_url || null]
       );
       return res.json({ ok: true, data: result.rows[0] });
     } catch (error) {
@@ -6783,7 +6784,7 @@ export async function registerRoutes(
     try {
       const id = parseIdParam(req.params.id);
       if (!id) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
-      const { title, description, event_type, location_type, location_name, location_address, event_date, event_end_date, background_image_url, video_link, video_link_public, entry_fee, max_participants, is_recurring, recurrence_rule, is_published } = req.body;
+      const { title, description, event_type, location_type, location_name, location_address, event_date, event_end_date, background_image_url, video_link, video_link_public, entry_fee, max_participants, is_recurring, recurrence_rule, is_published, event_page_url } = req.body;
       const result = await queryDB(
         `UPDATE user_events SET
           title = COALESCE($1, title),
@@ -6802,9 +6803,10 @@ export async function registerRoutes(
           is_recurring = COALESCE($14, is_recurring),
           recurrence_rule = COALESCE($15, recurrence_rule),
           is_published = COALESCE($16, is_published),
+          event_page_url = COALESCE($17, event_page_url),
           updated_at = NOW()
-        WHERE id = $17 RETURNING *`,
-        [title || null, description !== undefined ? description : null, event_type || null, location_type || null, location_name !== undefined ? location_name : null, location_address !== undefined ? location_address : null, event_date || null, event_end_date !== undefined ? event_end_date : null, background_image_url !== undefined ? background_image_url : null, video_link !== undefined ? video_link : null, video_link_public !== undefined ? video_link_public : null, entry_fee !== undefined ? entry_fee : null, max_participants !== undefined ? max_participants : null, is_recurring !== undefined ? is_recurring : null, recurrence_rule !== undefined ? recurrence_rule : null, is_published !== undefined ? is_published : null, id]
+        WHERE id = $18 RETURNING *`,
+        [title || null, description !== undefined ? description : null, event_type || null, location_type || null, location_name !== undefined ? location_name : null, location_address !== undefined ? location_address : null, event_date || null, event_end_date !== undefined ? event_end_date : null, background_image_url !== undefined ? background_image_url : null, video_link !== undefined ? video_link : null, video_link_public !== undefined ? video_link_public : null, entry_fee !== undefined ? entry_fee : null, max_participants !== undefined ? max_participants : null, is_recurring !== undefined ? is_recurring : null, recurrence_rule !== undefined ? recurrence_rule : null, is_published !== undefined ? is_published : null, event_page_url !== undefined ? event_page_url : null, id]
       );
       if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Event not found' });
       return res.json({ ok: true, data: result.rows[0] });
@@ -6837,7 +6839,7 @@ export async function registerRoutes(
       const result = await queryDB(
         `SELECT e.id, e.title, e.description, e.event_type, e.location_type, e.location_name, e.location_address, e.event_date, e.event_end_date, e.background_image_url, 
           CASE WHEN e.video_link_public = true THEN e.video_link ELSE NULL END AS video_link,
-          e.video_link_public, e.entry_fee, e.entry_fee_currency, e.max_participants, e.is_recurring, e.recurrence_rule,
+          e.video_link_public, e.entry_fee, e.entry_fee_currency, e.max_participants, e.is_recurring, e.recurrence_rule, e.event_page_url,
           (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id AND status = 'booked') AS participant_count
          FROM user_events e
          WHERE e.user_id = $1 AND e.is_published = true AND e.event_date >= NOW() - INTERVAL '1 day'

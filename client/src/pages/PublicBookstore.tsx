@@ -448,7 +448,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                           </span>
                           {entryFee > 0 ? (
                             <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(232, 168, 56, 0.15)', color: '#c48a1a' }}>
-                              {entryFee.toFixed(2).replace('.', ',')} {event.entry_fee_currency || 'EUR'}
+                              {entryFee.toFixed(2).replace('.', ',')} {event.entry_fee_currency || 'EUR'} inkl. Steuern und Gebühren
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#059669' }}>
@@ -500,7 +500,20 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                           </Text>
                         )}
 
-                        <div className="flex items-center gap-2 pt-2 border-t border-border">
+                        <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-border">
+                          {event.event_page_url && (
+                            <a
+                              href={event.event_page_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 text-xs font-medium transition-colors"
+                              style={{ color: '#247ba0' }}
+                              data-testid={`event-page-link-${event.id}`}
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              Veranstaltungsseite
+                            </a>
+                          )}
                           {event.video_link && event.video_link_public && (
                             <a
                               href={event.video_link}
