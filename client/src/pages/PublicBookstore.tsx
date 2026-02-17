@@ -185,9 +185,9 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
           className="py-10 md:py-14 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
           data-testid="hero-section"
         >
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8 md:gap-12 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
             {/* Left Column: Avatar + Name/Focus + Social, vertically centered */}
-            <div className="flex items-center gap-5 md:gap-6 justify-center">
+            <div className="flex items-center gap-5 md:gap-6">
               <div className="flex-shrink-0">
                 <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
                   {profile.avatar_url ? (
