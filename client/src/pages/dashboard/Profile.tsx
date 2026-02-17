@@ -322,8 +322,6 @@ export function DashboardProfile() {
           <div className="mt-4 pt-4 border-t flex justify-center" style={{ borderColor: '#E5E7EB' }}>
             <a
               href={`/${bookstoreSlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
               data-testid="button-open-profile"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all"
               style={{ backgroundColor: '#247ba0', color: '#ffffff' }}

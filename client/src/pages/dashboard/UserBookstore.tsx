@@ -377,8 +377,6 @@ export function UserBookstore() {
         {savedSlug ? (
           <a
             href={`/${savedSlug}`}
-            target="_blank"
-            rel="noopener noreferrer"
             data-testid="button-open-bookstore"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all"
             style={{ backgroundColor: '#247ba0', color: '#ffffff' }}

@@ -168,6 +168,13 @@ const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 10,
       retry: 1,
       refetchOnWindowFocus: false,
+      queryFn: async ({ queryKey }) => {
+        const res = await fetch(queryKey.join('/') as string, { credentials: 'include' });
+        if (!res.ok) {
+          throw new Error(`${res.status}: ${res.statusText}`);
+        }
+        return await res.json();
+      },
     },
   },
 });
