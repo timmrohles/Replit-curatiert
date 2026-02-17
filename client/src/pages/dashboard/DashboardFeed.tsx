@@ -784,13 +784,13 @@ function EventCard({ event }: { event: MockEvent }) {
       </div>
 
       <div className="p-4 flex flex-col flex-1 gap-2">
-        <h4
+        <h3
           className="text-sm font-bold leading-tight line-clamp-2"
           style={{ color: '#3A3A3A', fontFamily: 'Fjalla One' }}
           data-testid={`text-event-title-${event.id}`}
         >
           {event.title}
-        </h4>
+        </h3>
         <Text as="span" variant="small" className="text-gray-500 font-medium">
           {event.organizer}
         </Text>
