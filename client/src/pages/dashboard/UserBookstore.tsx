@@ -422,40 +422,8 @@ export function UserBookstore() {
             </p>
           </div>
 
-          <div>
-            <label htmlFor="tagline" className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
-              Tagline
-            </label>
-            <input
-              id="tagline"
-              type="text"
-              value={profile.tagline}
-              onChange={e => setProfile(prev => ({ ...prev, tagline: e.target.value }))}
-              className="w-full p-3 rounded-lg border transition-colors"
-              style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
-              placeholder="Kurze Beschreibung deines Bookstores"
-              data-testid="input-tagline"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="description" className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
-              Beschreibung
-            </label>
-            <textarea
-              id="description"
-              value={profile.description}
-              onChange={e => setProfile(prev => ({ ...prev, description: e.target.value }))}
-              rows={4}
-              className="w-full p-3 rounded-lg border transition-colors"
-              style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
-              placeholder="Erzähle mehr über deinen Bookstore..."
-              data-testid="input-description"
-            />
-          </div>
-
           <p className="text-xs" style={{ color: '#9CA3AF' }}>
-            Anzeigename und Social-Media-Kanäle werden aus deinem Profil übernommen und können dort bearbeitet werden.
+            Anzeigename, Fokus/Thema, Biografie und Social-Media-Kanäle werden aus deinem Profil übernommen und können dort bearbeitet werden.
           </p>
 
           <div>

@@ -6521,13 +6521,9 @@ export async function registerRoutes(
               podcast: sl.podcast || curator.podcast_url || '',
             };
           }
-          if (!profile.tagline && curator.focus) {
-            profile.tagline = curator.focus;
-          }
-          if (!profile.description && curator.bio) {
-            profile.description = curator.bio;
-          }
-          profile.bio = curator.bio || '';
+          profile.tagline = curator.focus || profile.tagline || '';
+          profile.bio = curator.bio || profile.description || '';
+          profile.description = curator.bio || profile.description || '';
         }
         const curationsResult = await queryDB(
           `SELECT uc.*, bcl.display_order as link_order
