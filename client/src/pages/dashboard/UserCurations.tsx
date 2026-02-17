@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Edit, Trash2, X, Search, GripVertical, BookOpen, ChevronRight, ChevronLeft, ChevronDown, Sparkles, Hand, Tag, Minus, Check, Info, BadgeCheck, Heart } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Search, GripVertical, BookOpen, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Sparkles, Hand, Tag, Minus, Check, Info, BadgeCheck, Heart } from 'lucide-react';
 import { Text } from '@/components/ui/typography';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 
@@ -39,6 +39,7 @@ interface TagRules {
   includeAll?: string[];
   includeAny?: string[];
   exclude?: string[];
+  maxYearsAgo?: number | null;
 }
 
 interface BookResult {
@@ -299,6 +300,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
   const [tagRulesIncludeAll, setTagRulesIncludeAll] = useState<string[]>([]);
   const [tagRulesIncludeAny, setTagRulesIncludeAny] = useState<string[]>([]);
   const [tagRulesExclude, setTagRulesExclude] = useState<string[]>([]);
+  const [maxYearsAgo, setMaxYearsAgo] = useState<number | null>(null);
 
   const [saving, setSaving] = useState(false);
   const [bookCounts, setBookCounts] = useState<Record<number, number>>({});
@@ -420,6 +422,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
           includeAny: tagRulesIncludeAny,
           exclude: tagRulesExclude,
           category: selectedCategory?.name || null,
+          maxYearsAgo: maxYearsAgo,
           limit: 50,
         }),
       });
@@ -432,7 +435,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
     } finally {
       setResolvingBooks(false);
     }
-  }, [tagRulesIncludeAll, tagRulesIncludeAny, tagRulesExclude, selectedCategory]);
+  }, [tagRulesIncludeAll, tagRulesIncludeAny, tagRulesExclude, selectedCategory, maxYearsAgo]);
 
   useEffect(() => {
     const timer = setTimeout(() => { searchBooks(bookSearchQuery); }, 300);
@@ -477,6 +480,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
     setTagRulesIncludeAll([]);
     setTagRulesIncludeAny([]);
     setTagRulesExclude([]);
+    setMaxYearsAgo(null);
     setEditingCuration(null);
     setResolvedBooks([]);
     setDerivedTags([]);
@@ -515,6 +519,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
       setTagRulesIncludeAll(rules.includeAll || []);
       setTagRulesIncludeAny(rules.includeAny || []);
       setTagRulesExclude(rules.exclude || []);
+      setMaxYearsAgo(rules.maxYearsAgo ?? null);
     }
 
     try {
@@ -600,6 +605,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
     if (tagRulesIncludeAll.length > 0) tagRules.includeAll = tagRulesIncludeAll;
     if (tagRulesIncludeAny.length > 0) tagRules.includeAny = tagRulesIncludeAny;
     if (tagRulesExclude.length > 0) tagRules.exclude = tagRulesExclude;
+    if (maxYearsAgo !== null && maxYearsAgo > 0) tagRules.maxYearsAgo = maxYearsAgo;
 
     const allTags = curationType === 'manual'
       ? derivedTags
@@ -1060,7 +1066,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
       )}
 
       {showWizard && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[10000]">
           <div
             className="rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             style={{ backgroundColor: '#FFFFFF' }}
@@ -1335,8 +1341,10 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
 
                     {selectedBooks.length > 0 && (
                       <div>
-                        <div className="text-xs font-medium mb-2" style={{ color: '#6B7280' }}>
-                          Ausgewählt ({selectedBooks.length})
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="text-xs font-medium" style={{ color: '#6B7280' }}>
+                            Ausgewählt ({selectedBooks.length}) — Reihenfolge = Anzeigereihenfolge
+                          </div>
                         </div>
                         <div className="space-y-1">
                           {selectedBooks.map((book, index) => (
@@ -1349,10 +1357,41 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                               onDragEnd={handleDragEnd}
                               className="flex items-center gap-2 px-3 py-2 rounded-lg border"
                               style={{
-                                borderColor: '#E5E7EB',
-                                backgroundColor: dragIndex === index ? '#F0F9FF' : '#FFFFFF',
+                                borderColor: index === 0 ? '#247ba0' : '#E5E7EB',
+                                backgroundColor: dragIndex === index ? '#F0F9FF' : index === 0 ? '#F0F9FF' : '#FFFFFF',
                               }}
                             >
+                              <div className="flex flex-col items-center flex-shrink-0 gap-0.5">
+                                <button
+                                  onClick={() => {
+                                    if (index > 0) {
+                                      const newBooks = [...selectedBooks];
+                                      [newBooks[index - 1], newBooks[index]] = [newBooks[index], newBooks[index - 1]];
+                                      setSelectedBooks(newBooks);
+                                    }
+                                  }}
+                                  disabled={index === 0}
+                                  className="p-0.5 rounded disabled:opacity-20"
+                                  data-testid={`button-move-up-${book.id}`}
+                                >
+                                  <ChevronUp className="w-3 h-3" style={{ color: '#6B7280' }} />
+                                </button>
+                                <span className="text-[10px] font-bold leading-none" style={{ color: index === 0 ? '#247ba0' : '#9CA3AF' }}>{index + 1}</span>
+                                <button
+                                  onClick={() => {
+                                    if (index < selectedBooks.length - 1) {
+                                      const newBooks = [...selectedBooks];
+                                      [newBooks[index], newBooks[index + 1]] = [newBooks[index + 1], newBooks[index]];
+                                      setSelectedBooks(newBooks);
+                                    }
+                                  }}
+                                  disabled={index === selectedBooks.length - 1}
+                                  className="p-0.5 rounded disabled:opacity-20"
+                                  data-testid={`button-move-down-${book.id}`}
+                                >
+                                  <ChevronDown className="w-3 h-3" style={{ color: '#6B7280' }} />
+                                </button>
+                              </div>
                               <GripVertical className="w-4 h-4 flex-shrink-0 cursor-grab" style={{ color: '#9CA3AF' }} />
                               {book.cover_url ? (
                                 <img src={book.cover_url} alt="" className="w-6 h-9 object-cover rounded flex-shrink-0" />
@@ -1362,7 +1401,10 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                                 </div>
                               )}
                               <div className="flex-1 min-w-0">
-                                <div className="text-xs truncate" style={{ color: '#3A3A3A' }}>{book.title}</div>
+                                <div className="text-xs truncate" style={{ color: '#3A3A3A' }}>
+                                  {index === 0 && <span className="font-semibold" style={{ color: '#247ba0' }}>[Zuerst angezeigt] </span>}
+                                  {book.title}
+                                </div>
                                 <div className="text-xs truncate" style={{ color: '#9CA3AF' }}>{book.author}</div>
                               </div>
                               <button
@@ -1418,6 +1460,38 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                   placeholder="Thema/Tag suchen..."
                   testIdPrefix="tag-exclude"
                 />
+
+                <div className="pt-3" style={{ borderTop: '1px solid #E5E7EB' }}>
+                  <label className="block text-sm font-medium mb-1" style={{ color: '#3A3A3A' }}>
+                    Erscheinungsjahr eingrenzen
+                  </label>
+                  <Text as="p" variant="xs" className="mb-3" style={{ color: '#6B7280' }}>
+                    Nur Bücher anzeigen, die in den letzten X Jahren erschienen sind. Leer lassen für alle Erscheinungsjahre.
+                  </Text>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm" style={{ color: '#3A3A3A' }}>Letzte</span>
+                    <select
+                      value={maxYearsAgo ?? ''}
+                      onChange={e => setMaxYearsAgo(e.target.value ? Number(e.target.value) : null)}
+                      className="rounded-lg border px-3 py-2 text-sm"
+                      style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
+                      data-testid="select-max-years-ago"
+                    >
+                      <option value="">Keine Einschränkung</option>
+                      <option value="1">1 Jahr</option>
+                      <option value="2">2 Jahre</option>
+                      <option value="3">3 Jahre</option>
+                      <option value="5">5 Jahre</option>
+                      <option value="10">10 Jahre</option>
+                      <option value="20">20 Jahre</option>
+                    </select>
+                    {maxYearsAgo && (
+                      <Text as="span" variant="xs" style={{ color: '#6B7280' }}>
+                        (ab {new Date().getFullYear() - maxYearsAgo})
+                      </Text>
+                    )}
+                  </div>
+                </div>
 
                 {(tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0) && (
                   <div className="pt-3" style={{ borderTop: '1px solid #E5E7EB' }}>
@@ -1635,6 +1709,12 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                               {tagRulesExclude.map(t => (
                                 <span key={t} className="text-xs px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: '#DC2626' }}>{t}</span>
                               ))}
+                            </div>
+                          )}
+                          {maxYearsAgo && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-xs font-medium" style={{ color: '#6B7280' }}>Erscheinungsjahr:</span>
+                              <span className="text-xs" style={{ color: '#3A3A3A' }}>Letzte {maxYearsAgo} {maxYearsAgo === 1 ? 'Jahr' : 'Jahre'} (ab {new Date().getFullYear() - maxYearsAgo})</span>
                             </div>
                           )}
                         </div>

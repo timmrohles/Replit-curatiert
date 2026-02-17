@@ -2135,7 +2135,7 @@ export async function registerRoutes(
 
   app.post('/api/books/resolve-by-tags', async (req: Request, res: Response) => {
     try {
-      const { includeAll, includeAny, exclude, category, limit: reqLimit } = req.body;
+      const { includeAll, includeAny, exclude, category, maxYearsAgo, limit: reqLimit } = req.body;
       const bookLimit = parseInt(reqLimit || '50');
 
       // First check which columns exist on books table
@@ -2148,6 +2148,10 @@ export async function registerRoutes(
       const hasCategory = cols.has('category');
       const hasAuthor = cols.has('author');
       const hasTitle = cols.has('title');
+      const hasPublicationDate = cols.has('publication_date');
+      const hasPublishedDate = cols.has('published_date');
+      const hasYear = cols.has('year');
+      const hasCreatedAt = cols.has('created_at');
 
       if (cols.size === 0) {
         return res.json({ ok: true, data: [], count: 0 });
@@ -2200,6 +2204,28 @@ export async function registerRoutes(
         conditions.push(`(${catParts.join(' OR ')})`);
         params.push(`%${category}%`);
         paramIndex++;
+      }
+
+      if (maxYearsAgo && parseInt(maxYearsAgo) > 0) {
+        const minYear = new Date().getFullYear() - parseInt(maxYearsAgo);
+        const minDate = `${minYear}-01-01`;
+        if (hasPublicationDate) {
+          conditions.push(`b.publication_date >= $${paramIndex}::date`);
+          params.push(minDate);
+          paramIndex++;
+        } else if (hasPublishedDate) {
+          conditions.push(`b.published_date >= $${paramIndex}::date`);
+          params.push(minDate);
+          paramIndex++;
+        } else if (hasYear) {
+          conditions.push(`b.year >= $${paramIndex}`);
+          params.push(minYear);
+          paramIndex++;
+        } else if (hasCreatedAt) {
+          conditions.push(`b.created_at >= $${paramIndex}::date`);
+          params.push(minDate);
+          paramIndex++;
+        }
       }
 
       const where = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
