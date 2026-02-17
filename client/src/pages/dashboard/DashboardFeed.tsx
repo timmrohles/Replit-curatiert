@@ -806,6 +806,16 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
                 <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
                   {MOCK_SPONSOR.name}
                 </Text>
+                <LikeButton
+                  entityId={`sponsor-${MOCK_SPONSOR.name.toLowerCase().replace(/\s+/g, '-')}`}
+                  entityType="creator"
+                  entityTitle={MOCK_SPONSOR.name}
+                  entityImage={MOCK_SPONSOR.avatar}
+                  variant="minimal"
+                  size="sm"
+                  iconColor="#ffffff"
+                  backgroundColor="var(--color-saffron)"
+                />
               </div>
             )}
             {tags.map((tag) => (
