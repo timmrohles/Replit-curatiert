@@ -308,78 +308,86 @@ function CurationBookCard({ book }: { book: BookResult }) {
           </div>
         </div>
 
-        <div className="px-2 md:px-3 pb-2 md:pb-3 flex flex-col gap-1">
-          <Heading
-            as="h4"
-            variant="h5"
-            className="text-foreground line-clamp-2 !normal-case"
-          >
-            {book.title}
-          </Heading>
+        <div className="px-2 md:px-3 pb-2 md:pb-3 flex flex-col min-h-[200px] md:min-h-[220px]">
+          <div className="flex flex-col gap-1 h-[9rem]">
+            <Heading
+              as="h4"
+              variant="h5"
+              className="text-foreground line-clamp-2 !normal-case min-h-[2.75rem]"
+            >
+              {book.title}
+            </Heading>
 
-          <Text
-            as="p"
-            variant="small"
-            className="text-foreground-muted !normal-case !font-bold !tracking-normal line-clamp-1"
-          >
-            {book.author}
-          </Text>
+            <Text
+              as="p"
+              variant="small"
+              className="text-foreground-muted !normal-case !font-bold !tracking-normal line-clamp-1 min-h-[1.25rem]"
+            >
+              {book.author}
+            </Text>
 
-          {descriptionText && (
-            <div className="mt-1">
-              <Text
-                as="p"
-                variant="small"
-                className="text-foreground-muted !normal-case !tracking-normal leading-relaxed"
-              >
-                {displayText}
-              </Text>
-              {isLong && (
+            <div className="mt-1 flex-1">
+              {descriptionText ? (
+                <>
+                  <Text
+                    as="p"
+                    variant="small"
+                    className="text-foreground-muted !normal-case !tracking-normal leading-relaxed line-clamp-3"
+                  >
+                    {displayText}
+                  </Text>
+                  {isLong && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpanded(!expanded);
+                      }}
+                      className="mt-0.5 text-sm font-medium flex items-center gap-0.5"
+                      style={{ color: 'var(--color-teal, #5a9690)' }}
+                      data-testid={`button-expand-desc-${book.id}`}
+                    >
+                      {expanded ? 'Weniger' : 'Mehr lesen'} {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="min-h-[1rem]" />
+              )}
+            </div>
+          </div>
+
+          <div className="mt-auto pt-2">
+            <div className="border-t border-foreground/10 pt-2">
+              <div className="flex items-center gap-1.5">
+                <LikeButton
+                  entityId={book.id}
+                  entityType="book"
+                  entityTitle={book.title}
+                  entitySubtitle={book.author}
+                  size="sm"
+                  iconColor="#3A3A3A"
+                />
+                <ReadingListButton
+                  bookId={book.id}
+                  bookTitle={book.title}
+                  bookAuthor={book.author}
+                  bookCover={book.cover_url || ''}
+                  size="sm"
+                  iconColor="#3A3A3A"
+                />
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setExpanded(!expanded);
+                    safeNav(`/book/${book.id}`);
                   }}
-                  className="mt-0.5 text-sm font-medium flex items-center gap-0.5"
-                  style={{ color: 'var(--color-teal, #5a9690)' }}
-                  data-testid={`button-expand-desc-${book.id}`}
+                  className="ml-auto p-1.5 rounded-md"
+                  style={{ color: '#3A3A3A' }}
+                  title="Buchdetails anzeigen"
+                  data-testid={`button-book-detail-${book.id}`}
                 >
-                  {expanded ? 'Weniger' : 'Mehr lesen'} {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  <ArrowRight className="w-4 h-4" style={{ strokeWidth: 1.5 }} />
                 </button>
-              )}
-            </div>
-          )}
-
-          <div className="border-t border-foreground/10 mt-2 pt-2">
-            <div className="flex items-center gap-1.5">
-              <LikeButton
-                entityId={book.id}
-                entityType="book"
-                entityTitle={book.title}
-                entitySubtitle={book.author}
-                size="sm"
-                iconColor="#3A3A3A"
-              />
-              <ReadingListButton
-                bookId={book.id}
-                bookTitle={book.title}
-                bookAuthor={book.author}
-                bookCover={book.cover_url || ''}
-                size="sm"
-                iconColor="#3A3A3A"
-              />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  safeNav(`/book/${book.id}`);
-                }}
-                className="ml-auto p-1.5 rounded-md"
-                style={{ color: '#3A3A3A' }}
-                title="Buchdetails anzeigen"
-                data-testid={`button-book-detail-${book.id}`}
-              >
-                <ArrowRight className="w-4 h-4" style={{ strokeWidth: 1.5 }} />
-              </button>
+              </div>
             </div>
           </div>
         </div>
