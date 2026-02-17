@@ -324,45 +324,6 @@ export function DashboardProfile() {
           </div>
         </div>
 
-        {/* Progress bar + stats */}
-        <div className="mt-5 pt-4 border-t" style={{ borderColor: '#E5E7EB' }}>
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <span className="text-xs sm:text-sm" style={{ color: '#6B7280' }}>
-              Profil {progress}% vollständig
-            </span>
-            <span className="text-xs sm:text-sm font-medium" style={{ color: '#247ba0' }}>
-              {progress}%
-            </span>
-          </div>
-          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#F3F4F6' }}>
-            <div
-              className="h-full transition-all duration-500 rounded-full"
-              style={{
-                width: `${progress}%`,
-                background: 'linear-gradient(to right, #247ba0, #70c1b3)'
-              }}
-              data-testid="progress-bar"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 mt-4">
-          {quickStats.map((stat, index) => {
-            const StatIcon = stat.icon;
-            return (
-              <div
-                key={index}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs"
-                style={{ backgroundColor: '#F3F4F6', color: '#6B7280' }}
-                data-testid={`stat-pill-${stat.label.toLowerCase()}`}
-              >
-                <StatIcon className="w-3.5 h-3.5" style={{ color: '#247ba0' }} />
-                <span>{stat.value}</span>
-                <span>{stat.label}</span>
-              </div>
-            );
-          })}
-        </div>
         {bookstoreSlug && (
           <div className="mt-4 pt-4 border-t flex justify-center" style={{ borderColor: '#E5E7EB' }}>
             <a
