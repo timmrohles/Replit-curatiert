@@ -365,6 +365,58 @@ export async function registerRoutes(
 
   try {
     await queryDB(`
+      CREATE TABLE IF NOT EXISTS affiliate_clicks (
+        id SERIAL PRIMARY KEY,
+        creator_id VARCHAR(255) NOT NULL,
+        creator_slug VARCHAR(255),
+        book_id VARCHAR(255) NOT NULL,
+        isbn13 VARCHAR(20),
+        session_id VARCHAR(255) NOT NULL,
+        merchant VARCHAR(255),
+        affiliate_id INTEGER,
+        landing_page TEXT,
+        referrer TEXT,
+        user_agent TEXT,
+        ip_hash VARCHAR(64),
+        click_timestamp TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_creator ON affiliate_clicks(creator_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_session ON affiliate_clicks(session_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_book ON affiliate_clicks(book_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_ts ON affiliate_clicks(click_timestamp)`);
+
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS affiliate_orders (
+        id SERIAL PRIMARY KEY,
+        creator_id VARCHAR(255) NOT NULL,
+        click_id INTEGER REFERENCES affiliate_clicks(id),
+        session_id VARCHAR(255),
+        book_id VARCHAR(255),
+        isbn13 VARCHAR(20),
+        merchant VARCHAR(255),
+        affiliate_id INTEGER,
+        order_reference VARCHAR(255),
+        purchase_timestamp TIMESTAMPTZ DEFAULT NOW(),
+        merchant_commission NUMERIC(10,2) DEFAULT 0,
+        creator_share NUMERIC(10,2) DEFAULT 0,
+        platform_share NUMERIC(10,2) DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'pending',
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_aff_orders_creator ON affiliate_orders(creator_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_aff_orders_status ON affiliate_orders(status)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_aff_orders_session ON affiliate_orders(session_id)`);
+    log.info('Affiliate tracking tables verified');
+  } catch (err) {
+    log.warn('Could not verify affiliate tracking tables:', err);
+  }
+
+  try {
+    await queryDB(`
       CREATE TABLE IF NOT EXISTS site_banners (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -7487,6 +7539,417 @@ export async function registerRoutes(
       return res.json({ ok: true });
     } catch (error) {
       log.error('Reschedule event error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // CREATOR LINK RESOLUTION - /@creatorSlug/buch/:isbn
+  // ==================================================================
+
+  app.get('/api/creator-link/:creatorSlug/buch/:isbn', async (req: Request, res: Response) => {
+    try {
+      const { creatorSlug, isbn } = req.params;
+
+      const profileResult = await queryDB(
+        `SELECT user_id, display_name, slug, avatar_url, hero_image_url FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
+        [creatorSlug]
+      );
+
+      if (profileResult.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Creator not found' });
+      }
+
+      const creator = profileResult.rows[0];
+
+      const bookResult = await queryDB(
+        `SELECT id, title, author, isbn13, cover_url, description FROM neon_books WHERE isbn13 = $1 LIMIT 1`,
+        [isbn]
+      );
+
+      let book = bookResult.rows.length > 0 ? bookResult.rows[0] : null;
+
+      if (!book) {
+        const altResult = await queryDB(
+          `SELECT id, title, author, isbn13, cover_url, description FROM neon_books WHERE id = $1 LIMIT 1`,
+          [isbn]
+        );
+        book = altResult.rows.length > 0 ? altResult.rows[0] : null;
+      }
+
+      const affiliatesResult = await queryDB(
+        `SELECT a.id, a.name, a.slug, a.link_template, a.icon_url, a.favicon_url,
+                ba.link_override, ba.merchant_product_id
+         FROM affiliates a
+         LEFT JOIN book_affiliates ba ON ba.affiliate_id = a.id AND ba.book_id = $1
+         WHERE a.is_active = true
+         ORDER BY a.display_order ASC`,
+        [book?.id || '']
+      );
+
+      const merchants = affiliatesResult.rows.map((a: any) => {
+        let url = a.link_override || a.link_template;
+        url = url.replace(/\{isbn13\}/g, isbn || book?.isbn13 || '');
+        url = url.replace(/\{merchant_product_id\}/g, a.merchant_product_id || '');
+        return {
+          id: a.id,
+          name: a.name,
+          slug: a.slug,
+          url,
+          iconUrl: a.icon_url,
+          faviconUrl: a.favicon_url
+        };
+      });
+
+      return res.json({
+        ok: true,
+        data: {
+          creator: {
+            userId: creator.user_id,
+            displayName: creator.display_name,
+            slug: creator.slug,
+            avatarUrl: creator.avatar_url,
+            heroImageUrl: creator.hero_image_url
+          },
+          book: book ? {
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            isbn13: book.isbn13,
+            coverUrl: book.cover_url,
+            description: book.description
+          } : null,
+          merchants,
+          isbn
+        }
+      });
+    } catch (error) {
+      log.error('Creator link resolve error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // AFFILIATE TRACKING - Creator Click & Order Tracking
+  // ==================================================================
+
+  app.post('/api/affiliate/track-click', async (req: Request, res: Response) => {
+    try {
+      const { creatorId, creatorSlug, bookId, isbn13, sessionId, merchant, affiliateId, landingPage, referrer } = req.body;
+      if (!creatorId || !bookId || !sessionId) {
+        return res.status(400).json({ ok: false, error: 'creatorId, bookId, and sessionId are required' });
+      }
+      const userAgent = req.headers['user-agent'] || '';
+      const crypto = await import('crypto');
+      const ipRaw = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+      const ipHash = crypto.createHash('sha256').update(String(ipRaw)).digest('hex').substring(0, 16);
+
+      const result = await queryDB(
+        `INSERT INTO affiliate_clicks (creator_id, creator_slug, book_id, isbn13, session_id, merchant, affiliate_id, landing_page, referrer, user_agent, ip_hash)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         RETURNING id, click_timestamp`,
+        [creatorId, creatorSlug || null, bookId, isbn13 || null, sessionId, merchant || null, affiliateId || null, landingPage || null, referrer || null, userAgent, ipHash]
+      );
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Track click error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/affiliate/resolve-link', async (req: Request, res: Response) => {
+    try {
+      const { bookId, isbn13, affiliateSlug } = req.body;
+      if (!bookId && !isbn13) {
+        return res.status(400).json({ ok: false, error: 'bookId or isbn13 required' });
+      }
+
+      let query = '';
+      let params: any[] = [];
+
+      if (affiliateSlug) {
+        query = `SELECT a.link_template, a.slug, a.name, a.id as affiliate_id, ba.link_override, ba.merchant_product_id, b.isbn13
+                 FROM affiliates a
+                 LEFT JOIN book_affiliates ba ON ba.affiliate_id = a.id AND ba.book_id = $1
+                 LEFT JOIN books b ON b.id = $1
+                 WHERE a.slug = $2 AND a.is_active = true
+                 LIMIT 1`;
+        params = [bookId || '', affiliateSlug];
+      } else {
+        query = `SELECT a.link_template, a.slug, a.name, a.id as affiliate_id, ba.link_override, ba.merchant_product_id, b.isbn13
+                 FROM affiliates a
+                 JOIN book_affiliates ba ON ba.affiliate_id = a.id AND ba.book_id = $1 AND ba.is_active = true
+                 LEFT JOIN books b ON b.id = $1
+                 WHERE a.is_active = true
+                 ORDER BY ba.display_order ASC
+                 LIMIT 1`;
+        params = [bookId || ''];
+      }
+
+      const result = await queryDB(query, params);
+      if (result.rows.length === 0) {
+        return res.json({ ok: true, data: null, message: 'No affiliate link found' });
+      }
+
+      const row = result.rows[0];
+      let finalUrl = row.link_override || row.link_template;
+      const bookIsbn = isbn13 || row.isbn13 || '';
+      finalUrl = finalUrl.replace(/\{isbn13\}/g, bookIsbn);
+      finalUrl = finalUrl.replace(/\{merchant_product_id\}/g, row.merchant_product_id || '');
+
+      return res.json({
+        ok: true,
+        data: {
+          url: finalUrl,
+          merchant: row.slug,
+          merchantName: row.name,
+          affiliateId: row.affiliate_id
+        }
+      });
+    } catch (error) {
+      log.error('Resolve affiliate link error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/affiliate/creator-stats', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ ok: false, error: 'userId required' });
+      }
+
+      const [clicksResult, ordersResult, earningsResult, recentClicksResult] = await Promise.all([
+        queryDB(
+          `SELECT COUNT(*) as total_clicks,
+                  COUNT(DISTINCT book_id) as unique_books,
+                  COUNT(DISTINCT session_id) as unique_sessions,
+                  COUNT(*) FILTER (WHERE click_timestamp >= NOW() - INTERVAL '30 days') as clicks_30d,
+                  COUNT(*) FILTER (WHERE click_timestamp >= NOW() - INTERVAL '7 days') as clicks_7d
+           FROM affiliate_clicks WHERE creator_id = $1`, [userId]
+        ),
+        queryDB(
+          `SELECT COUNT(*) as total_orders,
+                  COUNT(*) FILTER (WHERE status = 'confirmed') as confirmed_orders,
+                  COUNT(*) FILTER (WHERE status = 'pending') as pending_orders,
+                  COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled_orders,
+                  COUNT(*) FILTER (WHERE purchase_timestamp >= NOW() - INTERVAL '30 days') as orders_30d
+           FROM affiliate_orders WHERE creator_id = $1`, [userId]
+        ),
+        queryDB(
+          `SELECT COALESCE(SUM(creator_share), 0) as total_earnings,
+                  COALESCE(SUM(creator_share) FILTER (WHERE status = 'confirmed'), 0) as confirmed_earnings,
+                  COALESCE(SUM(creator_share) FILTER (WHERE status = 'pending'), 0) as pending_earnings,
+                  COALESCE(SUM(merchant_commission), 0) as total_commission
+           FROM affiliate_orders WHERE creator_id = $1`, [userId]
+        ),
+        queryDB(
+          `SELECT ac.book_id, ac.isbn13, ac.merchant, ac.click_timestamp, ac.creator_slug
+           FROM affiliate_clicks ac
+           WHERE ac.creator_id = $1
+           ORDER BY ac.click_timestamp DESC LIMIT 10`, [userId]
+        )
+      ]);
+
+      return res.json({
+        ok: true,
+        data: {
+          clicks: clicksResult.rows[0],
+          orders: ordersResult.rows[0],
+          earnings: earningsResult.rows[0],
+          recentClicks: recentClicksResult.rows
+        }
+      });
+    } catch (error) {
+      log.error('Creator stats error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/admin/affiliate-tracking', async (req: Request, res: Response) => {
+    try {
+      const token = req.headers['x-admin-token'] as string;
+      if (!token) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+      const view = (req.query.view as string) || 'clicks';
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+      const offset = (page - 1) * limit;
+      const creatorFilter = req.query.creator as string;
+      const statusFilter = req.query.status as string;
+
+      if (view === 'orders') {
+        let whereClause = '';
+        const params: any[] = [];
+        let paramIdx = 1;
+
+        if (creatorFilter) {
+          whereClause += ` AND ao.creator_id = $${paramIdx}`;
+          params.push(creatorFilter);
+          paramIdx++;
+        }
+        if (statusFilter) {
+          whereClause += ` AND ao.status = $${paramIdx}`;
+          params.push(statusFilter);
+          paramIdx++;
+        }
+
+        const [ordersRes, countRes] = await Promise.all([
+          queryDB(
+            `SELECT ao.*, bp.display_name as creator_name, bp.slug as creator_profile_slug
+             FROM affiliate_orders ao
+             LEFT JOIN bookstore_profiles bp ON bp.user_id = ao.creator_id
+             WHERE 1=1 ${whereClause}
+             ORDER BY ao.created_at DESC
+             LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
+            [...params, limit, offset]
+          ),
+          queryDB(
+            `SELECT COUNT(*) as total FROM affiliate_orders ao WHERE 1=1 ${whereClause}`,
+            params
+          )
+        ]);
+
+        return res.json({
+          ok: true,
+          data: ordersRes.rows,
+          pagination: { page, limit, total: parseInt(countRes.rows[0].total) }
+        });
+      }
+
+      let whereClause = '';
+      const params: any[] = [];
+      let paramIdx = 1;
+
+      if (creatorFilter) {
+        whereClause += ` AND ac.creator_id = $${paramIdx}`;
+        params.push(creatorFilter);
+        paramIdx++;
+      }
+
+      const [clicksRes, countRes, summaryRes] = await Promise.all([
+        queryDB(
+          `SELECT ac.*, bp.display_name as creator_name, bp.slug as creator_profile_slug
+           FROM affiliate_clicks ac
+           LEFT JOIN bookstore_profiles bp ON bp.user_id = ac.creator_id
+           WHERE 1=1 ${whereClause}
+           ORDER BY ac.click_timestamp DESC
+           LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
+          [...params, limit, offset]
+        ),
+        queryDB(
+          `SELECT COUNT(*) as total FROM affiliate_clicks ac WHERE 1=1 ${whereClause}`,
+          params
+        ),
+        queryDB(
+          `SELECT 
+            (SELECT COUNT(*) FROM affiliate_clicks) as total_clicks,
+            (SELECT COUNT(*) FROM affiliate_orders) as total_orders,
+            (SELECT COUNT(*) FROM affiliate_orders WHERE status = 'confirmed') as confirmed_orders,
+            (SELECT COALESCE(SUM(merchant_commission), 0) FROM affiliate_orders) as total_commission,
+            (SELECT COALESCE(SUM(creator_share), 0) FROM affiliate_orders) as total_creator_share,
+            (SELECT COUNT(DISTINCT creator_id) FROM affiliate_clicks) as active_creators`
+        )
+      ]);
+
+      return res.json({
+        ok: true,
+        data: clicksRes.rows,
+        summary: summaryRes.rows[0],
+        pagination: { page, limit, total: parseInt(countRes.rows[0].total) }
+      });
+    } catch (error) {
+      log.error('Admin affiliate tracking error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/affiliate-orders', async (req: Request, res: Response) => {
+    try {
+      const token = req.headers['x-admin-token'] as string;
+      if (!token) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+      const { creatorId, bookId, isbn13, merchant, affiliateId, sessionId, orderReference, merchantCommission, creatorShare, platformShare, status, notes } = req.body;
+      if (!creatorId) return res.status(400).json({ ok: false, error: 'creatorId required' });
+
+      let clickId = null;
+      if (sessionId) {
+        const lastClick = await queryDB(
+          `SELECT id FROM affiliate_clicks WHERE session_id = $1 AND creator_id = $2 ORDER BY click_timestamp DESC LIMIT 1`,
+          [sessionId, creatorId]
+        );
+        if (lastClick.rows.length > 0) clickId = lastClick.rows[0].id;
+      }
+
+      const result = await queryDB(
+        `INSERT INTO affiliate_orders (creator_id, click_id, session_id, book_id, isbn13, merchant, affiliate_id, order_reference, merchant_commission, creator_share, platform_share, status, notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+         RETURNING *`,
+        [creatorId, clickId, sessionId || null, bookId || null, isbn13 || null, merchant || null, affiliateId || null, orderReference || null, merchantCommission || 0, creatorShare || 0, platformShare || 0, status || 'pending', notes || null]
+      );
+
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Create affiliate order error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.patch('/api/admin/affiliate-orders/:id', async (req: Request, res: Response) => {
+    try {
+      const token = req.headers['x-admin-token'] as string;
+      if (!token) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+      const { id } = req.params;
+      const { status, merchantCommission, creatorShare, platformShare, notes } = req.body;
+
+      const updates: string[] = [];
+      const params: any[] = [];
+      let idx = 1;
+
+      if (status !== undefined) { updates.push(`status = $${idx}`); params.push(status); idx++; }
+      if (merchantCommission !== undefined) { updates.push(`merchant_commission = $${idx}`); params.push(merchantCommission); idx++; }
+      if (creatorShare !== undefined) { updates.push(`creator_share = $${idx}`); params.push(creatorShare); idx++; }
+      if (platformShare !== undefined) { updates.push(`platform_share = $${idx}`); params.push(platformShare); idx++; }
+      if (notes !== undefined) { updates.push(`notes = $${idx}`); params.push(notes); idx++; }
+
+      if (updates.length === 0) return res.status(400).json({ ok: false, error: 'No fields to update' });
+
+      updates.push(`updated_at = NOW()`);
+      params.push(id);
+
+      const result = await queryDB(
+        `UPDATE affiliate_orders SET ${updates.join(', ')} WHERE id = $${idx} RETURNING *`,
+        params
+      );
+
+      if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Order not found' });
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Update affiliate order error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/admin/affiliate-creators', async (req: Request, res: Response) => {
+    try {
+      const token = req.headers['x-admin-token'] as string;
+      if (!token) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+
+      const result = await queryDB(
+        `SELECT acp.user_id, acp.first_name, acp.last_name, acp.artist_name, acp.status as profile_status,
+                bp.display_name, bp.slug, bp.avatar_url,
+                (SELECT COUNT(*) FROM affiliate_clicks WHERE creator_id = acp.user_id) as total_clicks,
+                (SELECT COUNT(*) FROM affiliate_orders WHERE creator_id = acp.user_id) as total_orders,
+                (SELECT COALESCE(SUM(creator_share), 0) FROM affiliate_orders WHERE creator_id = acp.user_id AND status = 'confirmed') as total_earnings
+         FROM affiliate_creator_profiles acp
+         LEFT JOIN bookstore_profiles bp ON bp.user_id = acp.user_id
+         ORDER BY acp.created_at DESC`
+      );
+
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Admin affiliate creators error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });

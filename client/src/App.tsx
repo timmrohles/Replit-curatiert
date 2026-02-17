@@ -55,6 +55,7 @@ const AllCuratorsPage = React.lazy(() => import('./components/creator/AllCurator
 const AllListsPage = React.lazy(() => import('./components/creator/AllListsPage').then(m => ({ default: m.AllListsPage })));
 
 const EventsPage = React.lazy(() => import('./components/events/EventsPage').then(m => ({ default: m.EventsPage })));
+const CreatorBookLink = React.lazy(() => import('./pages/CreatorBookLink').then(m => ({ default: m.CreatorBookLink })));
 const ShopPage = React.lazy(() => import('./components/shop/ShopPage').then(m => ({ default: m.ShopPage })));
 const DynamicPage = React.lazy(() => import('./components/cms/DynamicPage').then(m => ({ default: m.DynamicPage })));
 const TagRouter = React.lazy(() => import('./components/tags/TagRouter').then(m => ({ default: m.TagRouter })));
@@ -84,7 +85,7 @@ const Setup = React.lazy(() => import('./pages/admin/Setup').then(m => ({ defaul
 const PublishControlPanel = React.lazy(() => import('./pages/admin/PublishControlPanel'));
 const PublicBookstore = React.lazy(() => import('./pages/PublicBookstore').then(m => ({ default: m.PublicBookstore })));
 
-const RESERVED_ROOT_PREFIXES = [
+const RESERVED_ROOT_PREFIXES: string[] = [
   'api', 'sys-mgmt-xK9', 'de-de', 'de-at', 'de-ch', 'uploads', 'assets', 'src', 'vite-hmr', '@',
 ];
 
@@ -246,6 +247,9 @@ function App() {
                       <Route path=":slug" element={<S><DynamicPage /></S>} />
                       <Route path=":slug/:subslug" element={<S><DynamicPage /></S>} />
                     </Route>
+
+                    {/* Creator affiliate book link - /@creatorSlug/buch/:isbn */}
+                    <Route path="/@:creatorSlug/buch/:isbn" element={<S><CreatorBookLink /></S>} />
 
                     {/* Admin routes - no locale prefix */}
                     <Route path="/sys-mgmt-xK9/content-manager" element={<S><AdminContentManager /></S>} />

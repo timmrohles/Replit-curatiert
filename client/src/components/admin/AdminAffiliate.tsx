@@ -97,7 +97,7 @@ function getAdminHeaders(): HeadersInit {
 // ==================================================================
 
 export function AdminAffiliate() {
-  const [view, setView] = useState<'partners' | 'assignments'>('partners');
+  const [view, setView] = useState<'partners' | 'assignments' | 'creator-tracking' | 'creator-orders'>('partners');
   
   // Affiliate Partners
   const [affiliates, setAffiliates] = useState<Affiliate[]>([]);
@@ -113,6 +113,17 @@ export function AdminAffiliate() {
   const [selectedAffiliateId, setSelectedAffiliateId] = useState<number | null>(null);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   
+  // Creator Tracking State
+  const [trackingData, setTrackingData] = useState<any[]>([]);
+  const [trackingSummary, setTrackingSummary] = useState<any>(null);
+  const [trackingPagination, setTrackingPagination] = useState({ page: 1, limit: 50, total: 0 });
+  const [ordersData, setOrdersData] = useState<any[]>([]);
+  const [ordersPagination, setOrdersPagination] = useState({ page: 1, limit: 50, total: 0 });
+  const [creatorsList, setCreatorsList] = useState<any[]>([]);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<any>(null);
+  const [newOrder, setNewOrder] = useState({ creatorId: '', bookId: '', isbn13: '', merchant: '', merchantCommission: '', creatorShare: '', platformShare: '', status: 'pending', notes: '' });
+  
   // UI State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -125,9 +136,15 @@ export function AdminAffiliate() {
   useEffect(() => {
     if (view === 'partners') {
       fetchAffiliates();
-    } else {
+    } else if (view === 'assignments') {
       fetchBookAffiliates();
-      fetchAffiliates(); // Needed for dropdown
+      fetchAffiliates();
+    } else if (view === 'creator-tracking') {
+      fetchTrackingData();
+      fetchCreatorsList();
+    } else if (view === 'creator-orders') {
+      fetchOrdersData();
+      fetchCreatorsList();
     }
   }, [view]);
 
@@ -1063,13 +1080,464 @@ export function AdminAffiliate() {
   }
 
   // ==================================================================
+  // CREATOR TRACKING FUNCTIONS
+  // ==================================================================
+
+  async function fetchTrackingData(page = 1) {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${API_BASE}/admin/affiliate-tracking?view=clicks&page=${page}&limit=50`, { headers: getAdminHeaders() });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || 'Failed to load tracking data');
+      setTrackingData(Array.isArray(result.data) ? result.data : []);
+      setTrackingSummary(result.summary || null);
+      setTrackingPagination(result.pagination || { page: 1, limit: 50, total: 0 });
+    } catch (err) {
+      setError(String(err));
+      setTrackingData([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchOrdersData(page = 1) {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${API_BASE}/admin/affiliate-tracking?view=orders&page=${page}&limit=50`, { headers: getAdminHeaders() });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || 'Failed to load orders');
+      setOrdersData(Array.isArray(result.data) ? result.data : []);
+      setOrdersPagination(result.pagination || { page: 1, limit: 50, total: 0 });
+    } catch (err) {
+      setError(String(err));
+      setOrdersData([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchCreatorsList() {
+    try {
+      const response = await fetch(`${API_BASE}/admin/affiliate-creators`, { headers: getAdminHeaders() });
+      if (!response.ok) return;
+      const result = await response.json();
+      if (result.ok) setCreatorsList(Array.isArray(result.data) ? result.data : []);
+    } catch (err) {
+      console.error('Failed to load creators list:', err);
+    }
+  }
+
+  async function createOrder() {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`${API_BASE}/admin/affiliate-orders`, {
+        method: 'POST',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({
+          creatorId: newOrder.creatorId,
+          bookId: newOrder.bookId || null,
+          isbn13: newOrder.isbn13 || null,
+          merchant: newOrder.merchant || null,
+          merchantCommission: parseFloat(newOrder.merchantCommission) || 0,
+          creatorShare: parseFloat(newOrder.creatorShare) || 0,
+          platformShare: parseFloat(newOrder.platformShare) || 0,
+          status: newOrder.status,
+          notes: newOrder.notes || null,
+        }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || 'Failed to create order');
+      setSuccess('Bestellung erstellt');
+      setShowOrderModal(false);
+      setNewOrder({ creatorId: '', bookId: '', isbn13: '', merchant: '', merchantCommission: '', creatorShare: '', platformShare: '', status: 'pending', notes: '' });
+      fetchOrdersData();
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function updateOrderStatus(orderId: number, status: string) {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE}/admin/affiliate-orders/${orderId}`, {
+        method: 'PATCH',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || 'Update failed');
+      setSuccess(`Status auf "${status}" geaendert`);
+      fetchOrdersData();
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function renderCreatorTrackingView() {
+    return (
+      <div className="space-y-6">
+        {trackingSummary && (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { label: 'Klicks gesamt', value: trackingSummary.total_clicks },
+              { label: 'Bestellungen', value: trackingSummary.total_orders },
+              { label: 'Bestaetigt', value: trackingSummary.confirmed_orders },
+              { label: 'Aktive Creator', value: trackingSummary.active_creators },
+              { label: 'Provision gesamt', value: `${parseFloat(trackingSummary.total_commission || 0).toFixed(2)} EUR` },
+              { label: 'Creator-Anteil', value: `${parseFloat(trackingSummary.total_creator_share || 0).toFixed(2)} EUR` },
+            ].map((item, idx) => (
+              <div key={idx} className="bg-white p-4 rounded-lg border border-gray-200 text-center">
+                <div className="text-xl font-bold text-gray-800">{item.value}</div>
+                <div className="text-xs text-gray-500 mt-1">{item.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {creatorsList.length > 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+              <h3 className="font-semibold text-gray-800">Registrierte Creator ({creatorsList.length})</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr>
+                    <th className="text-left px-4 py-2">Creator</th>
+                    <th className="text-left px-4 py-2">Slug</th>
+                    <th className="text-left px-4 py-2">Status</th>
+                    <th className="text-right px-4 py-2">Klicks</th>
+                    <th className="text-right px-4 py-2">Bestellungen</th>
+                    <th className="text-right px-4 py-2">Einnahmen</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {creatorsList.map((c: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 font-medium text-gray-800">
+                        {c.display_name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.user_id}
+                      </td>
+                      <td className="px-4 py-2 text-gray-500">@{c.slug || '-'}</td>
+                      <td className="px-4 py-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${c.profile_status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {c.profile_status || 'draft'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-right text-gray-600">{c.total_clicks}</td>
+                      <td className="px-4 py-2 text-right text-gray-600">{c.total_orders}</td>
+                      <td className="px-4 py-2 text-right font-medium text-gray-800">{parseFloat(c.total_earnings || 0).toFixed(2)} EUR</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+            <h3 className="font-semibold text-gray-800">Klick-Verlauf ({trackingPagination.total})</h3>
+          </div>
+          {trackingData.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr>
+                    <th className="text-left px-4 py-2">Zeitpunkt</th>
+                    <th className="text-left px-4 py-2">Creator</th>
+                    <th className="text-left px-4 py-2">Buch-ID</th>
+                    <th className="text-left px-4 py-2">ISBN</th>
+                    <th className="text-left px-4 py-2">Haendler</th>
+                    <th className="text-left px-4 py-2">Session</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {trackingData.map((click: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 text-gray-500 text-xs whitespace-nowrap">
+                        {new Date(click.click_timestamp).toLocaleString('de-DE')}
+                      </td>
+                      <td className="px-4 py-2 text-gray-800">{click.creator_name || click.creator_id}</td>
+                      <td className="px-4 py-2 text-gray-500 font-mono text-xs">{click.book_id}</td>
+                      <td className="px-4 py-2 text-gray-500">{click.isbn13 || '-'}</td>
+                      <td className="px-4 py-2 text-gray-500">{click.merchant || '-'}</td>
+                      <td className="px-4 py-2 text-gray-400 font-mono text-xs">{click.session_id?.substring(0, 12)}...</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-8 text-center text-gray-400">Keine Klicks erfasst</div>
+          )}
+          {trackingPagination.total > trackingPagination.limit && (
+            <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+              <button
+                onClick={() => fetchTrackingData(trackingPagination.page - 1)}
+                disabled={trackingPagination.page <= 1}
+                className="px-3 py-1 text-sm border rounded disabled:opacity-30"
+              >
+                Zurueck
+              </button>
+              <span className="text-sm text-gray-500">
+                Seite {trackingPagination.page} von {Math.ceil(trackingPagination.total / trackingPagination.limit)}
+              </span>
+              <button
+                onClick={() => fetchTrackingData(trackingPagination.page + 1)}
+                disabled={trackingPagination.page * trackingPagination.limit >= trackingPagination.total}
+                className="px-3 py-1 text-sm border rounded disabled:opacity-30"
+              >
+                Weiter
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  function renderCreatorOrdersView() {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-gray-800">Bestellungen verwalten</h3>
+          <button
+            onClick={() => setShowOrderModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+          >
+            <Plus className="w-4 h-4" />
+            Neue Bestellung
+          </button>
+        </div>
+
+        {ordersData.length > 0 ? (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600">
+                  <tr>
+                    <th className="text-left px-4 py-2">ID</th>
+                    <th className="text-left px-4 py-2">Creator</th>
+                    <th className="text-left px-4 py-2">Buch</th>
+                    <th className="text-left px-4 py-2">Haendler</th>
+                    <th className="text-right px-4 py-2">Provision</th>
+                    <th className="text-right px-4 py-2">Creator-Anteil</th>
+                    <th className="text-center px-4 py-2">Status</th>
+                    <th className="text-left px-4 py-2">Datum</th>
+                    <th className="text-center px-4 py-2">Aktionen</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {ordersData.map((order: any) => (
+                    <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2 text-gray-500">#{order.id}</td>
+                      <td className="px-4 py-2 text-gray-800">{order.creator_name || order.creator_id}</td>
+                      <td className="px-4 py-2 text-gray-500 text-xs">{order.isbn13 || order.book_id || '-'}</td>
+                      <td className="px-4 py-2 text-gray-500">{order.merchant || '-'}</td>
+                      <td className="px-4 py-2 text-right text-gray-600">{parseFloat(order.merchant_commission || 0).toFixed(2)} EUR</td>
+                      <td className="px-4 py-2 text-right font-medium text-gray-800">{parseFloat(order.creator_share || 0).toFixed(2)} EUR</td>
+                      <td className="px-4 py-2 text-center">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          order.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                          order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                          order.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-gray-500 text-xs whitespace-nowrap">
+                        {new Date(order.purchase_timestamp || order.created_at).toLocaleString('de-DE')}
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          {order.status === 'pending' && (
+                            <>
+                              <button
+                                onClick={() => updateOrderStatus(order.id, 'confirmed')}
+                                className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100"
+                                title="Bestaetigen"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => updateOrderStatus(order.id, 'cancelled')}
+                                className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100"
+                                title="Stornieren"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+                          {order.status === 'cancelled' && (
+                            <button
+                              onClick={() => updateOrderStatus(order.id, 'pending')}
+                              className="px-2 py-1 text-xs bg-yellow-50 text-yellow-700 rounded hover:bg-yellow-100"
+                              title="Zuruecksetzen"
+                            >
+                              Reaktivieren
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-400">
+            Keine Bestellungen vorhanden
+          </div>
+        )}
+
+        {showOrderModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-800">Neue Bestellung erfassen</h3>
+                <button onClick={() => setShowOrderModal(false)} className="p-1 hover:bg-gray-100 rounded">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Creator *</label>
+                  <select
+                    value={newOrder.creatorId}
+                    onChange={(e) => setNewOrder({ ...newOrder, creatorId: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  >
+                    <option value="">Creator waehlen...</option>
+                    {creatorsList.map((c: any, idx: number) => (
+                      <option key={idx} value={c.user_id}>
+                        {c.display_name || `${c.first_name || ''} ${c.last_name || ''}`.trim() || c.user_id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ISBN</label>
+                    <input
+                      type="text"
+                      value={newOrder.isbn13}
+                      onChange={(e) => setNewOrder({ ...newOrder, isbn13: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      placeholder="9783518420002"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Haendler</label>
+                    <input
+                      type="text"
+                      value={newOrder.merchant}
+                      onChange={(e) => setNewOrder({ ...newOrder, merchant: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      placeholder="z.B. thalia"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Provision (EUR)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={newOrder.merchantCommission}
+                      onChange={(e) => setNewOrder({ ...newOrder, merchantCommission: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Creator-Anteil</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={newOrder.creatorShare}
+                      onChange={(e) => setNewOrder({ ...newOrder, creatorShare: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Plattform-Anteil</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={newOrder.platformShare}
+                      onChange={(e) => setNewOrder({ ...newOrder, platformShare: e.target.value })}
+                      className="w-full px-3 py-2 border rounded-lg text-sm"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <select
+                    value={newOrder.status}
+                    onChange={(e) => setNewOrder({ ...newOrder, status: e.target.value })}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                  >
+                    <option value="pending">Ausstehend</option>
+                    <option value="confirmed">Bestaetigt</option>
+                    <option value="cancelled">Storniert</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Notizen</label>
+                  <textarea
+                    value={newOrder.notes}
+                    onChange={(e) => setNewOrder({ ...newOrder, notes: e.target.value })}
+                    rows={2}
+                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                    placeholder="Optionale Notizen..."
+                  />
+                </div>
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    onClick={createOrder}
+                    disabled={loading || !newOrder.creatorId}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    Erstellen
+                  </button>
+                  <button
+                    onClick={() => setShowOrderModal(false)}
+                    className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                  >
+                    Abbrechen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ==================================================================
   // MAIN RENDER
   // ==================================================================
 
   return (
     <div className="p-6">
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-6 flex-wrap">
         <button
           onClick={() => setView('partners')}
           className={`px-4 py-2 rounded-lg ${
@@ -1091,6 +1559,28 @@ export function AdminAffiliate() {
         >
           <BookOpen className="w-4 h-4 inline mr-2" />
           Buch-Zuordnungen
+        </button>
+        <button
+          onClick={() => setView('creator-tracking')}
+          className={`px-4 py-2 rounded-lg ${
+            view === 'creator-tracking'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <DollarSign className="w-4 h-4 inline mr-2" />
+          Creator-Tracking
+        </button>
+        <button
+          onClick={() => setView('creator-orders')}
+          className={`px-4 py-2 rounded-lg ${
+            view === 'creator-orders'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <Search className="w-4 h-4 inline mr-2" />
+          Bestellungen
         </button>
       </div>
 
@@ -1130,6 +1620,8 @@ export function AdminAffiliate() {
       {/* Content */}
       {view === 'partners' && renderPartnersView()}
       {view === 'assignments' && renderAssignmentsView()}
+      {view === 'creator-tracking' && renderCreatorTrackingView()}
+      {view === 'creator-orders' && renderCreatorOrdersView()}
 
       {/* Modals */}
       {renderAffiliateModal()}
