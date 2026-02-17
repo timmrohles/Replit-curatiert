@@ -264,10 +264,10 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
               </div>
             </div>
 
-            {/* Right Column: Bio - centered */}
-            <div className="flex flex-col items-center text-center">
+            {/* Right Column: Bio - left-aligned */}
+            <div className="flex flex-col">
               {(profile.bio || profile.description) && (
-                <Text as="p" variant="lg" className="text-foreground leading-relaxed max-w-lg" data-testid="text-description">
+                <Text as="p" variant="base" className="text-foreground leading-relaxed" data-testid="text-description">
                   {profile.bio || profile.description}
                 </Text>
               )}
