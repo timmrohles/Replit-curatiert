@@ -2,9 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Edit, Trash2, X, Search, GripVertical, BookOpen, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Sparkles, Hand, Tag, Minus, Check, Info, BadgeCheck, Heart, ArrowRight, List } from 'lucide-react';
 import { Text, Heading } from '@/components/ui/typography';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
-import { LikeButton } from '@/components/favorites/LikeButton';
-import { ReadingListButton } from '@/components/reading-list/ReadingListButton';
-import { useSafeNavigate } from '@/utils/routing';
+import { BookCard } from '@/components/book/BookCard';
 
 const API_BASE = '/api';
 const USER_ID = 'demo-user-123';
@@ -274,124 +272,24 @@ function TagSearchInput({
 }
 
 function CurationBookCard({ book }: { book: BookResult }) {
-  const safeNav = useSafeNavigate();
-  const [expanded, setExpanded] = useState(false);
-  const descriptionText = book.description || '';
-  const maxLength = 120;
-  const isLong = descriptionText.length > maxLength;
-  const displayText = expanded ? descriptionText : descriptionText.slice(0, maxLength) + (isLong ? '...' : '');
-
   return (
     <div className="flex-[0_0_50%] md:flex-[0_0_25%] min-w-0 pl-4" data-testid={`card-book-${book.id}`}>
-      <div className="group cursor-pointer flex flex-col">
-        <div className="pl-2 pb-2 pt-1 pr-1 md:pl-3 md:pb-3 md:pt-2 md:pr-2 relative">
-          <div
-            className="relative aspect-[2/3] rounded-[1px] overflow-hidden"
-            style={{
-              border: '1px solid var(--color-border)',
-              boxShadow: 'var(--shadow-book-cover, 2px 4px 12px rgba(0,0,0,0.08))',
-            }}
-          >
-            {book.cover_url ? (
-              <img
-                src={book.cover_url}
-                alt={book.title}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                data-testid={`img-cover-${book.id}`}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
-                <BookOpen className="w-8 h-8" style={{ color: '#9CA3AF' }} />
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="px-2 md:px-3 pb-2 md:pb-3 flex flex-col min-h-[200px] md:min-h-[220px]">
-          <div className="flex flex-col gap-1 h-[9rem]">
-            <Heading
-              as="h4"
-              variant="h5"
-              className="text-foreground line-clamp-2 !normal-case min-h-[2.75rem]"
-            >
-              {book.title}
-            </Heading>
-
-            <Text
-              as="p"
-              variant="small"
-              className="text-foreground-muted !normal-case !font-bold !tracking-normal line-clamp-1 min-h-[1.25rem]"
-            >
-              {book.author}
-            </Text>
-
-            <div className="mt-1 flex-1">
-              {descriptionText ? (
-                <>
-                  <Text
-                    as="p"
-                    variant="small"
-                    className="text-foreground-muted !normal-case !tracking-normal leading-relaxed line-clamp-3"
-                  >
-                    {displayText}
-                  </Text>
-                  {isLong && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setExpanded(!expanded);
-                      }}
-                      className="mt-0.5 text-sm font-medium flex items-center gap-0.5"
-                      style={{ color: 'var(--color-teal, #5a9690)' }}
-                      data-testid={`button-expand-desc-${book.id}`}
-                    >
-                      {expanded ? 'Weniger' : 'Mehr lesen'} {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    </button>
-                  )}
-                </>
-              ) : (
-                <div className="min-h-[1rem]" />
-              )}
-            </div>
-          </div>
-
-          <div className="mt-auto pt-2">
-            <div className="border-t border-foreground/10 pt-2">
-              <div className="flex items-center gap-1.5">
-                <LikeButton
-                  entityId={book.id}
-                  entityType="book"
-                  entityTitle={book.title}
-                  entitySubtitle={book.author}
-                  size="sm"
-                  iconColor="#3A3A3A"
-                />
-                <ReadingListButton
-                  bookId={book.id}
-                  bookTitle={book.title}
-                  bookAuthor={book.author}
-                  bookCover={book.cover_url || ''}
-                  size="sm"
-                  iconColor="#3A3A3A"
-                />
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    safeNav(`/book/${book.id}`);
-                  }}
-                  className="ml-auto p-1.5 rounded-md"
-                  style={{ color: '#3A3A3A' }}
-                  title="Buchdetails anzeigen"
-                  data-testid={`button-book-detail-${book.id}`}
-                >
-                  <ArrowRight className="w-4 h-4" style={{ strokeWidth: 1.5 }} />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <BookCard
+        cover={book.cover_url || ''}
+        title={book.title}
+        author={book.author}
+        publisher={book.publisher || undefined}
+        book={{
+          id: book.id,
+          title: book.title,
+          author: book.author,
+          coverUrl: book.cover_url || '',
+          publisher: book.publisher || '',
+          isbn: book.isbn13 || '',
+          klappentext: book.description || undefined,
+        } as any}
+        viewMode="compact"
+      />
     </div>
   );
 }
