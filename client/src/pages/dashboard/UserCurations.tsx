@@ -266,7 +266,11 @@ function TagSearchInput({
   );
 }
 
-export function UserCurations() {
+interface UserCurationsProps {
+  onNavigateToTab?: (tab: string) => void;
+}
+
+export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
   const [curations, setCurations] = useState<Curation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -739,12 +743,19 @@ export function UserCurations() {
             Neue Kuration
           </button>
         ) : (
-          <div className="p-4 rounded-lg text-center" style={{ backgroundColor: '#FEF3C7', border: '1px solid #FDE68A' }}>
+          <div className="p-4 rounded-lg text-center" style={{ backgroundColor: '#FEF3C7', border: '1px solid #FDE68A' }} data-testid="notice-profile-required">
             <Text as="p" variant="small" style={{ color: '#92400E' }}>
-              Fülle zuerst dein Bookstore-Profil aus, um Kurationen zu erstellen.
-            </Text>
-            <Text as="p" variant="xs" className="mt-1" style={{ color: '#B45309' }}>
-              Wechsle zum Tab "Bookstore" und gib mindestens deinen Namen ein.
+              Um Kurationen zu erstellen, musst du zuerst dein Kurator:innen-Profil im Tab{' '}
+              <button
+                type="button"
+                onClick={() => onNavigateToTab?.('profile')}
+                className="underline font-semibold cursor-pointer"
+                style={{ color: '#92400E' }}
+                data-testid="link-go-to-profile"
+              >
+                Profil
+              </button>
+              {' '}ausfüllen.
             </Text>
           </div>
         )}

@@ -228,7 +228,7 @@ export default function ModularUserDashboard() {
         case 'reviews':
           return <DashboardReviews />;
         case 'curations':
-          return <UserCurations />;
+          return <UserCurations onNavigateToTab={(tab) => setActiveSection(tab as DashboardSection)} />;
         case 'bookstore':
           return <UserBookstore />;
         case 'notifications':
