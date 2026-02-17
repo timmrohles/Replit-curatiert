@@ -744,15 +744,13 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         )}
 
-        {(isCuratorSection || isSponsoredSection) && (
-          <div className="w-full mt-4 md:mt-6 isolate">
-            <div className="flex items-center gap-3 mb-4">
-              <h2 className="section-title text-foreground">
-                {isSponsoredSection ? section.description : 'Neue Bücher für Leseratten'}
-              </h2>
-            </div>
+        <div className="w-full mt-4 md:mt-6 isolate">
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="section-title text-foreground">
+              {section.label}
+            </h2>
           </div>
-        )}
+        </div>
 
         {(isCuratorSection && curator) ? (
           <div className="w-full mb-4 md:mb-6">
@@ -763,16 +761,6 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
             <CuratorSectionHeader curator={MOCK_SPONSOR} isSponsored />
           </div>
         ) : null}
-
-        {!(isCuratorSection || isSponsoredSection) && (
-          <div className="w-full mt-4 md:mt-6 isolate">
-            <div className="flex items-center gap-3 mb-4">
-              <h2 className="section-title text-foreground">
-                {section.label}
-              </h2>
-            </div>
-          </div>
-        )}
 
         <div className="w-full mt-4 mb-4">
           <div className="flex gap-2 flex-wrap items-center">
@@ -862,8 +850,8 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
 
         {(isCuratorSection || isSponsoredSection) && (
           <div className="w-full mt-4 mb-4">
-            <Text as="div" variant="base" className="leading-relaxed text-black line-clamp-3">
-              {section.description}
+            <Text as="div" variant="base" className="leading-relaxed text-black font-semibold">
+              {isCuratorSection ? 'Neue Bücher für Leseratten' : section.description}
             </Text>
           </div>
         )}

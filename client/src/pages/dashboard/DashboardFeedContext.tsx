@@ -54,7 +54,7 @@ interface DashboardFeedContextType {
 const DEFAULT_SECTIONS: FeedSectionConfig[] = [
   {
     id: 'sponsored',
-    label: 'Anzeigen',
+    label: 'Neuerscheinungen im Herbst 2025',
     description: 'Unsere Empfehlungen für dich',
     visible: true,
     isPublic: true,
