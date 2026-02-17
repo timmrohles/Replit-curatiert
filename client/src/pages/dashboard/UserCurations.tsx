@@ -1144,6 +1144,70 @@ export function UserCurations() {
               <div className="space-y-4" data-testid="wizard-step-review">
                 <InfoBox text="Prüfe alle Angaben. Nach dem Speichern kannst du die Kuration jederzeit bearbeiten oder veröffentlichen." />
 
+                {/* CreatorCarousel-style Preview */}
+                {(() => {
+                  const previewBooks = curationType === 'manual' ? selectedBooks : resolvedBooks;
+                  if (previewBooks.length === 0) return null;
+                  return (
+                    <div className="rounded-lg overflow-hidden mb-4" style={{ backgroundColor: '#FAFAF8', border: '1px solid #E5E7EB' }}>
+                      <div className="px-4 pt-4 pb-2">
+                        <div className="flex items-center gap-3 mb-1">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ backgroundColor: '#247ba0' }}>
+                            {(formTitle || 'K')[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <Text as="span" variant="small" className="font-semibold" style={{ color: '#3A3A3A' }}>{formTitle || 'Meine Kuration'}</Text>
+                            {selectedCategory?.name && (
+                              <Text as="div" variant="xs" style={{ color: '#6B7280' }}>{selectedCategory.name}</Text>
+                            )}
+                          </div>
+                        </div>
+                        {formDescription && (
+                          <Text as="p" variant="xs" className="mt-1 line-clamp-2" style={{ color: '#6B7280' }}>
+                            {formDescription}
+                          </Text>
+                        )}
+                      </div>
+                      <div
+                        className="flex gap-3 overflow-x-auto px-4 pb-4 pt-1"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                        data-testid="preview-carousel"
+                      >
+                        {previewBooks.slice(0, 10).map(book => (
+                          <div key={book.id} className="flex-shrink-0" style={{ width: '100px' }}>
+                            <div className="relative rounded-sm overflow-hidden" style={{ aspectRatio: '2/3', border: '1px solid #E5E7EB', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                              {book.cover_url ? (
+                                <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
+                                  <BookOpen className="w-6 h-6" style={{ color: '#9CA3AF' }} />
+                                </div>
+                              )}
+                            </div>
+                            <Text as="div" variant="xs" className="mt-1 font-medium truncate" style={{ color: '#3A3A3A' }}>{book.title}</Text>
+                            <Text as="div" variant="xs" className="truncate" style={{ color: '#6B7280' }}>{book.author}</Text>
+                          </div>
+                        ))}
+                        {previewBooks.length > 10 && (
+                          <div className="flex-shrink-0 flex items-center justify-center rounded-sm" style={{ width: '100px', aspectRatio: '2/3', backgroundColor: '#F3F4F6', border: '1px solid #E5E7EB' }}>
+                            <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>+{previewBooks.length - 10}</Text>
+                          </div>
+                        )}
+                      </div>
+                      <div className="px-4 pb-3 flex items-center justify-between">
+                        <Text as="span" variant="xs" style={{ color: '#9CA3AF' }}>Vorschau · {previewBooks.length} {previewBooks.length === 1 ? 'Buch' : 'Bücher'}</Text>
+                        {(derivedTags.length > 0 || tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0) && (
+                          <div className="flex gap-1 flex-wrap justify-end max-w-[60%]">
+                            {(curationType === 'manual' ? derivedTags.slice(0, 3) : [...tagRulesIncludeAll, ...tagRulesIncludeAny].slice(0, 3)).map(t => (
+                              <span key={t} className="text-[10px] px-1.5 py-0.5 rounded-full" style={{ backgroundColor: '#E5E7EB', color: '#6B7280' }}>{t}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="rounded-lg p-4" style={{ backgroundColor: '#F9FAFB' }}>
                   <div className="space-y-3">
                     <div>
