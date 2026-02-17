@@ -646,6 +646,36 @@ export async function registerRoutes(
     await queryDB(`CREATE INDEX IF NOT EXISTS idx_curation_books_curation ON curation_books(curation_id)`);
     await queryDB(`ALTER TABLE curation_books ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0`);
     await queryDB(`ALTER TABLE curation_books ADD COLUMN IF NOT EXISTS added_at TIMESTAMPTZ DEFAULT NOW()`);
+    const constraintCheck = await queryDB(`
+      SELECT 1 FROM pg_constraint
+      WHERE conname = 'curation_books_curation_id_book_id_key'
+      AND conrelid = 'curation_books'::regclass
+    `);
+    if (constraintCheck.rows.length === 0) {
+      await queryDB(`ALTER TABLE curation_books ADD CONSTRAINT curation_books_curation_id_book_id_key UNIQUE (curation_id, book_id)`);
+      log.info('Added unique constraint to curation_books');
+    }
+    const badFk = await queryDB(`
+      SELECT conname FROM pg_constraint
+      WHERE conrelid = 'curation_books'::regclass
+      AND contype = 'f'
+      AND conname LIKE '%curations_id%'
+    `);
+    for (const row of badFk.rows) {
+      await queryDB(`ALTER TABLE curation_books DROP CONSTRAINT "${row.conname}"`);
+      log.info(`Dropped bad FK constraint: ${row.conname}`);
+    }
+    const goodFk = await queryDB(`
+      SELECT 1 FROM pg_constraint
+      WHERE conrelid = 'curation_books'::regclass
+      AND contype = 'f'
+      AND confrelid = 'user_curations'::regclass
+    `);
+    if (goodFk.rows.length === 0) {
+      await queryDB(`DELETE FROM curation_books WHERE curation_id NOT IN (SELECT id FROM user_curations)`);
+      await queryDB(`ALTER TABLE curation_books ADD CONSTRAINT curation_books_curation_id_fkey FOREIGN KEY (curation_id) REFERENCES user_curations(id) ON DELETE CASCADE`);
+      log.info('Added correct FK constraint to curation_books');
+    }
     log.info('user_curations and curation_books tables verified');
   } catch (err) {
     log.warn('Could not create user_curations tables:', err);
