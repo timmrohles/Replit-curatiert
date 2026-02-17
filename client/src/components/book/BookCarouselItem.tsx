@@ -508,7 +508,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
                 onClick={handleKlappentextToggle}
                 className="text-left underline hover:no-underline transition-all mt-3 md:mt-1.5 flex-shrink-0"
                 style={{
-                  color: 'var(--color-blue)',
+                  color: '#247ba0',
                   fontSize: '0.875rem',
                   lineHeight: '1.25rem'
                 }}
