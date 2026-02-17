@@ -15,6 +15,7 @@ import { useSafeNavigate } from '../utils/routing';
 import { CreatorCarousel } from '../components/creator/CreatorCarousel';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { Text } from '@/components/ui/typography';
+import { LikeButton } from '../components/favorites/LikeButton';
 
 interface BookstoreProfile {
   id: number;
@@ -286,15 +287,25 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                 {curation.tags && curation.tags.length > 0 && (
                   <div className="flex gap-2 flex-wrap mt-3">
                     {curation.tags.map((tag) => (
-                      <Link
+                      <div
                         key={tag}
-                        to={`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}/`}
-                        className="px-3 py-1.5 rounded-full inline-flex items-center shadow-lg bg-coral text-white cursor-pointer hover:scale-105 transition-all duration-200 select-none"
+                        role="group"
+                        className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral cursor-pointer hover:scale-105 transition-all duration-200 select-none"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}/`); }}
                       >
                         <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
                           {tag}
                         </Text>
-                      </Link>
+                        <LikeButton
+                          entityId={`tag-${tag.toLowerCase()}`}
+                          entityType="tag"
+                          entityTitle={tag}
+                          variant="minimal"
+                          size="sm"
+                          iconColor="#ffffff"
+                          backgroundColor="var(--vibrant-coral)"
+                        />
+                      </div>
                     ))}
                   </div>
                 )}
