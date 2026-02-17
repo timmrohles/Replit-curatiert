@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast, BookOpen, Star, CalendarDays, Clock, Video, Users, Download } from 'lucide-react';
+import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast, BookOpen, Star, CalendarDays, Clock, Video, Users, Download, Share2 } from 'lucide-react';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import { useSafeNavigate } from '../utils/routing';
 import { CreatorCarousel } from '../components/creator/CreatorCarousel';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
@@ -318,6 +319,23 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const { toast } = useToast();
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: profile?.display_name || '', url });
+      } catch {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        toast({ title: 'Link kopiert', description: 'Der Link wurde in die Zwischenablage kopiert.' });
+      } catch {
+        toast({ title: 'Teilen nicht möglich', description: 'Bitte kopiere den Link manuell aus der Adresszeile.', variant: 'destructive' });
+      }
+    }
+  };
 
   const { data, isLoading, error } = useQuery<{ ok: boolean; data: BookstoreData }>({
     queryKey: [`/api/bookstore/${slug}`],
@@ -431,7 +449,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
                   <div className="flex items-center gap-5 md:gap-6">
                     <div className="flex-shrink-0">
-                      <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden ring-2 ring-white/40 ring-offset-2 ring-offset-transparent shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                      <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 ring-offset-transparent shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                         {profile.avatar_url ? (
                           <ImageWithFallback
                             src={profile.avatar_url}
@@ -504,6 +522,27 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                           )}
                         </div>
                       )}
+
+                      <div className="flex items-center gap-2 flex-wrap mt-3" data-testid="action-buttons">
+                        <LikeButton
+                          entityId={`storefront-${profile.slug}`}
+                          entityType="storefront"
+                          entityTitle={profile.display_name}
+                          entityImage={profile.avatar_url}
+                          variant="social"
+                          iconColor="#ffffff"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full border-white/40 text-white bg-white/10 backdrop-blur-sm"
+                          onClick={handleShare}
+                          data-testid="button-share"
+                        >
+                          <Share2 className="w-4 h-4 mr-1.5" />
+                          Teilen
+                        </Button>
+                      </div>
                     </div>
                   </div>
 
@@ -643,6 +682,26 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                       )}
                     </div>
                   )}
+
+                  <div className="flex items-center gap-2 flex-wrap mt-3" data-testid="action-buttons">
+                    <LikeButton
+                      entityId={`storefront-${profile.slug}`}
+                      entityType="storefront"
+                      entityTitle={profile.display_name}
+                      entityImage={profile.avatar_url}
+                      variant="social"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      onClick={handleShare}
+                      data-testid="button-share"
+                    >
+                      <Share2 className="w-4 h-4 mr-1.5" />
+                      Teilen
+                    </Button>
+                  </div>
                 </div>
               </div>
 
