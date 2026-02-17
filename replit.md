@@ -40,6 +40,7 @@ The platform is built with a modern web stack, featuring a React frontend and an
 -   **Dashboard & Feed System**: Personalized user dashboard with a feed-first design (`DashboardFeed.tsx`). Users can customize (reorder, toggle visibility/public status) 9 feed section types (e.g., reading_list, favorites, followed_authors). Persistence is handled via localStorage.
 -   **User Bookstore & Curations System**: Users create thematic book collections (Kurationen) and set up public bookstore profiles with details and social links. Public profiles are accessible at `/bookstore/:slug`. Includes content reporting functionality.
 -   **Events System**: Users create and manage events (lesung, buchclub, etc.) via the dashboard (`UserEvents.tsx`). Events are displayed in the dashboard feed and public bookstore profiles. Admins can manage all events via a dedicated tab.
+-   **Category Cards System**: Admin-managed category cards with images, titles, links, colors, and display ordering. Stored in `category_cards` table. Public API at `/api/category-cards?location=homepage`, admin CRUD at `/api/admin/category-cards`. Displayed on homepage via `CategoryCardsGrid` component using `DSGenreCard` in a carousel. Admin UI in ContentManager "category-cards" tab (`CategoryCardsManager.tsx`) with Unsplash search integration.
 
 ## External Dependencies
 -   **Database**: Neon PostgreSQL (via `NEON_DATABASE_URL`).
