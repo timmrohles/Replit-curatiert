@@ -13,6 +13,8 @@ import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag } from 'lucide-re
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { apiRequest } from '@/lib/queryClient';
 import { useSafeNavigate } from '../utils/routing';
+import { Text } from '@/components/ui/typography';
+import { EditorialBookCard } from '@/components/book/EditorialBookCard';
 
 interface BookstoreProfile {
   id: number;
@@ -37,6 +39,9 @@ interface CurationBook {
   title: string;
   cover_url?: string;
   contributor_name?: string;
+  klappentext?: string;
+  isbn13?: string;
+  description?: string;
 }
 
 interface Curation {
@@ -60,6 +65,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [activeSortChips, setActiveSortChips] = useState<Record<number, string>>({});
 
   const { data, isLoading, error } = useQuery<{ ok: boolean; data: BookstoreData }>({
     queryKey: [`/api/bookstore/${slug}`],
@@ -225,39 +231,57 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                 </div>
               )}
 
-              {curation.books.length > 0 ? (
-                <div className="overflow-x-auto flex gap-4 pb-4">
-                  {curation.books.map((book) => (
-                    <button
-                      key={book.id}
-                      onClick={() => navigate(`/book/${book.id}`)}
-                      className="flex-shrink-0 text-left group"
-                      data-testid={`card-book-${book.id}`}
+              {curation.books.length > 0 && (
+                <div className="mb-4 md:mb-6">
+                  <div className="relative flex justify-end">
+                    <div
+                      className="flex gap-2 overflow-x-auto max-w-full select-none overscroll-x-contain pr-6 md:pr-0"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
                     >
-                      <div className="w-[120px]">
-                        {book.cover_url ? (
-                          <img
-                            src={book.cover_url}
-                            alt={book.title}
-                            className="w-[120px] h-[180px] object-cover rounded-lg shadow-sm mb-2"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-[120px] h-[180px] rounded-lg shadow-sm mb-2 bg-muted flex items-center justify-center">
-                            <span className="text-xs text-muted-foreground px-2 text-center">{book.title}</span>
-                          </div>
-                        )}
-                        <p className="text-sm font-medium text-foreground line-clamp-2 group-hover:underline">
-                          {book.title}
-                        </p>
-                        {book.contributor_name && (
-                          <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                            {book.contributor_name}
-                          </p>
-                        )}
+                      {['Beliebtheit', 'Auszeichnungen', 'Independent', 'Hidden Gems', 'Aktuell'].map(chip => (
+                        <button
+                          key={chip}
+                          className="sort-chip"
+                          aria-pressed={activeSortChips[curation.id] === chip ? 'true' : 'false'}
+                          onClick={() => setActiveSortChips(prev => ({
+                            ...prev,
+                            [curation.id]: prev[curation.id] === chip ? '' : chip
+                          }))}
+                          data-testid={`chip-sort-${chip.toLowerCase().replace(/\s+/g, '-')}-${curation.id}`}
+                        >
+                          <Text as="span" variant="xs" className="whitespace-nowrap !normal-case !tracking-normal !font-semibold">
+                            {chip}
+                          </Text>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="absolute right-0 top-0 bottom-0 w-10 pointer-events-none bg-gradient-to-l from-white to-transparent md:hidden" />
+                  </div>
+                </div>
+              )}
+
+              {curation.books.length > 0 ? (
+                <div className="mb-4">
+                  <div
+                    className="flex items-stretch -ml-4 overflow-x-auto pb-4"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                    data-testid={`carousel-curation-${curation.id}`}
+                  >
+                    {curation.books.map((book) => (
+                      <div key={book.id} className="flex-[0_0_50%] md:flex-[0_0_25%] min-w-0 pl-4" data-testid={`card-book-${book.id}`}>
+                        <EditorialBookCard
+                          book={{
+                            id: String(book.id),
+                            title: book.title,
+                            author: book.contributor_name || '',
+                            coverImage: book.cover_url || '',
+                            isbn: book.isbn13 || undefined,
+                            klappentext: book.klappentext || book.description || undefined,
+                          }}
+                        />
                       </div>
-                    </button>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">Keine Bücher in dieser Kuration.</p>

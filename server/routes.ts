@@ -6504,7 +6504,7 @@ export async function registerRoutes(
           `SELECT uc.*, bcl.display_order as link_order
            FROM bookstore_curation_links bcl
            JOIN user_curations uc ON uc.id = bcl.curation_id
-           WHERE bcl.bookstore_id = $1
+           WHERE bcl.bookstore_id = $1 AND uc.is_published = true
            ORDER BY bcl.display_order ASC`,
           [profile.id]
         );
