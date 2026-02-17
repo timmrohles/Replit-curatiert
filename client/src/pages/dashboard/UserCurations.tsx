@@ -925,7 +925,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                             </div>
                           )}
 
-                          {Array.isArray(curation.tags) && curation.tags.slice(0, 2).map((tag, idx) => (
+                          {Array.isArray(curation.tags) && curation.tags.filter(t => t !== curation.category_label).slice(0, 2).map((tag, idx) => (
                             <div
                               key={idx}
                               className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral select-none"

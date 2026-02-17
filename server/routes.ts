@@ -644,6 +644,8 @@ export async function registerRoutes(
       )
     `);
     await queryDB(`CREATE INDEX IF NOT EXISTS idx_curation_books_curation ON curation_books(curation_id)`);
+    await queryDB(`ALTER TABLE curation_books ADD COLUMN IF NOT EXISTS display_order INTEGER DEFAULT 0`);
+    await queryDB(`ALTER TABLE curation_books ADD COLUMN IF NOT EXISTS added_at TIMESTAMPTZ DEFAULT NOW()`);
     log.info('user_curations and curation_books tables verified');
   } catch (err) {
     log.warn('Could not create user_curations tables:', err);
