@@ -185,43 +185,47 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
           data-testid="hero-section"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-            {/* Left Column: Avatar, Name, Focus - centered */}
-            <div className="flex flex-col items-center text-center">
-              <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)] mb-5">
-                {profile.avatar_url ? (
-                  <ImageWithFallback
-                    src={profile.avatar_url}
-                    alt={profile.display_name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-cerulean/10 flex items-center justify-center">
-                    <span className="text-5xl md:text-6xl font-headline text-cerulean">
-                      {profile.display_name?.charAt(0)?.toUpperCase()}
-                    </span>
+            {/* Left Column: Avatar + Name/Focus side by side, vertically centered */}
+            <div className="flex items-center gap-5 md:gap-6 justify-center">
+              <div className="flex-shrink-0">
+                <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+                  {profile.avatar_url ? (
+                    <ImageWithFallback
+                      src={profile.avatar_url}
+                      alt={profile.display_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-cerulean/10 flex items-center justify-center">
+                      <span className="text-5xl md:text-6xl font-headline text-cerulean">
+                        {profile.display_name?.charAt(0)?.toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h1
+                  className="text-2xl md:text-3xl font-headline text-cerulean mb-1"
+                  data-testid="text-display-name"
+                >
+                  {profile.display_name}
+                </h1>
+
+                {profile.tagline && (
+                  <Text as="p" variant="base" className="font-semibold text-gray-500" data-testid="text-tagline">
+                    {profile.tagline}
+                  </Text>
+                )}
+
+                {profile.is_physical_store && profile.address && (
+                  <div className="flex items-center gap-2 text-muted-foreground mt-2" data-testid="text-address">
+                    <MapPin className="w-5 h-5" />
+                    <Text as="span" variant="base">{profile.address}</Text>
                   </div>
                 )}
               </div>
-
-              <h1
-                className="text-2xl md:text-3xl font-headline text-cerulean mb-2"
-                data-testid="text-display-name"
-              >
-                {profile.display_name}
-              </h1>
-
-              {profile.tagline && (
-                <Text as="p" variant="base" className="font-semibold text-gray-500" data-testid="text-tagline">
-                  {profile.tagline}
-                </Text>
-              )}
-
-              {profile.is_physical_store && profile.address && (
-                <div className="flex items-center gap-2 text-muted-foreground mt-3" data-testid="text-address">
-                  <MapPin className="w-5 h-5" />
-                  <Text as="span" variant="base">{profile.address}</Text>
-                </div>
-              )}
             </div>
 
             {/* Right Column: Bio, Social Links - centered */}
