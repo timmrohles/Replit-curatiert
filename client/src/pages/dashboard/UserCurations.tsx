@@ -53,6 +53,7 @@ interface CurationCategory {
   id: number;
   name: string;
   label: string;
+  children?: CurationCategory[];
 }
 
 interface TagSuggestion {
@@ -283,6 +284,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
 
   const [curationType, setCurationType] = useState<'manual' | 'dynamic'>('manual');
   const [selectedCategory, setSelectedCategory] = useState<CurationCategory | null>(null);
+  const [selectedParentCategory, setSelectedParentCategory] = useState<CurationCategory | null>(null);
   const [categories, setCategories] = useState<CurationCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
 
@@ -466,6 +468,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
     setWizardStep('type');
     setCurationType('manual');
     setSelectedCategory(null);
+    setSelectedParentCategory(null);
     setFormTitle('');
     setFormDescription('');
     setSelectedBooks([]);
@@ -494,7 +497,17 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
     setFormDescription(curation.description || '');
 
     if (curation.category_id && curation.category_label) {
-      setSelectedCategory({ id: curation.category_id, name: curation.category_label, label: curation.category_label });
+      const editCat = { id: curation.category_id, name: curation.category_label, label: curation.category_label };
+      setSelectedCategory(editCat);
+      const parentMatch = categories.find(c =>
+        c.id === curation.category_id ||
+        (c.children || []).some(sub => sub.id === curation.category_id)
+      );
+      if (parentMatch) {
+        setSelectedParentCategory(parentMatch);
+      } else {
+        setSelectedParentCategory(editCat);
+      }
     }
 
     if (curation.tag_rules) {
@@ -547,7 +560,10 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
     switch (wizardStep) {
       case 'type': return true;
       case 'category': return selectedCategory !== null;
-      case 'details': return formTitle.trim().length > 0;
+      case 'details': {
+        const wordCount = formDescription.trim() ? formDescription.trim().split(/\s+/).length : 0;
+        return formTitle.trim().length > 0 && formDescription.trim().length > 0 && wordCount <= 300;
+      }
       case 'content': return curationType === 'manual' ? selectedBooks.length > 0 : (tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0);
       case 'review': return true;
       default: return false;
@@ -720,8 +736,8 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
   const creatorTagline = profileComplete ? (bookstoreProfile!.tagline || '') : '';
 
   const contentStepSubtitle = curationType === 'manual'
-    ? 'Suche Bücher und füge sie deiner Kuration hinzu. Die Tags werden automatisch aus der Datenbank übernommen.'
-    : 'Wähle Tags, um Bücher automatisch zusammenzustellen. Bücher werden basierend auf deinen Tag-Regeln und der Kategorie zugeordnet.';
+    ? 'Suche Bücher und füge sie deiner Kuration hinzu. Die Themen/Tags werden automatisch aus der Datenbank übernommen.'
+    : 'Wähle Themen/Tags, um Bücher automatisch zusammenzustellen. Bücher werden basierend auf deinen Themen/Tag-Regeln und der Kategorie zugeordnet.';
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -1072,7 +1088,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
 
             {wizardStep === 'type' && (
               <div className="space-y-3" data-testid="wizard-step-type">
-                <InfoBox text="Manuelle Kurationen: Du wählst jedes Buch einzeln aus. Ideal, wenn du eine bestimmte Auswahl im Kopf hast. Dynamische Kurationen: Bücher werden automatisch anhand von Tags zusammengestellt und bleiben aktuell." />
+                <InfoBox text="Manuelle Kurationen: Du wählst jedes Buch einzeln aus. Ideal, wenn du eine bestimmte Auswahl im Kopf hast. Dynamische Kurationen: Bücher werden automatisch anhand von Themen/Tags zusammengestellt und bleiben aktuell." />
                 <button
                   onClick={() => setCurationType('manual')}
                   className="w-full p-4 rounded-lg border-2 text-left transition-all flex items-start gap-4"
@@ -1088,7 +1104,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                   <div>
                     <div className="font-semibold mb-1" style={{ color: '#3A3A3A' }}>Manuelle Kuration</div>
                     <Text as="p" variant="small" style={{ color: '#6B7280' }}>
-                      Wähle jedes Buch einzeln aus deiner Kategorie. Tags werden automatisch aus der Datenbank übernommen.
+                      Wähle jedes Buch einzeln aus deiner Kategorie. Themen/Tags werden automatisch aus der Datenbank übernommen.
                     </Text>
                   </div>
                 </button>
@@ -1107,7 +1123,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                   <div>
                     <div className="font-semibold mb-1" style={{ color: '#3A3A3A' }}>Dynamische Kuration</div>
                     <Text as="p" variant="small" style={{ color: '#6B7280' }}>
-                      Wähle Tags aus (Verlage, Autoren, Themen etc.) und Bücher werden automatisch zusammengestellt. Du kannst Tags mit UND/ODER kombinieren oder ausschließen.
+                      Wähle Themen/Tags aus (Verlage, Autoren, Themen etc.) und Bücher werden automatisch zusammengestellt. Du kannst Themen/Tags mit UND/ODER kombinieren oder ausschließen.
                     </Text>
                   </div>
                 </button>
@@ -1116,29 +1132,98 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
 
             {wizardStep === 'category' && (
               <div data-testid="wizard-step-category">
-                <InfoBox text="Die Kategorie bestimmt, aus welchem Bereich Bücher für deine Kuration gewählt werden können. So bleibt deine Sammlung thematisch passend." />
+                <InfoBox text="Wähle zuerst eine Oberkategorie und dann eine passende Unterkategorie. Bücher können nur aus der gewählten Kategorie stammen." />
                 {categoriesLoading ? (
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#247ba0' }} />
                   </div>
+                ) : !selectedParentCategory ? (
+                  <div>
+                    <label className="block text-sm font-medium mb-3" style={{ color: '#3A3A3A' }}>
+                      Oberkategorie wählen
+                    </label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {categories.map(cat => (
+                        <button
+                          key={cat.id}
+                          onClick={() => {
+                            setSelectedParentCategory(cat);
+                            if (!cat.children || cat.children.length === 0) {
+                              setSelectedCategory(cat);
+                            } else {
+                              setSelectedCategory(null);
+                            }
+                          }}
+                          className="p-4 rounded-lg border-2 text-left transition-all flex items-center justify-between"
+                          style={{
+                            borderColor: '#E5E7EB',
+                            backgroundColor: '#FFFFFF',
+                          }}
+                          data-testid={`button-parent-category-${cat.id}`}
+                        >
+                          <div className="text-sm font-medium" style={{ color: '#3A3A3A' }}>
+                            {cat.label || cat.name}
+                          </div>
+                          {cat.children && cat.children.length > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Text as="span" variant="xs" style={{ color: '#9CA3AF' }}>{cat.children.length} Unterkategorien</Text>
+                              <ChevronRight className="w-4 h-4" style={{ color: '#9CA3AF' }} />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2">
-                    {categories.map(cat => (
+                  <div>
+                    <button
+                      onClick={() => {
+                        setSelectedParentCategory(null);
+                        setSelectedCategory(null);
+                      }}
+                      className="flex items-center gap-1 mb-3 text-sm font-medium transition-colors"
+                      style={{ color: '#247ba0' }}
+                      data-testid="button-back-to-parent-categories"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Zurück zu Oberkategorien
+                    </button>
+                    <label className="block text-sm font-medium mb-3" style={{ color: '#3A3A3A' }}>
+                      {selectedParentCategory.label || selectedParentCategory.name}
+                      {selectedParentCategory.children && selectedParentCategory.children.length > 0 ? ' — Unterkategorie wählen' : ''}
+                    </label>
+
+                    <div className="grid grid-cols-2 gap-2">
                       <button
-                        key={cat.id}
-                        onClick={() => setSelectedCategory(cat)}
+                        onClick={() => setSelectedCategory(selectedParentCategory)}
                         className="p-3 rounded-lg border-2 text-left transition-all"
                         style={{
-                          borderColor: selectedCategory?.id === cat.id ? '#247ba0' : '#E5E7EB',
-                          backgroundColor: selectedCategory?.id === cat.id ? '#F0F9FF' : '#FFFFFF',
+                          borderColor: selectedCategory?.id === selectedParentCategory.id ? '#247ba0' : '#E5E7EB',
+                          backgroundColor: selectedCategory?.id === selectedParentCategory.id ? '#F0F9FF' : '#FFFFFF',
                         }}
-                        data-testid={`button-category-${cat.id}`}
+                        data-testid={`button-category-${selectedParentCategory.id}`}
                       >
-                        <div className="text-sm font-medium" style={{ color: selectedCategory?.id === cat.id ? '#247ba0' : '#3A3A3A' }}>
-                          {cat.label || cat.name}
+                        <div className="text-sm font-medium" style={{ color: selectedCategory?.id === selectedParentCategory.id ? '#247ba0' : '#3A3A3A' }}>
+                          Alle {selectedParentCategory.label || selectedParentCategory.name}
                         </div>
                       </button>
-                    ))}
+                      {(selectedParentCategory.children || []).map(sub => (
+                        <button
+                          key={sub.id}
+                          onClick={() => setSelectedCategory(sub)}
+                          className="p-3 rounded-lg border-2 text-left transition-all"
+                          style={{
+                            borderColor: selectedCategory?.id === sub.id ? '#247ba0' : '#E5E7EB',
+                            backgroundColor: selectedCategory?.id === sub.id ? '#F0F9FF' : '#FFFFFF',
+                          }}
+                          data-testid={`button-category-${sub.id}`}
+                        >
+                          <div className="text-sm font-medium" style={{ color: selectedCategory?.id === sub.id ? '#247ba0' : '#3A3A3A' }}>
+                            {sub.label || sub.name}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -1163,24 +1248,39 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
-                    Begründungstext
+                    Begründungstext *
                   </label>
                   <textarea
                     value={formDescription}
-                    onChange={e => setFormDescription(e.target.value)}
+                    onChange={e => {
+                      const words = e.target.value.trim() ? e.target.value.trim().split(/\s+/).length : 0;
+                      if (words <= 300 || e.target.value.length < formDescription.length) {
+                        setFormDescription(e.target.value);
+                      }
+                    }}
                     data-testid="input-curation-description"
-                    rows={3}
+                    rows={4}
                     className="w-full px-4 py-2 rounded-lg border"
-                    style={{ borderColor: '#E5E7EB' }}
-                    placeholder="Warum diese Auswahl? Was verbindet die Bücher?"
+                    style={{ borderColor: formDescription.trim() ? '#E5E7EB' : '#FCA5A5' }}
+                    placeholder="Warum diese Auswahl? Was verbindet die Bücher? (Pflichtfeld, max. 300 Wörter)"
                   />
+                  <div className="flex justify-between mt-1">
+                    {!formDescription.trim() && (
+                      <Text as="span" variant="xs" style={{ color: '#EF4444' }}>
+                        Pflichtfeld – erkläre deinen Leser:innen, warum du diese Bücher empfiehlst.
+                      </Text>
+                    )}
+                    <Text as="span" variant="xs" className="ml-auto" style={{ color: (formDescription.trim() ? formDescription.trim().split(/\s+/).length : 0) > 280 ? '#EF4444' : '#9CA3AF' }}>
+                      {formDescription.trim() ? formDescription.trim().split(/\s+/).length : 0}/300 Wörter
+                    </Text>
+                  </div>
                 </div>
               </div>
             )}
 
             {wizardStep === 'content' && curationType === 'manual' && (
               <div data-testid="wizard-step-content-manual">
-                <InfoBox text="Suche nach Büchern und füge sie deiner Kuration hinzu. Du kannst die Reihenfolge per Drag & Drop anpassen. Tags werden automatisch aus der Buchdatenbank übernommen." />
+                <InfoBox text="Suche nach Büchern und füge sie deiner Kuration hinzu. Du kannst die Reihenfolge per Drag & Drop anpassen. Themen/Tags werden automatisch aus der Buchdatenbank übernommen." />
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
@@ -1195,7 +1295,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                         data-testid="input-book-search"
                         className="w-full pl-10 pr-4 py-2 rounded-lg border"
                         style={{ borderColor: '#E5E7EB' }}
-                        placeholder={selectedCategory ? `In "${selectedCategory.name}" suchen...` : 'Buchtitel, Autor oder ISBN suchen...'}
+                        placeholder="Titel, Autor, Verlag, ISBN"
                       />
                     </div>
 
@@ -1284,38 +1384,38 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
 
             {wizardStep === 'content' && curationType === 'dynamic' && (
               <div className="space-y-5" data-testid="wizard-step-content-dynamic">
-                <InfoBox text="Kombiniere Tags, um Bücher automatisch zusammenzustellen. UND-Tags: Alle müssen zutreffen. ODER-Tags: Mindestens einer muss zutreffen. Ausschluss-Tags: Diese Bücher werden herausgefiltert." />
+                <InfoBox text="Kombiniere Themen/Tags, um Bücher automatisch zusammenzustellen. UND-Themen/Tags: Alle müssen zutreffen. ODER-Themen/Tags: Mindestens einer muss zutreffen. Ausschluss-Themen/Tags: Diese Bücher werden herausgefiltert." />
 
                 <TagSearchInput
-                  label="UND-Tags (alle müssen zutreffen)"
-                  helperText="Bücher müssen ALLE diese Tags haben. Z.B. 'Roman' UND 'Familiengeschichte' zeigt nur Bücher, die beides sind."
+                  label="UND-Themen/Tags (alle müssen zutreffen)"
+                  helperText="Bücher müssen ALLE diese Themen/Tags haben. Z.B. 'Roman' UND 'Familiengeschichte' zeigt nur Bücher, die beides sind."
                   selectedTags={tagRulesIncludeAll}
                   onAdd={tag => setTagRulesIncludeAll([...tagRulesIncludeAll, tag])}
                   onRemove={tag => setTagRulesIncludeAll(tagRulesIncludeAll.filter(t => t !== tag))}
                   tagColor="#247ba0"
-                  placeholder="Tag suchen (z.B. Verlag, Autor, Thema)..."
+                  placeholder="Thema/Tag suchen (z.B. Verlag, Autor, Thema)..."
                   testIdPrefix="tag-and"
                 />
 
                 <TagSearchInput
-                  label="ODER-Tags (mindestens einer muss zutreffen)"
-                  helperText="Bücher müssen MINDESTENS EINEN dieser Tags haben. Z.B. 'Krimi' ODER 'Thriller' zeigt Bücher aus beiden Bereichen."
+                  label="ODER-Themen/Tags (mindestens einer muss zutreffen)"
+                  helperText="Bücher müssen MINDESTENS EINES dieser Themen/Tags haben. Z.B. 'Krimi' ODER 'Thriller' zeigt Bücher aus beiden Bereichen."
                   selectedTags={tagRulesIncludeAny}
                   onAdd={tag => setTagRulesIncludeAny([...tagRulesIncludeAny, tag])}
                   onRemove={tag => setTagRulesIncludeAny(tagRulesIncludeAny.filter(t => t !== tag))}
                   tagColor="#059669"
-                  placeholder="Tag suchen..."
+                  placeholder="Thema/Tag suchen..."
                   testIdPrefix="tag-or"
                 />
 
                 <TagSearchInput
-                  label="Ausschluss-Tags (diese werden herausgefiltert)"
-                  helperText="Bücher mit diesen Tags werden NICHT in der Kuration angezeigt. Nützlich, um bestimmte Themen oder Verlage auszuschließen."
+                  label="Ausschluss-Themen/Tags (diese werden herausgefiltert)"
+                  helperText="Bücher mit diesen Themen/Tags werden NICHT in der Kuration angezeigt. Nützlich, um bestimmte Themen oder Verlage auszuschließen."
                   selectedTags={tagRulesExclude}
                   onAdd={tag => setTagRulesExclude([...tagRulesExclude, tag])}
                   onRemove={tag => setTagRulesExclude(tagRulesExclude.filter(t => t !== tag))}
                   tagColor="#DC2626"
-                  placeholder="Tag suchen..."
+                  placeholder="Thema/Tag suchen..."
                   testIdPrefix="tag-exclude"
                 />
 
@@ -1476,7 +1576,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                         <div className="text-sm mt-1" style={{ color: '#3A3A3A' }}>{selectedBooks.length} Bücher ausgewählt</div>
                         {derivedTags.length > 0 && (
                           <div className="mt-2">
-                            <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Automatisch abgeleitete Tags</Text>
+                            <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Automatisch abgeleitete Themen/Tags</Text>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {derivedTags.map(t => (
                                 <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}>{t}</span>
@@ -1506,7 +1606,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
 
                     {curationType === 'dynamic' && (
                       <div>
-                        <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Tag-Regeln</Text>
+                        <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Themen/Tag-Regeln</Text>
                         {resolvedBooks.length > 0 && (
                           <div className="text-sm mt-1" style={{ color: '#059669' }}>
                             {resolvedBooks.length} Bücher werden automatisch zugeordnet

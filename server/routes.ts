@@ -1985,43 +1985,80 @@ export async function registerRoutes(
   // CURATION CATEGORIES (from navigation)
   // ==================================================================
   app.get('/api/curation-categories', async (_req: Request, res: Response) => {
+    const FALLBACK_CATEGORIES = [
+      { id: 1, name: 'Belletristik', label: 'Belletristik', children: [
+        { id: 101, name: 'Psychothriller', label: 'Psychothriller' },
+        { id: 102, name: 'Gegenwartsliteratur', label: 'Gegenwartsliteratur' },
+        { id: 103, name: 'High Fantasy', label: 'High Fantasy' },
+        { id: 104, name: 'Science Fiction', label: 'Science Fiction' },
+        { id: 105, name: 'Cosy Crime', label: 'Cosy Crime' },
+        { id: 106, name: 'Historische Romane', label: 'Historische Romane' },
+        { id: 107, name: 'Familienromane', label: 'Familienromane' },
+      ]},
+      { id: 2, name: 'Sachbuch', label: 'Sachbuch', children: [
+        { id: 201, name: 'Fachbuch', label: 'Fachbuch' },
+        { id: 202, name: 'Lifestyle', label: 'Lifestyle' },
+        { id: 203, name: 'Reise', label: 'Reise' },
+        { id: 204, name: 'Ratgeber', label: 'Ratgeber' },
+      ]},
+      { id: 3, name: 'Kinder & Jugend', label: 'Kinder & Jugend', children: [] },
+    ];
+
+    const EXCLUDED_TERMS = [
+      'auszeichnungen', 'buchbesprechungen', 'kurator*innen', 'kuratoren', 'kurator:innen',
+      'alle bücher', 'alle kuratoren', 'alle kurationen', 'alle bookstores',
+      'alle autor:innen', 'alle verlage', 'alle events', 'startseite',
+      'alle kurator:innen', 'awards', 'reviews', 'curators', 'storefronts',
+    ];
+
+    const isExcluded = (item: any): boolean => {
+      const fields = [
+        (item.label || '').toLowerCase(),
+        (item.name || '').toLowerCase(),
+        (item.slug || '').toLowerCase(),
+        (item.href || '').toLowerCase(),
+      ];
+      return fields.some(f => EXCLUDED_TERMS.some(term => f === term || f.includes('/' + term)));
+    };
+
     try {
-      const result = await queryDB(
-        `SELECT id, name, label, path, slug FROM menu_items 
-         WHERE location = 'header' AND visible = true AND status = 'published' AND kind = 'link'
-         ORDER BY display_order ASC`,
-        []
-      );
-      if (result.rows.length === 0) {
-        // Fallback: return common book categories
-        return res.json({ ok: true, data: [
-          { id: 1, name: 'Belletristik', label: 'Belletristik' },
-          { id: 2, name: 'Sachbuch', label: 'Sachbuch' },
-          { id: 3, name: 'Familienromane', label: 'Familienromane' },
-          { id: 4, name: 'Krimis & Thriller', label: 'Krimis & Thriller' },
-          { id: 5, name: 'Fantasy & SciFi', label: 'Fantasy & SciFi' },
-          { id: 6, name: 'Jugendbuch', label: 'Jugendbuch' },
-          { id: 7, name: 'Kinderbuch', label: 'Kinderbuch' },
-          { id: 8, name: 'Lyrik', label: 'Lyrik' },
-          { id: 9, name: 'Biografien', label: 'Biografien' },
-          { id: 10, name: 'Graphic Novels', label: 'Graphic Novels' },
-        ]});
+      let navResult;
+      try {
+        navResult = await queryDB('SELECT * FROM get_navigation_v2()', []);
+      } catch { navResult = null; }
+
+      if (navResult && navResult.rows.length > 0) {
+        let navData = navResult.rows[0].get_navigation_v2 || navResult.rows[0];
+        if (typeof navData === 'string') navData = JSON.parse(navData);
+
+        const items = navData.items || [];
+        const bookCategories = items
+          .filter((item: any) => !isExcluded(item))
+          .map((item: any) => {
+            const children = (item.children || [])
+              .filter((c: any) => !isExcluded(c))
+              .map((c: any) => ({
+                id: c.id,
+                name: c.label || c.name || '',
+                label: c.label || c.name || '',
+              }));
+            return {
+              id: item.id,
+              name: item.label || item.name || '',
+              label: item.label || item.name || '',
+              children,
+            };
+          });
+
+        if (bookCategories.length > 0) {
+          return res.json({ ok: true, data: bookCategories });
+        }
       }
-      return res.json({ ok: true, data: result.rows });
+
+      return res.json({ ok: true, data: FALLBACK_CATEGORIES });
     } catch (error) {
       log.error('Curation categories error:', error);
-      return res.json({ ok: true, data: [
-        { id: 1, name: 'Belletristik', label: 'Belletristik' },
-        { id: 2, name: 'Sachbuch', label: 'Sachbuch' },
-        { id: 3, name: 'Familienromane', label: 'Familienromane' },
-        { id: 4, name: 'Krimis & Thriller', label: 'Krimis & Thriller' },
-        { id: 5, name: 'Fantasy & SciFi', label: 'Fantasy & SciFi' },
-        { id: 6, name: 'Jugendbuch', label: 'Jugendbuch' },
-        { id: 7, name: 'Kinderbuch', label: 'Kinderbuch' },
-        { id: 8, name: 'Lyrik', label: 'Lyrik' },
-        { id: 9, name: 'Biografien', label: 'Biografien' },
-        { id: 10, name: 'Graphic Novels', label: 'Graphic Novels' },
-      ]});
+      return res.json({ ok: true, data: FALLBACK_CATEGORIES });
     }
   });
 
@@ -2066,6 +2103,7 @@ export async function registerRoutes(
         const searchParts: string[] = [];
         if (cols.has('title')) searchParts.push(`title ILIKE $${paramIndex}`);
         if (cols.has('author')) searchParts.push(`author ILIKE $${paramIndex}`);
+        if (cols.has('publisher')) searchParts.push(`publisher ILIKE $${paramIndex}`);
         if (cols.has('isbn13')) searchParts.push(`isbn13 ILIKE $${paramIndex}`);
         if (searchParts.length > 0) {
           query += ` AND (${searchParts.join(' OR ')})`;
