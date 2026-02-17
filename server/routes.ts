@@ -321,6 +321,50 @@ export async function registerRoutes(
 
   try {
     await queryDB(`
+      CREATE TABLE IF NOT EXISTS affiliate_creator_profiles (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR(255) NOT NULL,
+        first_name VARCHAR(255),
+        last_name VARCHAR(255),
+        artist_name VARCHAR(255),
+        birth_date DATE,
+        nationality VARCHAR(100),
+        street VARCHAR(255),
+        city VARCHAR(100),
+        postal_code VARCHAR(20),
+        country VARCHAR(10) DEFAULT 'DE',
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        tax_status VARCHAR(50),
+        tax_number VARCHAR(100),
+        tax_id VARCHAR(100),
+        vat_id VARCHAR(100),
+        tax_country VARCHAR(10),
+        tax_self_responsible BOOLEAN DEFAULT false,
+        account_holder VARCHAR(255),
+        iban VARCHAR(50),
+        bic VARCHAR(20),
+        payout_country VARCHAR(10),
+        currency VARCHAR(10) DEFAULT 'EUR',
+        min_payout_accepted BOOLEAN DEFAULT false,
+        accept_creator_contract BOOLEAN DEFAULT false,
+        accept_revenue_share BOOLEAN DEFAULT false,
+        accept_ad_disclosure BOOLEAN DEFAULT false,
+        accept_no_third_party_rights BOOLEAN DEFAULT false,
+        accept_tracking BOOLEAN DEFAULT false,
+        status VARCHAR(50) DEFAULT 'draft',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id)
+      )
+    `);
+    log.info('Affiliate creator profiles table verified');
+  } catch (err) {
+    log.warn('Could not verify affiliate_creator_profiles table:', err);
+  }
+
+  try {
+    await queryDB(`
       CREATE TABLE IF NOT EXISTS site_banners (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
@@ -6413,6 +6457,87 @@ export async function registerRoutes(
     } catch (error) {
       log.error('Reorder curation books error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // AFFILIATE CREATOR PROFILE
+  // ==================================================================
+  app.get('/api/affiliate-creator-profile', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) return res.json({ ok: false, error: 'userId required' });
+      const result = await queryDB('SELECT * FROM affiliate_creator_profiles WHERE user_id = $1', [userId]);
+      if (result.rows.length === 0) {
+        return res.json({ ok: true, data: null });
+      }
+      res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Affiliate creator profile fetch error:', error);
+      res.status(500).json({ ok: false, error: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/affiliate-creator-profile', async (req: Request, res: Response) => {
+    try {
+      const {
+        userId, firstName, lastName, artistName, birthDate, nationality,
+        street, city, postalCode, country, email, phone,
+        taxStatus, taxNumber, taxId, vatId, taxCountry, taxSelfResponsible,
+        accountHolder, iban, bic, payoutCountry, currency, minPayoutAccepted,
+        acceptCreatorContract, acceptRevenueShare, acceptAdDisclosure,
+        acceptNoThirdPartyRights, acceptTracking
+      } = req.body;
+
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId required' });
+
+      const existing = await queryDB('SELECT id FROM affiliate_creator_profiles WHERE user_id = $1', [userId]);
+
+      if (existing.rows.length > 0) {
+        const result = await queryDB(`
+          UPDATE affiliate_creator_profiles SET
+            first_name = $2, last_name = $3, artist_name = $4, birth_date = $5,
+            nationality = $6, street = $7, city = $8, postal_code = $9, country = $10,
+            email = $11, phone = $12, tax_status = $13, tax_number = $14, tax_id = $15,
+            vat_id = $16, tax_country = $17, tax_self_responsible = $18,
+            account_holder = $19, iban = $20, bic = $21, payout_country = $22,
+            currency = $23, min_payout_accepted = $24,
+            accept_creator_contract = $25, accept_revenue_share = $26,
+            accept_ad_disclosure = $27, accept_no_third_party_rights = $28,
+            accept_tracking = $29, updated_at = NOW()
+          WHERE user_id = $1
+          RETURNING *
+        `, [userId, firstName, lastName, artistName, birthDate || null, nationality,
+            street, city, postalCode, country || 'DE', email, phone,
+            taxStatus, taxNumber, taxId, vatId, taxCountry, taxSelfResponsible || false,
+            accountHolder, iban, bic, payoutCountry, currency || 'EUR', minPayoutAccepted || false,
+            acceptCreatorContract || false, acceptRevenueShare || false,
+            acceptAdDisclosure || false, acceptNoThirdPartyRights || false,
+            acceptTracking || false]);
+        return res.json({ ok: true, data: result.rows[0] });
+      } else {
+        const result = await queryDB(`
+          INSERT INTO affiliate_creator_profiles (
+            user_id, first_name, last_name, artist_name, birth_date,
+            nationality, street, city, postal_code, country, email, phone,
+            tax_status, tax_number, tax_id, vat_id, tax_country, tax_self_responsible,
+            account_holder, iban, bic, payout_country, currency, min_payout_accepted,
+            accept_creator_contract, accept_revenue_share, accept_ad_disclosure,
+            accept_no_third_party_rights, accept_tracking
+          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29)
+          RETURNING *
+        `, [userId, firstName, lastName, artistName, birthDate || null, nationality,
+            street, city, postalCode, country || 'DE', email, phone,
+            taxStatus, taxNumber, taxId, vatId, taxCountry, taxSelfResponsible || false,
+            accountHolder, iban, bic, payoutCountry, currency || 'EUR', minPayoutAccepted || false,
+            acceptCreatorContract || false, acceptRevenueShare || false,
+            acceptAdDisclosure || false, acceptNoThirdPartyRights || false,
+            acceptTracking || false]);
+        return res.json({ ok: true, data: result.rows[0] });
+      }
+    } catch (error) {
+      log.error('Affiliate creator profile save error:', error);
+      res.status(500).json({ ok: false, error: 'Internal server error' });
     }
   });
 
