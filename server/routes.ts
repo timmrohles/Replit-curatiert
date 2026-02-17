@@ -783,6 +783,19 @@ export async function registerRoutes(
     await queryDB(`CREATE INDEX IF NOT EXISTS idx_user_events_user ON user_events(user_id)`);
     await queryDB(`CREATE INDEX IF NOT EXISTS idx_user_events_date ON user_events(event_date)`);
 
+    // Add columns that may be missing from older table versions
+    const missingCols = [
+      { col: 'event_page_url', def: 'TEXT' },
+      { col: 'rss_source_url', def: 'TEXT' },
+      { col: 'video_link', def: 'TEXT' },
+      { col: 'video_link_public', def: 'BOOLEAN DEFAULT false' },
+    ];
+    for (const { col, def } of missingCols) {
+      try {
+        await queryDB(`ALTER TABLE user_events ADD COLUMN IF NOT EXISTS ${col} ${def}`);
+      } catch (_) { /* column may already exist */ }
+    }
+
     await queryDB(`
       CREATE TABLE IF NOT EXISTS event_participants (
         id SERIAL PRIMARY KEY,
