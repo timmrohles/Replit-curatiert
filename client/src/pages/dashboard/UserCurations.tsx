@@ -356,6 +356,17 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
       const data = await res.json();
       if (data.ok) {
         setCurations(data.data || []);
+        const defaultChips: Record<number, string> = {};
+        for (const c of (data.data || [])) {
+          defaultChips[c.id] = 'Beliebtheit';
+        }
+        setActiveSortChips(prev => {
+          const merged = { ...defaultChips };
+          for (const key of Object.keys(prev)) {
+            if (prev[Number(key)]) merged[Number(key)] = prev[Number(key)];
+          }
+          return merged;
+        });
         const counts: Record<number, number> = {};
         const allBooks: Record<number, BookResult[]> = {};
         for (const c of (data.data || [])) {
