@@ -283,6 +283,21 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                     {curation.description}
                   </Text>
                 )}
+                {curation.tags && curation.tags.length > 0 && (
+                  <div className="flex gap-2 flex-wrap mt-3">
+                    {curation.tags.map((tag) => (
+                      <Link
+                        key={tag}
+                        to={`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}/`}
+                        className="px-3 py-1.5 rounded-full inline-flex items-center shadow-lg bg-coral text-white cursor-pointer hover:scale-105 transition-all duration-200 select-none"
+                      >
+                        <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                          {tag}
+                        </Text>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
               <CreatorCarousel
                 creatorAvatar={profile.avatar_url || ''}
