@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast, BookOpen, Star, CalendarDays } from 'lucide-react';
+import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast, BookOpen, Star, CalendarDays, Clock, Video, Users, Download } from 'lucide-react';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { apiRequest } from '@/lib/queryClient';
 import { useSafeNavigate } from '../utils/routing';
@@ -115,6 +115,15 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
 
   const { data, isLoading, error } = useQuery<{ ok: boolean; data: BookstoreData }>({
     queryKey: [`/api/bookstore/${slug}`],
+    enabled: !!slug,
+  });
+
+  const { data: eventsData } = useQuery<{ ok: boolean; data: any[] }>({
+    queryKey: ['/api/bookstore', slug, 'events'],
+    queryFn: async () => {
+      const res = await fetch(`/api/bookstore/${slug}/events`);
+      return res.json();
+    },
     enabled: !!slug,
   });
 
@@ -289,7 +298,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
               const vt = profile.visible_tabs;
               if (!vt || Object.keys(vt).length === 0) {
                 if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
-                if (tab.id === 'veranstaltungen') return false;
+                if (tab.id === 'veranstaltungen') return true;
                 return true;
               }
               return vt[tab.id] === true;
@@ -406,12 +415,121 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
 
         {activeTab === 'veranstaltungen' && (
           <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4" data-testid="veranstaltungen-section">
-            <div className="text-center py-16">
-              <CalendarDays className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
-              <Text as="p" variant="base" className="text-muted-foreground">
-                Noch keine Veranstaltungen vorhanden.
-              </Text>
-            </div>
+            {(!eventsData?.data || eventsData.data.length === 0) ? (
+              <div className="text-center py-16">
+                <CalendarDays className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+                <Text as="p" variant="base" className="text-muted-foreground">
+                  Noch keine Veranstaltungen vorhanden.
+                </Text>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {eventsData.data.map((event: any) => {
+                  const eventDate = new Date(event.event_date);
+                  const participantCount = parseInt(event.participant_count) || 0;
+                  const isFull = event.max_participants ? participantCount >= event.max_participants : false;
+                  const entryFee = parseFloat(String(event.entry_fee || 0));
+                  const eventTypeLabels: Record<string, string> = {
+                    lesung: 'Lesung', buchclub: 'Buchclub', workshop: 'Workshop',
+                    signierstunde: 'Signierstunde', diskussion: 'Podiumsdiskussion',
+                    messe: 'Messe / Festival', sonstiges: 'Sonstiges'
+                  };
+
+                  return (
+                    <div
+                      key={event.id}
+                      className="rounded-lg border border-border bg-card overflow-hidden hover-elevate"
+                      data-testid={`public-event-card-${event.id}`}
+                    >
+                      <div className="p-4">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(36, 123, 160, 0.1)', color: '#247ba0' }}>
+                            {eventTypeLabels[event.event_type] || event.event_type}
+                          </span>
+                          {entryFee > 0 ? (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(232, 168, 56, 0.15)', color: '#c48a1a' }}>
+                              {entryFee.toFixed(2).replace('.', ',')} {event.entry_fee_currency || 'EUR'}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#059669' }}>
+                              Kostenlos
+                            </span>
+                          )}
+                          {isFull && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444' }}>
+                              Ausgebucht
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="font-semibold text-foreground text-base mb-2 line-clamp-2">{event.title}</h3>
+
+                        <div className="space-y-1.5 mb-3">
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <CalendarDays className="w-3.5 h-3.5 flex-shrink-0" />
+                            {eventDate.toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric' })}
+                          </div>
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                            {eventDate.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr
+                            {event.event_end_date && ` – ${new Date(event.event_end_date).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`}
+                          </div>
+                          {event.location_name && (
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+                              {event.location_name}
+                            </div>
+                          )}
+                          {(event.location_type === 'digital' || event.location_type === 'hybrid') && (
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <Video className="w-3.5 h-3.5 flex-shrink-0" />
+                              {event.location_type === 'digital' ? 'Online-Veranstaltung' : 'Hybrid (Vor Ort + Online)'}
+                            </div>
+                          )}
+                          {event.max_participants && (
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <Users className="w-3.5 h-3.5 flex-shrink-0" />
+                              {participantCount}/{event.max_participants} Plätze belegt
+                            </div>
+                          )}
+                        </div>
+
+                        {event.description && (
+                          <Text as="p" variant="small" className="text-muted-foreground line-clamp-3 mb-3">
+                            {event.description}
+                          </Text>
+                        )}
+
+                        <div className="flex items-center gap-2 pt-2 border-t border-border">
+                          {event.video_link && event.video_link_public && (
+                            <a
+                              href={event.video_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 text-xs font-medium transition-colors"
+                              style={{ color: '#247ba0' }}
+                              data-testid={`event-video-link-${event.id}`}
+                            >
+                              <Video className="w-3.5 h-3.5" />
+                              Teilnehmen
+                            </a>
+                          )}
+                          <a
+                            href={`/api/user-events/${event.id}/ics`}
+                            download
+                            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors ml-auto"
+                            data-testid={`event-ics-${event.id}`}
+                          >
+                            <Download className="w-3.5 h-3.5" />
+                            Kalender
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         )}
 

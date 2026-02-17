@@ -749,6 +749,74 @@ export async function registerRoutes(
   }
 
   // ==================================================================
+  // EVENTS / VERANSTALTUNGEN TABLES
+  // ==================================================================
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS user_events (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        event_type VARCHAR(50) NOT NULL DEFAULT 'lesung',
+        location_type VARCHAR(20) NOT NULL DEFAULT 'vor_ort',
+        location_name VARCHAR(255),
+        location_address TEXT,
+        event_date TIMESTAMPTZ NOT NULL,
+        event_end_date TIMESTAMPTZ,
+        background_image_url TEXT,
+        video_link TEXT,
+        video_link_public BOOLEAN DEFAULT false,
+        entry_fee NUMERIC(10,2) DEFAULT 0,
+        entry_fee_currency VARCHAR(10) DEFAULT 'EUR',
+        max_participants INTEGER,
+        is_recurring BOOLEAN DEFAULT false,
+        recurrence_rule VARCHAR(50),
+        recurrence_parent_id INTEGER REFERENCES user_events(id) ON DELETE SET NULL,
+        rss_source_url TEXT,
+        is_published BOOLEAN DEFAULT true,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_user_events_user ON user_events(user_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_user_events_date ON user_events(event_date)`);
+
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS event_participants (
+        id SERIAL PRIMARY KEY,
+        event_id INTEGER NOT NULL REFERENCES user_events(id) ON DELETE CASCADE,
+        user_id TEXT NOT NULL,
+        user_display_name VARCHAR(255),
+        status VARCHAR(20) DEFAULT 'booked',
+        booked_at TIMESTAMPTZ DEFAULT NOW(),
+        reminder_sent BOOLEAN DEFAULT false,
+        UNIQUE(event_id, user_id)
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_event_participants_event ON event_participants(event_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_event_participants_user ON event_participants(user_id)`);
+
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS user_notifications (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        type VARCHAR(50) NOT NULL DEFAULT 'event_reminder',
+        title VARCHAR(255) NOT NULL,
+        message TEXT,
+        link TEXT,
+        is_read BOOLEAN DEFAULT false,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_user_notifications_user ON user_notifications(user_id)`);
+
+    log.info('user_events, event_participants, and user_notifications tables verified');
+  } catch (err) {
+    log.warn('Could not create events tables:', err);
+  }
+
+  // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
   const uploadsDir = path.resolve(process.cwd(), 'client/src/public/uploads/avatars');
@@ -6662,6 +6730,271 @@ export async function registerRoutes(
       return res.json({ ok: true, data: result.rows[0] });
     } catch (error) {
       log.error('Update content report error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // EVENTS / VERANSTALTUNGEN API ROUTES
+  // ==================================================================
+
+  // List events for a user
+  app.get('/api/user-events', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId is required' });
+      const result = await queryDB(
+        `SELECT e.*, 
+          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id AND status = 'booked') AS participant_count
+         FROM user_events e
+         WHERE e.user_id = $1
+         ORDER BY e.event_date ASC`,
+        [userId]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Get user events error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Create event
+  app.post('/api/user-events', async (req: Request, res: Response) => {
+    try {
+      const { userId, title, description, event_type, location_type, location_name, location_address, event_date, event_end_date, background_image_url, video_link, video_link_public, entry_fee, max_participants, is_recurring, recurrence_rule } = req.body;
+      if (!userId || !title || !event_date) {
+        return res.status(400).json({ ok: false, error: 'userId, title, and event_date are required' });
+      }
+      const result = await queryDB(
+        `INSERT INTO user_events (user_id, title, description, event_type, location_type, location_name, location_address, event_date, event_end_date, background_image_url, video_link, video_link_public, entry_fee, max_participants, is_recurring, recurrence_rule)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+         RETURNING *`,
+        [userId, title.trim(), description || null, event_type || 'lesung', location_type || 'vor_ort', location_name || null, location_address || null, event_date, event_end_date || null, background_image_url || null, video_link || null, video_link_public || false, entry_fee || 0, max_participants || null, is_recurring || false, recurrence_rule || null]
+      );
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Create event error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Update event
+  app.put('/api/user-events/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      const { title, description, event_type, location_type, location_name, location_address, event_date, event_end_date, background_image_url, video_link, video_link_public, entry_fee, max_participants, is_recurring, recurrence_rule, is_published } = req.body;
+      const result = await queryDB(
+        `UPDATE user_events SET
+          title = COALESCE($1, title),
+          description = COALESCE($2, description),
+          event_type = COALESCE($3, event_type),
+          location_type = COALESCE($4, location_type),
+          location_name = COALESCE($5, location_name),
+          location_address = COALESCE($6, location_address),
+          event_date = COALESCE($7, event_date),
+          event_end_date = COALESCE($8, event_end_date),
+          background_image_url = COALESCE($9, background_image_url),
+          video_link = COALESCE($10, video_link),
+          video_link_public = COALESCE($11, video_link_public),
+          entry_fee = COALESCE($12, entry_fee),
+          max_participants = COALESCE($13, max_participants),
+          is_recurring = COALESCE($14, is_recurring),
+          recurrence_rule = COALESCE($15, recurrence_rule),
+          is_published = COALESCE($16, is_published),
+          updated_at = NOW()
+        WHERE id = $17 RETURNING *`,
+        [title || null, description !== undefined ? description : null, event_type || null, location_type || null, location_name !== undefined ? location_name : null, location_address !== undefined ? location_address : null, event_date || null, event_end_date !== undefined ? event_end_date : null, background_image_url !== undefined ? background_image_url : null, video_link !== undefined ? video_link : null, video_link_public !== undefined ? video_link_public : null, entry_fee !== undefined ? entry_fee : null, max_participants !== undefined ? max_participants : null, is_recurring !== undefined ? is_recurring : null, recurrence_rule !== undefined ? recurrence_rule : null, is_published !== undefined ? is_published : null, id]
+      );
+      if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Event not found' });
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Update event error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Delete event
+  app.delete('/api/user-events/:id', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      await queryDB(`DELETE FROM user_events WHERE id = $1`, [id]);
+      return res.json({ ok: true });
+    } catch (error) {
+      log.error('Delete event error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Public events for a bookstore/curator profile
+  app.get('/api/bookstore/:slug/events', async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      const profileResult = await queryDB(`SELECT user_id FROM bookstore_profiles WHERE slug = $1`, [slug]);
+      if (profileResult.rows.length === 0) return res.status(404).json({ ok: false, error: 'Profile not found' });
+      const userId = profileResult.rows[0].user_id;
+      const result = await queryDB(
+        `SELECT e.id, e.title, e.description, e.event_type, e.location_type, e.location_name, e.location_address, e.event_date, e.event_end_date, e.background_image_url, 
+          CASE WHEN e.video_link_public = true THEN e.video_link ELSE NULL END AS video_link,
+          e.video_link_public, e.entry_fee, e.entry_fee_currency, e.max_participants, e.is_recurring, e.recurrence_rule,
+          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id AND status = 'booked') AS participant_count
+         FROM user_events e
+         WHERE e.user_id = $1 AND e.is_published = true AND e.event_date >= NOW() - INTERVAL '1 day'
+         ORDER BY e.event_date ASC`,
+        [userId]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Get public events error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Book a spot at an event
+  app.post('/api/user-events/:id/book', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      const { userId, displayName } = req.body;
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId is required' });
+
+      const event = await queryDB(`SELECT max_participants FROM user_events WHERE id = $1`, [id]);
+      if (event.rows.length === 0) return res.status(404).json({ ok: false, error: 'Event not found' });
+
+      if (event.rows[0].max_participants) {
+        const count = await queryDB(`SELECT COUNT(*) FROM event_participants WHERE event_id = $1 AND status = 'booked'`, [id]);
+        if (parseInt(count.rows[0].count) >= event.rows[0].max_participants) {
+          return res.status(400).json({ ok: false, error: 'Event is fully booked' });
+        }
+      }
+
+      const result = await queryDB(
+        `INSERT INTO event_participants (event_id, user_id, user_display_name, status)
+         VALUES ($1, $2, $3, 'booked')
+         ON CONFLICT (event_id, user_id) DO UPDATE SET status = 'booked', booked_at = NOW()
+         RETURNING *`,
+        [id, userId, displayName || userId]
+      );
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Book event error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Cancel booking
+  app.delete('/api/user-events/:id/book', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      const userId = req.query.userId as string;
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId is required' });
+      await queryDB(`DELETE FROM event_participants WHERE event_id = $1 AND user_id = $2`, [id, userId]);
+      return res.json({ ok: true });
+    } catch (error) {
+      log.error('Cancel booking error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Get participants for an event (organizer only)
+  app.get('/api/user-events/:id/participants', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      const result = await queryDB(
+        `SELECT ep.*, ue.user_id AS organizer_id
+         FROM event_participants ep
+         JOIN user_events ue ON ue.id = ep.event_id
+         WHERE ep.event_id = $1
+         ORDER BY ep.booked_at ASC`,
+        [id]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Get participants error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Check if user is booked for an event
+  app.get('/api/user-events/:id/booking-status', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      const userId = req.query.userId as string;
+      if (!id || !userId) return res.json({ ok: true, booked: false });
+      const result = await queryDB(
+        `SELECT id FROM event_participants WHERE event_id = $1 AND user_id = $2 AND status = 'booked'`,
+        [id, userId]
+      );
+      return res.json({ ok: true, booked: result.rows.length > 0 });
+    } catch (error) {
+      return res.json({ ok: true, booked: false });
+    }
+  });
+
+  // ICS calendar export for an event
+  app.get('/api/user-events/:id/ics', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      const result = await queryDB(`SELECT * FROM user_events WHERE id = $1`, [id]);
+      if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Event not found' });
+      const ev = result.rows[0];
+
+      const formatDate = (d: string) => new Date(d).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      const endDate = ev.event_end_date || new Date(new Date(ev.event_date).getTime() + 2 * 60 * 60 * 1000).toISOString();
+
+      const locationParts = [ev.location_name, ev.location_address].filter(Boolean).join(', ');
+      const ics = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//coratiert.de//Events//DE',
+        'BEGIN:VEVENT',
+        `DTSTART:${formatDate(ev.event_date)}`,
+        `DTEND:${formatDate(endDate)}`,
+        `SUMMARY:${(ev.title || '').replace(/\n/g, '\\n')}`,
+        `DESCRIPTION:${(ev.description || '').replace(/\n/g, '\\n').substring(0, 500)}`,
+        locationParts ? `LOCATION:${locationParts.replace(/\n/g, '\\n')}` : '',
+        `UID:event-${ev.id}@coratiert.de`,
+        'END:VEVENT',
+        'END:VCALENDAR'
+      ].filter(Boolean).join('\r\n');
+
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="event-${ev.id}.ics"`);
+      return res.send(ics);
+    } catch (error) {
+      log.error('ICS export error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Notifications for a user
+  app.get('/api/notifications', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId is required' });
+      const result = await queryDB(
+        `SELECT * FROM user_notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`,
+        [userId]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Get notifications error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // Mark notification as read
+  app.put('/api/notifications/:id/read', async (req: Request, res: Response) => {
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) return res.status(400).json({ ok: false, error: 'Invalid notification ID' });
+      await queryDB(`UPDATE user_notifications SET is_read = true WHERE id = $1`, [id]);
+      return res.json({ ok: true });
+    } catch (error) {
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });

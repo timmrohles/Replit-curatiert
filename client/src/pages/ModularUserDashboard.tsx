@@ -44,6 +44,7 @@ import { AuthorStatistics } from './dashboard/author/AuthorStatistics';
 import { AuthorRequest } from './dashboard/AuthorRequest';
 import { UserCurations } from './dashboard/UserCurations';
 import { UserBookstore } from './dashboard/UserBookstore';
+import { UserEvents } from './dashboard/UserEvents';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { Breadcrumb } from '../components/layout/Breadcrumb';
@@ -67,6 +68,7 @@ type DashboardSection =
   | 'reviews' 
   | 'curations'
   | 'bookstore'
+  | 'events'
   | 'notifications' 
   | 'privacy'
   | 'creator-storefront'
@@ -160,6 +162,7 @@ export default function ModularUserDashboard() {
     { id: 'reviews', label: 'Rezensionen', icon: MessageSquare, group: 'core' },
     { id: 'curations', label: 'Kurationen', icon: BookOpen, group: 'core' },
     { id: 'bookstore', label: 'Bookstore', icon: Store, group: 'core' },
+    { id: 'events', label: 'Veranstaltungen', icon: Calendar, group: 'core' },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, group: 'core' },
   ];
 
@@ -231,6 +234,8 @@ export default function ModularUserDashboard() {
           return <UserCurations onNavigateToTab={(tab) => setActiveSection(tab as DashboardSection)} />;
         case 'bookstore':
           return <UserBookstore />;
+        case 'events':
+          return <UserEvents />;
         case 'notifications':
           return <DashboardNotifications />;
         case 'privacy':

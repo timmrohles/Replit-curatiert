@@ -252,7 +252,7 @@ export function DashboardProfile() {
     kurationen: true,
     rezensionen: true,
     bewertungen: true,
-    veranstaltungen: false,
+    veranstaltungen: true,
     buchclub: false,
   });
 
