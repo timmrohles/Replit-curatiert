@@ -6461,7 +6461,7 @@ export async function registerRoutes(
                address_lat = COALESCE($7, address_lat),
                address_lng = COALESCE($8, address_lng),
                avatar_url = COALESCE($9, avatar_url),
-               hero_image_url = COALESCE($10, hero_image_url),
+               hero_image_url = CASE WHEN $10::text IS NOT NULL THEN $10 ELSE hero_image_url END,
                is_physical_store = COALESCE($11, is_physical_store),
                is_published = COALESCE($12, is_published),
                updated_at = NOW()
@@ -6471,7 +6471,7 @@ export async function registerRoutes(
             displayName || null, tagline || null, description || null,
             finalSlug, socialLinks ? JSON.stringify(socialLinks) : null,
             address || null, addressLat || null, addressLng || null,
-            avatarUrl || null, heroImageUrl || null,
+            avatarUrl || null, heroImageUrl !== undefined ? (heroImageUrl || '') : null,
             isPhysicalStore !== undefined ? isPhysicalStore : null,
             isPublished !== undefined ? isPublished : null,
             userId

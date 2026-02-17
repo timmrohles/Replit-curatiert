@@ -26,6 +26,7 @@ interface BookstoreProfile {
   tagline?: string;
   description?: string;
   avatar_url?: string;
+  hero_image_url?: string;
   address?: string;
   bio?: string;
   is_physical_store?: boolean;
@@ -383,149 +384,315 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
     );
   }
 
+  const hasHeroImage = !!profile.hero_image_url;
+
   return (
     <>
-      <Header isHomePage={false} />
+      {hasHeroImage ? (
+        <div className="relative w-full" data-testid="hero-banner-wrapper">
+          <div
+            className="absolute inset-0 w-full h-full"
+            style={{
+              backgroundImage: `url(${profile.hero_image_url})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+            data-testid="hero-bg-image"
+          />
+          <div
+            className="absolute inset-0 w-full h-full"
+            style={{
+              background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0.6) 70%, rgba(0,0,0,0.75) 100%)',
+            }}
+          />
 
-      <main id="main-content">
-        {/* Breadcrumbs */}
-        <Breadcrumb items={[
-          { label: 'Startseite', href: '/' },
-          { label: 'Kurator:innen', href: '/curators' },
-          { label: profile.display_name },
-        ]} />
+          <div className="relative z-10">
+            <Header isHomePage={false} />
 
-        {/* Profile Hero Section - two-column layout */}
-        <section
-          className="py-10 md:py-14 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
-          data-testid="hero-section"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-            {/* Left Column: Avatar + Name/Focus + Social, vertically centered */}
-            <div className="flex items-center gap-5 md:gap-6">
-              <div className="flex-shrink-0">
-                <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
-                  {profile.avatar_url ? (
-                    <ImageWithFallback
-                      src={profile.avatar_url}
-                      alt={profile.display_name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-cerulean/10 flex items-center justify-center">
-                      <span className="text-5xl md:text-6xl font-headline text-cerulean">
-                        {profile.display_name?.charAt(0)?.toUpperCase()}
-                      </span>
+            <main id="main-content">
+              <nav className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-2" aria-label="Breadcrumb">
+                <ol className="flex items-center gap-1.5 text-sm flex-wrap">
+                  <li>
+                    <a href="/" className="text-white/70 hover:text-white transition-colors">Startseite</a>
+                  </li>
+                  <li className="text-white/40">/</li>
+                  <li>
+                    <a href="/curators" className="text-white/70 hover:text-white transition-colors">Kurator:innen</a>
+                  </li>
+                  <li className="text-white/40">/</li>
+                  <li className="text-white font-medium">{profile.display_name}</li>
+                </ol>
+              </nav>
+
+              <section
+                className="py-10 md:py-14 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
+                data-testid="hero-section"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+                  <div className="flex items-center gap-5 md:gap-6">
+                    <div className="flex-shrink-0">
+                      <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden ring-2 ring-white/40 ring-offset-2 ring-offset-transparent shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                        {profile.avatar_url ? (
+                          <ImageWithFallback
+                            src={profile.avatar_url}
+                            alt={profile.display_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}>
+                            <span className="text-5xl md:text-6xl font-headline text-white">
+                              {profile.display_name?.charAt(0)?.toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <h1
+                        className="text-2xl md:text-3xl font-headline text-white mb-1"
+                        style={{ textShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
+                        data-testid="text-display-name"
+                      >
+                        {profile.display_name}
+                      </h1>
+
+                      {profile.tagline && (
+                        <p className="text-base font-semibold text-white/80" data-testid="text-tagline">
+                          {profile.tagline}
+                        </p>
+                      )}
+
+                      {profile.is_physical_store && profile.address && (
+                        <div className="flex items-center gap-2 text-white/70 mt-2" data-testid="text-address">
+                          <MapPin className="w-5 h-5" />
+                          <span className="text-base">{profile.address}</span>
+                        </div>
+                      )}
+
+                      {(socialLinks.website || socialLinks.instagram || socialLinks.youtube || socialLinks.tiktok || socialLinks.twitter || socialLinks.podcast) && (
+                        <div className="flex items-center gap-3 flex-wrap mt-3" data-testid="social-links">
+                          {socialLinks.website && (
+                            <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" data-testid="link-social-website" className="text-white/70 hover:text-white transition-colors">
+                              <Globe className="w-6 h-6" />
+                            </a>
+                          )}
+                          {socialLinks.instagram && (
+                            <a href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-instagram" className="text-white/70 hover:text-white transition-colors">
+                              <Instagram className="w-6 h-6" />
+                            </a>
+                          )}
+                          {socialLinks.youtube && (
+                            <a href={socialLinks.youtube.startsWith('http') ? socialLinks.youtube : `https://youtube.com/${socialLinks.youtube}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-youtube" className="text-white/70 hover:text-white transition-colors">
+                              <SiYoutube className="w-6 h-6" />
+                            </a>
+                          )}
+                          {socialLinks.tiktok && (
+                            <a href={socialLinks.tiktok.startsWith('http') ? socialLinks.tiktok : `https://tiktok.com/@${socialLinks.tiktok}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-tiktok" className="text-white/70 hover:text-white transition-colors">
+                              <SiTiktok className="w-6 h-6" />
+                            </a>
+                          )}
+                          {socialLinks.podcast && (
+                            <a href={socialLinks.podcast} target="_blank" rel="noopener noreferrer" data-testid="link-social-podcast" className="text-white/70 hover:text-white transition-colors">
+                              <Podcast className="w-6 h-6" />
+                            </a>
+                          )}
+                          {socialLinks.twitter && (
+                            <a href={socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://twitter.com/${socialLinks.twitter}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-twitter" className="text-white/70 hover:text-white transition-colors">
+                              <ExternalLink className="w-6 h-6" />
+                            </a>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    {(profile.bio || profile.description) && (
+                      <p className="text-base text-white/90 leading-relaxed" data-testid="text-description">
+                        {profile.bio || profile.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <nav className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8" data-testid="profile-tabs" style={{ borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                <div className="flex gap-2 flex-wrap justify-center">
+                  {([
+                    { id: 'kurationen' as ProfileTab, label: 'Kurationen' },
+                    { id: 'rezensionen' as ProfileTab, label: 'Rezensionen' },
+                    { id: 'bewertungen' as ProfileTab, label: 'Bewertungen' },
+                    { id: 'veranstaltungen' as ProfileTab, label: 'Veranstaltungen' },
+                    { id: 'buchclub' as ProfileTab, label: 'Buchclub' },
+                  ]).filter((tab) => {
+                    const vt = profile.visible_tabs;
+                    if (!vt || Object.keys(vt).length === 0) {
+                      if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
+                      if (tab.id === 'veranstaltungen') return true;
+                      return true;
+                    }
+                    return vt[tab.id] === true;
+                  }).map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`relative px-5 md:px-8 py-3.5 text-base font-medium whitespace-nowrap transition-colors ${
+                        activeTab === tab.id
+                          ? 'text-white'
+                          : 'text-white/60'
+                      }`}
+                      data-testid={`tab-${tab.id}`}
+                    >
+                      {tab.label}
+                      {activeTab === tab.id && (
+                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </nav>
+            </main>
+          </div>
+        </div>
+      ) : (
+        <>
+          <Header isHomePage={false} />
+          <Breadcrumb items={[
+            { label: 'Startseite', href: '/' },
+            { label: 'Kurator:innen', href: '/curators' },
+            { label: profile.display_name },
+          ]} />
+
+          <section
+            className="py-10 md:py-14 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
+            data-testid="hero-section"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+              <div className="flex items-center gap-5 md:gap-6">
+                <div className="flex-shrink-0">
+                  <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+                    {profile.avatar_url ? (
+                      <ImageWithFallback
+                        src={profile.avatar_url}
+                        alt={profile.display_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-cerulean/10 flex items-center justify-center">
+                        <span className="text-5xl md:text-6xl font-headline text-cerulean">
+                          {profile.display_name?.charAt(0)?.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h1
+                    className="text-2xl md:text-3xl font-headline text-cerulean mb-1"
+                    data-testid="text-display-name"
+                  >
+                    {profile.display_name}
+                  </h1>
+
+                  {profile.tagline && (
+                    <Text as="p" variant="base" className="font-semibold text-gray-500" data-testid="text-tagline">
+                      {profile.tagline}
+                    </Text>
+                  )}
+
+                  {profile.is_physical_store && profile.address && (
+                    <div className="flex items-center gap-2 text-muted-foreground mt-2" data-testid="text-address">
+                      <MapPin className="w-5 h-5" />
+                      <Text as="span" variant="base">{profile.address}</Text>
+                    </div>
+                  )}
+
+                  {(socialLinks.website || socialLinks.instagram || socialLinks.youtube || socialLinks.tiktok || socialLinks.twitter || socialLinks.podcast) && (
+                    <div className="flex items-center gap-3 flex-wrap mt-3" data-testid="social-links">
+                      {socialLinks.website && (
+                        <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" data-testid="link-social-website" className="text-muted-foreground hover:text-cerulean transition-colors">
+                          <Globe className="w-6 h-6" />
+                        </a>
+                      )}
+                      {socialLinks.instagram && (
+                        <a href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-instagram" className="text-muted-foreground hover:text-cerulean transition-colors">
+                          <Instagram className="w-6 h-6" />
+                        </a>
+                      )}
+                      {socialLinks.youtube && (
+                        <a href={socialLinks.youtube.startsWith('http') ? socialLinks.youtube : `https://youtube.com/${socialLinks.youtube}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-youtube" className="text-muted-foreground hover:text-cerulean transition-colors">
+                          <SiYoutube className="w-6 h-6" />
+                        </a>
+                      )}
+                      {socialLinks.tiktok && (
+                        <a href={socialLinks.tiktok.startsWith('http') ? socialLinks.tiktok : `https://tiktok.com/@${socialLinks.tiktok}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-tiktok" className="text-muted-foreground hover:text-cerulean transition-colors">
+                          <SiTiktok className="w-6 h-6" />
+                        </a>
+                      )}
+                      {socialLinks.podcast && (
+                        <a href={socialLinks.podcast} target="_blank" rel="noopener noreferrer" data-testid="link-social-podcast" className="text-muted-foreground hover:text-cerulean transition-colors">
+                          <Podcast className="w-6 h-6" />
+                        </a>
+                      )}
+                      {socialLinks.twitter && (
+                        <a href={socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://twitter.com/${socialLinks.twitter}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-twitter" className="text-muted-foreground hover:text-cerulean transition-colors">
+                          <ExternalLink className="w-6 h-6" />
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div>
-                <h1
-                  className="text-2xl md:text-3xl font-headline text-cerulean mb-1"
-                  data-testid="text-display-name"
-                >
-                  {profile.display_name}
-                </h1>
-
-                {profile.tagline && (
-                  <Text as="p" variant="base" className="font-semibold text-gray-500" data-testid="text-tagline">
-                    {profile.tagline}
+              <div className="flex flex-col">
+                {(profile.bio || profile.description) && (
+                  <Text as="p" variant="base" className="text-foreground leading-relaxed" data-testid="text-description">
+                    {profile.bio || profile.description}
                   </Text>
-                )}
-
-                {profile.is_physical_store && profile.address && (
-                  <div className="flex items-center gap-2 text-muted-foreground mt-2" data-testid="text-address">
-                    <MapPin className="w-5 h-5" />
-                    <Text as="span" variant="base">{profile.address}</Text>
-                  </div>
-                )}
-
-                {(socialLinks.website || socialLinks.instagram || socialLinks.youtube || socialLinks.tiktok || socialLinks.twitter || socialLinks.podcast) && (
-                  <div className="flex items-center gap-3 flex-wrap mt-3" data-testid="social-links">
-                    {socialLinks.website && (
-                      <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" data-testid="link-social-website" className="text-muted-foreground hover:text-cerulean transition-colors">
-                        <Globe className="w-6 h-6" />
-                      </a>
-                    )}
-                    {socialLinks.instagram && (
-                      <a href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-instagram" className="text-muted-foreground hover:text-cerulean transition-colors">
-                        <Instagram className="w-6 h-6" />
-                      </a>
-                    )}
-                    {socialLinks.youtube && (
-                      <a href={socialLinks.youtube.startsWith('http') ? socialLinks.youtube : `https://youtube.com/${socialLinks.youtube}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-youtube" className="text-muted-foreground hover:text-cerulean transition-colors">
-                        <SiYoutube className="w-6 h-6" />
-                      </a>
-                    )}
-                    {socialLinks.tiktok && (
-                      <a href={socialLinks.tiktok.startsWith('http') ? socialLinks.tiktok : `https://tiktok.com/@${socialLinks.tiktok}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-tiktok" className="text-muted-foreground hover:text-cerulean transition-colors">
-                        <SiTiktok className="w-6 h-6" />
-                      </a>
-                    )}
-                    {socialLinks.podcast && (
-                      <a href={socialLinks.podcast} target="_blank" rel="noopener noreferrer" data-testid="link-social-podcast" className="text-muted-foreground hover:text-cerulean transition-colors">
-                        <Podcast className="w-6 h-6" />
-                      </a>
-                    )}
-                    {socialLinks.twitter && (
-                      <a href={socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://twitter.com/${socialLinks.twitter}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-twitter" className="text-muted-foreground hover:text-cerulean transition-colors">
-                        <ExternalLink className="w-6 h-6" />
-                      </a>
-                    )}
-                  </div>
                 )}
               </div>
             </div>
+          </section>
 
-            {/* Right Column: Bio - left-aligned */}
-            <div className="flex flex-col">
-              {(profile.bio || profile.description) && (
-                <Text as="p" variant="base" className="text-foreground leading-relaxed" data-testid="text-description">
-                  {profile.bio || profile.description}
-                </Text>
-              )}
+          <nav className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 border-b border-border" data-testid="profile-tabs">
+            <div className="flex gap-2 flex-wrap justify-center">
+              {([
+                { id: 'kurationen' as ProfileTab, label: 'Kurationen' },
+                { id: 'rezensionen' as ProfileTab, label: 'Rezensionen' },
+                { id: 'bewertungen' as ProfileTab, label: 'Bewertungen' },
+                { id: 'veranstaltungen' as ProfileTab, label: 'Veranstaltungen' },
+                { id: 'buchclub' as ProfileTab, label: 'Buchclub' },
+              ]).filter((tab) => {
+                const vt = profile.visible_tabs;
+                if (!vt || Object.keys(vt).length === 0) {
+                  if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
+                  if (tab.id === 'veranstaltungen') return true;
+                  return true;
+                }
+                return vt[tab.id] === true;
+              }).map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative px-5 md:px-8 py-3.5 text-base font-medium whitespace-nowrap transition-colors ${
+                    activeTab === tab.id
+                      ? 'text-cerulean'
+                      : 'text-muted-foreground'
+                  }`}
+                  data-testid={`tab-${tab.id}`}
+                >
+                  {tab.label}
+                  {activeTab === tab.id && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-cerulean" />
+                  )}
+                </button>
+              ))}
             </div>
-          </div>
-        </section>
-
-        {/* Profile Tabs */}
-        <nav className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 border-b border-border" data-testid="profile-tabs">
-          <div className="flex gap-2 flex-wrap justify-center">
-            {([
-              { id: 'kurationen' as ProfileTab, label: 'Kurationen' },
-              { id: 'rezensionen' as ProfileTab, label: 'Rezensionen' },
-              { id: 'bewertungen' as ProfileTab, label: 'Bewertungen' },
-              { id: 'veranstaltungen' as ProfileTab, label: 'Veranstaltungen' },
-              { id: 'buchclub' as ProfileTab, label: 'Buchclub' },
-            ]).filter((tab) => {
-              const vt = profile.visible_tabs;
-              if (!vt || Object.keys(vt).length === 0) {
-                if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
-                if (tab.id === 'veranstaltungen') return true;
-                return true;
-              }
-              return vt[tab.id] === true;
-            }).map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative px-5 md:px-8 py-3.5 text-base font-medium whitespace-nowrap transition-colors ${
-                  activeTab === tab.id
-                    ? 'text-cerulean'
-                    : 'text-muted-foreground'
-                }`}
-                data-testid={`tab-${tab.id}`}
-              >
-                {tab.label}
-                {activeTab === tab.id && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-cerulean" />
-                )}
-              </button>
-            ))}
-          </div>
-        </nav>
+          </nav>
+        </>
+      )}
 
         {/* Tab Content */}
         {activeTab === 'kurationen' && (
@@ -664,7 +831,6 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
             Inhalt melden
           </button>
         </div>
-      </main>
 
       <Dialog open={reportOpen} onOpenChange={setReportOpen}>
         <DialogContent data-testid="dialog-report">

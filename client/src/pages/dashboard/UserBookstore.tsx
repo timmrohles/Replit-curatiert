@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Store, Save, Eye, GripVertical, Globe, ExternalLink,
-  Instagram, Twitter, Youtube, MapPin, BookOpen, AlertTriangle, User
+  Instagram, Twitter, Youtube, MapPin, BookOpen, AlertTriangle, User,
+  ImageIcon, Search, X, Loader2
 } from 'lucide-react';
 
 const API_BASE = '/api';
@@ -24,6 +25,7 @@ interface BookstoreProfile {
   description: string;
   socialLinks: SocialLinks;
   address: string;
+  heroImageUrl: string;
   isPhysicalStore: boolean;
   isPublished: boolean;
 }
@@ -80,6 +82,7 @@ export function UserBookstore() {
     description: '',
     socialLinks: { website: '', instagram: '', twitter: '', youtube: '', tiktok: '' },
     address: '',
+    heroImageUrl: '',
     isPhysicalStore: false,
     isPublished: false,
   });
@@ -88,6 +91,10 @@ export function UserBookstore() {
   const [linkedSections, setLinkedSections] = useState<BookstoreSection[]>([]);
   const [curationsLoading, setCurationsLoading] = useState(true);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [heroSearch, setHeroSearch] = useState('');
+  const [heroSearchResults, setHeroSearchResults] = useState<any[]>([]);
+  const [heroSearching, setHeroSearching] = useState(false);
+  const [heroManualUrl, setHeroManualUrl] = useState('');
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -109,6 +116,7 @@ export function UserBookstore() {
             tiktok: d.socialLinks?.tiktok || d.social_links?.tiktok || '',
           },
           address: d.address || '',
+          heroImageUrl: d.heroImageUrl || d.hero_image_url || '',
           isPhysicalStore: d.isPhysicalStore ?? d.is_physical_store ?? false,
           isPublished: d.isPublished ?? d.is_published ?? false,
         });
@@ -196,6 +204,33 @@ export function UserBookstore() {
   const handleSlugChange = (value: string) => {
     setSlugManuallyEdited(true);
     setProfile(prev => ({ ...prev, slug: generateSlug(value) }));
+  };
+
+  const searchHeroImages = async () => {
+    if (!heroSearch.trim()) return;
+    setHeroSearching(true);
+    try {
+      const res = await fetch(`${API_BASE}/unsplash/search?query=${encodeURIComponent(heroSearch)}`);
+      const data = await res.json();
+      if (data.success) setHeroSearchResults(data.data || []);
+    } catch {
+      setHeroSearchResults([]);
+    } finally {
+      setHeroSearching(false);
+    }
+  };
+
+  const selectHeroImage = (url: string) => {
+    setProfile(prev => ({ ...prev, heroImageUrl: url }));
+    setHeroSearchResults([]);
+    setHeroSearch('');
+  };
+
+  const applyManualHeroUrl = () => {
+    if (heroManualUrl.trim()) {
+      setProfile(prev => ({ ...prev, heroImageUrl: heroManualUrl.trim() }));
+      setHeroManualUrl('');
+    }
   };
 
   const handleSave = async () => {
@@ -425,6 +460,112 @@ export function UserBookstore() {
           <p className="text-xs" style={{ color: '#9CA3AF' }}>
             Anzeigename, Fokus/Thema, Biografie und Social-Media-Kanäle werden aus deinem Profil übernommen und können dort bearbeitet werden.
           </p>
+
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
+              <ImageIcon className="w-4 h-4 inline-block mr-1.5 -mt-0.5" style={{ color: '#247ba0' }} />
+              Hintergrundbild
+            </label>
+            <p className="text-xs mb-3" style={{ color: '#6B7280' }}>
+              Wähle ein Hintergrundbild für deinen Bookstore-Header. Das Bild wird über die gesamte Breite angezeigt.
+            </p>
+
+            {profile.heroImageUrl && (
+              <div className="relative mb-3 rounded-lg overflow-hidden" style={{ height: '140px' }}>
+                <img
+                  src={profile.heroImageUrl}
+                  alt="Hintergrundbild-Vorschau"
+                  className="w-full h-full object-cover"
+                  data-testid="img-hero-preview"
+                />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)' }} />
+                <button
+                  type="button"
+                  onClick={() => setProfile(prev => ({ ...prev, heroImageUrl: '' }))}
+                  className="absolute top-2 right-2 p-1 rounded-full"
+                  style={{ backgroundColor: 'rgba(0,0,0,0.5)', color: '#FFFFFF' }}
+                  data-testid="button-remove-hero"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <span className="absolute bottom-2 left-3 text-xs text-white font-medium" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                  Aktuelle Vorschau
+                </span>
+              </div>
+            )}
+
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={heroSearch}
+                onChange={e => setHeroSearch(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && searchHeroImages()}
+                className="flex-1 p-2.5 rounded-lg border text-sm"
+                style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
+                placeholder="Unsplash-Bilder suchen..."
+                data-testid="input-hero-search"
+              />
+              <button
+                type="button"
+                onClick={searchHeroImages}
+                disabled={heroSearching}
+                className="px-3 py-2.5 rounded-lg text-white text-sm font-medium"
+                style={{ backgroundColor: '#247ba0' }}
+                data-testid="button-hero-search"
+              >
+                {heroSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {heroSearchResults.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3 max-h-48 overflow-y-auto rounded-lg border p-2" style={{ borderColor: '#E5E7EB' }}>
+                {heroSearchResults.map((img: any) => (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => selectHeroImage(img.url)}
+                    className="relative aspect-video rounded-md overflow-hidden border-2 transition-colors"
+                    style={{ borderColor: 'transparent' }}
+                    data-testid={`hero-img-${img.id}`}
+                  >
+                    <img
+                      src={img.thumb}
+                      alt={img.alt}
+                      className="w-full h-full object-cover"
+                    />
+                    {img.author && (
+                      <span className="absolute bottom-0 left-0 right-0 text-[10px] text-white px-1 py-0.5 truncate" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                        {img.author}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={heroManualUrl}
+                onChange={e => setHeroManualUrl(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && applyManualHeroUrl()}
+                className="flex-1 p-2.5 rounded-lg border text-sm"
+                style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
+                placeholder="Oder Bild-URL direkt eingeben..."
+                data-testid="input-hero-manual-url"
+              />
+              <button
+                type="button"
+                onClick={applyManualHeroUrl}
+                disabled={!heroManualUrl.trim()}
+                className="px-3 py-2.5 rounded-lg text-sm font-medium border"
+                style={{ borderColor: '#E5E7EB', color: heroManualUrl.trim() ? '#247ba0' : '#9CA3AF' }}
+                data-testid="button-hero-apply-url"
+              >
+                Übernehmen
+              </button>
+            </div>
+          </div>
 
           <div>
             <label className="flex items-center gap-3 cursor-pointer" data-testid="toggle-physical-store">
