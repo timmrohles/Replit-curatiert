@@ -61,7 +61,7 @@ const DEFAULT_SECTIONS: FeedSectionConfig[] = [
   },
   {
     id: 'followed_curators',
-    label: 'Meine Kurator:innen',
+    label: 'Meine Kurationen',
     description: 'Entdecke die neuesten Empfehlungen der Kurator:innen, denen du folgst.',
     visible: true,
     isPublic: true,

@@ -848,10 +848,19 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         </div>
 
-        {(isCuratorSection || isSponsoredSection) && (
+        {isCuratorSection && (
           <div className="w-full mt-4 mb-4">
-            <Text as="div" variant="base" className="leading-relaxed text-black font-semibold">
-              {isCuratorSection ? 'Neue Bücher für Leseratten' : section.description}
+            <h3 className="text-lg font-semibold text-foreground mb-1">Neue Bücher für Leseratten</h3>
+            <Text as="div" variant="base" className="leading-relaxed text-black">
+              {section.description}
+            </Text>
+          </div>
+        )}
+
+        {isSponsoredSection && (
+          <div className="w-full mt-4 mb-4">
+            <Text as="div" variant="base" className="leading-relaxed text-black">
+              {section.description}
             </Text>
           </div>
         )}
