@@ -619,11 +619,20 @@ export async function registerRoutes(
         tags TEXT[] DEFAULT '{}',
         is_published BOOLEAN DEFAULT false,
         display_order INTEGER DEFAULT 0,
+        curation_type VARCHAR(20) DEFAULT 'manual',
+        category_id INTEGER,
+        category_label VARCHAR(255),
+        tag_rules JSONB DEFAULT '{}',
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
     await queryDB(`CREATE INDEX IF NOT EXISTS idx_user_curations_user ON user_curations(user_id)`);
+    // Add new columns if they don't exist (for existing tables)
+    await queryDB(`ALTER TABLE user_curations ADD COLUMN IF NOT EXISTS curation_type VARCHAR(20) DEFAULT 'manual'`);
+    await queryDB(`ALTER TABLE user_curations ADD COLUMN IF NOT EXISTS category_id INTEGER`);
+    await queryDB(`ALTER TABLE user_curations ADD COLUMN IF NOT EXISTS category_label VARCHAR(255)`);
+    await queryDB(`ALTER TABLE user_curations ADD COLUMN IF NOT EXISTS tag_rules JSONB DEFAULT '{}'`);
     await queryDB(`
       CREATE TABLE IF NOT EXISTS curation_books (
         id SERIAL PRIMARY KEY,
@@ -1973,6 +1982,49 @@ export async function registerRoutes(
   });
 
   // ==================================================================
+  // CURATION CATEGORIES (from navigation)
+  // ==================================================================
+  app.get('/api/curation-categories', async (_req: Request, res: Response) => {
+    try {
+      const result = await queryDB(
+        `SELECT id, name, label, path, slug FROM menu_items 
+         WHERE location = 'header' AND visible = true AND status = 'published' AND kind = 'link'
+         ORDER BY display_order ASC`,
+        []
+      );
+      if (result.rows.length === 0) {
+        // Fallback: return common book categories
+        return res.json({ ok: true, data: [
+          { id: 1, name: 'Belletristik', label: 'Belletristik' },
+          { id: 2, name: 'Sachbuch', label: 'Sachbuch' },
+          { id: 3, name: 'Familienromane', label: 'Familienromane' },
+          { id: 4, name: 'Krimis & Thriller', label: 'Krimis & Thriller' },
+          { id: 5, name: 'Fantasy & SciFi', label: 'Fantasy & SciFi' },
+          { id: 6, name: 'Jugendbuch', label: 'Jugendbuch' },
+          { id: 7, name: 'Kinderbuch', label: 'Kinderbuch' },
+          { id: 8, name: 'Lyrik', label: 'Lyrik' },
+          { id: 9, name: 'Biografien', label: 'Biografien' },
+          { id: 10, name: 'Graphic Novels', label: 'Graphic Novels' },
+        ]});
+      }
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Curation categories error:', error);
+      return res.json({ ok: true, data: [
+        { id: 1, name: 'Belletristik', label: 'Belletristik' },
+        { id: 2, name: 'Sachbuch', label: 'Sachbuch' },
+        { id: 3, name: 'Familienromane', label: 'Familienromane' },
+        { id: 4, name: 'Krimis & Thriller', label: 'Krimis & Thriller' },
+        { id: 5, name: 'Fantasy & SciFi', label: 'Fantasy & SciFi' },
+        { id: 6, name: 'Jugendbuch', label: 'Jugendbuch' },
+        { id: 7, name: 'Kinderbuch', label: 'Kinderbuch' },
+        { id: 8, name: 'Lyrik', label: 'Lyrik' },
+        { id: 9, name: 'Biografien', label: 'Biografien' },
+        { id: 10, name: 'Graphic Novels', label: 'Graphic Novels' },
+      ]});
+    }
+  });
+
   // BOOKS
   // ==================================================================
   app.get('/api/books', async (req: Request, res: Response) => {
@@ -1993,14 +2045,44 @@ export async function registerRoutes(
   app.get('/api/books/search', async (req: Request, res: Response) => {
     try {
       const q = req.query.q as string;
+      const category = req.query.category as string;
       const limit = parseInt((req.query.limit as string) || '200');
+
+      // Check available columns
+      const colCheck = await queryDB(
+        `SELECT column_name FROM information_schema.columns WHERE table_name = 'books' AND table_schema = 'public'`, []
+      );
+      const cols = new Set(colCheck.rows.map((r: any) => r.column_name));
+
+      if (cols.size === 0) {
+        return res.json({ ok: true, data: [] });
+      }
 
       let query = 'SELECT * FROM books WHERE 1=1';
       const params: any[] = [];
+      let paramIndex = 1;
 
       if (q) {
-        query += ' AND (title ILIKE $1 OR author ILIKE $1 OR isbn13 ILIKE $1)';
-        params.push(`%${q}%`);
+        const searchParts: string[] = [];
+        if (cols.has('title')) searchParts.push(`title ILIKE $${paramIndex}`);
+        if (cols.has('author')) searchParts.push(`author ILIKE $${paramIndex}`);
+        if (cols.has('isbn13')) searchParts.push(`isbn13 ILIKE $${paramIndex}`);
+        if (searchParts.length > 0) {
+          query += ` AND (${searchParts.join(' OR ')})`;
+          params.push(`%${q}%`);
+          paramIndex++;
+        }
+      }
+
+      if (category) {
+        const catParts: string[] = [];
+        if (cols.has('genre')) catParts.push(`genre ILIKE $${paramIndex}`);
+        if (cols.has('category')) catParts.push(`category ILIKE $${paramIndex}`);
+        if (catParts.length > 0) {
+          query += ` AND (${catParts.join(' OR ')})`;
+          params.push(`%${category}%`);
+          paramIndex++;
+        }
       }
 
       query += ` ORDER BY created_at DESC LIMIT ${limit}`;
@@ -2010,6 +2092,86 @@ export async function registerRoutes(
     } catch (error) {
       log.error('Books search error:', error);
       return res.status(500).json({ ok: false, error: String(error), data: [] });
+    }
+  });
+
+  app.post('/api/books/resolve-by-tags', async (req: Request, res: Response) => {
+    try {
+      const { includeAll, includeAny, exclude, category, limit: reqLimit } = req.body;
+      const bookLimit = parseInt(reqLimit || '50');
+
+      // First check which columns exist on books table
+      const colCheck = await queryDB(
+        `SELECT column_name FROM information_schema.columns WHERE table_name = 'books' AND table_schema = 'public'`, []
+      );
+      const cols = new Set(colCheck.rows.map((r: any) => r.column_name));
+      const hasGenre = cols.has('genre');
+      const hasTags = cols.has('tags');
+      const hasCategory = cols.has('category');
+      const hasAuthor = cols.has('author');
+      const hasTitle = cols.has('title');
+
+      if (cols.size === 0) {
+        return res.json({ ok: true, data: [], count: 0 });
+      }
+
+      const buildTagMatch = (paramIdx: number): string => {
+        const parts: string[] = [];
+        if (hasGenre) parts.push(`b.genre ILIKE $${paramIdx}`);
+        if (hasTags) parts.push(`b.tags::text ILIKE $${paramIdx}`);
+        if (hasAuthor) parts.push(`b.author ILIKE $${paramIdx}`);
+        if (hasTitle) parts.push(`b.title ILIKE $${paramIdx}`);
+        return parts.length > 0 ? `(${parts.join(' OR ')})` : 'TRUE';
+      };
+
+      let query = 'SELECT DISTINCT b.* FROM books b';
+      const conditions: string[] = [];
+      const params: any[] = [];
+      let paramIndex = 1;
+
+      if (Array.isArray(includeAll) && includeAll.length > 0) {
+        for (const tag of includeAll) {
+          conditions.push(buildTagMatch(paramIndex));
+          params.push(`%${tag}%`);
+          paramIndex++;
+        }
+      }
+
+      if (Array.isArray(includeAny) && includeAny.length > 0) {
+        const orConds = includeAny.map(tag => {
+          const cond = buildTagMatch(paramIndex);
+          params.push(`%${tag}%`);
+          paramIndex++;
+          return cond;
+        });
+        conditions.push(`(${orConds.join(' OR ')})`);
+      }
+
+      if (Array.isArray(exclude) && exclude.length > 0) {
+        for (const tag of exclude) {
+          conditions.push(`NOT ${buildTagMatch(paramIndex)}`);
+          params.push(`%${tag}%`);
+          paramIndex++;
+        }
+      }
+
+      if (category && (hasGenre || hasCategory)) {
+        const catParts: string[] = [];
+        if (hasGenre) catParts.push(`b.genre ILIKE $${paramIndex}`);
+        if (hasCategory) catParts.push(`b.category ILIKE $${paramIndex}`);
+        conditions.push(`(${catParts.join(' OR ')})`);
+        params.push(`%${category}%`);
+        paramIndex++;
+      }
+
+      const where = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
+      query += `${where} ORDER BY b.created_at DESC LIMIT ${bookLimit}`;
+
+      const result = await queryDB(query, params);
+      return res.json({ ok: true, data: result.rows, count: result.rows.length });
+    } catch (error) {
+      log.error('Resolve books by tags error:', error);
+      return res.json({ ok: true, data: [], count: 0 });
     }
   });
 
@@ -5785,16 +5947,16 @@ export async function registerRoutes(
 
   app.post('/api/user-curations', async (req: Request, res: Response) => {
     try {
-      const { userId, title, description, tags } = req.body;
+      const { userId, title, description, tags, curation_type, category_id, category_label, tag_rules } = req.body;
       if (!userId || !title) {
         return res.status(400).json({ ok: false, error: 'userId and title are required' });
       }
       const tagsArray = Array.isArray(tags) ? tags : [];
       const result = await queryDB(
-        `INSERT INTO user_curations (user_id, title, description, tags)
-         VALUES ($1, $2, $3, $4)
+        `INSERT INTO user_curations (user_id, title, description, tags, curation_type, category_id, category_label, tag_rules)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [userId, title.trim(), description || null, tagsArray]
+        [userId, title.trim(), description || null, tagsArray, curation_type || 'manual', category_id || null, category_label || null, tag_rules ? JSON.stringify(tag_rules) : '{}']
       );
       return res.json({ ok: true, data: result.rows[0] });
     } catch (error) {
@@ -5809,21 +5971,29 @@ export async function registerRoutes(
       if (!id) {
         return res.status(400).json({ ok: false, error: 'Invalid curation ID' });
       }
-      const { title, description, tags, is_published } = req.body;
+      const { title, description, tags, is_published, curation_type, category_id, category_label, tag_rules } = req.body;
       const result = await queryDB(
         `UPDATE user_curations
          SET title = COALESCE($1, title),
              description = COALESCE($2, description),
              tags = COALESCE($3, tags),
              is_published = COALESCE($4, is_published),
+             curation_type = COALESCE($5, curation_type),
+             category_id = COALESCE($6, category_id),
+             category_label = COALESCE($7, category_label),
+             tag_rules = COALESCE($8, tag_rules),
              updated_at = NOW()
-         WHERE id = $5
+         WHERE id = $9
          RETURNING *`,
         [
           title ? title.trim() : null,
           description !== undefined ? description : null,
           Array.isArray(tags) ? tags : null,
           is_published !== undefined ? is_published : null,
+          curation_type || null,
+          category_id !== undefined ? category_id : null,
+          category_label !== undefined ? category_label : null,
+          tag_rules ? JSON.stringify(tag_rules) : null,
           id
         ]
       );

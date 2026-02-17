@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Plus, Edit, Trash2, X, Search, GripVertical, BookOpen } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Plus, Edit, Trash2, X, Search, GripVertical, BookOpen, ChevronRight, ChevronLeft, Sparkles, Hand, Tag, Minus, Check, Info } from 'lucide-react';
+import { Text } from '@/components/ui/typography';
 
 const API_BASE = '/api';
 const USER_ID = 'demo-user-123';
@@ -12,8 +13,18 @@ interface Curation {
   tags: string[];
   is_published: boolean;
   display_order: number;
+  curation_type: 'manual' | 'dynamic';
+  category_id: number | null;
+  category_label: string | null;
+  tag_rules: TagRules;
   created_at: string;
   updated_at: string;
+}
+
+interface TagRules {
+  includeAll?: string[];
+  includeAny?: string[];
+  exclude?: string[];
 }
 
 interface BookResult {
@@ -24,10 +35,221 @@ interface BookResult {
   isbn13: string | null;
 }
 
-interface CurationBook extends BookResult {
-  curation_id: number;
-  book_id: number;
-  display_order: number;
+interface CurationCategory {
+  id: number;
+  name: string;
+  label: string;
+}
+
+interface TagSuggestion {
+  id: number;
+  name: string;
+  tag_type: string;
+  displayName?: string;
+  type?: string;
+}
+
+type WizardStep = 'type' | 'category' | 'details' | 'content' | 'review';
+
+const WIZARD_STEPS: WizardStep[] = ['type', 'category', 'details', 'content', 'review'];
+
+const STEP_INFO: Record<WizardStep, { title: string; subtitle: string }> = {
+  type: {
+    title: 'Kurationstyp wählen',
+    subtitle: 'Entscheide, wie du deine Buchsammlung zusammenstellen möchtest.',
+  },
+  category: {
+    title: 'Kategorie zuordnen',
+    subtitle: 'Wähle eine Buchkategorie, zu der deine Kuration gehört. Bücher können nur aus dieser Kategorie gewählt werden.',
+  },
+  details: {
+    title: 'Titel & Beschreibung',
+    subtitle: 'Gib deiner Kuration einen aussagekräftigen Titel und eine Begründung, warum du diese Bücher empfiehlst.',
+  },
+  content: {
+    title: 'Bücher auswählen',
+    subtitle: '',
+  },
+  review: {
+    title: 'Zusammenfassung',
+    subtitle: 'Prüfe deine Kuration, bevor du sie speicherst.',
+  },
+};
+
+function StepIndicator({ currentStep, steps }: { currentStep: WizardStep; steps: WizardStep[] }) {
+  const currentIndex = steps.indexOf(currentStep);
+  return (
+    <div className="flex items-center justify-center gap-2 mb-6" data-testid="step-indicator">
+      {steps.map((step, idx) => (
+        <div key={step} className="flex items-center gap-2">
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all"
+            style={{
+              backgroundColor: idx <= currentIndex ? '#247ba0' : '#E5E7EB',
+              color: idx <= currentIndex ? '#FFFFFF' : '#9CA3AF',
+            }}
+          >
+            {idx < currentIndex ? <Check className="w-4 h-4" /> : idx + 1}
+          </div>
+          {idx < steps.length - 1 && (
+            <div
+              className="w-8 h-0.5 transition-all"
+              style={{ backgroundColor: idx < currentIndex ? '#247ba0' : '#E5E7EB' }}
+            />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function InfoBox({ text }: { text: string }) {
+  return (
+    <div className="flex items-start gap-2 p-3 rounded-lg mb-4" style={{ backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
+      <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#0284C7' }} />
+      <Text as="span" variant="small" style={{ color: '#0369A1' }}>
+        {text}
+      </Text>
+    </div>
+  );
+}
+
+function TagSearchInput({
+  label,
+  helperText,
+  selectedTags,
+  onAdd,
+  onRemove,
+  tagColor,
+  placeholder,
+  testIdPrefix,
+}: {
+  label: string;
+  helperText: string;
+  selectedTags: string[];
+  onAdd: (tag: string) => void;
+  onRemove: (tag: string) => void;
+  tagColor: string;
+  placeholder: string;
+  testIdPrefix: string;
+}) {
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<TagSuggestion[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!query || query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/onix-tags?q=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (data.ok) {
+          const allTags: TagSuggestion[] = data.data || [];
+          const filtered = allTags.filter((t: TagSuggestion) =>
+            (t.name || t.displayName || '').toLowerCase().includes(query.toLowerCase()) &&
+            !selectedTags.includes(t.name || t.displayName || '')
+          ).slice(0, 15);
+          setSuggestions(filtered);
+        }
+      } catch {
+        setSuggestions([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, selectedTags]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleAddTag = (tagName: string) => {
+    onAdd(tagName);
+    setQuery('');
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (query.trim() && !selectedTags.includes(query.trim())) {
+        handleAddTag(query.trim());
+      }
+    }
+  };
+
+  return (
+    <div ref={containerRef}>
+      <label className="block text-sm font-medium mb-1" style={{ color: '#3A3A3A' }}>
+        {label}
+      </label>
+      <Text as="p" variant="small" className="mb-2" style={{ color: '#6B7280' }}>
+        {helperText}
+      </Text>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9CA3AF' }} />
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={e => { setQuery(e.target.value); setShowSuggestions(true); }}
+          onFocus={() => setShowSuggestions(true)}
+          onKeyDown={handleKeyDown}
+          data-testid={`${testIdPrefix}-search`}
+          className="w-full pl-10 pr-4 py-2 rounded-lg border"
+          style={{ borderColor: '#E5E7EB' }}
+          placeholder={placeholder}
+        />
+        {showSuggestions && (suggestions.length > 0 || loading) && (
+          <div className="absolute left-0 right-0 top-full mt-1 border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+            {loading && <div className="px-3 py-2 text-xs" style={{ color: '#6B7280' }}>Suche...</div>}
+            {suggestions.map(tag => (
+              <button
+                key={tag.id || tag.name}
+                onClick={() => handleAddTag(tag.name || tag.displayName || '')}
+                className="w-full px-3 py-2 text-left text-sm flex items-center justify-between hover:bg-gray-50 transition-colors"
+                data-testid={`${testIdPrefix}-suggestion-${tag.id}`}
+              >
+                <span style={{ color: '#3A3A3A' }}>{tag.name || tag.displayName}</span>
+                <span className="text-xs" style={{ color: '#9CA3AF' }}>{tag.type || tag.tag_type}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+      {selectedTags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {selectedTags.map(tag => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full text-white"
+              style={{ backgroundColor: tagColor }}
+            >
+              {tag}
+              <button onClick={() => onRemove(tag)} data-testid={`${testIdPrefix}-remove-${tag}`}>
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function UserCurations() {
@@ -35,23 +257,33 @@ export function UserCurations() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [showModal, setShowModal] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
   const [editingCuration, setEditingCuration] = useState<Curation | null>(null);
+  const [wizardStep, setWizardStep] = useState<WizardStep>('type');
+
+  const [curationType, setCurationType] = useState<'manual' | 'dynamic'>('manual');
+  const [selectedCategory, setSelectedCategory] = useState<CurationCategory | null>(null);
+  const [categories, setCategories] = useState<CurationCategory[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
 
   const [formTitle, setFormTitle] = useState('');
   const [formDescription, setFormDescription] = useState('');
-  const [formTags, setFormTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
 
   const [bookSearchQuery, setBookSearchQuery] = useState('');
   const [bookSearchResults, setBookSearchResults] = useState<BookResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [selectedBooks, setSelectedBooks] = useState<BookResult[]>([]);
+
+  const [tagRulesIncludeAll, setTagRulesIncludeAll] = useState<string[]>([]);
+  const [tagRulesIncludeAny, setTagRulesIncludeAny] = useState<string[]>([]);
+  const [tagRulesExclude, setTagRulesExclude] = useState<string[]>([]);
+
   const [saving, setSaving] = useState(false);
-
   const [bookCounts, setBookCounts] = useState<Record<number, number>>({});
-
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [resolvedBooks, setResolvedBooks] = useState<BookResult[]>([]);
+  const [resolvingBooks, setResolvingBooks] = useState(false);
+  const [derivedTags, setDerivedTags] = useState<string[]>([]);
 
   const fetchCurations = useCallback(async () => {
     try {
@@ -74,16 +306,29 @@ export function UserCurations() {
       } else {
         setError(data.error || 'Fehler beim Laden');
       }
-    } catch (err) {
+    } catch {
       setError('Netzwerkfehler beim Laden der Kurationen');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchCurations();
-  }, [fetchCurations]);
+  const fetchCategories = useCallback(async () => {
+    setCategoriesLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/curation-categories`);
+      const data = await res.json();
+      if (data.ok) {
+        setCategories(data.data || []);
+      }
+    } catch {
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchCurations(); }, [fetchCurations]);
 
   const searchBooks = useCallback(async (q: string) => {
     if (!q || q.length < 2) {
@@ -92,7 +337,11 @@ export function UserCurations() {
     }
     try {
       setSearchLoading(true);
-      const res = await fetch(`${API_BASE}/books/search?q=${encodeURIComponent(q)}&limit=20`);
+      let url = `${API_BASE}/books/search?q=${encodeURIComponent(q)}&limit=20`;
+      if (selectedCategory) {
+        url += `&category=${encodeURIComponent(selectedCategory.name)}`;
+      }
+      const res = await fetch(url);
       const data = await res.json();
       if (data.ok) {
         setBookSearchResults(data.data || []);
@@ -102,35 +351,108 @@ export function UserCurations() {
     } finally {
       setSearchLoading(false);
     }
-  }, []);
+  }, [selectedCategory]);
+
+  const resolveBooksByTags = useCallback(async () => {
+    if (tagRulesIncludeAll.length === 0 && tagRulesIncludeAny.length === 0) {
+      setResolvedBooks([]);
+      return;
+    }
+    setResolvingBooks(true);
+    try {
+      const res = await fetch(`${API_BASE}/books/resolve-by-tags`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          includeAll: tagRulesIncludeAll,
+          includeAny: tagRulesIncludeAny,
+          exclude: tagRulesExclude,
+          category: selectedCategory?.name || null,
+          limit: 50,
+        }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setResolvedBooks(data.data || []);
+      }
+    } catch {
+      setResolvedBooks([]);
+    } finally {
+      setResolvingBooks(false);
+    }
+  }, [tagRulesIncludeAll, tagRulesIncludeAny, tagRulesExclude, selectedCategory]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      searchBooks(bookSearchQuery);
-    }, 300);
+    const timer = setTimeout(() => { searchBooks(bookSearchQuery); }, 300);
     return () => clearTimeout(timer);
   }, [bookSearchQuery, searchBooks]);
 
-  const openCreateModal = () => {
-    setEditingCuration(null);
+  useEffect(() => {
+    if (curationType === 'dynamic' && (tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0)) {
+      const timer = setTimeout(() => { resolveBooksByTags(); }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setResolvedBooks([]);
+    }
+  }, [tagRulesIncludeAll, tagRulesIncludeAny, tagRulesExclude, curationType, resolveBooksByTags]);
+
+  useEffect(() => {
+    if (curationType === 'manual' && selectedBooks.length > 0) {
+      const tagSet = new Set<string>();
+      for (const book of selectedBooks) {
+        if ((book as any).genre) tagSet.add((book as any).genre);
+        if (Array.isArray((book as any).tags)) {
+          for (const t of (book as any).tags) { if (t) tagSet.add(String(t)); }
+        }
+      }
+      if (selectedCategory?.name) tagSet.add(selectedCategory.name);
+      setDerivedTags(Array.from(tagSet).filter(Boolean));
+    } else {
+      setDerivedTags([]);
+    }
+  }, [selectedBooks, curationType, selectedCategory]);
+
+  const resetWizard = () => {
+    setWizardStep('type');
+    setCurationType('manual');
+    setSelectedCategory(null);
     setFormTitle('');
     setFormDescription('');
-    setFormTags([]);
-    setTagInput('');
     setSelectedBooks([]);
     setBookSearchQuery('');
     setBookSearchResults([]);
-    setShowModal(true);
+    setTagRulesIncludeAll([]);
+    setTagRulesIncludeAny([]);
+    setTagRulesExclude([]);
+    setEditingCuration(null);
+    setResolvedBooks([]);
+    setDerivedTags([]);
   };
 
-  const openEditModal = async (curation: Curation) => {
+  const openCreateWizard = () => {
+    resetWizard();
+    fetchCategories();
+    setShowWizard(true);
+  };
+
+  const openEditWizard = async (curation: Curation) => {
+    resetWizard();
+    fetchCategories();
     setEditingCuration(curation);
+    setCurationType(curation.curation_type || 'manual');
     setFormTitle(curation.title);
     setFormDescription(curation.description || '');
-    setFormTags(Array.isArray(curation.tags) ? curation.tags : []);
-    setTagInput('');
-    setBookSearchQuery('');
-    setBookSearchResults([]);
+
+    if (curation.category_id && curation.category_label) {
+      setSelectedCategory({ id: curation.category_id, name: curation.category_label, label: curation.category_label });
+    }
+
+    if (curation.tag_rules) {
+      const rules = typeof curation.tag_rules === 'string' ? JSON.parse(curation.tag_rules) : curation.tag_rules;
+      setTagRulesIncludeAll(rules.includeAll || []);
+      setTagRulesIncludeAny(rules.includeAny || []);
+      setTagRulesExclude(rules.exclude || []);
+    }
 
     try {
       const res = await fetch(`${API_BASE}/user-curations/${curation.id}/books`);
@@ -143,31 +465,43 @@ export function UserCurations() {
           cover_url: b.cover_url || null,
           isbn13: b.isbn13 || null,
         })));
-      } else {
-        setSelectedBooks([]);
       }
     } catch {
       setSelectedBooks([]);
     }
 
-    setShowModal(true);
+    setWizardStep('details');
+    setShowWizard(true);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setEditingCuration(null);
+  const closeWizard = () => {
+    setShowWizard(false);
+    resetWizard();
   };
 
-  const addTag = () => {
-    const tag = tagInput.trim();
-    if (tag && !formTags.includes(tag)) {
-      setFormTags([...formTags, tag]);
+  const goNext = () => {
+    const idx = WIZARD_STEPS.indexOf(wizardStep);
+    if (idx < WIZARD_STEPS.length - 1) {
+      setWizardStep(WIZARD_STEPS[idx + 1]);
     }
-    setTagInput('');
   };
 
-  const removeTag = (tag: string) => {
-    setFormTags(formTags.filter(t => t !== tag));
+  const goBack = () => {
+    const idx = WIZARD_STEPS.indexOf(wizardStep);
+    if (idx > 0) {
+      setWizardStep(WIZARD_STEPS[idx - 1]);
+    }
+  };
+
+  const canGoNext = (): boolean => {
+    switch (wizardStep) {
+      case 'type': return true;
+      case 'category': return selectedCategory !== null;
+      case 'details': return formTitle.trim().length > 0;
+      case 'content': return curationType === 'manual' ? selectedBooks.length > 0 : (tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0);
+      case 'review': return true;
+      default: return false;
+    }
   };
 
   const addBook = (book: BookResult) => {
@@ -180,10 +514,7 @@ export function UserCurations() {
     setSelectedBooks(selectedBooks.filter(b => b.id !== bookId));
   };
 
-  const handleDragStart = (index: number) => {
-    setDragIndex(index);
-  };
-
+  const handleDragStart = (index: number) => { setDragIndex(index); };
   const handleDragOver = (e: React.DragEvent, index: number) => {
     e.preventDefault();
     if (dragIndex === null || dragIndex === index) return;
@@ -193,14 +524,20 @@ export function UserCurations() {
     setSelectedBooks(newBooks);
     setDragIndex(index);
   };
-
-  const handleDragEnd = () => {
-    setDragIndex(null);
-  };
+  const handleDragEnd = () => { setDragIndex(null); };
 
   const saveCuration = async () => {
     if (!formTitle.trim()) return;
     setSaving(true);
+
+    const tagRules: TagRules = {};
+    if (tagRulesIncludeAll.length > 0) tagRules.includeAll = tagRulesIncludeAll;
+    if (tagRulesIncludeAny.length > 0) tagRules.includeAny = tagRulesIncludeAny;
+    if (tagRulesExclude.length > 0) tagRules.exclude = tagRulesExclude;
+
+    const allTags = curationType === 'manual'
+      ? derivedTags
+      : [...tagRulesIncludeAll, ...tagRulesIncludeAny];
 
     try {
       let curationId: number;
@@ -212,7 +549,11 @@ export function UserCurations() {
           body: JSON.stringify({
             title: formTitle.trim(),
             description: formDescription.trim() || null,
-            tags: formTags,
+            tags: allTags,
+            curation_type: curationType,
+            category_id: selectedCategory?.id || null,
+            category_label: selectedCategory?.name || selectedCategory?.label || null,
+            tag_rules: tagRules,
           }),
         });
         const data = await res.json();
@@ -248,7 +589,11 @@ export function UserCurations() {
             userId: USER_ID,
             title: formTitle.trim(),
             description: formDescription.trim() || null,
-            tags: formTags,
+            tags: allTags,
+            curation_type: curationType,
+            category_id: selectedCategory?.id || null,
+            category_label: selectedCategory?.name || selectedCategory?.label || null,
+            tag_rules: tagRules,
           }),
         });
         const data = await res.json();
@@ -272,7 +617,7 @@ export function UserCurations() {
         });
       }
 
-      closeModal();
+      closeWizard();
       fetchCurations();
     } catch (err: any) {
       setError(err.message || 'Fehler beim Speichern');
@@ -304,9 +649,7 @@ export function UserCurations() {
         body: JSON.stringify({ is_published: !curation.is_published }),
       });
       const data = await res.json();
-      if (data.ok) {
-        fetchCurations();
-      }
+      if (data.ok) { fetchCurations(); }
     } catch {
       setError('Fehler beim Aktualisieren');
     }
@@ -320,17 +663,21 @@ export function UserCurations() {
     );
   }
 
+  const contentStepSubtitle = curationType === 'manual'
+    ? 'Suche Bücher und füge sie deiner Kuration hinzu. Die Tags werden automatisch aus der Datenbank übernommen.'
+    : 'Wähle Tags, um Bücher automatisch zusammenzustellen. Bücher werden basierend auf deinen Tag-Regeln und der Kategorie zugeordnet.';
+
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+        <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }} data-testid="text-curations-heading">
           Meine Kurationen
         </h1>
         <p className="text-xs md:text-sm mb-4" style={{ color: '#6B7280' }}>
           Erstelle thematische Buchsammlungen für deinen Bookstore
         </p>
         <button
-          onClick={openCreateModal}
+          onClick={openCreateWizard}
           data-testid="button-new-curation"
           className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg touch-manipulation"
           style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
@@ -357,7 +704,7 @@ export function UserCurations() {
             Erstelle deine erste thematische Buchsammlung
           </p>
           <button
-            onClick={openCreateModal}
+            onClick={openCreateWizard}
             data-testid="button-empty-new-curation"
             className="px-4 py-2 rounded-lg text-sm text-white"
             style={{ backgroundColor: '#247ba0' }}
@@ -379,6 +726,15 @@ export function UserCurations() {
                     <h2 className="text-base md:text-lg" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
                       {curation.title}
                     </h2>
+                    <span
+                      className="text-xs px-2 py-0.5 rounded-full"
+                      style={{
+                        backgroundColor: curation.curation_type === 'dynamic' ? '#EDE9FE' : '#DBEAFE',
+                        color: curation.curation_type === 'dynamic' ? '#6D28D9' : '#1E40AF',
+                      }}
+                    >
+                      {curation.curation_type === 'dynamic' ? 'Dynamisch' : 'Manuell'}
+                    </span>
                     <button
                       onClick={() => togglePublished(curation)}
                       data-testid={`button-toggle-publish-${curation.id}`}
@@ -391,6 +747,13 @@ export function UserCurations() {
                       {curation.is_published ? 'Veröffentlicht' : 'Entwurf'}
                     </button>
                   </div>
+
+                  {curation.category_label && (
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Tag className="w-3 h-3" style={{ color: '#9CA3AF' }} />
+                      <span className="text-xs" style={{ color: '#6B7280' }}>{curation.category_label}</span>
+                    </div>
+                  )}
 
                   {curation.description && (
                     <p className="text-xs md:text-sm mb-2" style={{ color: '#6B7280' }}>
@@ -421,7 +784,7 @@ export function UserCurations() {
 
                 <div className="flex md:flex-col gap-2">
                   <button
-                    onClick={() => openEditModal(curation)}
+                    onClick={() => openEditWizard(curation)}
                     data-testid={`button-edit-curation-${curation.id}`}
                     className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs transition-all hover:shadow-md touch-manipulation"
                     style={{ backgroundColor: '#F3F4F6', color: '#3A3A3A' }}
@@ -445,214 +808,489 @@ export function UserCurations() {
         </div>
       )}
 
-      {showModal && (
+      {showWizard && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div
             className="rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             style={{ backgroundColor: '#FFFFFF' }}
+            data-testid="curation-wizard"
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl md:text-2xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
                 {editingCuration ? 'Kuration bearbeiten' : 'Neue Kuration'}
               </h2>
-              <button
-                onClick={closeModal}
-                data-testid="button-close-modal"
-                className="p-2 rounded-lg hover:bg-gray-100"
-              >
+              <button onClick={closeWizard} data-testid="button-close-wizard" className="p-2 rounded-lg hover:bg-gray-100">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
-                  Titel *
-                </label>
-                <input
-                  type="text"
-                  value={formTitle}
-                  onChange={e => setFormTitle(e.target.value)}
-                  data-testid="input-curation-title"
-                  className="w-full px-4 py-2 rounded-lg border"
-                  style={{ borderColor: '#E5E7EB' }}
-                  placeholder="z.B. Feministische Klassiker 2024"
-                />
-              </div>
+            <StepIndicator currentStep={wizardStep} steps={WIZARD_STEPS} />
 
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
-                  Begründungstext
-                </label>
-                <textarea
-                  value={formDescription}
-                  onChange={e => setFormDescription(e.target.value)}
-                  data-testid="input-curation-description"
-                  rows={3}
-                  className="w-full px-4 py-2 rounded-lg border"
-                  style={{ borderColor: '#E5E7EB' }}
-                  placeholder="Warum diese Auswahl? Was verbindet die Bücher?"
-                />
-              </div>
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-1" style={{ color: '#3A3A3A' }}>
+                {STEP_INFO[wizardStep].title}
+              </h3>
+              <Text as="p" variant="small" style={{ color: '#6B7280' }}>
+                {wizardStep === 'content' ? contentStepSubtitle : STEP_INFO[wizardStep].subtitle}
+              </Text>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
-                  Tags
-                </label>
-                <div className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={e => setTagInput(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }}
-                    data-testid="input-curation-tag"
-                    className="flex-1 px-4 py-2 rounded-lg border"
-                    style={{ borderColor: '#E5E7EB' }}
-                    placeholder="Tag eingeben und Enter drücken"
-                  />
-                  <button
-                    onClick={addTag}
-                    data-testid="button-add-tag"
-                    className="px-3 py-2 rounded-lg text-sm text-white"
-                    style={{ backgroundColor: '#247ba0' }}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                {formTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {formTags.map((tag, idx) => (
-                      <span key={idx} className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}>
-                        {tag}
-                        <button
-                          onClick={() => removeTag(tag)}
-                          data-testid={`button-remove-tag-${idx}`}
-                          className="hover:opacity-70"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
+            {wizardStep === 'type' && (
+              <div className="space-y-3" data-testid="wizard-step-type">
+                <InfoBox text="Manuelle Kurationen: Du wählst jedes Buch einzeln aus. Ideal, wenn du eine bestimmte Auswahl im Kopf hast. Dynamische Kurationen: Bücher werden automatisch anhand von Tags zusammengestellt und bleiben aktuell." />
+                <button
+                  onClick={() => setCurationType('manual')}
+                  className="w-full p-4 rounded-lg border-2 text-left transition-all flex items-start gap-4"
+                  style={{
+                    borderColor: curationType === 'manual' ? '#247ba0' : '#E5E7EB',
+                    backgroundColor: curationType === 'manual' ? '#F0F9FF' : '#FFFFFF',
+                  }}
+                  data-testid="button-type-manual"
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: curationType === 'manual' ? '#247ba0' : '#F3F4F6' }}>
+                    <Hand className="w-6 h-6" style={{ color: curationType === 'manual' ? '#FFFFFF' : '#9CA3AF' }} />
+                  </div>
+                  <div>
+                    <div className="font-semibold mb-1" style={{ color: '#3A3A3A' }}>Manuelle Kuration</div>
+                    <Text as="p" variant="small" style={{ color: '#6B7280' }}>
+                      Wähle jedes Buch einzeln aus deiner Kategorie. Tags werden automatisch aus der Datenbank übernommen.
+                    </Text>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setCurationType('dynamic')}
+                  className="w-full p-4 rounded-lg border-2 text-left transition-all flex items-start gap-4"
+                  style={{
+                    borderColor: curationType === 'dynamic' ? '#6D28D9' : '#E5E7EB',
+                    backgroundColor: curationType === 'dynamic' ? '#FAF5FF' : '#FFFFFF',
+                  }}
+                  data-testid="button-type-dynamic"
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: curationType === 'dynamic' ? '#6D28D9' : '#F3F4F6' }}>
+                    <Sparkles className="w-6 h-6" style={{ color: curationType === 'dynamic' ? '#FFFFFF' : '#9CA3AF' }} />
+                  </div>
+                  <div>
+                    <div className="font-semibold mb-1" style={{ color: '#3A3A3A' }}>Dynamische Kuration</div>
+                    <Text as="p" variant="small" style={{ color: '#6B7280' }}>
+                      Wähle Tags aus (Verlage, Autoren, Themen etc.) und Bücher werden automatisch zusammengestellt. Du kannst Tags mit UND/ODER kombinieren oder ausschließen.
+                    </Text>
+                  </div>
+                </button>
+              </div>
+            )}
+
+            {wizardStep === 'category' && (
+              <div data-testid="wizard-step-category">
+                <InfoBox text="Die Kategorie bestimmt, aus welchem Bereich Bücher für deine Kuration gewählt werden können. So bleibt deine Sammlung thematisch passend." />
+                {categoriesLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#247ba0' }} />
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2">
+                    {categories.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat)}
+                        className="p-3 rounded-lg border-2 text-left transition-all"
+                        style={{
+                          borderColor: selectedCategory?.id === cat.id ? '#247ba0' : '#E5E7EB',
+                          backgroundColor: selectedCategory?.id === cat.id ? '#F0F9FF' : '#FFFFFF',
+                        }}
+                        data-testid={`button-category-${cat.id}`}
+                      >
+                        <div className="text-sm font-medium" style={{ color: selectedCategory?.id === cat.id ? '#247ba0' : '#3A3A3A' }}>
+                          {cat.label || cat.name}
+                        </div>
+                      </button>
                     ))}
                   </div>
                 )}
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
-                  Bücher suchen & hinzufügen
-                </label>
-                <div className="relative mb-3">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9CA3AF' }} />
+            {wizardStep === 'details' && (
+              <div className="space-y-4" data-testid="wizard-step-details">
+                <InfoBox text="Der Titel erscheint als Überschrift deiner Kuration. Die Begründung erklärt deinen Leser:innen, warum du diese Bücher empfiehlst." />
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
+                    Titel *
+                  </label>
                   <input
                     type="text"
-                    value={bookSearchQuery}
-                    onChange={e => setBookSearchQuery(e.target.value)}
-                    data-testid="input-book-search"
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border"
+                    value={formTitle}
+                    onChange={e => setFormTitle(e.target.value)}
+                    data-testid="input-curation-title"
+                    className="w-full px-4 py-2 rounded-lg border"
                     style={{ borderColor: '#E5E7EB' }}
-                    placeholder="Buchtitel, Autor oder ISBN suchen..."
+                    placeholder="z.B. Neue Bücher für Leseratten"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
+                    Begründungstext
+                  </label>
+                  <textarea
+                    value={formDescription}
+                    onChange={e => setFormDescription(e.target.value)}
+                    data-testid="input-curation-description"
+                    rows={3}
+                    className="w-full px-4 py-2 rounded-lg border"
+                    style={{ borderColor: '#E5E7EB' }}
+                    placeholder="Warum diese Auswahl? Was verbindet die Bücher?"
+                  />
+                </div>
+              </div>
+            )}
 
-                {searchLoading && (
-                  <div className="text-xs py-2" style={{ color: '#6B7280' }}>Suche...</div>
-                )}
-
-                {bookSearchResults.length > 0 && (
-                  <div className="border rounded-lg max-h-48 overflow-y-auto mb-3" style={{ borderColor: '#E5E7EB' }}>
-                    {bookSearchResults
-                      .filter(b => !selectedBooks.some(s => s.id === b.id))
-                      .slice(0, 10)
-                      .map(book => (
-                        <button
-                          key={book.id}
-                          onClick={() => addBook(book)}
-                          data-testid={`button-add-book-${book.id}`}
-                          className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 transition-colors border-b last:border-b-0"
-                          style={{ borderColor: '#F3F4F6' }}
-                        >
-                          {book.cover_url ? (
-                            <img src={book.cover_url} alt="" className="w-8 h-12 object-cover rounded flex-shrink-0" />
-                          ) : (
-                            <div className="w-8 h-12 rounded flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
-                              <BookOpen className="w-4 h-4" style={{ color: '#9CA3AF' }} />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm truncate" style={{ color: '#3A3A3A' }}>{book.title}</div>
-                            <div className="text-xs truncate" style={{ color: '#6B7280' }}>{book.author}</div>
-                          </div>
-                          <Plus className="w-4 h-4 flex-shrink-0" style={{ color: '#247ba0' }} />
-                        </button>
-                      ))}
-                  </div>
-                )}
-
-                {selectedBooks.length > 0 && (
+            {wizardStep === 'content' && curationType === 'manual' && (
+              <div data-testid="wizard-step-content-manual">
+                <InfoBox text="Suche nach Büchern und füge sie deiner Kuration hinzu. Du kannst die Reihenfolge per Drag & Drop anpassen. Tags werden automatisch aus der Buchdatenbank übernommen." />
+                <div className="space-y-4">
                   <div>
-                    <div className="text-xs font-medium mb-2" style={{ color: '#6B7280' }}>
-                      Ausgewählt ({selectedBooks.length})
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
+                      Bücher suchen & hinzufügen
+                    </label>
+                    <div className="relative mb-3">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9CA3AF' }} />
+                      <input
+                        type="text"
+                        value={bookSearchQuery}
+                        onChange={e => setBookSearchQuery(e.target.value)}
+                        data-testid="input-book-search"
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border"
+                        style={{ borderColor: '#E5E7EB' }}
+                        placeholder={selectedCategory ? `In "${selectedCategory.name}" suchen...` : 'Buchtitel, Autor oder ISBN suchen...'}
+                      />
                     </div>
-                    <div className="space-y-1">
-                      {selectedBooks.map((book, index) => (
-                        <div
-                          key={book.id}
-                          data-testid={`selected-book-${book.id}`}
-                          draggable
-                          onDragStart={() => handleDragStart(index)}
-                          onDragOver={e => handleDragOver(e, index)}
-                          onDragEnd={handleDragEnd}
-                          className="flex items-center gap-2 px-3 py-2 rounded-lg border"
-                          style={{
-                            borderColor: '#E5E7EB',
-                            backgroundColor: dragIndex === index ? '#F0F9FF' : '#FFFFFF',
-                          }}
-                        >
-                          <GripVertical className="w-4 h-4 flex-shrink-0 cursor-grab" style={{ color: '#9CA3AF' }} />
-                          {book.cover_url ? (
-                            <img src={book.cover_url} alt="" className="w-6 h-9 object-cover rounded flex-shrink-0" />
-                          ) : (
-                            <div className="w-6 h-9 rounded flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
-                              <BookOpen className="w-3 h-3" style={{ color: '#9CA3AF' }} />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs truncate" style={{ color: '#3A3A3A' }}>{book.title}</div>
-                            <div className="text-xs truncate" style={{ color: '#9CA3AF' }}>{book.author}</div>
-                          </div>
-                          <button
-                            onClick={() => removeBook(book.id)}
-                            data-testid={`button-remove-book-${book.id}`}
-                            className="p-1 rounded hover:bg-gray-100 flex-shrink-0"
-                          >
-                            <X className="w-3.5 h-3.5" style={{ color: '#EF4444' }} />
-                          </button>
+
+                    {searchLoading && (
+                      <div className="text-xs py-2" style={{ color: '#6B7280' }}>Suche...</div>
+                    )}
+
+                    {bookSearchResults.length > 0 && (
+                      <div className="border rounded-lg max-h-48 overflow-y-auto mb-3" style={{ borderColor: '#E5E7EB' }}>
+                        {bookSearchResults
+                          .filter(b => !selectedBooks.some(s => s.id === b.id))
+                          .slice(0, 10)
+                          .map(book => (
+                            <button
+                              key={book.id}
+                              onClick={() => addBook(book)}
+                              data-testid={`button-add-book-${book.id}`}
+                              className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 transition-colors border-b last:border-b-0"
+                              style={{ borderColor: '#F3F4F6' }}
+                            >
+                              {book.cover_url ? (
+                                <img src={book.cover_url} alt="" className="w-8 h-12 object-cover rounded flex-shrink-0" />
+                              ) : (
+                                <div className="w-8 h-12 rounded flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
+                                  <BookOpen className="w-4 h-4" style={{ color: '#9CA3AF' }} />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm truncate" style={{ color: '#3A3A3A' }}>{book.title}</div>
+                                <div className="text-xs truncate" style={{ color: '#6B7280' }}>{book.author}</div>
+                              </div>
+                              <Plus className="w-4 h-4 flex-shrink-0" style={{ color: '#247ba0' }} />
+                            </button>
+                          ))}
+                      </div>
+                    )}
+
+                    {selectedBooks.length > 0 && (
+                      <div>
+                        <div className="text-xs font-medium mb-2" style={{ color: '#6B7280' }}>
+                          Ausgewählt ({selectedBooks.length})
                         </div>
-                      ))}
+                        <div className="space-y-1">
+                          {selectedBooks.map((book, index) => (
+                            <div
+                              key={book.id}
+                              data-testid={`selected-book-${book.id}`}
+                              draggable
+                              onDragStart={() => handleDragStart(index)}
+                              onDragOver={e => handleDragOver(e, index)}
+                              onDragEnd={handleDragEnd}
+                              className="flex items-center gap-2 px-3 py-2 rounded-lg border"
+                              style={{
+                                borderColor: '#E5E7EB',
+                                backgroundColor: dragIndex === index ? '#F0F9FF' : '#FFFFFF',
+                              }}
+                            >
+                              <GripVertical className="w-4 h-4 flex-shrink-0 cursor-grab" style={{ color: '#9CA3AF' }} />
+                              {book.cover_url ? (
+                                <img src={book.cover_url} alt="" className="w-6 h-9 object-cover rounded flex-shrink-0" />
+                              ) : (
+                                <div className="w-6 h-9 rounded flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
+                                  <BookOpen className="w-3 h-3" style={{ color: '#9CA3AF' }} />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-xs truncate" style={{ color: '#3A3A3A' }}>{book.title}</div>
+                                <div className="text-xs truncate" style={{ color: '#9CA3AF' }}>{book.author}</div>
+                              </div>
+                              <button
+                                onClick={() => removeBook(book.id)}
+                                data-testid={`button-remove-book-${book.id}`}
+                                className="p-1 rounded hover:bg-gray-100 flex-shrink-0"
+                              >
+                                <X className="w-3.5 h-3.5" style={{ color: '#EF4444' }} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {wizardStep === 'content' && curationType === 'dynamic' && (
+              <div className="space-y-5" data-testid="wizard-step-content-dynamic">
+                <InfoBox text="Kombiniere Tags, um Bücher automatisch zusammenzustellen. UND-Tags: Alle müssen zutreffen. ODER-Tags: Mindestens einer muss zutreffen. Ausschluss-Tags: Diese Bücher werden herausgefiltert." />
+
+                <TagSearchInput
+                  label="UND-Tags (alle müssen zutreffen)"
+                  helperText="Bücher müssen ALLE diese Tags haben. Z.B. 'Roman' UND 'Familiengeschichte' zeigt nur Bücher, die beides sind."
+                  selectedTags={tagRulesIncludeAll}
+                  onAdd={tag => setTagRulesIncludeAll([...tagRulesIncludeAll, tag])}
+                  onRemove={tag => setTagRulesIncludeAll(tagRulesIncludeAll.filter(t => t !== tag))}
+                  tagColor="#247ba0"
+                  placeholder="Tag suchen (z.B. Verlag, Autor, Thema)..."
+                  testIdPrefix="tag-and"
+                />
+
+                <TagSearchInput
+                  label="ODER-Tags (mindestens einer muss zutreffen)"
+                  helperText="Bücher müssen MINDESTENS EINEN dieser Tags haben. Z.B. 'Krimi' ODER 'Thriller' zeigt Bücher aus beiden Bereichen."
+                  selectedTags={tagRulesIncludeAny}
+                  onAdd={tag => setTagRulesIncludeAny([...tagRulesIncludeAny, tag])}
+                  onRemove={tag => setTagRulesIncludeAny(tagRulesIncludeAny.filter(t => t !== tag))}
+                  tagColor="#059669"
+                  placeholder="Tag suchen..."
+                  testIdPrefix="tag-or"
+                />
+
+                <TagSearchInput
+                  label="Ausschluss-Tags (diese werden herausgefiltert)"
+                  helperText="Bücher mit diesen Tags werden NICHT in der Kuration angezeigt. Nützlich, um bestimmte Themen oder Verlage auszuschließen."
+                  selectedTags={tagRulesExclude}
+                  onAdd={tag => setTagRulesExclude([...tagRulesExclude, tag])}
+                  onRemove={tag => setTagRulesExclude(tagRulesExclude.filter(t => t !== tag))}
+                  tagColor="#DC2626"
+                  placeholder="Tag suchen..."
+                  testIdPrefix="tag-exclude"
+                />
+
+                {(tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0) && (
+                  <div className="pt-3" style={{ borderTop: '1px solid #E5E7EB' }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <Text as="span" variant="small" className="font-medium" style={{ color: '#3A3A3A' }}>
+                        Vorschau: Passende Bücher
+                      </Text>
+                      <button
+                        onClick={resolveBooksByTags}
+                        disabled={resolvingBooks}
+                        data-testid="button-resolve-preview"
+                        className="px-3 py-1.5 rounded-lg text-xs text-white transition-all disabled:opacity-50"
+                        style={{ backgroundColor: '#6D28D9' }}
+                      >
+                        {resolvingBooks ? 'Suche...' : 'Bücher laden'}
+                      </button>
                     </div>
+                    {resolvingBooks && (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: '#6D28D9' }} />
+                      </div>
+                    )}
+                    {!resolvingBooks && resolvedBooks.length > 0 && (
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
+                        <Text as="p" variant="small" className="mb-2" style={{ color: '#059669' }}>
+                          {resolvedBooks.length} Bücher gefunden
+                        </Text>
+                        {resolvedBooks.slice(0, 10).map(book => (
+                          <div key={book.id} className="flex items-center gap-2 px-2 py-1.5 rounded" style={{ backgroundColor: '#FAF5FF' }}>
+                            {book.cover_url ? (
+                              <img src={book.cover_url} alt="" className="w-6 h-9 object-cover rounded flex-shrink-0" />
+                            ) : (
+                              <div className="w-6 h-9 rounded flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
+                                <BookOpen className="w-3 h-3" style={{ color: '#9CA3AF' }} />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs truncate" style={{ color: '#3A3A3A' }}>{book.title}</div>
+                              <div className="text-xs truncate" style={{ color: '#9CA3AF' }}>{book.author}</div>
+                            </div>
+                          </div>
+                        ))}
+                        {resolvedBooks.length > 10 && (
+                          <Text as="p" variant="small" style={{ color: '#6B7280' }}>+ {resolvedBooks.length - 10} weitere</Text>
+                        )}
+                      </div>
+                    )}
+                    {!resolvingBooks && resolvedBooks.length === 0 && (tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0) && (
+                      <Text as="p" variant="small" style={{ color: '#6B7280' }}>
+                        Klicke auf "Bücher laden", um passende Bücher anzuzeigen.
+                      </Text>
+                    )}
                   </div>
                 )}
               </div>
+            )}
 
-              <div className="flex gap-3 pt-4">
+            {wizardStep === 'review' && (
+              <div className="space-y-4" data-testid="wizard-step-review">
+                <InfoBox text="Prüfe alle Angaben. Nach dem Speichern kannst du die Kuration jederzeit bearbeiten oder veröffentlichen." />
+
+                <div className="rounded-lg p-4" style={{ backgroundColor: '#F9FAFB' }}>
+                  <div className="space-y-3">
+                    <div>
+                      <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Typ</Text>
+                      <div className="flex items-center gap-2 mt-1">
+                        {curationType === 'manual' ? <Hand className="w-4 h-4" style={{ color: '#247ba0' }} /> : <Sparkles className="w-4 h-4" style={{ color: '#6D28D9' }} />}
+                        <span className="text-sm" style={{ color: '#3A3A3A' }}>{curationType === 'manual' ? 'Manuelle Kuration' : 'Dynamische Kuration'}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Kategorie</Text>
+                      <div className="text-sm mt-1" style={{ color: '#3A3A3A' }}>{selectedCategory?.name || selectedCategory?.label || '–'}</div>
+                    </div>
+
+                    <div>
+                      <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Titel</Text>
+                      <div className="text-sm font-semibold mt-1" style={{ color: '#3A3A3A' }}>{formTitle || '–'}</div>
+                    </div>
+
+                    {formDescription && (
+                      <div>
+                        <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Begründung</Text>
+                        <div className="text-sm mt-1" style={{ color: '#3A3A3A' }}>{formDescription}</div>
+                      </div>
+                    )}
+
+                    {curationType === 'manual' && (
+                      <div>
+                        <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Bücher</Text>
+                        <div className="text-sm mt-1" style={{ color: '#3A3A3A' }}>{selectedBooks.length} Bücher ausgewählt</div>
+                        {derivedTags.length > 0 && (
+                          <div className="mt-2">
+                            <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Automatisch abgeleitete Tags</Text>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {derivedTags.map(t => (
+                                <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}>{t}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {selectedBooks.length > 0 && (
+                          <div className="mt-2 space-y-1">
+                            {selectedBooks.slice(0, 5).map(book => (
+                              <div key={book.id} className="flex items-center gap-2">
+                                {book.cover_url ? (
+                                  <img src={book.cover_url} alt="" className="w-5 h-7 object-cover rounded flex-shrink-0" />
+                                ) : (
+                                  <div className="w-5 h-7 rounded flex-shrink-0" style={{ backgroundColor: '#F3F4F6' }} />
+                                )}
+                                <span className="text-xs truncate" style={{ color: '#3A3A3A' }}>{book.title}</span>
+                              </div>
+                            ))}
+                            {selectedBooks.length > 5 && (
+                              <Text as="span" variant="small" style={{ color: '#6B7280' }}>+ {selectedBooks.length - 5} weitere</Text>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {curationType === 'dynamic' && (
+                      <div>
+                        <Text as="span" variant="small" className="font-medium" style={{ color: '#6B7280' }}>Tag-Regeln</Text>
+                        {resolvedBooks.length > 0 && (
+                          <div className="text-sm mt-1" style={{ color: '#059669' }}>
+                            {resolvedBooks.length} Bücher werden automatisch zugeordnet
+                          </div>
+                        )}
+                        <div className="mt-2 space-y-2">
+                          {tagRulesIncludeAll.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className="text-xs font-medium" style={{ color: '#247ba0' }}>UND:</span>
+                              {tagRulesIncludeAll.map(t => (
+                                <span key={t} className="text-xs px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: '#247ba0' }}>{t}</span>
+                              ))}
+                            </div>
+                          )}
+                          {tagRulesIncludeAny.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className="text-xs font-medium" style={{ color: '#059669' }}>ODER:</span>
+                              {tagRulesIncludeAny.map(t => (
+                                <span key={t} className="text-xs px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: '#059669' }}>{t}</span>
+                              ))}
+                            </div>
+                          )}
+                          {tagRulesExclude.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className="text-xs font-medium" style={{ color: '#DC2626' }}>Ausschluss:</span>
+                              {tagRulesExclude.map(t => (
+                                <span key={t} className="text-xs px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: '#DC2626' }}>{t}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-6 mt-4" style={{ borderTop: '1px solid #E5E7EB' }}>
+              {wizardStep !== 'type' && (
                 <button
-                  onClick={closeModal}
+                  onClick={goBack}
+                  data-testid="button-wizard-back"
+                  className="flex items-center gap-1.5 px-4 py-3 rounded-lg font-medium transition-all"
+                  style={{ backgroundColor: '#F3F4F6', color: '#3A3A3A' }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Zurück
+                </button>
+              )}
+              <div className="flex-1" />
+              {wizardStep === 'type' && (
+                <button
+                  onClick={closeWizard}
                   data-testid="button-cancel"
-                  className="flex-1 px-4 py-3 rounded-lg font-medium transition-all"
+                  className="px-4 py-3 rounded-lg font-medium transition-all"
                   style={{ backgroundColor: '#F3F4F6', color: '#3A3A3A' }}
                 >
                   Abbrechen
                 </button>
+              )}
+              {wizardStep !== 'review' ? (
                 <button
-                  onClick={saveCuration}
-                  disabled={!formTitle.trim() || saving}
-                  data-testid="button-save-curation"
-                  className="flex-1 px-4 py-3 rounded-lg font-medium transition-all disabled:opacity-50"
+                  onClick={goNext}
+                  disabled={!canGoNext()}
+                  data-testid="button-wizard-next"
+                  className="flex items-center gap-1.5 px-6 py-3 rounded-lg font-medium transition-all disabled:opacity-50"
                   style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
                 >
-                  {saving ? 'Speichern...' : (editingCuration ? 'Aktualisieren' : 'Erstellen')}
+                  Weiter
+                  <ChevronRight className="w-4 h-4" />
                 </button>
-              </div>
+              ) : (
+                <button
+                  onClick={saveCuration}
+                  disabled={saving}
+                  data-testid="button-save-curation"
+                  className="flex items-center gap-1.5 px-6 py-3 rounded-lg font-medium transition-all disabled:opacity-50"
+                  style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
+                >
+                  {saving ? 'Speichern...' : (editingCuration ? 'Aktualisieren' : 'Kuration erstellen')}
+                </button>
+              )}
             </div>
           </div>
         </div>
