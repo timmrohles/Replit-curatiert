@@ -280,6 +280,8 @@ export function UserCurations() {
 
   const [saving, setSaving] = useState(false);
   const [bookCounts, setBookCounts] = useState<Record<number, number>>({});
+  const [curationBooks, setCurationBooks] = useState<Record<number, BookResult[]>>({});
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<number, boolean>>({});
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [resolvedBooks, setResolvedBooks] = useState<BookResult[]>([]);
   const [resolvingBooks, setResolvingBooks] = useState(false);
@@ -293,16 +295,27 @@ export function UserCurations() {
       if (data.ok) {
         setCurations(data.data || []);
         const counts: Record<number, number> = {};
+        const allBooks: Record<number, BookResult[]> = {};
         for (const c of (data.data || [])) {
           try {
             const bRes = await fetch(`${API_BASE}/user-curations/${c.id}/books`);
             const bData = await bRes.json();
-            counts[c.id] = bData.ok ? (bData.data?.length || 0) : 0;
+            const books = bData.ok ? (bData.data || []) : [];
+            counts[c.id] = books.length;
+            allBooks[c.id] = books.map((b: any) => ({
+              id: b.id || b.book_id,
+              title: b.title || '',
+              author: b.author || '',
+              cover_url: b.cover_url || b.cover || null,
+              isbn13: b.isbn13 || null,
+            }));
           } catch {
             counts[c.id] = 0;
+            allBooks[c.id] = [];
           }
         }
         setBookCounts(counts);
+        setCurationBooks(allBooks);
       } else {
         setError(data.error || 'Fehler beim Laden');
       }
@@ -713,64 +726,185 @@ export function UserCurations() {
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {curations.map((curation) => (
-            <div
-              key={curation.id}
-              data-testid={`card-curation-${curation.id}`}
-              className="p-4 md:p-6 transition-all duration-200"
-            >
-              <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h2 className="text-base md:text-lg" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-                      {curation.title}
-                    </h2>
-                    <span
-                      className="text-xs px-2 py-0.5 rounded-full"
-                      style={{
-                        backgroundColor: curation.curation_type === 'dynamic' ? '#EDE9FE' : '#DBEAFE',
-                        color: curation.curation_type === 'dynamic' ? '#6D28D9' : '#1E40AF',
-                      }}
-                    >
-                      {curation.curation_type === 'dynamic' ? 'Dynamisch' : 'Manuell'}
-                    </span>
-                    <button
-                      onClick={() => togglePublished(curation)}
-                      data-testid={`button-toggle-publish-${curation.id}`}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs cursor-pointer"
-                      style={curation.is_published
-                        ? { backgroundColor: '#D1FAE5', color: '#065F46' }
-                        : { backgroundColor: '#FEF3C7', color: '#92400E' }
-                      }
-                    >
-                      {curation.is_published ? 'Veröffentlicht' : 'Entwurf'}
-                    </button>
-                  </div>
+        <div className="space-y-6">
+          {curations.map((curation) => {
+            const books = curationBooks[curation.id] || [];
+            const isDescExpanded = expandedDescriptions[curation.id] || false;
+            const descCharLimit = 280;
+            const shouldTruncateDesc = curation.description && curation.description.length > descCharLimit;
 
-                  {curation.category_label && (
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Tag className="w-3 h-3" style={{ color: '#9CA3AF' }} />
-                      <span className="text-xs" style={{ color: '#6B7280' }}>{curation.category_label}</span>
+            return (
+              <div
+                key={curation.id}
+                data-testid={`card-curation-${curation.id}`}
+                className="py-2 md:py-4 w-full"
+              >
+                {/* Creator-style Header */}
+                <div className="px-4 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden flex-shrink-0" style={{ border: '2px solid #E5E7EB' }}>
+                      <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#247ba0' }}>
+                        <span className="text-white font-bold text-lg">{(curation.title || 'K')[0].toUpperCase()}</span>
+                      </div>
                     </div>
-                  )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm md:text-base uppercase tracking-wide" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+                          {curation.title}
+                        </span>
+                        <button
+                          onClick={() => togglePublished(curation)}
+                          data-testid={`button-toggle-publish-${curation.id}`}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] cursor-pointer"
+                          style={curation.is_published
+                            ? { backgroundColor: '#D1FAE5', color: '#065F46' }
+                            : { backgroundColor: '#FEF3C7', color: '#92400E' }
+                          }
+                        >
+                          {curation.is_published ? 'Veröffentlicht' : 'Entwurf'}
+                        </button>
+                      </div>
+                      {curation.category_label && (
+                        <Text as="div" variant="xs" style={{ color: '#6B7280' }}>{curation.category_label}</Text>
+                      )}
+                    </div>
+                    <div className="flex gap-1.5 flex-shrink-0">
+                      <button
+                        onClick={() => openEditWizard(curation)}
+                        data-testid={`button-edit-curation-${curation.id}`}
+                        className="p-2 rounded-lg transition-all"
+                        style={{ backgroundColor: '#F3F4F6', color: '#3A3A3A' }}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => deleteCuration(curation.id)}
+                        data-testid={`button-delete-curation-${curation.id}`}
+                        className="p-2 rounded-lg transition-all"
+                        style={{ backgroundColor: '#FEF2F2', color: '#EF4444' }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
-                  {curation.description && (
-                    <p className="text-xs md:text-sm mb-2" style={{ color: '#6B7280' }}>
-                      {curation.description}
-                    </p>
-                  )}
+                {/* Tags row */}
+                <div className="flex flex-wrap items-center gap-2 px-4 mb-2">
+                  {Array.isArray(curation.tags) && curation.tags.length > 0 && curation.tags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      data-testid={`tag-curation-${curation.id}-${idx}`}
+                      className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full"
+                      style={{ backgroundColor: '#e8f4f8', color: '#247ba0', border: '1px solid #c5dfe8' }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  <span
+                    data-testid={`badge-type-${curation.id}`}
+                    className="text-xs px-2.5 py-1 rounded-full"
+                    style={{
+                      backgroundColor: curation.curation_type === 'dynamic' ? '#EDE9FE' : '#DBEAFE',
+                      color: curation.curation_type === 'dynamic' ? '#6D28D9' : '#1E40AF',
+                    }}
+                  >
+                    {curation.curation_type === 'dynamic' ? 'Dynamisch' : 'Manuell'}
+                  </span>
+                </div>
 
-                  {Array.isArray(curation.tags) && curation.tags.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                      {curation.tags.map((tag, idx) => (
-                        <span key={idx} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF' }}>
-                          {tag}
+                {/* Description with expand/collapse */}
+                {curation.description && (
+                  <div className="px-4 mb-3">
+                    <Text as="p" variant="small" style={{ color: '#4B5563', lineHeight: '1.6' }}>
+                      {shouldTruncateDesc && !isDescExpanded
+                        ? curation.description.slice(0, descCharLimit) + '...'
+                        : curation.description
+                      }
+                    </Text>
+                    {shouldTruncateDesc && (
+                      <button
+                        onClick={() => setExpandedDescriptions(prev => ({ ...prev, [curation.id]: !isDescExpanded }))}
+                        className="text-xs mt-1 flex items-center gap-1"
+                        style={{ color: '#247ba0' }}
+                        data-testid={`button-expand-desc-${curation.id}`}
+                      >
+                        {isDescExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen'}
+                        <ChevronRight className={`w-3 h-3 transition-transform ${isDescExpanded ? 'rotate-90' : ''}`} />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Sort chips row */}
+                {books.length > 0 && (
+                  <div className="flex justify-end px-4 mb-3">
+                    <div
+                      className="flex gap-2 overflow-x-auto"
+                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    >
+                      {['Beliebtheit', 'Auszeichnungen', 'Independent', 'Hidden Gems', 'Aktuell'].map(chip => (
+                        <span
+                          key={chip}
+                          className="sort-chip text-xs px-3 py-1.5 rounded-full whitespace-nowrap cursor-default"
+                          style={{ backgroundColor: '#F3F4F6', color: '#3A3A3A', border: '1px solid #E5E7EB' }}
+                        >
+                          {chip}
                         </span>
                       ))}
                     </div>
-                  )}
+                  </div>
+                )}
 
+                {/* Book carousel */}
+                {books.length > 0 ? (
+                  <div
+                    className="flex gap-4 overflow-x-auto px-4 pb-4"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
+                    data-testid={`carousel-curation-${curation.id}`}
+                  >
+                    {books.map(book => (
+                      <div key={book.id} className="flex-shrink-0" style={{ width: 'clamp(140px, 22vw, 200px)' }} data-testid={`card-book-${book.id}`}>
+                        <div
+                          className="relative rounded-sm overflow-hidden group"
+                          style={{
+                            aspectRatio: '2/3',
+                            border: '1px solid var(--color-border, #E5E7EB)',
+                            boxShadow: '2px 4px 12px rgba(0,0,0,0.08)',
+                          }}
+                        >
+                          {book.cover_url ? (
+                            <img
+                              src={book.cover_url}
+                              alt={book.title}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                              data-testid={`img-cover-${book.id}`}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: '#F3F4F6' }}>
+                              <BookOpen className="w-8 h-8" style={{ color: '#9CA3AF' }} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-2 px-1">
+                          <Text as="div" variant="xs" className="font-medium truncate" style={{ color: '#3A3A3A' }} data-testid={`text-title-${book.id}`}>{book.title}</Text>
+                          <Text as="div" variant="xs" className="truncate" style={{ color: '#6B7280' }} data-testid={`text-author-${book.id}`}>{book.author}</Text>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-4 py-6 text-center">
+                    <BookOpen className="w-10 h-10 mx-auto mb-2" style={{ color: '#D1D5DB' }} />
+                    <Text as="p" variant="small" style={{ color: '#9CA3AF' }}>
+                      Noch keine Bücher in dieser Kuration
+                    </Text>
+                  </div>
+                )}
+
+                {/* Footer meta */}
+                <div className="flex items-center justify-between px-4 pt-2" style={{ borderTop: '1px solid #F3F4F6' }}>
                   <div className="flex items-center gap-4 text-xs" style={{ color: '#9CA3AF' }}>
                     <span className="flex items-center gap-1">
                       <BookOpen className="w-3.5 h-3.5" />
@@ -781,30 +915,9 @@ export function UserCurations() {
                     </span>
                   </div>
                 </div>
-
-                <div className="flex md:flex-col gap-2">
-                  <button
-                    onClick={() => openEditWizard(curation)}
-                    data-testid={`button-edit-curation-${curation.id}`}
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs transition-all hover:shadow-md touch-manipulation"
-                    style={{ backgroundColor: '#F3F4F6', color: '#3A3A3A' }}
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span className="md:hidden">Bearbeiten</span>
-                  </button>
-                  <button
-                    onClick={() => deleteCuration(curation.id)}
-                    data-testid={`button-delete-curation-${curation.id}`}
-                    className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs transition-all hover:shadow-md touch-manipulation"
-                    style={{ backgroundColor: '#FEF2F2', color: '#EF4444' }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    <span className="md:hidden">Löschen</span>
-                  </button>
-                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
