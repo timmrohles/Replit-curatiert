@@ -22,6 +22,7 @@ const SiteBannerTab = lazy(() => import('../../components/admin/SiteBannerTab').
 const AdminAffiliate = lazy(() => import('../../components/admin/AdminAffiliate').then(m => ({ default: m.AdminAffiliate })));
 const AdminAuthorRequests = lazy(() => import('../../components/admin/AdminAuthorRequests').then(m => ({ default: m.AdminAuthorRequests })));
 const ContentReportsTab = lazy(() => import('../../components/admin/ContentReportsTab').then(m => ({ default: m.ContentReportsTab })));
+const AdminEventsTab = lazy(() => import('../../components/admin/AdminEventsTab').then(m => ({ default: m.AdminEventsTab })));
 
 // ✅ Import types and API functions
 import type { Book, Curator, Tag, ONIXTag, MenuItem, Section, Page } from '../../utils/api';
@@ -91,8 +92,8 @@ export function ContentManager() {
   };
   
   // ✅ URL-based tab navigation
-  type TabType = 'books' | 'curators' | 'storefronts' | 'navigation' | 'pages' | 'category-cards' | 'awards' | 'tags' | 'persons' | 'user-modules' | 'author-requests' | 'settings' | 'diagnostics' | 'affiliates' | 'sections' | 'site-banner' | 'meldungen';
-  const validTabs: TabType[] = ['books', 'curators', 'storefronts', 'navigation', 'pages', 'category-cards', 'awards', 'tags', 'persons', 'user-modules', 'author-requests', 'settings', 'diagnostics', 'affiliates', 'sections', 'site-banner', 'meldungen'];
+  type TabType = 'books' | 'curators' | 'storefronts' | 'navigation' | 'pages' | 'category-cards' | 'awards' | 'tags' | 'persons' | 'user-modules' | 'author-requests' | 'settings' | 'diagnostics' | 'affiliates' | 'sections' | 'site-banner' | 'meldungen' | 'events';
+  const validTabs: TabType[] = ['books', 'curators', 'storefronts', 'navigation', 'pages', 'category-cards', 'awards', 'tags', 'persons', 'user-modules', 'author-requests', 'settings', 'diagnostics', 'affiliates', 'sections', 'site-banner', 'meldungen', 'events'];
   
   const tabParam = searchParams.get('tab') as TabType;
   const activeTab: TabType = tabParam && validTabs.includes(tabParam) ? tabParam : 'books';
@@ -767,6 +768,18 @@ export function ContentManager() {
           >
             📋 Meldungen
           </button>
+          <button
+            onClick={() => setActiveTab('events')}
+            className="px-4 py-2 rounded-lg transition-all text-sm"
+            style={{
+              backgroundColor: activeTab === 'events' ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
+              color: '#3A3A3A',
+              fontFamily: 'Fjalla One'
+            }}
+            data-testid="button-tab-events"
+          >
+            📅 Veranstaltungen
+          </button>
         </div>
 
         {/* Content */}
@@ -929,6 +942,15 @@ export function ContentManager() {
             <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Meldungen...</div>}>
               <TabErrorBoundary tabName="Meldungen">
                 <ContentReportsTab />
+              </TabErrorBoundary>
+            </Suspense>
+          )}
+
+          {/* Events Tab */}
+          {activeTab === 'events' && (
+            <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Veranstaltungen...</div>}>
+              <TabErrorBoundary tabName="Veranstaltungen">
+                <AdminEventsTab />
               </TabErrorBoundary>
             </Suspense>
           )}

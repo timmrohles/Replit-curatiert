@@ -7001,5 +7001,57 @@ export async function registerRoutes(
     }
   });
 
+  // ============================================
+  // ADMIN: Events Management
+  // ============================================
+
+  app.get('/api/admin/events', async (req: Request, res: Response) => {
+    const isAuthed = await requireAdminGuard(req, res);
+    if (!isAuthed) return;
+    try {
+      const result = await queryDB(`
+        SELECT e.*,
+          (SELECT COUNT(*) FROM event_participants WHERE event_id = e.id) as participant_count
+        FROM user_events e
+        ORDER BY e.created_at DESC
+      `);
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Admin get events error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.put('/api/admin/events/:id/toggle-publish', async (req: Request, res: Response) => {
+    const isAuthed = await requireAdminGuard(req, res);
+    if (!isAuthed) return;
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      const current = await queryDB(`SELECT is_published FROM user_events WHERE id = $1`, [id]);
+      if (current.rows.length === 0) return res.status(404).json({ ok: false, error: 'Event not found' });
+      const newStatus = !current.rows[0].is_published;
+      await queryDB(`UPDATE user_events SET is_published = $1 WHERE id = $2`, [newStatus, id]);
+      return res.json({ ok: true, is_published: newStatus });
+    } catch (error) {
+      log.error('Admin toggle event publish error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/admin/events/:id', async (req: Request, res: Response) => {
+    const isAuthed = await requireAdminGuard(req, res);
+    if (!isAuthed) return;
+    try {
+      const id = parseIdParam(req.params.id);
+      if (!id) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      await queryDB(`DELETE FROM user_events WHERE id = $1`, [id]);
+      return res.json({ ok: true });
+    } catch (error) {
+      log.error('Admin delete event error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
   return httpServer;
 }

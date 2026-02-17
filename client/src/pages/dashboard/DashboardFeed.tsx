@@ -24,6 +24,11 @@ import {
   Hash,
   Home,
   Megaphone,
+  Calendar,
+  MapPin,
+  Users,
+  ExternalLink,
+  Clock,
 } from 'lucide-react';
 import type { FeedSectionConfig } from './DashboardFeedContext';
 import { BookCarouselItem, type BookCarouselItemData } from '../../components/book/BookCarouselItem';
@@ -155,6 +160,7 @@ const SECTION_TO_ENTITY_TYPES: Record<string, FrontendEntityType[]> = {
   followed_tags: ['tag', 'genre', 'topic'],
   followed_media: ['media'],
   followed_awards: ['award'],
+  followed_events: ['event'],
   followed_curators: ['creator'],
   recommendations: ['book'],
 };
@@ -180,6 +186,7 @@ const SECTION_SEARCH_ENDPOINTS: Record<string, string> = {
   followed_tags: '/api/onix-tags',
   followed_media: '/api/onix-tags',
   followed_awards: '/api/awards',
+  followed_events: '/api/user-events',
   followed_curators: '/api/curators',
   recommendations: '/api/books/search',
 };
@@ -197,6 +204,7 @@ const SECTION_PLACEHOLDER: Record<string, string> = {
   followed_tags: 'Thema suchen...',
   followed_media: 'Medienformat suchen...',
   followed_awards: 'Auszeichnung suchen...',
+  followed_events: 'Veranstaltung suchen...',
   followed_curators: 'Kurator:in suchen...',
   recommendations: 'Buch suchen...',
 };
@@ -652,6 +660,245 @@ function CuratorSectionHeader({ curator, isSponsored }: { curator: MockCurator; 
   );
 }
 
+interface MockEvent {
+  id: string;
+  title: string;
+  organizer: string;
+  description: string;
+  event_type: string;
+  event_date: string;
+  location_name: string;
+  location_type: string;
+  background_image_url: string;
+  entry_fee: number;
+  max_participants: number | null;
+  participant_count: number;
+  event_page_url?: string;
+}
+
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  lesung: 'Lesung',
+  buchclub: 'Buchclub',
+  workshop: 'Workshop',
+  signierstunde: 'Signierstunde',
+  messe: 'Messe',
+  vortrag: 'Vortrag',
+  sonstiges: 'Sonstiges',
+};
+
+const MOCK_EVENTS: MockEvent[] = [
+  {
+    id: 'evt-1',
+    title: 'Lesung: Die Welt von morgen',
+    organizer: 'Buchhandlung am Markt',
+    description: 'Eine fesselnde Lesung mit der Autorin Maria Schneider. Erleben Sie eine Reise durch die Zukunftswelten ihres neuen Romans. Im Anschluss gibt es die Möglichkeit zum Gespräch und Signieren.',
+    event_type: 'lesung',
+    event_date: '2026-03-15T19:00:00Z',
+    location_name: 'Buchhandlung am Markt, München',
+    location_type: 'vor_ort',
+    background_image_url: '',
+    entry_fee: 8,
+    max_participants: 40,
+    participant_count: 28,
+    event_page_url: '',
+  },
+  {
+    id: 'evt-2',
+    title: 'Buchclub: Klassiker neu entdecken',
+    organizer: 'Literaturkreis Berlin',
+    description: 'Jeden Monat widmen wir uns einem Klassiker der Weltliteratur und diskutieren ihn aus heutiger Perspektive. Diesen Monat: Franz Kafkas "Der Prozess".',
+    event_type: 'buchclub',
+    event_date: '2026-03-20T18:30:00Z',
+    location_name: 'Online via Zoom',
+    location_type: 'online',
+    background_image_url: '',
+    entry_fee: 0,
+    max_participants: null,
+    participant_count: 15,
+  },
+  {
+    id: 'evt-3',
+    title: 'Workshop: Kreatives Schreiben',
+    organizer: 'Schreibwerkstatt Hamburg',
+    description: 'Ein intensiver Workshop für alle, die ihre Schreibfähigkeiten verbessern möchten. Techniken, Übungen und persönliches Feedback von erfahrenen Autor:innen.',
+    event_type: 'workshop',
+    event_date: '2026-04-05T10:00:00Z',
+    location_name: 'Kulturzentrum Altona, Hamburg',
+    location_type: 'vor_ort',
+    background_image_url: '',
+    entry_fee: 45,
+    max_participants: 20,
+    participant_count: 12,
+    event_page_url: 'https://example.com/workshop',
+  },
+  {
+    id: 'evt-4',
+    title: 'Signierstunde mit Thomas Müller',
+    organizer: 'Thalia Buchhandlung',
+    description: 'Treffen Sie den Bestseller-Autor Thomas Müller persönlich und lassen Sie sich Ihr Exemplar signieren. Begrenzte Plätze!',
+    event_type: 'signierstunde',
+    event_date: '2026-03-28T14:00:00Z',
+    location_name: 'Thalia, Zeil, Frankfurt',
+    location_type: 'vor_ort',
+    background_image_url: '',
+    entry_fee: 0,
+    max_participants: 50,
+    participant_count: 42,
+  },
+];
+
+function EventCard({ event }: { event: MockEvent }) {
+  const [expanded, setExpanded] = useState(false);
+  const dateStr = new Date(event.event_date).toLocaleDateString('de-DE', {
+    day: '2-digit', month: 'long', year: 'numeric',
+  });
+  const timeStr = new Date(event.event_date).toLocaleTimeString('de-DE', {
+    hour: '2-digit', minute: '2-digit',
+  });
+  const typeLabel = EVENT_TYPE_LABELS[event.event_type] || event.event_type;
+  const spotsLeft = event.max_participants ? event.max_participants - event.participant_count : null;
+
+  return (
+    <div
+      className="rounded-lg overflow-hidden flex flex-col h-full"
+      style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB' }}
+      data-testid={`event-card-${event.id}`}
+    >
+      <div
+        className="h-36 w-full relative flex items-end"
+        style={{
+          background: event.background_image_url
+            ? `url(${event.background_image_url}) center/cover no-repeat`
+            : 'linear-gradient(135deg, #247ba0 0%, #1a5c78 50%, #0f3d52 100%)',
+        }}
+      >
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)' }} />
+        <div className="relative z-10 p-3 w-full">
+          <span
+            className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold"
+            style={{ backgroundColor: 'rgba(255,255,255,0.2)', color: '#FFFFFF', backdropFilter: 'blur(4px)' }}
+          >
+            {typeLabel}
+          </span>
+        </div>
+      </div>
+
+      <div className="p-4 flex flex-col flex-1 gap-2">
+        <h4
+          className="text-sm font-bold leading-tight line-clamp-2"
+          style={{ color: '#3A3A3A', fontFamily: 'Fjalla One' }}
+          data-testid={`text-event-title-${event.id}`}
+        >
+          {event.title}
+        </h4>
+        <Text as="span" variant="small" className="text-gray-500 font-medium">
+          {event.organizer}
+        </Text>
+
+        <div className="flex flex-col gap-1 mt-1">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#247ba0' }} />
+            <Text as="span" variant="xs" className="text-gray-600">{dateStr}</Text>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#247ba0' }} />
+            <Text as="span" variant="xs" className="text-gray-600">{timeStr} Uhr</Text>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#247ba0' }} />
+            <Text as="span" variant="xs" className="text-gray-600 line-clamp-1">{event.location_name}</Text>
+          </div>
+        </div>
+
+        <div className="mt-1">
+          <Text
+            as="p"
+            variant="xs"
+            className={`text-gray-500 leading-relaxed ${expanded ? '' : 'line-clamp-2'}`}
+          >
+            {event.description}
+          </Text>
+          {event.description.length > 80 && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="text-xs font-semibold mt-0.5"
+              style={{ color: '#247ba0' }}
+              data-testid={`button-expand-event-${event.id}`}
+            >
+              {expanded ? 'weniger' : 'mehr lesen'}
+            </button>
+          )}
+        </div>
+
+        <div className="mt-auto pt-3 border-t flex items-center justify-between gap-2" style={{ borderColor: '#F3F4F6' }}>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Users className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
+              <Text as="span" variant="xs" className="text-gray-500">
+                {event.participant_count}{event.max_participants ? `/${event.max_participants}` : ''}
+              </Text>
+            </div>
+            {event.entry_fee > 0 && (
+              <Text as="span" variant="xs" className="font-semibold" style={{ color: '#247ba0' }}>
+                {event.entry_fee.toFixed(2).replace('.', ',')} &euro;
+              </Text>
+            )}
+            {event.entry_fee === 0 && (
+              <Text as="span" variant="xs" className="font-semibold" style={{ color: '#16a34a' }}>
+                Kostenlos
+              </Text>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {event.event_page_url && (
+              <a
+                href={event.event_page_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 rounded-md transition-colors"
+                style={{ color: '#247ba0' }}
+                data-testid={`link-event-page-${event.id}`}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+            <button
+              className="text-xs px-3 py-1.5 rounded-md font-semibold transition-colors"
+              style={{
+                backgroundColor: spotsLeft !== null && spotsLeft <= 0 ? '#E5E7EB' : '#247ba0',
+                color: spotsLeft !== null && spotsLeft <= 0 ? '#9CA3AF' : '#FFFFFF',
+              }}
+              disabled={spotsLeft !== null && spotsLeft <= 0}
+              data-testid={`button-participate-${event.id}`}
+            >
+              {spotsLeft !== null && spotsLeft <= 0 ? 'Ausgebucht' : 'Teilnehmen'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FeedEventCarousel({ events }: { events: MockEvent[] }) {
+  return (
+    <CarouselContainer
+      showDesktopButtons={events.length > 3}
+      showMobileButtons={events.length > 1}
+      className="pb-4"
+      buttonOffset={8}
+    >
+      <div className="flex -ml-4">
+        {events.map((event) => (
+          <div key={event.id} className="flex-[0_0_85%] sm:flex-[0_0_50%] md:flex-[0_0_33.333%] min-w-0 pl-4">
+            <EventCard event={event} />
+          </div>
+        ))}
+      </div>
+    </CarouselContainer>
+  );
+}
+
 function FeedBookCarousel({ books }: { books: BookCarouselItemData[] }) {
   return (
     <CarouselContainer
@@ -709,6 +956,7 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
   const { favorites, toggleFavorite } = useFavorites();
   const isCuratorSection = section.id === 'followed_curators';
   const isSponsoredSection = section.id === 'sponsored';
+  const isEventsSection = section.id === 'followed_events';
   const isReadingSection = READING_SECTIONS.includes(section.id as ReadingStatus);
   const books = useMemo(() => getMockBooksForSection(section.id), [section.id]);
   const tags = useMemo(() => favoritesToTags(favorites, section.id), [favorites, section.id]);
@@ -877,10 +1125,16 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         )}
 
-        <SortChips sortBy={sortBy} setSortBy={setSortBy} />
+        {!isEventsSection && (
+          <SortChips sortBy={sortBy} setSortBy={setSortBy} />
+        )}
 
         <div className="mb-4">
-          <FeedBookCarousel books={books} />
+          {isEventsSection ? (
+            <FeedEventCarousel events={MOCK_EVENTS} />
+          ) : (
+            <FeedBookCarousel books={books} />
+          )}
         </div>
       </div>
     </section>

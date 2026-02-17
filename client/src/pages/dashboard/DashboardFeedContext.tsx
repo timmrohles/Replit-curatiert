@@ -14,6 +14,7 @@ export type FeedSectionType =
   | 'followed_tags'
   | 'followed_media'
   | 'followed_awards'
+  | 'followed_events'
   | 'recommendations';
 
 export type ReadingStatus = 'currently_reading' | 'already_read' | 'want_to_read';
@@ -140,6 +141,13 @@ const DEFAULT_SECTIONS: FeedSectionConfig[] = [
     id: 'followed_awards',
     label: 'Meine Auszeichnungen',
     description: 'Bücher mit den Literaturpreisen und Auszeichnungen, die dich interessieren.',
+    visible: true,
+    isPublic: false,
+  },
+  {
+    id: 'followed_events',
+    label: 'Meine Veranstaltungen',
+    description: 'Lesungen, Workshops und Events, die dich interessieren oder an denen du teilnimmst.',
     visible: true,
     isPublic: false,
   },
