@@ -472,7 +472,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
       {/* Produktdetails - FESTE HÖHE für einheitliche Cards */}
       <div className="px-2 md:px-3 pb-2 md:pb-3 flex flex-col gap-1 h-[340px] md:h-[320px]">
         {/* Content-Bereich - Titel und Autor bleiben immer gleich */}
-        <div className="flex flex-col gap-0.5 flex-1 overflow-hidden">
+        <div className="flex flex-col gap-2 flex-1 overflow-hidden">
           <Heading 
             as="h4" 
             variant="h4" 
