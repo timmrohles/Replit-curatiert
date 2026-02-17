@@ -472,11 +472,11 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
       {/* Produktdetails - FESTE HÖHE für einheitliche Cards */}
       <div className="px-2 md:px-3 pb-2 md:pb-3 flex flex-col gap-1 h-[340px] md:h-[320px]">
         {/* Content-Bereich - Titel und Autor bleiben immer gleich */}
-        <div className="flex flex-col gap-2 flex-1 overflow-hidden">
+        <div className="flex flex-col gap-1 flex-1 overflow-hidden">
           <Heading 
             as="h4" 
             variant="h4" 
-            className="text-foreground line-clamp-2 !normal-case min-h-[4rem] flex-shrink-0"
+            className="text-foreground line-clamp-2 !normal-case min-h-[3rem] flex-shrink-0"
           >
             {book.title}
           </Heading>
@@ -484,7 +484,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
           <Text 
             as="p" 
             variant="base" 
-            className="text-foreground-muted !normal-case !font-bold !tracking-normal line-clamp-2 min-h-[2.5rem] flex-shrink-0"
+            className="text-foreground-muted !normal-case !font-bold !tracking-normal !leading-snug line-clamp-2 min-h-[2.5rem] flex-shrink-0"
           >
             {book.author}
           </Text>
@@ -496,7 +496,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
                 <Text 
                   as="p" 
                   variant="small" 
-                  className={`leading-relaxed ${isKlappentextExpanded ? '' : 'line-clamp-6 md:line-clamp-5'}`}
+                  className={`!leading-snug ${isKlappentextExpanded ? '' : 'line-clamp-6 md:line-clamp-5'}`}
                   style={{ 
                     color: 'var(--color-foreground-muted)'
                   }}
@@ -506,7 +506,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
               </div>
               <button
                 onClick={handleKlappentextToggle}
-                className="text-left underline hover:no-underline transition-all mt-3 md:mt-1.5 flex-shrink-0"
+                className="text-left underline hover:no-underline transition-all mt-1.5 flex-shrink-0"
                 style={{
                   color: '#247ba0',
                   fontSize: '0.875rem',
