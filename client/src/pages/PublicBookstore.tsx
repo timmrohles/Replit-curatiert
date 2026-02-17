@@ -31,6 +31,7 @@ interface BookstoreProfile {
   is_physical_store?: boolean;
   is_author?: boolean;
   show_buchclub?: boolean;
+  visible_tabs?: Record<string, boolean>;
   social_links?: {
     website?: string;
     instagram?: string;
@@ -283,10 +284,16 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
               { id: 'rezensionen' as ProfileTab, label: 'Rezensionen' },
               { id: 'bewertungen' as ProfileTab, label: 'Bewertungen' },
               { id: 'veranstaltungen' as ProfileTab, label: 'Veranstaltungen' },
-              ...(profile.is_author && profile.show_buchclub
-                ? [{ id: 'buchclub' as ProfileTab, label: 'Buchclub' }]
-                : []),
-            ]).map((tab) => (
+              { id: 'buchclub' as ProfileTab, label: 'Buchclub' },
+            ]).filter((tab) => {
+              const vt = profile.visible_tabs;
+              if (!vt || Object.keys(vt).length === 0) {
+                if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
+                if (tab.id === 'veranstaltungen') return false;
+                return true;
+              }
+              return vt[tab.id] === true;
+            }).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}

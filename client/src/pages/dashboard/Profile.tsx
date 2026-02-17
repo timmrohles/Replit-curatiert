@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Save, BookOpen, Mail, Phone, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon, ExternalLink } from 'lucide-react';
+import { User, Save, BookOpen, Mail, Phone, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon, ExternalLink, Globe, Instagram, Podcast, Check } from 'lucide-react';
+import { SiYoutube, SiTiktok } from 'react-icons/si';
 
 const CURATOR_STORAGE_KEY = 'coratiert-curator-id';
 
@@ -51,6 +52,13 @@ export function DashboardProfile() {
 
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [bookstoreSlug, setBookstoreSlug] = useState<string | null>(null);
+  const [visibleTabs, setVisibleTabs] = useState({
+    kurationen: true,
+    rezensionen: true,
+    bewertungen: true,
+    veranstaltungen: false,
+    buchclub: false,
+  });
 
   const availableGenres = [
     'Belletristik',
@@ -99,6 +107,9 @@ export function DashboardProfile() {
         });
         if (d.slug) {
           setBookstoreSlug(d.slug);
+        }
+        if (d.visible_tabs && typeof d.visible_tabs === 'object') {
+          setVisibleTabs(prev => ({ ...prev, ...d.visible_tabs }));
         }
       }
     } catch (err) {
@@ -172,7 +183,8 @@ export function DashboardProfile() {
           bio: curatorProfile.bio,
           focus: curatorProfile.focus,
           avatar_url: curatorProfile.avatarUrl,
-          socials: curatorProfile.socials
+          socials: curatorProfile.socials,
+          visible_tabs: visibleTabs
         })
       });
       const json = await resp.json();
@@ -228,80 +240,113 @@ export function DashboardProfile() {
         className="p-5 md:p-6"
         data-testid="hero-profile-card"
       >
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0">
-            {curatorProfile.avatarUrl ? (
-              <img
-                src={curatorProfile.avatarUrl}
-                alt="Avatar"
-                className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover border-2"
-                style={{ borderColor: '#E5E7EB' }}
-                data-testid="avatar-user-image"
-              />
-            ) : (
-              <div
-                className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0"
-                style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-                data-testid="avatar-user"
-              >
-                <User className="w-7 h-7 md:w-8 md:h-8" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center">
+          {/* Left Column: Avatar + Name/Focus + Social */}
+          <div className="flex items-center gap-5 md:gap-6">
+            <div className="flex-shrink-0">
+              <div className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden ring-2 ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)]" style={{ '--tw-ring-color': '#247ba0' } as React.CSSProperties}>
+                {curatorProfile.avatarUrl ? (
+                  <img
+                    src={curatorProfile.avatarUrl}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                    data-testid="avatar-user-image"
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full flex items-center justify-center"
+                    style={{ backgroundColor: 'rgba(36, 123, 160, 0.1)' }}
+                    data-testid="avatar-user"
+                  >
+                    <span className="text-4xl md:text-5xl" style={{ fontFamily: 'Fjalla One', color: '#247ba0' }}>
+                      {displayName.charAt(0)?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2
-              className="text-xl md:text-2xl mb-1"
-              style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}
-              data-testid="text-username"
-            >
-              {displayName.toUpperCase()}
-            </h2>
-            {curatorProfile.focus && (
-              <p className="text-sm mb-1" style={{ color: '#6B7280' }} data-testid="text-curator-focus">
-                {curatorProfile.focus}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-2 mb-3">
-              {roles.map((role, index) => (
-                <span
-                  key={index}
-                  className="px-2.5 py-0.5 rounded-full text-xs text-white"
-                  style={{ backgroundColor: '#247ba0' }}
-                  data-testid={`badge-role-${index}`}
-                >
-                  {role}
-                </span>
-              ))}
             </div>
+
+            <div>
+              <h2
+                className="text-xl md:text-2xl mb-1"
+                style={{ fontFamily: 'Fjalla One', color: '#247ba0' }}
+                data-testid="text-username"
+              >
+                {curatorProfile.publicName || displayName}
+              </h2>
+              {curatorProfile.focus && (
+                <p className="text-sm font-semibold mb-1" style={{ color: '#6B7280' }} data-testid="text-curator-focus">
+                  {curatorProfile.focus}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {roles.map((role, index) => (
+                  <span
+                    key={index}
+                    className="px-2.5 py-0.5 rounded-full text-xs text-white"
+                    style={{ backgroundColor: '#247ba0' }}
+                    data-testid={`badge-role-${index}`}
+                  >
+                    {role}
+                  </span>
+                ))}
+              </div>
+              {/* Social Icons */}
+              {(curatorProfile.socials.website || curatorProfile.socials.instagram || curatorProfile.socials.youtube || curatorProfile.socials.tiktok || curatorProfile.socials.podcast) && (
+                <div className="flex items-center gap-3 flex-wrap mt-2" data-testid="social-links-preview">
+                  {curatorProfile.socials.website && (
+                    <span className="text-gray-400"><Globe className="w-5 h-5" /></span>
+                  )}
+                  {curatorProfile.socials.instagram && (
+                    <span className="text-gray-400"><Instagram className="w-5 h-5" /></span>
+                  )}
+                  {curatorProfile.socials.youtube && (
+                    <span className="text-gray-400"><SiYoutube className="w-5 h-5" /></span>
+                  )}
+                  {curatorProfile.socials.tiktok && (
+                    <span className="text-gray-400"><SiTiktok className="w-5 h-5" /></span>
+                  )}
+                  {curatorProfile.socials.podcast && (
+                    <span className="text-gray-400"><Podcast className="w-5 h-5" /></span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Bio */}
+          <div className="flex flex-col">
             {curatorProfile.bio && (
-              <p className="text-sm mb-3 line-clamp-2" style={{ color: '#4B5563' }} data-testid="text-curator-bio-preview">
+              <p className="text-sm leading-relaxed" style={{ color: '#4B5563' }} data-testid="text-curator-bio-preview">
                 {curatorProfile.bio}
               </p>
             )}
-            <div>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="text-xs sm:text-sm" style={{ color: '#6B7280' }}>
-                  Profil {progress}% vollständig
-                </span>
-                <span className="text-xs sm:text-sm font-medium" style={{ color: '#247ba0' }}>
-                  {progress}%
-                </span>
-              </div>
-              <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#F3F4F6' }}>
-                <div
-                  className="h-full transition-all duration-500 rounded-full"
-                  style={{
-                    width: `${progress}%`,
-                    background: 'linear-gradient(to right, #247ba0, #70c1b3)'
-                  }}
-                  data-testid="progress-bar"
-                />
-              </div>
-            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t" style={{ borderColor: '#E5E7EB' }}>
+        {/* Progress bar + stats */}
+        <div className="mt-5 pt-4 border-t" style={{ borderColor: '#E5E7EB' }}>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="text-xs sm:text-sm" style={{ color: '#6B7280' }}>
+              Profil {progress}% vollständig
+            </span>
+            <span className="text-xs sm:text-sm font-medium" style={{ color: '#247ba0' }}>
+              {progress}%
+            </span>
+          </div>
+          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: '#F3F4F6' }}>
+            <div
+              className="h-full transition-all duration-500 rounded-full"
+              style={{
+                width: `${progress}%`,
+                background: 'linear-gradient(to right, #247ba0, #70c1b3)'
+              }}
+              data-testid="progress-bar"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2 mt-4">
           {quickStats.map((stat, index) => {
             const StatIcon = stat.icon;
             return (
@@ -332,6 +377,47 @@ export function DashboardProfile() {
           </div>
         )}
       </section>
+
+      {/* Tab Visibility Settings */}
+      <div className="p-6">
+        <h2 className="text-lg md:text-xl mb-3" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+          Sichtbare Tabs im öffentlichen Profil
+        </h2>
+        <p className="text-xs mb-4" style={{ color: '#6B7280' }}>
+          Wähle aus, welche Tabs auf deinem öffentlichen Profil angezeigt werden sollen.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          {([
+            { key: 'kurationen', label: 'Kurationen' },
+            { key: 'rezensionen', label: 'Rezensionen' },
+            { key: 'bewertungen', label: 'Bewertungen' },
+            { key: 'veranstaltungen', label: 'Veranstaltungen' },
+            { key: 'buchclub', label: 'Buchclub' },
+          ] as const).map((tab) => (
+            <label
+              key={tab.key}
+              className="flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-colors"
+              style={{
+                borderColor: visibleTabs[tab.key] ? '#247ba0' : '#D1D5DB',
+                backgroundColor: visibleTabs[tab.key] ? 'rgba(36, 123, 160, 0.05)' : '#FFFFFF',
+              }}
+              data-testid={`checkbox-tab-${tab.key}`}
+              onClick={() => setVisibleTabs(prev => ({ ...prev, [tab.key]: !prev[tab.key] }))}
+            >
+              <div
+                className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+                style={{
+                  borderColor: visibleTabs[tab.key] ? '#247ba0' : '#D1D5DB',
+                  backgroundColor: visibleTabs[tab.key] ? '#247ba0' : 'transparent',
+                }}
+              >
+                {visibleTabs[tab.key] && <Check className="w-3.5 h-3.5 text-white" />}
+              </div>
+              <span className="text-sm" style={{ color: '#3A3A3A' }}>{tab.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
 
       <div 
         className="p-6"

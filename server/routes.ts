@@ -175,6 +175,7 @@ function mapCuratorRow(row: any) {
       podcast: row.podcast_url || row.podcast || '',
       website: row.website_url || row.website || '',
     },
+    visible_tabs: row.visible_tabs || {},
     visible: Boolean(row.visible),
     verified: Boolean(row.verified),
     display_order: Number(row.display_order) || 0,
@@ -346,6 +347,13 @@ export async function registerRoutes(
     log.info('Site banners table verified');
   } catch (err) {
     log.warn('Could not verify site_banners table:', err);
+  }
+
+  try {
+    await queryDB(`ALTER TABLE curators ADD COLUMN IF NOT EXISTS visible_tabs JSONB DEFAULT '{}'::jsonb`);
+    log.info('Curators visible_tabs column verified');
+  } catch (err) {
+    log.warn('Could not verify curators visible_tabs column:', err);
   }
 
   try {
@@ -887,7 +895,7 @@ export async function registerRoutes(
 
   app.post('/api/user/curator-profile', async (req: Request, res: Response) => {
     try {
-      const { curatorId, name, email, bio, focus, avatar_url, socials, userId } = req.body;
+      const { curatorId, name, email, bio, focus, avatar_url, socials, userId, visible_tabs } = req.body;
       if (!name || !name.trim()) {
         return res.status(400).json({ ok: false, error: 'Name is required' });
       }
@@ -902,6 +910,8 @@ export async function registerRoutes(
       const podcastValue = (socials?.podcast || '').trim();
       const websiteValue = (socials?.website || '').trim();
 
+      const visibleTabsValue = visible_tabs ? JSON.stringify(visible_tabs) : '{}';
+
       let result;
       if (curatorId) {
         const id = parseInt(curatorId, 10);
@@ -911,14 +921,14 @@ export async function registerRoutes(
            SET name = $1, slug = $2, bio = $3, avatar_url = $4,
                instagram_url = $5, youtube_url = $6, tiktok_url = $7,
                podcast_url = $8, website_url = $9, focus = $10,
-               email = $11, updated_at = NOW()
-           WHERE id = $12 AND deleted_at IS NULL
+               email = $11, visible_tabs = $12::jsonb, updated_at = NOW()
+           WHERE id = $13 AND deleted_at IS NULL
            RETURNING *`,
           [
             name.trim(), slug, bioValue, avatarValue,
             instagramValue, youtubeValue, tiktokValue,
             podcastValue, websiteValue, focusValue,
-            emailValue, id
+            emailValue, visibleTabsValue, id
           ]
         );
         if (result.rows.length === 0) {
@@ -953,14 +963,14 @@ export async function registerRoutes(
           `INSERT INTO curators (
             name, slug, bio, avatar_url, instagram_url, youtube_url,
             tiktok_url, podcast_url, website_url, focus,
-            email, visible, status, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, 'active', NOW(), NOW())
+            email, visible_tabs, visible, status, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::jsonb, true, 'active', NOW(), NOW())
            RETURNING *`,
           [
             name.trim(), slug, bioValue, avatarValue,
             instagramValue, youtubeValue, tiktokValue,
             podcastValue, websiteValue, focusValue,
-            emailValue
+            emailValue, visibleTabsValue
           ]
         );
 
@@ -6501,7 +6511,7 @@ export async function registerRoutes(
       if (profileResult.rows.length > 0) {
         profile = profileResult.rows[0];
         const curatorBySlug = await queryDB(
-          `SELECT avatar_url, website_url, instagram_url, tiktok_url, youtube_url, podcast_url, focus, bio FROM curators WHERE slug = $1 AND deleted_at IS NULL LIMIT 1`,
+          `SELECT avatar_url, website_url, instagram_url, tiktok_url, youtube_url, podcast_url, focus, bio, visible_tabs FROM curators WHERE slug = $1 AND deleted_at IS NULL LIMIT 1`,
           [slug]
         );
         if (curatorBySlug.rows.length > 0) {
@@ -6524,6 +6534,7 @@ export async function registerRoutes(
           profile.tagline = curator.focus || profile.tagline || '';
           profile.bio = curator.bio || profile.description || '';
           profile.description = curator.bio || profile.description || '';
+          profile.visible_tabs = curator.visible_tabs || {};
         }
         const curationsResult = await queryDB(
           `SELECT uc.*, bcl.display_order as link_order
@@ -6571,6 +6582,7 @@ export async function registerRoutes(
             youtube: curator.youtube_url || '',
             tiktok: curator.tiktok_url || '',
           },
+          visible_tabs: curator.visible_tabs || {},
           is_published: true,
           is_physical_store: false,
         };
