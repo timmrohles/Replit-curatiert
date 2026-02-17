@@ -3,16 +3,18 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
+import { Breadcrumb } from '../components/layout/Breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag } from 'lucide-react';
+import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast } from 'lucide-react';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { apiRequest } from '@/lib/queryClient';
 import { useSafeNavigate } from '../utils/routing';
 import { CreatorCarousel } from '../components/creator/CreatorCarousel';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { Text } from '@/components/ui/typography';
 
 interface BookstoreProfile {
   id: number;
@@ -29,6 +31,7 @@ interface BookstoreProfile {
     youtube?: string;
     tiktok?: string;
     twitter?: string;
+    podcast?: string;
   };
 }
 
@@ -163,78 +166,104 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
       <Header isHomePage={false} />
 
       <main id="main-content">
-        {/* Profile Hero Section */}
+        {/* Breadcrumbs */}
+        <Breadcrumb items={[
+          { label: 'Startseite', href: '/' },
+          { label: 'Kurator:innen', href: '/curators' },
+          { label: profile.display_name },
+        ]} />
+
+        {/* Profile Hero Section - left-aligned avatar layout like CreatorHeader */}
         <section
-          className="py-12 px-6 text-center"
-          style={{ background: 'linear-gradient(to bottom, #f5f5f5, #ffffff)' }}
+          className="py-8 md:py-10 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
           data-testid="hero-section"
         >
-          {profile.avatar_url && (
-            <div className="flex justify-center mb-4">
-              <Avatar className="w-20 h-20">
-                <AvatarImage src={profile.avatar_url} alt={profile.display_name} />
-                <AvatarFallback className="text-xl font-headline">
-                  {profile.display_name?.charAt(0)?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+          <div className="flex items-start gap-4 md:gap-6">
+            {/* Avatar with blue ring - matching CreatorHeader style */}
+            <div className="flex-shrink-0">
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+                {profile.avatar_url ? (
+                  <ImageWithFallback
+                    src={profile.avatar_url}
+                    alt={profile.display_name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-cerulean/10 flex items-center justify-center">
+                    <span className="text-2xl md:text-3xl font-headline text-cerulean">
+                      {profile.display_name?.charAt(0)?.toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
 
-          <h1
-            className="text-3xl md:text-4xl font-headline text-[#3A3A3A] dark:text-foreground mb-2"
-            data-testid="text-display-name"
-          >
-            {profile.display_name}
-          </h1>
+            {/* Name, Tagline, Description, Social Links */}
+            <div className="min-w-0 flex-1">
+              <h1
+                className="kuratorname text-cerulean mb-1"
+                data-testid="text-display-name"
+              >
+                {profile.display_name}
+              </h1>
 
-          {profile.tagline && (
-            <p className="text-lg text-[#6B7280] dark:text-muted-foreground mb-3" data-testid="text-tagline">
-              {profile.tagline}
-            </p>
-          )}
+              {profile.tagline && (
+                <Text as="p" variant="small" className="font-semibold text-gray-500 mb-2" data-testid="text-tagline">
+                  {profile.tagline}
+                </Text>
+              )}
 
-          {profile.description && (
-            <p className="max-w-2xl mx-auto text-muted-foreground mb-4" data-testid="text-description">
-              {profile.description}
-            </p>
-          )}
+              {profile.description && (
+                <Text as="p" variant="base" className="text-foreground leading-relaxed mb-3 max-w-2xl" data-testid="text-description">
+                  {profile.description}
+                </Text>
+              )}
 
-          {(socialLinks.website || socialLinks.instagram || socialLinks.youtube || socialLinks.tiktok || socialLinks.twitter) && (
-            <div className="flex items-center justify-center gap-3 mb-4" data-testid="social-links">
-              {socialLinks.website && (
-                <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" data-testid="link-social-website" className="text-muted-foreground hover:text-foreground transition-colors">
-                  <Globe className="w-5 h-5" />
-                </a>
+              {/* Social Media Links */}
+              {(socialLinks.website || socialLinks.instagram || socialLinks.youtube || socialLinks.tiktok || socialLinks.twitter || socialLinks.podcast) && (
+                <div className="flex items-center gap-3 flex-wrap" data-testid="social-links">
+                  {socialLinks.website && (
+                    <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" data-testid="link-social-website" className="text-muted-foreground hover:text-cerulean transition-colors">
+                      <Globe className="w-5 h-5" />
+                    </a>
+                  )}
+                  {socialLinks.instagram && (
+                    <a href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-instagram" className="text-muted-foreground hover:text-cerulean transition-colors">
+                      <Instagram className="w-5 h-5" />
+                    </a>
+                  )}
+                  {socialLinks.youtube && (
+                    <a href={socialLinks.youtube.startsWith('http') ? socialLinks.youtube : `https://youtube.com/${socialLinks.youtube}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-youtube" className="text-muted-foreground hover:text-cerulean transition-colors">
+                      <SiYoutube className="w-5 h-5" />
+                    </a>
+                  )}
+                  {socialLinks.tiktok && (
+                    <a href={socialLinks.tiktok.startsWith('http') ? socialLinks.tiktok : `https://tiktok.com/@${socialLinks.tiktok}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-tiktok" className="text-muted-foreground hover:text-cerulean transition-colors">
+                      <SiTiktok className="w-5 h-5" />
+                    </a>
+                  )}
+                  {socialLinks.podcast && (
+                    <a href={socialLinks.podcast} target="_blank" rel="noopener noreferrer" data-testid="link-social-podcast" className="text-muted-foreground hover:text-cerulean transition-colors">
+                      <Podcast className="w-5 h-5" />
+                    </a>
+                  )}
+                  {socialLinks.twitter && (
+                    <a href={socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://twitter.com/${socialLinks.twitter}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-twitter" className="text-muted-foreground hover:text-cerulean transition-colors">
+                      <ExternalLink className="w-5 h-5" />
+                    </a>
+                  )}
+                </div>
               )}
-              {socialLinks.instagram && (
-                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" data-testid="link-social-instagram" className="text-muted-foreground hover:text-foreground transition-colors">
-                  <Instagram className="w-5 h-5" />
-                </a>
-              )}
-              {socialLinks.youtube && (
-                <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" data-testid="link-social-youtube" className="text-muted-foreground hover:text-foreground transition-colors">
-                  <SiYoutube className="w-5 h-5" />
-                </a>
-              )}
-              {socialLinks.tiktok && (
-                <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" data-testid="link-social-tiktok" className="text-muted-foreground hover:text-foreground transition-colors">
-                  <SiTiktok className="w-5 h-5" />
-                </a>
-              )}
-              {socialLinks.twitter && (
-                <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" data-testid="link-social-twitter" className="text-muted-foreground hover:text-foreground transition-colors">
-                  <ExternalLink className="w-5 h-5" />
-                </a>
+
+              {/* Physical Store Address */}
+              {profile.is_physical_store && profile.address && (
+                <div className="flex items-center gap-1.5 text-muted-foreground mt-2" data-testid="text-address">
+                  <MapPin className="w-4 h-4" />
+                  <Text as="span" variant="small">{profile.address}</Text>
+                </div>
               )}
             </div>
-          )}
-
-          {profile.is_physical_store && profile.address && (
-            <div className="flex items-center justify-center gap-1.5 text-muted-foreground" data-testid="text-address">
-              <MapPin className="w-4 h-4" />
-              <span className="text-sm">{profile.address}</span>
-            </div>
-          )}
+          </div>
         </section>
 
         {/* Curations via CreatorCarousel */}

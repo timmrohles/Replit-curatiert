@@ -6500,13 +6500,32 @@ export async function registerRoutes(
       );
       if (profileResult.rows.length > 0) {
         profile = profileResult.rows[0];
-        if (!profile.avatar_url) {
-          const curatorBySlug = await queryDB(
-            `SELECT avatar_url FROM curators WHERE slug = $1 AND deleted_at IS NULL LIMIT 1`,
-            [slug]
-          );
-          if (curatorBySlug.rows.length > 0 && curatorBySlug.rows[0].avatar_url) {
-            profile.avatar_url = curatorBySlug.rows[0].avatar_url;
+        const curatorBySlug = await queryDB(
+          `SELECT avatar_url, website_url, instagram_url, tiktok_url, youtube_url, podcast_url, focus, bio FROM curators WHERE slug = $1 AND deleted_at IS NULL LIMIT 1`,
+          [slug]
+        );
+        if (curatorBySlug.rows.length > 0) {
+          const curator = curatorBySlug.rows[0];
+          if (!profile.avatar_url && curator.avatar_url) {
+            profile.avatar_url = curator.avatar_url;
+          }
+          const sl = profile.social_links || {};
+          const hasSocials = sl.website || sl.instagram || sl.youtube || sl.tiktok || sl.podcast;
+          if (!hasSocials) {
+            profile.social_links = {
+              ...sl,
+              website: sl.website || curator.website_url || '',
+              instagram: sl.instagram || curator.instagram_url || '',
+              youtube: sl.youtube || curator.youtube_url || '',
+              tiktok: sl.tiktok || curator.tiktok_url || '',
+              podcast: sl.podcast || curator.podcast_url || '',
+            };
+          }
+          if (!profile.tagline && curator.focus) {
+            profile.tagline = curator.focus;
+          }
+          if (!profile.description && curator.bio) {
+            profile.description = curator.bio;
           }
         }
         const curationsResult = await queryDB(
