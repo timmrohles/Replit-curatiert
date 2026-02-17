@@ -6527,6 +6527,7 @@ export async function registerRoutes(
           if (!profile.description && curator.bio) {
             profile.description = curator.bio;
           }
+          profile.bio = curator.bio || '';
         }
         const curationsResult = await queryDB(
           `SELECT uc.*, bcl.display_order as link_order
@@ -6566,6 +6567,7 @@ export async function registerRoutes(
           slug: curator.slug,
           tagline: curator.focus || '',
           description: curator.bio || '',
+          bio: curator.bio || '',
           avatar_url: curator.avatar_url || '',
           social_links: {
             website: curator.website_url || '',

@@ -27,6 +27,7 @@ interface BookstoreProfile {
   description?: string;
   avatar_url?: string;
   address?: string;
+  bio?: string;
   is_physical_store?: boolean;
   is_author?: boolean;
   show_buchclub?: boolean;
@@ -230,9 +231,9 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
 
             {/* Right Column: Bio, Social Links - centered */}
             <div className="flex flex-col items-center text-center">
-              {profile.description && (
+              {(profile.bio || profile.description) && (
                 <Text as="p" variant="lg" className="text-foreground leading-relaxed mb-5 max-w-lg" data-testid="text-description">
-                  {profile.description}
+                  {profile.bio || profile.description}
                 </Text>
               )}
 
