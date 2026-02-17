@@ -179,15 +179,15 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
           { label: profile.display_name },
         ]} />
 
-        {/* Profile Hero Section - left-aligned avatar layout like CreatorHeader */}
+        {/* Profile Hero Section - two-column layout */}
         <section
-          className="py-8 md:py-10 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
+          className="py-10 md:py-14 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
           data-testid="hero-section"
         >
-          <div className="flex items-start gap-4 md:gap-6">
-            {/* Avatar with blue ring - matching CreatorHeader style */}
-            <div className="flex-shrink-0">
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+            {/* Left Column: Avatar, Name, Focus - centered */}
+            <div className="flex flex-col items-center text-center">
+              <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)] mb-5">
                 {profile.avatar_url ? (
                   <ImageWithFallback
                     src={profile.avatar_url}
@@ -196,76 +196,74 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                   />
                 ) : (
                   <div className="w-full h-full bg-cerulean/10 flex items-center justify-center">
-                    <span className="text-2xl md:text-3xl font-headline text-cerulean">
+                    <span className="text-5xl md:text-6xl font-headline text-cerulean">
                       {profile.display_name?.charAt(0)?.toUpperCase()}
                     </span>
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Name, Tagline, Description, Social Links */}
-            <div className="min-w-0 flex-1">
               <h1
-                className="kuratorname text-cerulean mb-1"
+                className="text-2xl md:text-3xl font-headline text-cerulean mb-2"
                 data-testid="text-display-name"
               >
                 {profile.display_name}
               </h1>
 
               {profile.tagline && (
-                <Text as="p" variant="small" className="font-semibold text-gray-500 mb-2" data-testid="text-tagline">
+                <Text as="p" variant="base" className="font-semibold text-gray-500" data-testid="text-tagline">
                   {profile.tagline}
                 </Text>
               )}
 
+              {profile.is_physical_store && profile.address && (
+                <div className="flex items-center gap-2 text-muted-foreground mt-3" data-testid="text-address">
+                  <MapPin className="w-5 h-5" />
+                  <Text as="span" variant="base">{profile.address}</Text>
+                </div>
+              )}
+            </div>
+
+            {/* Right Column: Bio, Social Links - centered */}
+            <div className="flex flex-col items-center text-center">
               {profile.description && (
-                <Text as="p" variant="base" className="text-foreground leading-relaxed mb-3 max-w-2xl" data-testid="text-description">
+                <Text as="p" variant="lg" className="text-foreground leading-relaxed mb-5 max-w-lg" data-testid="text-description">
                   {profile.description}
                 </Text>
               )}
 
-              {/* Social Media Links */}
               {(socialLinks.website || socialLinks.instagram || socialLinks.youtube || socialLinks.tiktok || socialLinks.twitter || socialLinks.podcast) && (
-                <div className="flex items-center gap-3 flex-wrap" data-testid="social-links">
+                <div className="flex items-center gap-4 flex-wrap justify-center" data-testid="social-links">
                   {socialLinks.website && (
                     <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" data-testid="link-social-website" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <Globe className="w-5 h-5" />
+                      <Globe className="w-7 h-7" />
                     </a>
                   )}
                   {socialLinks.instagram && (
                     <a href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-instagram" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <Instagram className="w-5 h-5" />
+                      <Instagram className="w-7 h-7" />
                     </a>
                   )}
                   {socialLinks.youtube && (
                     <a href={socialLinks.youtube.startsWith('http') ? socialLinks.youtube : `https://youtube.com/${socialLinks.youtube}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-youtube" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <SiYoutube className="w-5 h-5" />
+                      <SiYoutube className="w-7 h-7" />
                     </a>
                   )}
                   {socialLinks.tiktok && (
                     <a href={socialLinks.tiktok.startsWith('http') ? socialLinks.tiktok : `https://tiktok.com/@${socialLinks.tiktok}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-tiktok" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <SiTiktok className="w-5 h-5" />
+                      <SiTiktok className="w-7 h-7" />
                     </a>
                   )}
                   {socialLinks.podcast && (
                     <a href={socialLinks.podcast} target="_blank" rel="noopener noreferrer" data-testid="link-social-podcast" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <Podcast className="w-5 h-5" />
+                      <Podcast className="w-7 h-7" />
                     </a>
                   )}
                   {socialLinks.twitter && (
                     <a href={socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://twitter.com/${socialLinks.twitter}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-twitter" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <ExternalLink className="w-5 h-5" />
+                      <ExternalLink className="w-7 h-7" />
                     </a>
                   )}
-                </div>
-              )}
-
-              {/* Physical Store Address */}
-              {profile.is_physical_store && profile.address && (
-                <div className="flex items-center gap-1.5 text-muted-foreground mt-2" data-testid="text-address">
-                  <MapPin className="w-4 h-4" />
-                  <Text as="span" variant="small">{profile.address}</Text>
                 </div>
               )}
             </div>
