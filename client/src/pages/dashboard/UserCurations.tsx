@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Edit, Trash2, X, Search, GripVertical, BookOpen, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Sparkles, Hand, Tag, Minus, Check, Info, BadgeCheck, Heart, ArrowRight, List } from 'lucide-react';
 import { Text, Heading } from '@/components/ui/typography';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
-import { BookCard } from '@/components/book/BookCard';
+import { BookCarouselItem } from '@/components/book/BookCarouselItem';
 
 const API_BASE = '/api';
 const USER_ID = 'demo-user-123';
@@ -274,21 +274,17 @@ function TagSearchInput({
 function CurationBookCard({ book }: { book: BookResult }) {
   return (
     <div className="flex-[0_0_50%] md:flex-[0_0_25%] min-w-0 pl-4" data-testid={`card-book-${book.id}`}>
-      <BookCard
-        cover={book.cover_url || ''}
-        title={book.title}
-        author={book.author}
-        publisher={book.publisher || undefined}
+      <BookCarouselItem
         book={{
-          id: book.id,
+          id: String(book.id),
           title: book.title,
           author: book.author,
-          coverUrl: book.cover_url || '',
-          publisher: book.publisher || '',
-          isbn: book.isbn13 || '',
+          coverImage: book.cover_url || '',
+          price: '',
+          isbn: book.isbn13 || undefined,
+          publisher: book.publisher || undefined,
           klappentext: book.description || undefined,
-        } as any}
-        viewMode="compact"
+        }}
       />
     </div>
   );
