@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Calendar, MapPin, Video, Users, Clock, Plus, X, Edit2, Trash2, ExternalLink, Download, ChevronDown, ChevronUp, Globe, Lock, BookOpen, Send, XCircle, CalendarClock, MessageSquare, UserMinus, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Calendar, MapPin, Video, Users, Clock, Plus, X, Edit2, Trash2, ExternalLink, Download, ChevronDown, ChevronUp, Globe, Lock, BookOpen, Send, XCircle, CalendarClock, MessageSquare, UserMinus, AlertTriangle, Search, Image as ImageIcon } from 'lucide-react';
 import { Heading, Text } from '../../components/ui/typography';
 
 const API_BASE = '/api';
@@ -15,11 +15,57 @@ const EVENT_TYPES = [
   { value: 'sonstiges', label: 'Sonstiges' },
 ];
 
-const RECURRENCE_OPTIONS = [
-  { value: 'weekly', label: 'Wöchentlich' },
-  { value: 'biweekly', label: 'Alle 2 Wochen' },
-  { value: 'monthly', label: 'Monatlich' },
-];
+const GERMAN_WEEKDAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+const GERMAN_MONTHS = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+
+function getWeekdayOrdinal(date: Date): string {
+  const day = date.getDate();
+  const weekOfMonth = Math.ceil(day / 7);
+  const ordinals = ['ersten', 'zweiten', 'dritten', 'vierten', 'fünften'];
+  return ordinals[weekOfMonth - 1] || `${weekOfMonth}.`;
+}
+
+function getRecurrenceOptions(dateStr: string) {
+  if (!dateStr) return [];
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return [];
+  const weekday = GERMAN_WEEKDAYS[d.getDay()];
+  const ordinal = getWeekdayOrdinal(d);
+  const dayNum = d.getDate();
+  const month = GERMAN_MONTHS[d.getMonth()];
+  return [
+    { value: '', label: 'Einmalig' },
+    { value: 'weekly', label: `Wöchentlich am ${weekday}` },
+    { value: 'monthly', label: `Monatlich am ${ordinal} ${weekday}` },
+    { value: 'yearly', label: `Jährlich am ${dayNum}. ${month}` },
+    { value: 'weekdays', label: 'Jeden Montag bis Freitag' },
+  ];
+}
+
+function getRecurrenceLabel(rule: string | null, dateStr?: string): string {
+  if (!rule) return '';
+  if (dateStr) {
+    const options = getRecurrenceOptions(dateStr);
+    const found = options.find(o => o.value === rule);
+    if (found) return found.label;
+  }
+  const fallback: Record<string, string> = {
+    weekly: 'Wöchentlich',
+    monthly: 'Monatlich',
+    yearly: 'Jährlich',
+    weekdays: 'Mo\u2013Fr',
+    biweekly: 'Alle 2 Wochen',
+  };
+  return fallback[rule] || rule;
+}
+
+interface UnsplashImage {
+  id: string;
+  url: string;
+  thumb: string;
+  alt: string;
+  author: string;
+}
 
 interface UserEvent {
   id: number;
@@ -90,9 +136,14 @@ export function UserEvents() {
   const [formVideoLinkPublic, setFormVideoLinkPublic] = useState(false);
   const [formEntryFee, setFormEntryFee] = useState('0');
   const [formMaxParticipants, setFormMaxParticipants] = useState('');
-  const [formIsRecurring, setFormIsRecurring] = useState(false);
   const [formRecurrenceRule, setFormRecurrenceRule] = useState('');
   const [formEventPageUrl, setFormEventPageUrl] = useState('');
+  const [formBackgroundImageUrl, setFormBackgroundImageUrl] = useState('');
+  const [unsplashSearch, setUnsplashSearch] = useState('');
+  const [unsplashResults, setUnsplashResults] = useState<UnsplashImage[]>([]);
+  const [searchingUnsplash, setSearchingUnsplash] = useState(false);
+
+  const recurrenceOptions = useMemo(() => getRecurrenceOptions(formDate), [formDate]);
 
   const fetchEvents = useCallback(async () => {
     try {
@@ -121,9 +172,11 @@ export function UserEvents() {
     setFormVideoLinkPublic(false);
     setFormEntryFee('0');
     setFormMaxParticipants('');
-    setFormIsRecurring(false);
     setFormRecurrenceRule('');
     setFormEventPageUrl('');
+    setFormBackgroundImageUrl('');
+    setUnsplashSearch('');
+    setUnsplashResults([]);
     setEditingEvent(null);
   };
 
@@ -141,9 +194,9 @@ export function UserEvents() {
     setFormVideoLinkPublic(event.video_link_public);
     setFormEntryFee(String(event.entry_fee || 0));
     setFormMaxParticipants(event.max_participants ? String(event.max_participants) : '');
-    setFormIsRecurring(event.is_recurring);
     setFormRecurrenceRule(event.recurrence_rule || '');
     setFormEventPageUrl(event.event_page_url || '');
+    setFormBackgroundImageUrl(event.background_image_url || '');
     setShowForm(true);
   };
 
@@ -165,8 +218,9 @@ export function UserEvents() {
         video_link_public: formVideoLinkPublic,
         entry_fee: parseFloat(formEntryFee) || 0,
         max_participants: formMaxParticipants ? parseInt(formMaxParticipants) : null,
-        is_recurring: formIsRecurring,
-        recurrence_rule: formIsRecurring ? formRecurrenceRule : null,
+        is_recurring: !!formRecurrenceRule,
+        recurrence_rule: formRecurrenceRule || null,
+        background_image_url: formBackgroundImageUrl.trim() || null,
         event_page_url: formEventPageUrl.trim() || null,
       };
 
@@ -193,6 +247,19 @@ export function UserEvents() {
       await fetch(`${API_BASE}/user-events/${id}`, { method: 'DELETE' });
       await fetchEvents();
     } catch { /* ignore */ }
+  };
+
+  const searchUnsplashImages = async () => {
+    if (!unsplashSearch.trim()) return;
+    setSearchingUnsplash(true);
+    try {
+      const res = await fetch(`${API_BASE}/unsplash/search?query=${encodeURIComponent(unsplashSearch)}`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setUnsplashResults(data.data);
+      }
+    } catch { /* ignore */ }
+    finally { setSearchingUnsplash(false); }
   };
 
   const togglePublished = async (event: UserEvent) => {
@@ -512,28 +579,97 @@ export function UserEvents() {
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-sm font-medium" style={{ color: '#3A3A3A' }}>
-                  <input
-                    type="checkbox"
-                    checked={formIsRecurring}
-                    onChange={e => setFormIsRecurring(e.target.checked)}
-                    className="rounded"
-                    data-testid="checkbox-recurring"
-                  />
-                  Regelmäßiges Event (Serie)
-                </label>
-                {formIsRecurring && (
-                  <select
-                    value={formRecurrenceRule}
-                    onChange={e => setFormRecurrenceRule(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border text-sm mt-2"
-                    style={{ borderColor: '#E5E7EB', backgroundColor: '#FFFFFF', color: '#3A3A3A' }}
-                    data-testid="select-recurrence"
-                  >
-                    <option value="">Wiederholung wählen...</option>
-                    {RECURRENCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: '#3A3A3A' }}>Wiederholung</label>
+                <select
+                  value={formRecurrenceRule}
+                  onChange={e => setFormRecurrenceRule(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                  style={{ borderColor: '#E5E7EB', backgroundColor: '#FFFFFF', color: '#3A3A3A' }}
+                  disabled={!formDate}
+                  data-testid="select-recurrence"
+                >
+                  {recurrenceOptions.length > 0 ? (
+                    recurrenceOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)
+                  ) : (
+                    <option value="">Bitte zuerst Datum wählen</option>
+                  )}
+                </select>
+                {!formDate && (
+                  <p className="text-xs mt-1" style={{ color: '#9CA3AF' }}>Wähle zuerst ein Datum, um Wiederholungsoptionen zu sehen</p>
                 )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: '#3A3A3A' }}>Hintergrundbild</label>
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={unsplashSearch}
+                    onChange={e => setUnsplashSearch(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        searchUnsplashImages();
+                      }
+                    }}
+                    placeholder="Unsplash durchsuchen..."
+                    className="flex-1 px-3 py-2 rounded-lg border text-sm"
+                    style={{ borderColor: '#E5E7EB' }}
+                    data-testid="input-event-unsplash-search"
+                  />
+                  <button
+                    type="button"
+                    onClick={searchUnsplashImages}
+                    disabled={searchingUnsplash || !unsplashSearch.trim()}
+                    className="px-3 py-2 rounded-lg flex items-center gap-1 text-xs font-medium text-white disabled:opacity-50"
+                    style={{ backgroundColor: '#247ba0' }}
+                    data-testid="button-event-unsplash-search"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    {searchingUnsplash ? 'Suche...' : 'Suchen'}
+                  </button>
+                </div>
+                {unsplashResults.length > 0 && (
+                  <div className="grid grid-cols-4 gap-2 mb-3 max-h-48 overflow-y-auto p-2 border rounded-lg" style={{ borderColor: '#E5E7EB' }}>
+                    {unsplashResults.map(img => (
+                      <div
+                        key={img.id}
+                        onClick={() => { setFormBackgroundImageUrl(img.url); setUnsplashResults([]); setUnsplashSearch(''); }}
+                        className="cursor-pointer rounded overflow-hidden hover:ring-2 transition-all"
+                        style={{ '--tw-ring-color': '#247ba0' } as any}
+                        data-testid={`unsplash-event-${img.id}`}
+                      >
+                        <img src={img.thumb} alt={img.alt} className="w-full h-16 object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {formBackgroundImageUrl && (
+                  <div className="relative mb-2">
+                    <img
+                      src={formBackgroundImageUrl}
+                      alt="Hintergrundbild"
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFormBackgroundImageUrl('')}
+                      className="absolute top-2 right-2 p-1 rounded-full bg-white shadow-lg"
+                      data-testid="button-remove-event-bg"
+                    >
+                      <X className="w-4 h-4" style={{ color: '#374151' }} />
+                    </button>
+                  </div>
+                )}
+                <input
+                  type="text"
+                  value={formBackgroundImageUrl}
+                  onChange={e => setFormBackgroundImageUrl(e.target.value)}
+                  placeholder="Oder Bild-URL direkt eingeben"
+                  className="w-full px-3 py-2 rounded-lg border text-sm"
+                  style={{ borderColor: '#E5E7EB' }}
+                  data-testid="input-event-bg-url"
+                />
               </div>
             </div>
 
@@ -742,9 +878,9 @@ function EventCard({
               >
                 {getEventTypeLabel(event.event_type)}
               </span>
-              {event.is_recurring && (
+              {event.is_recurring && event.recurrence_rule && (
                 <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(109, 40, 217, 0.1)', color: '#6D28D9' }}>
-                  Serie {event.recurrence_rule ? `(${RECURRENCE_OPTIONS.find(o => o.value === event.recurrence_rule)?.label || event.recurrence_rule})` : ''}
+                  {getRecurrenceLabel(event.recurrence_rule, event.event_date)}
                 </span>
               )}
               {!event.is_published && (

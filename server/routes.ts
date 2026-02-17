@@ -789,6 +789,9 @@ export async function registerRoutes(
       { col: 'rss_source_url', def: 'TEXT' },
       { col: 'video_link', def: 'TEXT' },
       { col: 'video_link_public', def: 'BOOLEAN DEFAULT false' },
+      { col: 'background_image_url', def: 'TEXT' },
+      { col: 'is_recurring', def: 'BOOLEAN DEFAULT false' },
+      { col: 'recurrence_rule', def: 'VARCHAR(50)' },
     ];
     for (const { col, def } of missingCols) {
       try {
@@ -1213,7 +1216,39 @@ export async function registerRoutes(
   });
 
   // ==================================================================
-  // UNSPLASH SEARCH PROXY
+  // UNSPLASH SEARCH PROXY (Public - simplified for user-facing features)
+  // ==================================================================
+  app.get('/api/unsplash/search', async (req: Request, res: Response) => {
+    try {
+      const query = req.query.query as string;
+      if (!query?.trim()) return res.json({ success: true, data: [] });
+
+      const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+      if (!accessKey) return res.json({ success: true, data: [] });
+
+      const unsplashUrl = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=12&orientation=landscape`;
+      const unsplashRes = await fetch(unsplashUrl, {
+        headers: { 'Authorization': `Client-ID ${accessKey}` }
+      });
+      if (!unsplashRes.ok) return res.json({ success: true, data: [] });
+
+      const data = await unsplashRes.json();
+      const results = (data.results || []).map((photo: any) => ({
+        id: photo.id,
+        url: photo.urls?.regular || photo.urls?.small || '',
+        thumb: photo.urls?.thumb || photo.urls?.small || '',
+        alt: photo.alt_description || photo.description || '',
+        author: photo.user?.name || '',
+        authorUrl: photo.user?.links?.html || '',
+      }));
+      return res.json({ success: true, data: results });
+    } catch {
+      return res.json({ success: true, data: [] });
+    }
+  });
+
+  // ==================================================================
+  // UNSPLASH SEARCH PROXY (Admin - detailed)
   // ==================================================================
   app.get('/api/admin/unsplash/search', async (req: Request, res: Response) => {
     try {
