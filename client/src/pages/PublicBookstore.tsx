@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast } from 'lucide-react';
+import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast, BookOpen, Star, CalendarDays } from 'lucide-react';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { apiRequest } from '@/lib/queryClient';
 import { useSafeNavigate } from '../utils/routing';
@@ -16,6 +16,8 @@ import { CreatorCarousel } from '../components/creator/CreatorCarousel';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { Text } from '@/components/ui/typography';
 import { LikeButton } from '../components/favorites/LikeButton';
+
+type ProfileTab = 'kurationen' | 'rezensionen' | 'bewertungen' | 'veranstaltungen' | 'buchclub';
 
 interface BookstoreProfile {
   id: number;
@@ -26,6 +28,8 @@ interface BookstoreProfile {
   avatar_url?: string;
   address?: string;
   is_physical_store?: boolean;
+  is_author?: boolean;
+  show_buchclub?: boolean;
   social_links?: {
     website?: string;
     instagram?: string;
@@ -101,6 +105,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
   const { slug: paramSlug } = useParams<{ slug: string }>();
   const slug = overrideSlug || paramSlug;
   const navigate = useSafeNavigate();
+  const [activeTab, setActiveTab] = useState<ProfileTab>('kurationen');
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
@@ -267,69 +272,149 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
           </div>
         </section>
 
-        {/* Curations via CreatorCarousel */}
-        <section className="max-w-7xl mx-auto px-0 md:px-2 py-4" data-testid="curations-section">
-          {curations.length === 0 && (
-            <p className="text-center text-muted-foreground py-12" data-testid="text-no-curations">
-              Noch keine Kurationen vorhanden.
-            </p>
-          )}
+        {/* Profile Tabs */}
+        <nav className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 border-b border-border" data-testid="profile-tabs">
+          <div className="flex gap-1 flex-wrap">
+            {([
+              { id: 'kurationen' as ProfileTab, label: 'Kurationen' },
+              { id: 'rezensionen' as ProfileTab, label: 'Rezensionen' },
+              { id: 'bewertungen' as ProfileTab, label: 'Bewertungen' },
+              { id: 'veranstaltungen' as ProfileTab, label: 'Veranstaltungen' },
+              ...(profile.is_author && profile.show_buchclub
+                ? [{ id: 'buchclub' as ProfileTab, label: 'Buchclub' }]
+                : []),
+            ]).map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative px-4 md:px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'text-cerulean'
+                    : 'text-muted-foreground'
+                }`}
+                data-testid={`tab-${tab.id}`}
+              >
+                {tab.label}
+                {activeTab === tab.id && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-cerulean" />
+                )}
+              </button>
+            ))}
+          </div>
+        </nav>
 
-          {curations.map((curation) => (
-            <div key={curation.id} data-testid={`curation-${curation.id}`}>
-              <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-2">
-                <h3 className="section-title text-foreground">{curation.title}</h3>
-                {curation.description && (
-                  <Text as="p" variant="base" className="text-foreground/80 leading-relaxed mt-2 max-w-3xl">
-                    {curation.description}
-                  </Text>
-                )}
-                {curation.tags && curation.tags.length > 0 && (
-                  <div className="flex gap-2 flex-wrap mt-3">
-                    {curation.tags.map((tag) => (
-                      <div
-                        key={tag}
-                        role="group"
-                        className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral cursor-pointer hover:scale-105 transition-all duration-200 select-none"
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}/`); }}
-                      >
-                        <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
-                          {tag}
-                        </Text>
-                        <LikeButton
-                          entityId={`tag-${tag.toLowerCase()}`}
-                          entityType="tag"
-                          entityTitle={tag}
-                          variant="minimal"
-                          size="sm"
-                          iconColor="#ffffff"
-                          backgroundColor="var(--vibrant-coral)"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
+        {/* Tab Content */}
+        {activeTab === 'kurationen' && (
+          <section className="max-w-7xl mx-auto px-0 md:px-2 py-4" data-testid="curations-section">
+            {curations.length === 0 ? (
+              <div className="text-center py-16 px-6" data-testid="text-no-curations">
+                <BookOpen className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+                <Text as="p" variant="base" className="text-muted-foreground">
+                  Noch keine Kurationen vorhanden.
+                </Text>
               </div>
-              <CreatorCarousel
-                creatorAvatar={profile.avatar_url || ''}
-                creatorName={profile.display_name}
-                creatorFocus={profile.tagline || ''}
-                occasion={curation.title}
-                curationReason={curation.description || ''}
-                showSocials={false}
-                creatorWebsiteUrl={profile.social_links?.website}
-                isVerified={false}
-                showHeader={false}
-                books={mapBooksForCarousel(curation.books)}
-                tags={curation.tags}
-                showCta={false}
-                backgroundColor="white"
-                useEditorialLayout={true}
-                showVideo={false}
-              />
+            ) : (
+              curations.map((curation) => (
+                <div key={curation.id} data-testid={`curation-${curation.id}`}>
+                  <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-2">
+                    <h3 className="section-title text-foreground">{curation.title}</h3>
+                    {curation.description && (
+                      <Text as="p" variant="base" className="text-foreground/80 leading-relaxed mt-2 max-w-3xl">
+                        {curation.description}
+                      </Text>
+                    )}
+                    {curation.tags && curation.tags.length > 0 && (
+                      <div className="flex gap-2 flex-wrap mt-3">
+                        {curation.tags.map((tag) => (
+                          <div
+                            key={tag}
+                            role="group"
+                            className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral cursor-pointer hover:scale-105 transition-all duration-200 select-none"
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/tags/${tag.toLowerCase().replace(/\s+/g, '-')}/`); }}
+                          >
+                            <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                              {tag}
+                            </Text>
+                            <LikeButton
+                              entityId={`tag-${tag.toLowerCase()}`}
+                              entityType="tag"
+                              entityTitle={tag}
+                              variant="minimal"
+                              size="sm"
+                              iconColor="#ffffff"
+                              backgroundColor="var(--vibrant-coral)"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <CreatorCarousel
+                    creatorAvatar={profile.avatar_url || ''}
+                    creatorName={profile.display_name}
+                    creatorFocus={profile.tagline || ''}
+                    occasion={curation.title}
+                    curationReason={curation.description || ''}
+                    showSocials={false}
+                    creatorWebsiteUrl={profile.social_links?.website}
+                    isVerified={false}
+                    showHeader={false}
+                    books={mapBooksForCarousel(curation.books)}
+                    tags={curation.tags}
+                    showCta={false}
+                    backgroundColor="white"
+                    useEditorialLayout={true}
+                    showVideo={false}
+                  />
+                </div>
+              ))
+            )}
+          </section>
+        )}
+
+        {activeTab === 'rezensionen' && (
+          <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4" data-testid="rezensionen-section">
+            <div className="text-center py-16">
+              <BookOpen className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+              <Text as="p" variant="base" className="text-muted-foreground">
+                Noch keine Rezensionen vorhanden.
+              </Text>
             </div>
-          ))}
-        </section>
+          </section>
+        )}
+
+        {activeTab === 'bewertungen' && (
+          <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4" data-testid="bewertungen-section">
+            <div className="text-center py-16">
+              <Star className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+              <Text as="p" variant="base" className="text-muted-foreground">
+                Noch keine Bewertungen vorhanden.
+              </Text>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'veranstaltungen' && (
+          <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4" data-testid="veranstaltungen-section">
+            <div className="text-center py-16">
+              <CalendarDays className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+              <Text as="p" variant="base" className="text-muted-foreground">
+                Noch keine Veranstaltungen vorhanden.
+              </Text>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'buchclub' && profile.is_author && profile.show_buchclub && (
+          <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4" data-testid="buchclub-section">
+            <div className="text-center py-16">
+              <BookOpen className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+              <Text as="p" variant="base" className="text-muted-foreground">
+                Noch keine Buchclub-Inhalte vorhanden.
+              </Text>
+            </div>
+          </section>
+        )}
 
         <section className="bg-gray-50 dark:bg-muted/30 py-6 px-6 text-center" data-testid="disclaimer-section">
           <p className="text-xs text-muted-foreground max-w-3xl mx-auto">
