@@ -100,9 +100,9 @@ function isBookstoreCandidate(pathname: string): boolean {
 
 function BookstoreRouteGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const [bookstoreState, setBookstoreState] = useState<'checking' | 'found' | 'not_bookstore'>('not_bookstore');
-  const [bookstoreSlug, setBookstoreSlug] = useState<string | null>(null);
   const candidateSlug = isBookstoreCandidate(location.pathname) ? location.pathname.split('/').filter(Boolean)[0] : null;
+  const [bookstoreState, setBookstoreState] = useState<'checking' | 'found' | 'not_bookstore'>(candidateSlug ? 'checking' : 'not_bookstore');
+  const [bookstoreSlug, setBookstoreSlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (!candidateSlug) {
