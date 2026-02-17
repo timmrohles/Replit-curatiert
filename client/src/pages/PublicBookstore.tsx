@@ -185,8 +185,8 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
           className="py-10 md:py-14 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto"
           data-testid="hero-section"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-            {/* Left Column: Avatar + Name/Focus side by side, vertically centered */}
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-8 md:gap-12 items-center">
+            {/* Left Column: Avatar + Name/Focus + Social, vertically centered */}
             <div className="flex items-center gap-5 md:gap-6 justify-center">
               <div className="flex-shrink-0">
                 <div className="w-36 h-36 md:w-44 md:h-44 rounded-full overflow-hidden ring-2 ring-cerulean ring-offset-2 shadow-[0_4px_12px_rgba(0,0,0,0.15)]">
@@ -226,50 +226,50 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                     <Text as="span" variant="base">{profile.address}</Text>
                   </div>
                 )}
+
+                {(socialLinks.website || socialLinks.instagram || socialLinks.youtube || socialLinks.tiktok || socialLinks.twitter || socialLinks.podcast) && (
+                  <div className="flex items-center gap-3 flex-wrap mt-3" data-testid="social-links">
+                    {socialLinks.website && (
+                      <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" data-testid="link-social-website" className="text-muted-foreground hover:text-cerulean transition-colors">
+                        <Globe className="w-6 h-6" />
+                      </a>
+                    )}
+                    {socialLinks.instagram && (
+                      <a href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-instagram" className="text-muted-foreground hover:text-cerulean transition-colors">
+                        <Instagram className="w-6 h-6" />
+                      </a>
+                    )}
+                    {socialLinks.youtube && (
+                      <a href={socialLinks.youtube.startsWith('http') ? socialLinks.youtube : `https://youtube.com/${socialLinks.youtube}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-youtube" className="text-muted-foreground hover:text-cerulean transition-colors">
+                        <SiYoutube className="w-6 h-6" />
+                      </a>
+                    )}
+                    {socialLinks.tiktok && (
+                      <a href={socialLinks.tiktok.startsWith('http') ? socialLinks.tiktok : `https://tiktok.com/@${socialLinks.tiktok}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-tiktok" className="text-muted-foreground hover:text-cerulean transition-colors">
+                        <SiTiktok className="w-6 h-6" />
+                      </a>
+                    )}
+                    {socialLinks.podcast && (
+                      <a href={socialLinks.podcast} target="_blank" rel="noopener noreferrer" data-testid="link-social-podcast" className="text-muted-foreground hover:text-cerulean transition-colors">
+                        <Podcast className="w-6 h-6" />
+                      </a>
+                    )}
+                    {socialLinks.twitter && (
+                      <a href={socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://twitter.com/${socialLinks.twitter}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-twitter" className="text-muted-foreground hover:text-cerulean transition-colors">
+                        <ExternalLink className="w-6 h-6" />
+                      </a>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
-            {/* Right Column: Bio, Social Links - centered */}
+            {/* Right Column: Bio - centered */}
             <div className="flex flex-col items-center text-center">
               {(profile.bio || profile.description) && (
-                <Text as="p" variant="lg" className="text-foreground leading-relaxed mb-5 max-w-lg" data-testid="text-description">
+                <Text as="p" variant="lg" className="text-foreground leading-relaxed max-w-lg" data-testid="text-description">
                   {profile.bio || profile.description}
                 </Text>
-              )}
-
-              {(socialLinks.website || socialLinks.instagram || socialLinks.youtube || socialLinks.tiktok || socialLinks.twitter || socialLinks.podcast) && (
-                <div className="flex items-center gap-4 flex-wrap justify-center" data-testid="social-links">
-                  {socialLinks.website && (
-                    <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" data-testid="link-social-website" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <Globe className="w-7 h-7" />
-                    </a>
-                  )}
-                  {socialLinks.instagram && (
-                    <a href={socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-instagram" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <Instagram className="w-7 h-7" />
-                    </a>
-                  )}
-                  {socialLinks.youtube && (
-                    <a href={socialLinks.youtube.startsWith('http') ? socialLinks.youtube : `https://youtube.com/${socialLinks.youtube}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-youtube" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <SiYoutube className="w-7 h-7" />
-                    </a>
-                  )}
-                  {socialLinks.tiktok && (
-                    <a href={socialLinks.tiktok.startsWith('http') ? socialLinks.tiktok : `https://tiktok.com/@${socialLinks.tiktok}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-tiktok" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <SiTiktok className="w-7 h-7" />
-                    </a>
-                  )}
-                  {socialLinks.podcast && (
-                    <a href={socialLinks.podcast} target="_blank" rel="noopener noreferrer" data-testid="link-social-podcast" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <Podcast className="w-7 h-7" />
-                    </a>
-                  )}
-                  {socialLinks.twitter && (
-                    <a href={socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://twitter.com/${socialLinks.twitter}`} target="_blank" rel="noopener noreferrer" data-testid="link-social-twitter" className="text-muted-foreground hover:text-cerulean transition-colors">
-                      <ExternalLink className="w-7 h-7" />
-                    </a>
-                  )}
-                </div>
               )}
             </div>
           </div>
