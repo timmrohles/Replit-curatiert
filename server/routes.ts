@@ -7053,5 +7053,130 @@ export async function registerRoutes(
     }
   });
 
+  // ============================================
+  // ORGANIZER: Participant Management
+  // ============================================
+
+  app.delete('/api/user-events/:id/participants/:participantId', async (req: Request, res: Response) => {
+    try {
+      const eventId = parseIdParam(req.params.id);
+      const participantId = parseIdParam(req.params.participantId);
+      if (!eventId || !participantId) return res.status(400).json({ ok: false, error: 'Invalid IDs' });
+      const organizerUserId = req.query.userId as string;
+      if (!organizerUserId) return res.status(400).json({ ok: false, error: 'userId is required' });
+
+      const event = await queryDB(`SELECT user_id, title FROM user_events WHERE id = $1`, [eventId]);
+      if (event.rows.length === 0) return res.status(404).json({ ok: false, error: 'Event not found' });
+      if (event.rows[0].user_id !== organizerUserId) return res.status(403).json({ ok: false, error: 'Not authorized' });
+
+      const participant = await queryDB(`SELECT user_id, user_display_name FROM event_participants WHERE id = $1 AND event_id = $2`, [participantId, eventId]);
+      if (participant.rows.length === 0) return res.status(404).json({ ok: false, error: 'Participant not found' });
+
+      await queryDB(`DELETE FROM event_participants WHERE id = $1`, [participantId]);
+
+      await queryDB(
+        `INSERT INTO user_notifications (user_id, type, title, message, link) VALUES ($1, 'event_cancelled', $2, $3, $4)`,
+        [participant.rows[0].user_id, `Teilnahme entfernt: ${event.rows[0].title}`, `Du wurdest aus der Teilnehmerliste für "${event.rows[0].title}" entfernt.`, `/bookstore`]
+      );
+
+      return res.json({ ok: true });
+    } catch (error) {
+      log.error('Remove participant error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/user-events/:id/message', async (req: Request, res: Response) => {
+    try {
+      const eventId = parseIdParam(req.params.id);
+      if (!eventId) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      const { userId, message } = req.body;
+      if (!userId || !message?.trim()) return res.status(400).json({ ok: false, error: 'userId and message are required' });
+
+      const event = await queryDB(`SELECT user_id, title FROM user_events WHERE id = $1`, [eventId]);
+      if (event.rows.length === 0) return res.status(404).json({ ok: false, error: 'Event not found' });
+      if (event.rows[0].user_id !== userId) return res.status(403).json({ ok: false, error: 'Not authorized' });
+
+      const participants = await queryDB(`SELECT user_id FROM event_participants WHERE event_id = $1 AND status = 'booked'`, [eventId]);
+
+      let sentCount = 0;
+      for (const p of participants.rows) {
+        await queryDB(
+          `INSERT INTO user_notifications (user_id, type, title, message, link) VALUES ($1, 'event_message', $2, $3, $4)`,
+          [p.user_id, `Nachricht: ${event.rows[0].title}`, message.trim(), `/bookstore`]
+        );
+        sentCount++;
+      }
+
+      return res.json({ ok: true, sentCount });
+    } catch (error) {
+      log.error('Send event message error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.put('/api/user-events/:id/cancel', async (req: Request, res: Response) => {
+    try {
+      const eventId = parseIdParam(req.params.id);
+      if (!eventId) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      const { userId, reason } = req.body;
+      if (!userId) return res.status(400).json({ ok: false, error: 'userId is required' });
+
+      const event = await queryDB(`SELECT user_id, title FROM user_events WHERE id = $1`, [eventId]);
+      if (event.rows.length === 0) return res.status(404).json({ ok: false, error: 'Event not found' });
+      if (event.rows[0].user_id !== userId) return res.status(403).json({ ok: false, error: 'Not authorized' });
+
+      await queryDB(`UPDATE user_events SET is_published = false WHERE id = $1`, [eventId]);
+
+      const participants = await queryDB(`SELECT user_id FROM event_participants WHERE event_id = $1 AND status = 'booked'`, [eventId]);
+      for (const p of participants.rows) {
+        await queryDB(
+          `INSERT INTO user_notifications (user_id, type, title, message, link) VALUES ($1, 'event_cancelled', $2, $3, $4)`,
+          [p.user_id, `Veranstaltung abgesagt: ${event.rows[0].title}`, reason ? `Grund: ${reason}` : `Die Veranstaltung "${event.rows[0].title}" wurde leider abgesagt.`, `/bookstore`]
+        );
+      }
+
+      await queryDB(`DELETE FROM event_participants WHERE event_id = $1`, [eventId]);
+
+      return res.json({ ok: true });
+    } catch (error) {
+      log.error('Cancel event error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.put('/api/user-events/:id/reschedule', async (req: Request, res: Response) => {
+    try {
+      const eventId = parseIdParam(req.params.id);
+      if (!eventId) return res.status(400).json({ ok: false, error: 'Invalid event ID' });
+      const { userId, new_event_date, new_event_end_date, message } = req.body;
+      if (!userId || !new_event_date) return res.status(400).json({ ok: false, error: 'userId and new_event_date are required' });
+
+      const event = await queryDB(`SELECT user_id, title, event_date FROM user_events WHERE id = $1`, [eventId]);
+      if (event.rows.length === 0) return res.status(404).json({ ok: false, error: 'Event not found' });
+      if (event.rows[0].user_id !== userId) return res.status(403).json({ ok: false, error: 'Not authorized' });
+
+      await queryDB(
+        `UPDATE user_events SET event_date = $1, event_end_date = $2 WHERE id = $3`,
+        [new_event_date, new_event_end_date || null, eventId]
+      );
+
+      const newDateFormatted = new Date(new_event_date).toLocaleDateString('de-DE', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+      const participants = await queryDB(`SELECT user_id FROM event_participants WHERE event_id = $1 AND status = 'booked'`, [eventId]);
+      for (const p of participants.rows) {
+        await queryDB(
+          `INSERT INTO user_notifications (user_id, type, title, message, link) VALUES ($1, 'event_rescheduled', $2, $3, $4)`,
+          [p.user_id, `Veranstaltung verschoben: ${event.rows[0].title}`, message ? `${message}\n\nNeuer Termin: ${newDateFormatted}` : `Die Veranstaltung "${event.rows[0].title}" wurde auf ${newDateFormatted} verschoben.`, `/bookstore`]
+        );
+      }
+
+      return res.json({ ok: true });
+    } catch (error) {
+      log.error('Reschedule event error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
   return httpServer;
 }

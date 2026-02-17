@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Calendar, MapPin, Video, Users, Clock, Plus, X, Edit2, Trash2, ExternalLink, Download, ChevronDown, ChevronUp, Globe, Lock, BookOpen } from 'lucide-react';
+import { Calendar, MapPin, Video, Users, Clock, Plus, X, Edit2, Trash2, ExternalLink, Download, ChevronDown, ChevronUp, Globe, Lock, BookOpen, Send, XCircle, CalendarClock, MessageSquare, UserMinus, AlertTriangle } from 'lucide-react';
 import { Heading, Text } from '../../components/ui/typography';
 
 const API_BASE = '/api';
@@ -222,6 +222,54 @@ export function UserEvents() {
     if (!isExpanded && !participants[eventId]) {
       loadParticipants(eventId);
     }
+  };
+
+  const removeParticipant = async (eventId: number, participantId: number) => {
+    try {
+      const res = await fetch(`${API_BASE}/user-events/${eventId}/participants/${participantId}?userId=${USER_ID}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.ok) {
+        await loadParticipants(eventId);
+        await fetchEvents();
+      }
+    } catch { /* ignore */ }
+  };
+
+  const sendMessage = async (eventId: number, message: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/user-events/${eventId}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: USER_ID, message }),
+      });
+      return await res.json();
+    } catch { return { ok: false }; }
+  };
+
+  const cancelEvent = async (eventId: number, reason: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/user-events/${eventId}/cancel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: USER_ID, reason }),
+      });
+      const data = await res.json();
+      if (data.ok) await fetchEvents();
+      return data;
+    } catch { return { ok: false }; }
+  };
+
+  const rescheduleEvent = async (eventId: number, newDate: string, newEndDate: string | null, message: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/user-events/${eventId}/reschedule`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: USER_ID, new_event_date: newDate, new_event_end_date: newEndDate, message }),
+      });
+      const data = await res.json();
+      if (data.ok) await fetchEvents();
+      return data;
+    } catch { return { ok: false }; }
   };
 
   const upcomingEvents = events.filter(e => new Date(e.event_date) >= new Date());
@@ -544,6 +592,10 @@ export function UserEvents() {
                     onToggleParticipants={() => toggleParticipants(event.id)}
                     isParticipantsExpanded={expandedParticipants[event.id] || false}
                     participants={participants[event.id] || []}
+                    onRemoveParticipant={(pId) => removeParticipant(event.id, pId)}
+                    onSendMessage={(msg) => sendMessage(event.id, msg)}
+                    onCancelEvent={(reason) => cancelEvent(event.id, reason)}
+                    onRescheduleEvent={(newDate, newEndDate, msg) => rescheduleEvent(event.id, newDate, newEndDate, msg)}
                   />
                 ))}
               </div>
@@ -566,6 +618,10 @@ export function UserEvents() {
                     onToggleParticipants={() => toggleParticipants(event.id)}
                     isParticipantsExpanded={expandedParticipants[event.id] || false}
                     participants={participants[event.id] || []}
+                    onRemoveParticipant={(pId) => removeParticipant(event.id, pId)}
+                    onSendMessage={(msg) => sendMessage(event.id, msg)}
+                    onCancelEvent={(reason) => cancelEvent(event.id, reason)}
+                    onRescheduleEvent={(newDate, newEndDate, msg) => rescheduleEvent(event.id, newDate, newEndDate, msg)}
                     isPast
                   />
                 ))}
@@ -586,6 +642,10 @@ function EventCard({
   onToggleParticipants,
   isParticipantsExpanded,
   participants,
+  onRemoveParticipant,
+  onSendMessage,
+  onCancelEvent,
+  onRescheduleEvent,
   isPast,
 }: {
   event: UserEvent;
@@ -595,10 +655,76 @@ function EventCard({
   onToggleParticipants: () => void;
   isParticipantsExpanded: boolean;
   participants: Participant[];
+  onRemoveParticipant: (participantId: number) => void;
+  onSendMessage: (message: string) => Promise<any>;
+  onCancelEvent: (reason: string) => Promise<any>;
+  onRescheduleEvent: (newDate: string, newEndDate: string | null, message: string) => Promise<any>;
   isPast?: boolean;
 }) {
   const participantCount = parseInt(event.participant_count) || 0;
   const isFull = event.max_participants ? participantCount >= event.max_participants : false;
+
+  const [showMessageForm, setShowMessageForm] = useState(false);
+  const [messageText, setMessageText] = useState('');
+  const [messageSending, setMessageSending] = useState(false);
+  const [messageSuccess, setMessageSuccess] = useState<string | null>(null);
+
+  const [showCancelForm, setShowCancelForm] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+
+  const [showRescheduleForm, setShowRescheduleForm] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleEndDate, setRescheduleEndDate] = useState('');
+  const [rescheduleMessage, setRescheduleMessage] = useState('');
+  const [rescheduling, setRescheduling] = useState(false);
+
+  const [removingParticipant, setRemovingParticipant] = useState<number | null>(null);
+
+  const handleSendMessage = async () => {
+    if (!messageText.trim()) return;
+    setMessageSending(true);
+    const result = await onSendMessage(messageText.trim());
+    setMessageSending(false);
+    if (result.ok) {
+      setMessageSuccess(`Nachricht an ${result.sentCount} Teilnehmer:innen gesendet.`);
+      setMessageText('');
+      setTimeout(() => { setMessageSuccess(null); setShowMessageForm(false); }, 3000);
+    }
+  };
+
+  const handleCancel = async () => {
+    setCancelling(true);
+    const result = await onCancelEvent(cancelReason.trim());
+    setCancelling(false);
+    if (result.ok) {
+      setCancelReason('');
+      setShowCancelForm(false);
+    }
+  };
+
+  const handleReschedule = async () => {
+    if (!rescheduleDate) return;
+    setRescheduling(true);
+    const result = await onRescheduleEvent(
+      new Date(rescheduleDate).toISOString(),
+      rescheduleEndDate ? new Date(rescheduleEndDate).toISOString() : null,
+      rescheduleMessage.trim()
+    );
+    setRescheduling(false);
+    if (result.ok) {
+      setRescheduleDate('');
+      setRescheduleEndDate('');
+      setRescheduleMessage('');
+      setShowRescheduleForm(false);
+    }
+  };
+
+  const handleRemoveParticipant = async (pId: number) => {
+    setRemovingParticipant(pId);
+    await onRemoveParticipant(pId);
+    setRemovingParticipant(null);
+  };
 
   return (
     <div
@@ -710,38 +836,230 @@ function EventCard({
           </div>
         </div>
 
-        {participantCount > 0 && (
-          <div className="mt-3 pt-3" style={{ borderTop: '1px solid #F3F4F6' }}>
+        {!isPast && (
+          <div className="mt-3 pt-3 flex flex-wrap gap-2" style={{ borderTop: '1px solid #F3F4F6' }}>
+            {participantCount > 0 && (
+              <button
+                onClick={() => { setShowMessageForm(!showMessageForm); setShowCancelForm(false); setShowRescheduleForm(false); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                style={{ backgroundColor: showMessageForm ? '#247ba0' : 'rgba(36,123,160,0.1)', color: showMessageForm ? '#fff' : '#247ba0' }}
+                data-testid={`button-message-participants-${event.id}`}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Nachricht senden
+              </button>
+            )}
             <button
-              onClick={onToggleParticipants}
-              className="flex items-center gap-1.5 text-sm font-medium transition-colors"
-              style={{ color: '#247ba0' }}
-              data-testid={`toggle-participants-${event.id}`}
+              onClick={() => { setShowRescheduleForm(!showRescheduleForm); setShowCancelForm(false); setShowMessageForm(false); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+              style={{ backgroundColor: showRescheduleForm ? '#d97706' : 'rgba(217,119,6,0.1)', color: showRescheduleForm ? '#fff' : '#d97706' }}
+              data-testid={`button-reschedule-${event.id}`}
             >
-              <Users className="w-3.5 h-3.5" />
-              {participantCount} Teilnehmer:innen anzeigen
-              {isParticipantsExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              <CalendarClock className="w-3.5 h-3.5" />
+              Verschieben
             </button>
+            <button
+              onClick={() => { setShowCancelForm(!showCancelForm); setShowRescheduleForm(false); setShowMessageForm(false); }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+              style={{ backgroundColor: showCancelForm ? '#EF4444' : 'rgba(239,68,68,0.1)', color: showCancelForm ? '#fff' : '#EF4444' }}
+              data-testid={`button-cancel-event-${event.id}`}
+            >
+              <XCircle className="w-3.5 h-3.5" />
+              Absagen
+            </button>
+          </div>
+        )}
 
-            {isParticipantsExpanded && (
-              <div className="mt-2 space-y-1">
-                {participants.length === 0 ? (
-                  <Text as="p" variant="xs" style={{ color: '#9CA3AF' }}>Lade Teilnehmer...</Text>
-                ) : (
-                  participants.map(p => (
-                    <div key={p.id} className="flex items-center justify-between px-2 py-1.5 rounded" style={{ backgroundColor: '#F9FAFB' }}>
-                      <Text as="span" variant="small" style={{ color: '#3A3A3A' }}>
+        {showMessageForm && (
+          <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
+            <Text as="p" variant="small" className="font-semibold mb-2" style={{ color: '#0369A1' }}>
+              Nachricht an alle Teilnehmer:innen ({participantCount})
+            </Text>
+            <textarea
+              value={messageText}
+              onChange={e => setMessageText(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 rounded-lg border text-sm mb-2"
+              style={{ borderColor: '#BAE6FD', resize: 'vertical' }}
+              placeholder="Schreibe eine Nachricht an alle Teilnehmer:innen..."
+              data-testid={`textarea-message-${event.id}`}
+            />
+            {messageSuccess && (
+              <Text as="p" variant="xs" className="mb-2 font-medium" style={{ color: '#059669' }}>{messageSuccess}</Text>
+            )}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setShowMessageForm(false); setMessageText(''); setMessageSuccess(null); }}
+                className="px-3 py-1.5 rounded-md text-xs font-medium"
+                style={{ color: '#6B7280' }}
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleSendMessage}
+                disabled={messageSending || !messageText.trim()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-white disabled:opacity-50"
+                style={{ backgroundColor: '#247ba0' }}
+                data-testid={`button-send-message-${event.id}`}
+              >
+                <Send className="w-3 h-3" />
+                {messageSending ? 'Sende...' : 'Senden'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showRescheduleForm && (
+          <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: '#FFFBEB', border: '1px solid #FDE68A' }}>
+            <Text as="p" variant="small" className="font-semibold mb-2" style={{ color: '#92400E' }}>
+              Veranstaltung verschieben
+            </Text>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: '#92400E' }}>Neuer Termin *</label>
+                <input
+                  type="datetime-local"
+                  value={rescheduleDate}
+                  onChange={e => setRescheduleDate(e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-lg border text-sm"
+                  style={{ borderColor: '#FDE68A' }}
+                  data-testid={`input-reschedule-date-${event.id}`}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium mb-1" style={{ color: '#92400E' }}>Neues Ende (optional)</label>
+                <input
+                  type="datetime-local"
+                  value={rescheduleEndDate}
+                  onChange={e => setRescheduleEndDate(e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-lg border text-sm"
+                  style={{ borderColor: '#FDE68A' }}
+                  data-testid={`input-reschedule-end-date-${event.id}`}
+                />
+              </div>
+            </div>
+            <textarea
+              value={rescheduleMessage}
+              onChange={e => setRescheduleMessage(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 rounded-lg border text-sm mb-2"
+              style={{ borderColor: '#FDE68A', resize: 'vertical' }}
+              placeholder="Optionale Nachricht an alle Teilnehmer:innen..."
+              data-testid={`textarea-reschedule-message-${event.id}`}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setShowRescheduleForm(false); setRescheduleDate(''); setRescheduleEndDate(''); setRescheduleMessage(''); }}
+                className="px-3 py-1.5 rounded-md text-xs font-medium"
+                style={{ color: '#6B7280' }}
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleReschedule}
+                disabled={rescheduling || !rescheduleDate}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-white disabled:opacity-50"
+                style={{ backgroundColor: '#d97706' }}
+                data-testid={`button-confirm-reschedule-${event.id}`}
+              >
+                <CalendarClock className="w-3 h-3" />
+                {rescheduling ? 'Verschiebe...' : 'Verschieben & benachrichtigen'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showCancelForm && (
+          <div className="mt-3 p-3 rounded-lg" style={{ backgroundColor: '#FEF2F2', border: '1px solid #FECACA' }}>
+            <div className="flex items-start gap-2 mb-2">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: '#EF4444' }} />
+              <div>
+                <Text as="p" variant="small" className="font-semibold" style={{ color: '#991B1B' }}>
+                  Veranstaltung absagen
+                </Text>
+                <Text as="p" variant="xs" style={{ color: '#B91C1C' }}>
+                  Alle {participantCount} Teilnehmer:innen werden benachrichtigt und aus der Liste entfernt.
+                </Text>
+              </div>
+            </div>
+            <textarea
+              value={cancelReason}
+              onChange={e => setCancelReason(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 rounded-lg border text-sm mb-2"
+              style={{ borderColor: '#FECACA', resize: 'vertical' }}
+              placeholder="Grund für die Absage (optional)..."
+              data-testid={`textarea-cancel-reason-${event.id}`}
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setShowCancelForm(false); setCancelReason(''); }}
+                className="px-3 py-1.5 rounded-md text-xs font-medium"
+                style={{ color: '#6B7280' }}
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-white disabled:opacity-50"
+                style={{ backgroundColor: '#EF4444' }}
+                data-testid={`button-confirm-cancel-${event.id}`}
+              >
+                <XCircle className="w-3 h-3" />
+                {cancelling ? 'Sage ab...' : 'Endgültig absagen'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {participantCount > 0 && (
+        <div className="mt-3 pt-3" style={{ borderTop: '1px solid #F3F4F6' }}>
+          <button
+            onClick={onToggleParticipants}
+            className="flex items-center gap-1.5 text-sm font-medium transition-colors"
+            style={{ color: '#247ba0' }}
+            data-testid={`toggle-participants-${event.id}`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            {participantCount} Teilnehmer:innen {isParticipantsExpanded ? 'ausblenden' : 'anzeigen'}
+            {isParticipantsExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+
+          {isParticipantsExpanded && (
+            <div className="mt-2 space-y-1">
+              {participants.length === 0 ? (
+                <Text as="p" variant="xs" style={{ color: '#9CA3AF' }}>Lade Teilnehmer...</Text>
+              ) : (
+                participants.map(p => (
+                  <div key={p.id} className="flex items-center justify-between px-3 py-2 rounded-md gap-2" style={{ backgroundColor: '#F9FAFB' }}>
+                    <div className="flex-1 min-w-0">
+                      <Text as="span" variant="small" className="font-medium" style={{ color: '#3A3A3A' }}>
                         {p.user_display_name || p.user_id}
                       </Text>
-                      <Text as="span" variant="xs" style={{ color: '#9CA3AF' }}>
-                        {new Date(p.booked_at).toLocaleDateString('de-DE')}
+                      <Text as="span" variant="xs" className="ml-2" style={{ color: '#9CA3AF' }}>
+                        angemeldet am {new Date(p.booked_at).toLocaleDateString('de-DE')}
                       </Text>
                     </div>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
+                    <button
+                      onClick={() => handleRemoveParticipant(p.id)}
+                      disabled={removingParticipant === p.id}
+                      className="p-1 rounded-md transition-colors hover:bg-red-50 flex-shrink-0"
+                      title="Teilnehmer:in entfernen"
+                      data-testid={`button-remove-participant-${p.id}`}
+                    >
+                      {removingParticipant === p.id ? (
+                        <div className="w-3.5 h-3.5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <UserMinus className="w-3.5 h-3.5" style={{ color: '#EF4444' }} />
+                      )}
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
         )}
       </div>
     </div>
