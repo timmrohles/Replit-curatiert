@@ -6500,6 +6500,15 @@ export async function registerRoutes(
       );
       if (profileResult.rows.length > 0) {
         profile = profileResult.rows[0];
+        if (!profile.avatar_url) {
+          const curatorBySlug = await queryDB(
+            `SELECT avatar_url FROM curators WHERE slug = $1 AND deleted_at IS NULL LIMIT 1`,
+            [slug]
+          );
+          if (curatorBySlug.rows.length > 0 && curatorBySlug.rows[0].avatar_url) {
+            profile.avatar_url = curatorBySlug.rows[0].avatar_url;
+          }
+        }
         const curationsResult = await queryDB(
           `SELECT uc.*, bcl.display_order as link_order
            FROM bookstore_curation_links bcl
