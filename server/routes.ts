@@ -818,6 +818,29 @@ export async function registerRoutes(
   }
 
   // ==================================================================
+  // CATEGORY CARDS TABLE
+  // ==================================================================
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS category_cards (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        image_url TEXT,
+        link TEXT NOT NULL DEFAULT '',
+        color VARCHAR(50) DEFAULT '#247ba0',
+        display_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        location VARCHAR(100) DEFAULT 'homepage',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    log.info('category_cards table verified');
+  } catch (err) {
+    log.warn('Could not create category_cards table:', err);
+  }
+
+  // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
   const uploadsDir = path.resolve(process.cwd(), 'client/src/public/uploads/avatars');
@@ -7049,6 +7072,123 @@ export async function registerRoutes(
       return res.json({ ok: true });
     } catch (error) {
       log.error('Admin delete event error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ============================================
+  // CATEGORY CARDS - Public + Admin CRUD
+  // ============================================
+
+  app.get('/api/category-cards', async (req: Request, res: Response) => {
+    try {
+      const location = (req.query.location as string) || 'homepage';
+      const result = await queryDB(
+        `SELECT id, name, image_url, link, color, display_order
+         FROM category_cards
+         WHERE is_active = true AND location = $1
+         ORDER BY display_order ASC, name ASC`,
+        [location]
+      );
+      return res.json({ success: true, data: result.rows });
+    } catch (error) {
+      log.error('Category cards fetch error:', error);
+      return res.json({ success: true, data: [] });
+    }
+  });
+
+  app.get('/api/admin/category-cards', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const result = await queryDB(
+        `SELECT * FROM category_cards ORDER BY location ASC, display_order ASC, name ASC`
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Admin category cards fetch error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/category-cards', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const { name, image_url, link, color, display_order, is_active, location } = req.body;
+      if (!name?.trim()) return res.status(400).json({ ok: false, error: 'Name is required' });
+      const result = await queryDB(
+        `INSERT INTO category_cards (name, image_url, link, color, display_order, is_active, location)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *`,
+        [name.trim(), image_url || null, link || '', color || '#247ba0', display_order ?? 0, is_active !== false, location || 'homepage']
+      );
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Create category card error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.patch('/api/admin/category-cards/:id', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    const id = parseIdParam(req.params.id);
+    if (!id) return res.status(400).json({ ok: false, error: 'Invalid ID' });
+    try {
+      const body = req.body;
+      const updates: string[] = [];
+      const values: any[] = [];
+      let idx = 1;
+      const allowed = ['name', 'image_url', 'link', 'color', 'display_order', 'is_active', 'location'];
+      for (const field of allowed) {
+        if (field in body) {
+          updates.push(`${field} = $${idx}`);
+          values.push(body[field]);
+          idx++;
+        }
+      }
+      if (updates.length === 0) return res.status(400).json({ ok: false, error: 'No updates' });
+      values.push(id);
+      const result = await queryDB(
+        `UPDATE category_cards SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${idx} RETURNING *`,
+        values
+      );
+      if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Not found' });
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Update category card error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/admin/category-cards/:id', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    const id = parseIdParam(req.params.id);
+    if (!id) return res.status(400).json({ ok: false, error: 'Invalid ID' });
+    try {
+      const result = await queryDB(`DELETE FROM category_cards WHERE id = $1 RETURNING id`, [id]);
+      if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Not found' });
+      return res.json({ ok: true });
+    } catch (error) {
+      log.error('Delete category card error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/category-cards/reorder', async (req: Request, res: Response) => {
+    const authorized = await requireAdminGuard(req, res);
+    if (!authorized) return;
+    try {
+      const { ids } = req.body;
+      if (!Array.isArray(ids)) return res.status(400).json({ ok: false, error: 'ids array required' });
+      for (let i = 0; i < ids.length; i++) {
+        await queryDB(`UPDATE category_cards SET display_order = $1, updated_at = NOW() WHERE id = $2`, [i, ids[i]]);
+      }
+      return res.json({ ok: true });
+    } catch (error) {
+      log.error('Reorder category cards error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });
