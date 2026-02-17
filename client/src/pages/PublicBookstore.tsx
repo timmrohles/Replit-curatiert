@@ -276,6 +276,14 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
 
           {curations.map((curation) => (
             <div key={curation.id} data-testid={`curation-${curation.id}`}>
+              <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-2">
+                <h3 className="section-title text-foreground">{curation.title}</h3>
+                {curation.description && (
+                  <Text as="p" variant="base" className="text-foreground/80 leading-relaxed mt-2 max-w-3xl">
+                    {curation.description}
+                  </Text>
+                )}
+              </div>
               <CreatorCarousel
                 creatorAvatar={profile.avatar_url || ''}
                 creatorName={profile.display_name}
@@ -285,7 +293,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                 showSocials={false}
                 creatorWebsiteUrl={profile.social_links?.website}
                 isVerified={false}
-                showHeader={true}
+                showHeader={false}
                 books={mapBooksForCarousel(curation.books)}
                 tags={curation.tags}
                 showCta={false}
