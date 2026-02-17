@@ -1,6 +1,202 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Save, BookOpen, Mail, Phone, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon, ExternalLink, Globe, Instagram, Podcast, Check } from 'lucide-react';
+import { User, Save, BookOpen, Mail, Phone, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon, ExternalLink, Globe, Instagram, Podcast, Check, Plus, Search, X } from 'lucide-react';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
+import { LikeButton } from '../../components/favorites/LikeButton';
+import { Text } from '../../components/ui/typography';
+
+const TAG_COLORS = [
+  'var(--vibrant-coral, #f25f5c)',
+  'var(--color-saffron, #e8a838)',
+  'var(--color-teal, #70c1b3)',
+  'var(--color-cerulean, #247ba0)',
+  '#8b5cf6',
+  '#ec4899',
+];
+
+interface GenreSuggestion {
+  id: string;
+  name: string;
+  displayName?: string;
+}
+
+function GenrePickerDropdown({
+  onAdd,
+  existingGenres,
+}: {
+  onAdd: (genre: string) => void;
+  existingGenres: string[];
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<GenreSuggestion[]>([]);
+  const [popularItems, setPopularItems] = useState<GenreSuggestion[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [popularLoaded, setPopularLoaded] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setQuery('');
+        setSuggestions([]);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && !popularLoaded) {
+      (async () => {
+        try {
+          const res = await fetch('/api/onix-tags?scope=book&tag_type=topic&visible=true&limit=12');
+          if (res.ok) {
+            const data = await res.json();
+            const items = (data.data || []).map((t: any) => ({
+              id: String(t.id),
+              name: t.displayName || t.name || '',
+            }));
+            setPopularItems(items.filter((i: GenreSuggestion) => !existingGenres.includes(i.name)).slice(0, 8));
+          }
+        } catch { /* ignore */ }
+        setPopularLoaded(true);
+      })();
+    }
+  }, [isOpen, popularLoaded, existingGenres]);
+
+  const searchItems = useCallback(async (searchQuery: string) => {
+    if (searchQuery.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    setIsSearching(true);
+    try {
+      const res = await fetch(`/api/onix-tags?q=${encodeURIComponent(searchQuery)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const items = (data.data || []).map((t: any) => ({
+          id: String(t.id),
+          name: t.displayName || t.name || '',
+        }));
+        setSuggestions(items.filter((i: GenreSuggestion) => !existingGenres.includes(i.name)));
+      }
+    } catch {
+      setSuggestions([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [existingGenres]);
+
+  const handleQueryChange = useCallback((value: string) => {
+    setQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchItems(value), 300);
+  }, [searchItems]);
+
+  const handleSelect = useCallback((item: GenreSuggestion) => {
+    onAdd(item.name);
+    setPopularItems((prev) => prev.filter((p) => p.id !== item.id));
+    setQuery('');
+    setSuggestions([]);
+    setIsOpen(false);
+  }, [onAdd]);
+
+  const showPopular = isOpen && query.length < 2 && !isSearching && popularItems.length > 0;
+
+  return (
+    <div className="relative inline-block" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-8 h-8 rounded-full inline-flex items-center justify-center border-2 border-dashed transition-colors"
+        style={{ borderColor: '#9CA3AF', color: '#9CA3AF' }}
+        data-testid="button-add-genre"
+      >
+        <Plus className="w-4 h-4" />
+      </button>
+
+      {isOpen && (
+        <div
+          className="absolute left-0 top-full mt-2 w-72 rounded-lg shadow-xl border z-50"
+          style={{ backgroundColor: 'var(--color-beige, #faf6f1)', borderColor: '#E5E7EB' }}
+        >
+          <div className="p-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#9CA3AF' }} />
+              <input
+                ref={inputRef}
+                type="text"
+                value={query}
+                onChange={(e) => handleQueryChange(e.target.value)}
+                placeholder="Genre oder Thema suchen..."
+                className="w-full pl-8 pr-3 py-2 rounded-md border text-sm"
+                style={{ borderColor: '#E5E7EB', backgroundColor: 'white' }}
+                data-testid="input-search-genre"
+              />
+            </div>
+          </div>
+          {showPopular && (
+            <div className="px-3 pt-1 pb-1.5">
+              <div className="text-xs font-semibold mb-2" style={{ color: '#9CA3AF' }}>
+                Beliebt bei anderen Nutzer:innen
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {popularItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSelect(item)}
+                    className="px-2.5 py-1 rounded-full text-xs font-medium transition-colors border"
+                    style={{ color: '#3A3A3A', borderColor: '#D1D5DB', backgroundColor: 'rgba(255,255,255,0.6)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#247ba0'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#247ba0'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)'; e.currentTarget.style.color = '#3A3A3A'; e.currentTarget.style.borderColor = '#D1D5DB'; }}
+                    data-testid={`popular-genre-${item.id}`}
+                  >
+                    {item.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {isSearching && (
+            <div className="px-3 py-2 text-sm" style={{ color: '#9CA3AF' }}>
+              Suche...
+            </div>
+          )}
+          {!isSearching && suggestions.length > 0 && (
+            <div className="max-h-48 overflow-y-auto">
+              {suggestions.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleSelect(item)}
+                  className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 transition-colors"
+                  style={{ color: '#3A3A3A' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  data-testid={`suggestion-genre-${item.id}`}
+                >
+                  <div className="truncate font-medium">{item.name}</div>
+                </button>
+              ))}
+            </div>
+          )}
+          {!isSearching && query.length >= 2 && suggestions.length === 0 && (
+            <div className="px-3 py-2 text-sm" style={{ color: '#9CA3AF' }}>
+              Keine Ergebnisse gefunden
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const CURATOR_STORAGE_KEY = 'coratiert-curator-id';
 
@@ -828,25 +1024,47 @@ export function DashboardProfile() {
           Wähle deine bevorzugten Genres aus, um personalisierte Empfehlungen zu erhalten.
         </p>
 
-        <div className="flex flex-wrap gap-2">
-          {availableGenres.map((genre) => {
-            const isSelected = preferredGenres.includes(genre);
-            return (
-              <button
-                key={genre}
-                onClick={() => toggleGenre(genre)}
-                data-testid={`button-genre-${genre.toLowerCase().replace(/\s+/g, '-')}`}
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                style={{
-                  backgroundColor: isSelected ? '#247ba0' : '#F3F4F6',
-                  color: isSelected ? '#FFFFFF' : '#3A3A3A',
-                  border: `1px solid ${isSelected ? '#247ba0' : '#E5E7EB'}`
-                }}
-              >
+        <div className="flex gap-2 flex-wrap items-center">
+          {preferredGenres.map((genre, i) => (
+            <div
+              role="group"
+              key={genre}
+              className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none cursor-pointer transition-all duration-200 hover-elevate"
+              style={{ backgroundColor: TAG_COLORS[i % TAG_COLORS.length] }}
+              data-testid={`tag-genre-${genre.toLowerCase().replace(/\s+/g, '-')}`}
+            >
+              <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
                 {genre}
+              </Text>
+              <LikeButton
+                entityId={`genre-${genre.toLowerCase().replace(/\s+/g, '-')}`}
+                entityType="tag"
+                entityTitle={genre}
+                variant="minimal"
+                size="sm"
+                iconColor="#ffffff"
+                backgroundColor={TAG_COLORS[i % TAG_COLORS.length]}
+              />
+              <button
+                onClick={() => toggleGenre(genre)}
+                className="p-0.5 rounded-full transition-colors"
+                style={{ color: 'rgba(255,255,255,0.7)' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                data-testid={`button-remove-genre-${genre.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <X className="w-3.5 h-3.5" />
               </button>
-            );
-          })}
+            </div>
+          ))}
+          <GenrePickerDropdown
+            onAdd={(genre) => {
+              if (!preferredGenres.includes(genre)) {
+                setPreferredGenres([...preferredGenres, genre]);
+              }
+            }}
+            existingGenres={preferredGenres}
+          />
         </div>
 
         <p className="text-xs mt-4" style={{ color: '#9CA3AF' }}>
