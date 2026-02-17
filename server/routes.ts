@@ -855,7 +855,7 @@ export async function registerRoutes(
 
   app.post('/api/user/curator-profile', async (req: Request, res: Response) => {
     try {
-      const { curatorId, name, email, bio, focus, avatar_url, socials } = req.body;
+      const { curatorId, name, email, bio, focus, avatar_url, socials, userId } = req.body;
       if (!name || !name.trim()) {
         return res.status(400).json({ ok: false, error: 'Name is required' });
       }
@@ -892,6 +892,29 @@ export async function registerRoutes(
         if (result.rows.length === 0) {
           return res.status(404).json({ ok: false, error: 'Curator not found' });
         }
+
+        if (userId) {
+          try {
+            const bpExists = await queryDB(
+              `SELECT id FROM bookstore_profiles WHERE user_id = $1 LIMIT 1`,
+              [userId]
+            );
+            if (bpExists.rows.length > 0) {
+              await queryDB(
+                `UPDATE bookstore_profiles SET slug = $1, display_name = $2, updated_at = NOW() WHERE user_id = $3`,
+                [slug, name.trim(), userId]
+              );
+            } else {
+              await queryDB(
+                `INSERT INTO bookstore_profiles (user_id, display_name, slug, is_published, created_at, updated_at)
+                 VALUES ($1, $2, $3, false, NOW(), NOW())`,
+                [userId, name.trim(), slug]
+              );
+            }
+          } catch (syncErr) {
+            log.warn('Could not sync curator slug to bookstore_profiles:', syncErr);
+          }
+        }
       } else {
         const slug = await generateUniqueSlug('curators', name.trim(), null);
         result = await queryDB(
@@ -908,6 +931,29 @@ export async function registerRoutes(
             emailValue
           ]
         );
+
+        if (userId) {
+          try {
+            const bpExists = await queryDB(
+              `SELECT id FROM bookstore_profiles WHERE user_id = $1 LIMIT 1`,
+              [userId]
+            );
+            if (bpExists.rows.length > 0) {
+              await queryDB(
+                `UPDATE bookstore_profiles SET slug = $1, display_name = $2, updated_at = NOW() WHERE user_id = $3`,
+                [slug, name.trim(), userId]
+              );
+            } else {
+              await queryDB(
+                `INSERT INTO bookstore_profiles (user_id, display_name, slug, is_published, created_at, updated_at)
+                 VALUES ($1, $2, $3, false, NOW(), NOW())`,
+                [userId, name.trim(), slug]
+              );
+            }
+          } catch (syncErr) {
+            log.warn('Could not sync curator slug to bookstore_profiles:', syncErr);
+          }
+        }
       }
 
       return res.json({ ok: true, data: mapCuratorRow(result.rows[0]) });

@@ -97,6 +97,9 @@ export function DashboardProfile() {
             website: d.socialMedia?.website || ''
           }
         });
+        if (d.slug) {
+          setBookstoreSlug(d.slug);
+        }
       }
     } catch (err) {
       console.error('Failed to load curator profile:', err);
@@ -107,10 +110,6 @@ export function DashboardProfile() {
 
   useEffect(() => {
     loadCuratorProfile();
-    fetch('/api/bookstore/profile?userId=demo-user-123')
-      .then(r => r.json())
-      .then(d => { if (d.ok && d.data?.slug) setBookstoreSlug(d.data.slug); })
-      .catch(() => {});
   }, [loadCuratorProfile]);
 
   const countWords = (text: string): number => {
@@ -167,6 +166,7 @@ export function DashboardProfile() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           curatorId: curatorId || undefined,
+          userId: 'demo-user-123',
           name: publicName,
           email: profile.email,
           bio: curatorProfile.bio,
@@ -181,6 +181,9 @@ export function DashboardProfile() {
           const newId = String(json.data.id);
           setCuratorId(newId);
           localStorage.setItem(CURATOR_STORAGE_KEY, newId);
+        }
+        if (json.data?.slug) {
+          setBookstoreSlug(json.data.slug);
         }
         setSaveMessage({ type: 'success', text: 'Profil erfolgreich gespeichert!' });
         setTimeout(() => setSaveMessage(null), 3000);

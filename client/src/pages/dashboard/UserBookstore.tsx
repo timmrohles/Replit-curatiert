@@ -424,17 +424,20 @@ export function UserBookstore() {
               id="slug"
               type="text"
               value={profile.slug}
-              onChange={e => handleSlugChange(e.target.value)}
+              readOnly
               className="w-full p-3 rounded-lg border transition-colors"
-              style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
-              placeholder="mein-bookstore"
+              style={{ borderColor: '#E5E7EB', color: '#6B7280', backgroundColor: '#F9FAFB' }}
+              placeholder="wird vom Kurator:in-Namen abgeleitet"
               data-testid="input-slug"
             />
             {profile.slug && (
               <p className="mt-1 text-xs" style={{ color: '#6B7280' }} data-testid="text-url-preview">
-                coratiert.de/bookstore/{profile.slug}
+                coratiert.de/{profile.slug}
               </p>
             )}
+            <p className="mt-1 text-xs" style={{ color: '#9CA3AF' }}>
+              Der URL-Slug wird automatisch vom Kurator:in-Namen abgeleitet.
+            </p>
           </div>
 
           <div>
