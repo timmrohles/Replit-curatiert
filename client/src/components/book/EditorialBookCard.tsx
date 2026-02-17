@@ -134,8 +134,8 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
   const displayDescription = book.shortDescription || book.klappentext || '';
 
   return (
-    <div className="group relative" onClick={() => navigate(getBookUrl(book))}>
-      <div className="pl-2 pb-2 pt-1 pr-1 md:pl-3 md:pb-3 md:pt-2 md:pr-2 relative">
+    <div className="group relative h-full" onClick={() => navigate(getBookUrl(book))}>
+      <div className="pl-2 pb-2 pt-1 pr-1 md:pl-3 md:pb-3 md:pt-2 md:pr-2 relative flex flex-col h-full">
         {/* Buchcover Container */}
         <div className="relative">
           {/* Cover */}
@@ -340,34 +340,36 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
         </div>
 
         {/* Klappentext */}
-        {displayDescription && (
-          <>
-            <div className={`${isKlappentextExpanded ? 'mt-2' : 'h-[5.5rem] md:h-[6rem] overflow-hidden mt-2'}`}>
-              <Text 
-                as="p" 
-                variant="small" 
-                className={`!text-[0.8rem] md:!text-[0.85rem] leading-relaxed ${isKlappentextExpanded ? '' : 'line-clamp-5 md:line-clamp-4'}`}
-                style={{ 
-                  color: 'var(--color-foreground-muted)'
+        <div className="flex-1">
+          {displayDescription && (
+            <>
+              <div className={`${isKlappentextExpanded ? 'mt-2' : 'h-[5.5rem] md:h-[6rem] overflow-hidden mt-2'}`}>
+                <Text 
+                  as="p" 
+                  variant="small" 
+                  className={`!text-[0.8rem] md:!text-[0.85rem] leading-relaxed ${isKlappentextExpanded ? '' : 'line-clamp-5 md:line-clamp-4'}`}
+                  style={{ 
+                    color: 'var(--color-foreground-muted)'
+                  }}
+                >
+                  {displayDescription}
+                </Text>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsKlappentextExpanded(!isKlappentextExpanded);
                 }}
+                className="flex items-center gap-1 mt-2 text-cerulean hover:opacity-80 transition-colors"
               >
-                {displayDescription}
-              </Text>
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsKlappentextExpanded(!isKlappentextExpanded);
-              }}
-              className="flex items-center gap-1 mt-2 text-cerulean hover:opacity-80 transition-colors"
-            >
-              <Text as="span" variant="small" className="text-cerulean !normal-case !tracking-normal !font-normal">
-                {isKlappentextExpanded ? 'Weniger lesen' : 'Mehr lesen'}
-              </Text>
-              <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isKlappentextExpanded ? 'rotate-180' : ''}`} />
-            </button>
-          </>
-        )}
+                <Text as="span" variant="small" className="text-cerulean !normal-case !tracking-normal !font-normal">
+                  {isKlappentextExpanded ? 'Weniger lesen' : 'Mehr lesen'}
+                </Text>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isKlappentextExpanded ? 'rotate-180' : ''}`} />
+              </button>
+            </>
+          )}
+        </div>
 
         {/* Trennlinie über Action-Icons */}
         <div 

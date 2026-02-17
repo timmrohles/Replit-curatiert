@@ -330,6 +330,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
   const [resolvedBooks, setResolvedBooks] = useState<BookResult[]>([]);
   const [resolvingBooks, setResolvingBooks] = useState(false);
   const [derivedTags, setDerivedTags] = useState<string[]>([]);
+  const [activeSortChips, setActiveSortChips] = useState<Record<number, string>>({});
 
   const fetchBookstoreProfile = useCallback(async () => {
     try {
@@ -1020,6 +1021,11 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                             <button
                               key={chip}
                               className="sort-chip"
+                              aria-pressed={activeSortChips[curation.id] === chip ? 'true' : 'false'}
+                              onClick={() => setActiveSortChips(prev => ({
+                                ...prev,
+                                [curation.id]: prev[curation.id] === chip ? '' : chip
+                              }))}
                               data-testid={`chip-sort-${chip.toLowerCase().replace(/\s+/g, '-')}`}
                             >
                               <Text as="span" variant="xs" className="whitespace-nowrap !normal-case !tracking-normal !font-semibold">
@@ -1037,7 +1043,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                   {books.length > 0 ? (
                     <div className="mb-4">
                       <div
-                        className="flex -ml-4 overflow-x-auto pb-4"
+                        className="flex items-stretch -ml-4 overflow-x-auto pb-4"
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
                         data-testid={`carousel-curation-${curation.id}`}
                       >
