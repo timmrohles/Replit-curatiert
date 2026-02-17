@@ -749,6 +749,9 @@ const MOCK_EVENTS: MockEvent[] = [
 
 function EventCard({ event }: { event: MockEvent }) {
   const [expanded, setExpanded] = useState(false);
+  const [booked, setBooked] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [localParticipantCount, setLocalParticipantCount] = useState(event.participant_count);
   const dateStr = new Date(event.event_date).toLocaleDateString('de-DE', {
     day: '2-digit', month: 'long', year: 'numeric',
   });
@@ -756,7 +759,59 @@ function EventCard({ event }: { event: MockEvent }) {
     hour: '2-digit', minute: '2-digit',
   });
   const typeLabel = EVENT_TYPE_LABELS[event.event_type] || event.event_type;
-  const spotsLeft = event.max_participants ? event.max_participants - event.participant_count : null;
+  const spotsLeft = event.max_participants ? event.max_participants - localParticipantCount : null;
+
+  const userId = 'demo-user-123';
+  const numericId = parseInt(String(event.id));
+  const isRealEvent = !isNaN(numericId);
+
+  useEffect(() => {
+    if (!isRealEvent) return;
+    fetch(`/api/user-events/${numericId}/booking-status?userId=${userId}`)
+      .then(r => r.json())
+      .then(data => { if (data.booked) setBooked(true); })
+      .catch(() => {});
+  }, [event.id, isRealEvent, numericId]);
+
+  const handleParticipate = async () => {
+    if (!isRealEvent) {
+      if (booked) {
+        setBooked(false);
+        setLocalParticipantCount(prev => Math.max(0, prev - 1));
+      } else {
+        setBooked(true);
+        setLocalParticipantCount(prev => prev + 1);
+      }
+      return;
+    }
+    setLoading(true);
+    try {
+      if (booked) {
+        const res = await fetch(`/api/user-events/${numericId}/book?userId=${userId}`, { method: 'DELETE' });
+        if (res.ok) {
+          setBooked(false);
+          setLocalParticipantCount(prev => Math.max(0, prev - 1));
+        }
+      } else {
+        const res = await fetch(`/api/user-events/${numericId}/book`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, displayName: 'Demo User' }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          setBooked(true);
+          setLocalParticipantCount(prev => prev + 1);
+        } else if (data.error) {
+          console.warn('Booking failed:', data.error);
+        }
+      }
+    } catch (err) {
+      console.error('Booking error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -835,7 +890,7 @@ function EventCard({ event }: { event: MockEvent }) {
             <div className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
               <Text as="span" variant="xs" className="text-gray-500">
-                {event.participant_count}{event.max_participants ? `/${event.max_participants}` : ''}
+                {localParticipantCount}{event.max_participants ? `/${event.max_participants}` : ''}
               </Text>
             </div>
             {event.entry_fee > 0 && (
@@ -863,15 +918,16 @@ function EventCard({ event }: { event: MockEvent }) {
               </a>
             )}
             <button
+              onClick={handleParticipate}
               className="text-xs px-3 py-1.5 rounded-md font-semibold transition-colors"
               style={{
-                backgroundColor: spotsLeft !== null && spotsLeft <= 0 ? '#E5E7EB' : '#247ba0',
-                color: spotsLeft !== null && spotsLeft <= 0 ? '#9CA3AF' : '#FFFFFF',
+                backgroundColor: loading ? '#D1D5DB' : booked ? '#16a34a' : (spotsLeft !== null && spotsLeft <= 0 ? '#E5E7EB' : '#247ba0'),
+                color: loading ? '#9CA3AF' : (spotsLeft !== null && spotsLeft <= 0 && !booked ? '#9CA3AF' : '#FFFFFF'),
               }}
-              disabled={spotsLeft !== null && spotsLeft <= 0}
+              disabled={loading || (spotsLeft !== null && spotsLeft <= 0 && !booked)}
               data-testid={`button-participate-${event.id}`}
             >
-              {spotsLeft !== null && spotsLeft <= 0 ? 'Ausgebucht' : 'Teilnehmen'}
+              {loading ? '...' : booked ? 'Angemeldet' : (spotsLeft !== null && spotsLeft <= 0 ? 'Ausgebucht' : 'Teilnehmen')}
             </button>
           </div>
         </div>

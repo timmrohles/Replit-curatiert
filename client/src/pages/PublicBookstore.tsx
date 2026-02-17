@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Header } from '../components/layout/Header';
@@ -111,10 +111,51 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 
 function PublicEventCard({ event, profileName }: { event: any; profileName: string }) {
   const [expanded, setExpanded] = useState(false);
+  const [booked, setBooked] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [localParticipantCount, setLocalParticipantCount] = useState(parseInt(event.participant_count) || 0);
   const eventDate = new Date(event.event_date);
-  const participantCount = parseInt(event.participant_count) || 0;
-  const isFull = event.max_participants ? participantCount >= event.max_participants : false;
+  const isFull = event.max_participants ? localParticipantCount >= event.max_participants : false;
   const entryFee = parseFloat(String(event.entry_fee || 0));
+
+  const userId = 'demo-user-123';
+
+  useEffect(() => {
+    fetch(`/api/user-events/${event.id}/booking-status?userId=${userId}`)
+      .then(r => r.json())
+      .then(data => { if (data.booked) setBooked(true); })
+      .catch(() => {});
+  }, [event.id]);
+
+  const handleParticipate = async () => {
+    setLoading(true);
+    try {
+      if (booked) {
+        const res = await fetch(`/api/user-events/${event.id}/book?userId=${userId}`, { method: 'DELETE' });
+        if (res.ok) {
+          setBooked(false);
+          setLocalParticipantCount(prev => Math.max(0, prev - 1));
+        }
+      } else {
+        const res = await fetch(`/api/user-events/${event.id}/book`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, displayName: 'Demo User' }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          setBooked(true);
+          setLocalParticipantCount(prev => prev + 1);
+        } else if (data.error) {
+          console.warn('Booking failed:', data.error);
+        }
+      }
+    } catch (err) {
+      console.error('Booking error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -184,7 +225,7 @@ function PublicEventCard({ event, profileName }: { event: any; profileName: stri
           {event.max_participants && (
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
               <Users className="w-3.5 h-3.5 flex-shrink-0" />
-              {participantCount}/{event.max_participants} Plätze belegt
+              {localParticipantCount}/{event.max_participants} Plätze belegt
             </div>
           )}
         </div>
@@ -250,15 +291,16 @@ function PublicEventCard({ event, profileName }: { event: any; profileName: stri
             </a>
           </div>
           <button
+            onClick={handleParticipate}
             className="text-xs px-3 py-1.5 rounded-md font-semibold transition-colors"
             style={{
-              backgroundColor: isFull ? '#E5E7EB' : '#247ba0',
-              color: isFull ? '#9CA3AF' : '#FFFFFF',
+              backgroundColor: loading ? '#D1D5DB' : booked ? '#16a34a' : (isFull ? '#E5E7EB' : '#247ba0'),
+              color: loading ? '#9CA3AF' : (isFull && !booked ? '#9CA3AF' : '#FFFFFF'),
             }}
-            disabled={isFull}
+            disabled={loading || (isFull && !booked)}
             data-testid={`button-participate-${event.id}`}
           >
-            {isFull ? 'Ausgebucht' : 'Teilnehmen'}
+            {loading ? '...' : booked ? 'Angemeldet' : (isFull ? 'Ausgebucht' : 'Teilnehmen')}
           </button>
         </div>
       </div>
