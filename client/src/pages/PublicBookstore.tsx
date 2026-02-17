@@ -274,7 +274,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
 
         {/* Profile Tabs */}
         <nav className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 border-b border-border" data-testid="profile-tabs">
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex gap-2 flex-wrap justify-center">
             {([
               { id: 'kurationen' as ProfileTab, label: 'Kurationen' },
               { id: 'rezensionen' as ProfileTab, label: 'Rezensionen' },
@@ -287,7 +287,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative px-4 md:px-6 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`relative px-5 md:px-8 py-3.5 text-base font-medium whitespace-nowrap transition-colors ${
                   activeTab === tab.id
                     ? 'text-cerulean'
                     : 'text-muted-foreground'
