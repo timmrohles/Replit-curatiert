@@ -38,6 +38,8 @@ interface MockCurator {
   avatar: string;
   focus: string;
   isVerified: boolean;
+  occasion: string;
+  curationReason: string;
 }
 
 const MOCK_CURATORS: MockCurator[] = [
@@ -46,12 +48,16 @@ const MOCK_CURATORS: MockCurator[] = [
     avatar: '/uploads/avatars/coratiert-redaktion.jpg',
     focus: 'Die Allzweckwaffe unter den Redakteur*innen',
     isVerified: true,
+    occasion: 'Neue Bücher für Leseratten',
+    curationReason: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.',
   },
   {
     name: 'Elena Hartmann',
     avatar: '',
     focus: 'Belletristik & Literarische Fiction',
     isVerified: false,
+    occasion: 'Lesetipps im Frühling',
+    curationReason: 'Meine persönlichen Empfehlungen für gemütliche Lesestunden.',
   },
 ];
 
@@ -60,6 +66,8 @@ const MOCK_SPONSOR: MockCurator = {
   avatar: '',
   focus: 'Literatur, Sachbuch & Fantasy',
   isVerified: true,
+  occasion: 'Unsere Empfehlungen für dich',
+  curationReason: '',
 };
 
 const MOCK_BOOKS: BookCarouselItemData[] = [
@@ -628,6 +636,18 @@ function CuratorSectionHeader({ curator, isSponsored }: { curator: MockCurator; 
           </div>
         </div>
       </div>
+      <div className="w-full mt-4 md:mt-6 isolate">
+        <h3 className="section-title mb-4 text-foreground">
+          {curator.occasion}
+        </h3>
+      </div>
+      {curator.curationReason && (
+        <div className="w-full">
+          <Text as="div" variant="base" className="leading-relaxed text-black line-clamp-3">
+            {curator.curationReason}
+          </Text>
+        </div>
+      )}
     </div>
   );
 }
@@ -848,22 +868,6 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         </div>
 
-        {isCuratorSection && (
-          <div className="w-full mt-4 mb-4">
-            <h3 className="text-lg font-semibold text-foreground mb-1">Neue Bücher für Leseratten</h3>
-            <Text as="div" variant="base" className="leading-relaxed text-black">
-              {section.description}
-            </Text>
-          </div>
-        )}
-
-        {isSponsoredSection && (
-          <div className="w-full mt-4 mb-4">
-            <Text as="div" variant="base" className="leading-relaxed text-black">
-              {section.description}
-            </Text>
-          </div>
-        )}
 
         {!isCuratorSection && !isSponsoredSection && (
           <div className="w-full mt-2 mb-4">
