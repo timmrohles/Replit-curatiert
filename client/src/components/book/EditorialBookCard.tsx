@@ -340,14 +340,14 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
         </div>
 
         {/* Klappentext */}
-        <div className="flex-1">
-          {displayDescription && (
+        <div className="flex-1 flex flex-col mt-2">
+          {displayDescription ? (
             <>
-              <div className={`${isKlappentextExpanded ? 'mt-2' : 'h-[5.5rem] md:h-[6rem] overflow-hidden mt-2'}`}>
+              <div className={`flex-1 ${isKlappentextExpanded ? '' : 'overflow-hidden'}`}>
                 <Text 
                   as="p" 
                   variant="small" 
-                  className={`!text-[0.8rem] md:!text-[0.85rem] leading-relaxed ${isKlappentextExpanded ? '' : 'line-clamp-5 md:line-clamp-4'}`}
+                  className={`!text-[0.8rem] md:!text-[0.85rem] leading-relaxed ${isKlappentextExpanded ? '' : 'line-clamp-[8]'}`}
                   style={{ 
                     color: 'var(--color-foreground-muted)'
                   }}
@@ -368,6 +368,8 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
                 <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isKlappentextExpanded ? 'rotate-180' : ''}`} />
               </button>
             </>
+          ) : (
+            <div className="flex-1" />
           )}
         </div>
 
