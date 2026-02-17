@@ -6435,11 +6435,18 @@ export async function registerRoutes(
       if (!slug) {
         return res.json({ exists: false });
       }
-      const result = await queryDB(
+      const bpResult = await queryDB(
         `SELECT 1 FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
         [slug]
       );
-      return res.json({ exists: result.rows.length > 0 });
+      if (bpResult.rows.length > 0) {
+        return res.json({ exists: true });
+      }
+      const curatorResult = await queryDB(
+        `SELECT 1 FROM curators WHERE slug = $1 AND deleted_at IS NULL LIMIT 1`,
+        [slug]
+      );
+      return res.json({ exists: curatorResult.rows.length > 0 });
     } catch {
       return res.json({ exists: false });
     }
@@ -6452,37 +6459,65 @@ export async function registerRoutes(
       if (!slug) {
         return res.status(400).json({ ok: false, error: 'Slug is required' });
       }
+      let profile: any = null;
+      let curations: any[] = [];
+
       const profileResult = await queryDB(
         `SELECT * FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
         [slug]
       );
-      if (profileResult.rows.length === 0) {
-        return res.status(404).json({ ok: false, error: 'Bookstore not found' });
-      }
-      const profile = profileResult.rows[0];
-      const curationsResult = await queryDB(
-        `SELECT uc.*, bcl.display_order as link_order
-         FROM bookstore_curation_links bcl
-         JOIN user_curations uc ON uc.id = bcl.curation_id
-         WHERE bcl.bookstore_id = $1
-         ORDER BY bcl.display_order ASC`,
-        [profile.id]
-      );
-      const curations = [];
-      for (const curation of curationsResult.rows) {
-        const booksResult = await queryDB(
-          `SELECT cb.display_order as curation_book_order, cb.added_at, b.*
-           FROM curation_books cb
-           LEFT JOIN books b ON b.id = cb.book_id
-           WHERE cb.curation_id = $1
-           ORDER BY cb.display_order ASC`,
-          [curation.id]
+      if (profileResult.rows.length > 0) {
+        profile = profileResult.rows[0];
+        const curationsResult = await queryDB(
+          `SELECT uc.*, bcl.display_order as link_order
+           FROM bookstore_curation_links bcl
+           JOIN user_curations uc ON uc.id = bcl.curation_id
+           WHERE bcl.bookstore_id = $1
+           ORDER BY bcl.display_order ASC`,
+          [profile.id]
         );
-        curations.push({
-          ...curation,
-          books: booksResult.rows
-        });
+        for (const curation of curationsResult.rows) {
+          const booksResult = await queryDB(
+            `SELECT cb.display_order as curation_book_order, cb.added_at, b.*
+             FROM curation_books cb
+             LEFT JOIN books b ON b.id = cb.book_id
+             WHERE cb.curation_id = $1
+             ORDER BY cb.display_order ASC`,
+            [curation.id]
+          );
+          curations.push({
+            ...curation,
+            books: booksResult.rows
+          });
+        }
+      } else {
+        const curatorResult = await queryDB(
+          `SELECT * FROM curators WHERE slug = $1 AND deleted_at IS NULL LIMIT 1`,
+          [slug]
+        );
+        if (curatorResult.rows.length === 0) {
+          return res.status(404).json({ ok: false, error: 'Profile not found' });
+        }
+        const curator = curatorResult.rows[0];
+        profile = {
+          id: curator.id,
+          user_id: curator.user_id || null,
+          display_name: curator.name,
+          slug: curator.slug,
+          tagline: curator.focus || '',
+          description: curator.bio || '',
+          avatar_url: curator.avatar_url || '',
+          social_links: {
+            website: curator.website_url || '',
+            instagram: curator.instagram_url || '',
+            youtube: curator.youtube_url || '',
+            tiktok: curator.tiktok_url || '',
+          },
+          is_published: true,
+          is_physical_store: false,
+        };
       }
+
       return res.json({ ok: true, data: { profile, curations } });
     } catch (error) {
       log.error('Get bookstore by slug error:', error);
