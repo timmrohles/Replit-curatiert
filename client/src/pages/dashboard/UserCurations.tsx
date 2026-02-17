@@ -285,6 +285,7 @@ function CurationBookCard({ book }: { book: BookResult }) {
           publisher: book.publisher || undefined,
           klappentext: book.description || undefined,
         }}
+        size="md"
       />
     </div>
   );
