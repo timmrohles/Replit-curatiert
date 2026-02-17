@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Flag } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag } from 'lucide-react';
+import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { apiRequest } from '@/lib/queryClient';
 import { useSafeNavigate } from '../utils/routing';
 import { CreatorCarousel } from '../components/creator/CreatorCarousel';
@@ -107,6 +109,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
 
   const profile = data?.data?.profile;
   const curations = data?.data?.curations || [];
+  const socialLinks = profile?.social_links || {};
 
   const handleReportSubmit = async () => {
     if (!reportReason || !profile) return;
@@ -160,6 +163,81 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
       <Header isHomePage={false} />
 
       <main id="main-content">
+        {/* Profile Hero Section */}
+        <section
+          className="py-12 px-6 text-center"
+          style={{ background: 'linear-gradient(to bottom, #f5f5f5, #ffffff)' }}
+          data-testid="hero-section"
+        >
+          {profile.avatar_url && (
+            <div className="flex justify-center mb-4">
+              <Avatar className="w-20 h-20">
+                <AvatarImage src={profile.avatar_url} alt={profile.display_name} />
+                <AvatarFallback className="text-xl font-headline">
+                  {profile.display_name?.charAt(0)?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+          )}
+
+          <h1
+            className="text-3xl md:text-4xl font-headline text-[#3A3A3A] dark:text-foreground mb-2"
+            data-testid="text-display-name"
+          >
+            {profile.display_name}
+          </h1>
+
+          {profile.tagline && (
+            <p className="text-lg text-[#6B7280] dark:text-muted-foreground mb-3" data-testid="text-tagline">
+              {profile.tagline}
+            </p>
+          )}
+
+          {profile.description && (
+            <p className="max-w-2xl mx-auto text-muted-foreground mb-4" data-testid="text-description">
+              {profile.description}
+            </p>
+          )}
+
+          {(socialLinks.website || socialLinks.instagram || socialLinks.youtube || socialLinks.tiktok || socialLinks.twitter) && (
+            <div className="flex items-center justify-center gap-3 mb-4" data-testid="social-links">
+              {socialLinks.website && (
+                <a href={socialLinks.website} target="_blank" rel="noopener noreferrer" data-testid="link-social-website" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Globe className="w-5 h-5" />
+                </a>
+              )}
+              {socialLinks.instagram && (
+                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" data-testid="link-social-instagram" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <Instagram className="w-5 h-5" />
+                </a>
+              )}
+              {socialLinks.youtube && (
+                <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" data-testid="link-social-youtube" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <SiYoutube className="w-5 h-5" />
+                </a>
+              )}
+              {socialLinks.tiktok && (
+                <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" data-testid="link-social-tiktok" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <SiTiktok className="w-5 h-5" />
+                </a>
+              )}
+              {socialLinks.twitter && (
+                <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" data-testid="link-social-twitter" className="text-muted-foreground hover:text-foreground transition-colors">
+                  <ExternalLink className="w-5 h-5" />
+                </a>
+              )}
+            </div>
+          )}
+
+          {profile.is_physical_store && profile.address && (
+            <div className="flex items-center justify-center gap-1.5 text-muted-foreground" data-testid="text-address">
+              <MapPin className="w-4 h-4" />
+              <span className="text-sm">{profile.address}</span>
+            </div>
+          )}
+        </section>
+
+        {/* Curations via CreatorCarousel */}
         <section className="max-w-7xl mx-auto px-0 md:px-2 py-4" data-testid="curations-section">
           {curations.length === 0 && (
             <p className="text-center text-muted-foreground py-12" data-testid="text-no-curations">
