@@ -492,7 +492,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
           {/* Klappentext - nur dieser Bereich expandiert */}
           {(book.klappentext || book.shortDescription) && (
             <div className="flex flex-col flex-1 min-h-0">
-              <div className={`${isKlappentextExpanded ? 'flex-1 overflow-y-auto' : 'h-[6.5rem] md:h-[7rem] flex-shrink-0'}`}>
+              <div className={`${isKlappentextExpanded ? 'flex-1 overflow-y-auto' : 'flex-shrink-0'}`}>
                 <Text 
                   as="p" 
                   variant="small" 
@@ -506,7 +506,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
               </div>
               <button
                 onClick={handleKlappentextToggle}
-                className="text-left underline hover:no-underline transition-all mt-1.5 flex-shrink-0"
+                className="text-left underline hover:no-underline transition-all mt-0.5 flex-shrink-0"
                 style={{
                   color: '#247ba0',
                   fontSize: '0.875rem',
