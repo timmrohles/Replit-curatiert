@@ -399,22 +399,6 @@ export function UserBookstore() {
 
         <div className="space-y-4">
           <div>
-            <label htmlFor="displayName" className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
-              Anzeigename
-            </label>
-            <input
-              id="displayName"
-              type="text"
-              value={profile.displayName}
-              onChange={e => handleDisplayNameChange(e.target.value)}
-              className="w-full p-3 rounded-lg border transition-colors"
-              style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
-              placeholder="Dein Bookstore-Name"
-              data-testid="input-display-name"
-            />
-          </div>
-
-          <div>
             <label htmlFor="slug" className="block text-sm font-medium mb-2" style={{ color: '#3A3A3A' }}>
               URL-Slug
             </label>
@@ -470,83 +454,9 @@ export function UserBookstore() {
             />
           </div>
 
-          <div>
-            <h3 className="text-sm font-medium mb-3" style={{ color: '#3A3A3A' }}>
-              <Globe className="w-4 h-4 inline-block mr-1.5 -mt-0.5" style={{ color: '#247ba0' }} />
-              Social Links
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs mb-1" style={{ color: '#6B7280' }}>Website</label>
-                <input
-                  type="url"
-                  value={profile.socialLinks.website}
-                  onChange={e => setProfile(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, website: e.target.value } }))}
-                  className="w-full p-3 rounded-lg border text-sm"
-                  style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
-                  placeholder="https://deine-website.de"
-                  data-testid="input-social-website"
-                />
-              </div>
-              <div>
-                <label className="block text-xs mb-1" style={{ color: '#6B7280' }}>
-                  <Instagram className="w-3.5 h-3.5 inline-block mr-1 -mt-0.5" />
-                  Instagram
-                </label>
-                <input
-                  type="text"
-                  value={profile.socialLinks.instagram}
-                  onChange={e => setProfile(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, instagram: e.target.value } }))}
-                  className="w-full p-3 rounded-lg border text-sm"
-                  style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
-                  placeholder="@username"
-                  data-testid="input-social-instagram"
-                />
-              </div>
-              <div>
-                <label className="block text-xs mb-1" style={{ color: '#6B7280' }}>
-                  <Twitter className="w-3.5 h-3.5 inline-block mr-1 -mt-0.5" />
-                  Twitter
-                </label>
-                <input
-                  type="text"
-                  value={profile.socialLinks.twitter}
-                  onChange={e => setProfile(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: e.target.value } }))}
-                  className="w-full p-3 rounded-lg border text-sm"
-                  style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
-                  placeholder="@username"
-                  data-testid="input-social-twitter"
-                />
-              </div>
-              <div>
-                <label className="block text-xs mb-1" style={{ color: '#6B7280' }}>
-                  <Youtube className="w-3.5 h-3.5 inline-block mr-1 -mt-0.5" />
-                  YouTube
-                </label>
-                <input
-                  type="text"
-                  value={profile.socialLinks.youtube}
-                  onChange={e => setProfile(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, youtube: e.target.value } }))}
-                  className="w-full p-3 rounded-lg border text-sm"
-                  style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
-                  placeholder="@channel"
-                  data-testid="input-social-youtube"
-                />
-              </div>
-              <div>
-                <label className="block text-xs mb-1" style={{ color: '#6B7280' }}>TikTok</label>
-                <input
-                  type="text"
-                  value={profile.socialLinks.tiktok}
-                  onChange={e => setProfile(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, tiktok: e.target.value } }))}
-                  className="w-full p-3 rounded-lg border text-sm"
-                  style={{ borderColor: '#E5E7EB', color: '#3A3A3A' }}
-                  placeholder="@username"
-                  data-testid="input-social-tiktok"
-                />
-              </div>
-            </div>
-          </div>
+          <p className="text-xs" style={{ color: '#9CA3AF' }}>
+            Anzeigename und Social-Media-Kanäle werden aus deinem Profil übernommen und können dort bearbeitet werden.
+          </p>
 
           <div>
             <label className="flex items-center gap-3 cursor-pointer" data-testid="toggle-physical-store">
