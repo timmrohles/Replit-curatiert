@@ -744,6 +744,16 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         )}
 
+        {(isCuratorSection || isSponsoredSection) && (
+          <div className="w-full mt-4 md:mt-6 isolate">
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="section-title text-foreground">
+                {isSponsoredSection ? section.description : 'Neue Bücher für Leseratten'}
+              </h2>
+            </div>
+          </div>
+        )}
+
         {(isCuratorSection && curator) ? (
           <div className="w-full mb-4 md:mb-6">
             <CuratorSectionHeader curator={curator} />
@@ -754,13 +764,15 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         ) : null}
 
-        <div className="w-full mt-4 md:mt-6 isolate">
-          <div className="flex items-center gap-3 mb-4">
-            <h3 className="section-title text-foreground">
-              {isSponsoredSection ? section.description : isCuratorSection ? 'Neue Bücher für Leseratten' : section.label}
-            </h3>
+        {!(isCuratorSection || isSponsoredSection) && (
+          <div className="w-full mt-4 md:mt-6 isolate">
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="section-title text-foreground">
+                {section.label}
+              </h2>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="w-full mt-4 mb-4">
           <div className="flex gap-2 flex-wrap items-center">
