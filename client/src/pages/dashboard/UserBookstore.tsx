@@ -375,15 +375,17 @@ export function UserBookstore() {
           </label>
         </div>
         {savedSlug ? (
-          <button
-            onClick={() => window.open(`/${savedSlug}`, '_blank')}
+          <a
+            href={`/${savedSlug}`}
+            target="_blank"
+            rel="noopener noreferrer"
             data-testid="button-open-bookstore"
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all"
             style={{ backgroundColor: '#247ba0', color: '#ffffff' }}
           >
             <ExternalLink className="w-4 h-4" />
             Bookstore öffnen
-          </button>
+          </a>
         ) : profile.slug ? (
           <span className="text-xs" style={{ color: '#9CA3AF' }}>
             Speichere zuerst, um die Vorschau zu sehen

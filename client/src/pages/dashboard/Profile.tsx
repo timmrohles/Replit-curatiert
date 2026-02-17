@@ -28,6 +28,7 @@ export function DashboardProfile() {
   });
 
   const [curatorProfile, setCuratorProfile] = useState({
+    publicName: '',
     focus: '',
     bio: '',
     avatarUrl: '',
@@ -84,6 +85,7 @@ export function DashboardProfile() {
           email: d.email || prev.email
         }));
         setCuratorProfile({
+          publicName: d.name || '',
           focus: d.focus || '',
           bio: d.bio || '',
           avatarUrl: d.avatar || '',
@@ -159,12 +161,13 @@ export function DashboardProfile() {
     setSaving(true);
     setSaveMessage(null);
     try {
+      const publicName = curatorProfile.publicName.trim() || `${profile.firstName} ${profile.lastName}`.trim();
       const resp = await fetch('/api/user/curator-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           curatorId: curatorId || undefined,
-          name: `${profile.firstName} ${profile.lastName}`.trim(),
+          name: publicName,
           email: profile.email,
           bio: curatorProfile.bio,
           focus: curatorProfile.focus,
@@ -314,15 +317,17 @@ export function DashboardProfile() {
         </div>
         {bookstoreSlug && (
           <div className="mt-4 pt-4 border-t flex justify-center" style={{ borderColor: '#E5E7EB' }}>
-            <button
-              onClick={() => window.open(`/${bookstoreSlug}`, '_blank')}
+            <a
+              href={`/${bookstoreSlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
               data-testid="button-open-profile"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all"
               style={{ backgroundColor: '#247ba0', color: '#ffffff' }}
             >
               <ExternalLink className="w-4 h-4" />
               Öffentliches Profil ansehen
-            </button>
+            </a>
           </div>
         )}
       </section>
@@ -443,6 +448,33 @@ export function DashboardProfile() {
         </h2>
 
         <div className="space-y-4">
+          <div>
+            <label 
+              htmlFor="publicName" 
+              className="block text-sm font-medium mb-2"
+              style={{ color: '#3A3A3A' }}
+            >
+              Öffentlicher Kurator:in-Name *
+            </label>
+            <input
+              id="publicName"
+              type="text"
+              value={curatorProfile.publicName}
+              onChange={(e) => setCuratorProfile({ ...curatorProfile, publicName: e.target.value })}
+              className="w-full px-4 py-2 rounded-lg border transition-colors"
+              data-testid="input-public-name"
+              style={{ 
+                backgroundColor: '#FFFFFF',
+                borderColor: '#D1D5DB',
+                color: '#3A3A3A'
+              }}
+              placeholder="z.B. dein Name, Geschäftsname oder Künstlername"
+            />
+            <div className="text-xs mt-1" style={{ color: '#6B7280' }}>
+              Unter diesem Namen erscheint dein Kurator:in-Profil öffentlich auf coratiert.de. Kann sich von deinem persönlichen Namen unterscheiden.
+            </div>
+          </div>
+
           <div>
             <label 
               htmlFor="focus" 
