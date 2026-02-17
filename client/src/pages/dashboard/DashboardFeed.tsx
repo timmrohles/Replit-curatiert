@@ -64,10 +64,10 @@ const MOCK_CURATORS: MockCurator[] = [
 const MOCK_SPONSOR: MockCurator = {
   name: 'Klett-Cotta Verlag',
   avatar: '',
-  focus: 'Literatur, Sachbuch & Fantasy',
+  focus: 'Literatur, Sachbuch & Fantasy · ANZEIGE',
   isVerified: true,
   occasion: 'Unsere Empfehlungen für dich',
-  curationReason: '',
+  curationReason: 'Entdecke handverlesene Neuerscheinungen aus unserem Herbstprogramm. Von preisgekrönter Literatur bis hin zu fesselnden Fantasy-Welten – für jeden Geschmack ist etwas dabei.',
 };
 
 const MOCK_BOOKS: BookCarouselItemData[] = [
@@ -631,7 +631,15 @@ function CuratorSectionHeader({ curator, isSponsored }: { curator: MockCurator; 
           </div>
           <div className="flex flex-wrap items-center gap-x-2 mt-0.5">
             <Text as="span" variant="small" className="font-semibold text-gray-500">
-              {curator.focus}
+              {curator.focus.includes('ANZEIGE') ? (
+                <>
+                  {curator.focus.split('ANZEIGE')[0]}
+                  <span className="text-coral font-semibold">ANZEIGE</span>
+                  {curator.focus.split('ANZEIGE')[1]}
+                </>
+              ) : (
+                curator.focus
+              )}
             </Text>
           </div>
         </div>
