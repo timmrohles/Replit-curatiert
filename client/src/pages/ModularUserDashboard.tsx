@@ -17,7 +17,8 @@ import {
   Users,
   Gift,
   Mail,
-  PenTool
+  PenTool,
+  Banknote
 } from 'lucide-react';
 import { DashboardHome } from './dashboard/DashboardHome';
 import { DashboardProfile } from './dashboard/Profile';
@@ -43,8 +44,8 @@ import { AuthorEvents } from './dashboard/author/AuthorEvents';
 import { AuthorStatistics } from './dashboard/author/AuthorStatistics';
 import { AuthorRequest } from './dashboard/AuthorRequest';
 import { UserCurations } from './dashboard/UserCurations';
-import { UserBookstore } from './dashboard/UserBookstore';
 import { UserEvents } from './dashboard/UserEvents';
+import { DashboardEarnings } from './dashboard/Earnings';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { Breadcrumb } from '../components/layout/Breadcrumb';
@@ -67,7 +68,7 @@ type DashboardSection =
   | 'ratings' 
   | 'reviews' 
   | 'curations'
-  | 'bookstore'
+  | 'earnings'
   | 'events'
   | 'notifications' 
   | 'privacy'
@@ -118,7 +119,8 @@ export default function ModularUserDashboard() {
       ? location.pathname.substring(dashboardIndex + '/dashboard'.length).replace(/^\//, '')
       : '';
     if (afterDashboard && afterDashboard !== 'home') {
-      setActiveSection(afterDashboard as DashboardSection);
+      const section = afterDashboard === 'bookstore' ? 'profile' : afterDashboard;
+      setActiveSection(section as DashboardSection);
     } else {
       setActiveSection('home');
     }
@@ -161,8 +163,8 @@ export default function ModularUserDashboard() {
     { id: 'ratings', label: 'Bewertungen', icon: Star, group: 'core' },
     { id: 'reviews', label: 'Rezensionen', icon: MessageSquare, group: 'core' },
     { id: 'curations', label: 'Kurationen', icon: BookOpen, group: 'core' },
-    { id: 'bookstore', label: 'Bookstore', icon: Store, group: 'core' },
     { id: 'events', label: 'Veranstaltungen', icon: Calendar, group: 'core' },
+    { id: 'earnings', label: 'Geld verdienen', icon: Banknote, group: 'core' },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, group: 'core' },
   ];
 
@@ -232,8 +234,8 @@ export default function ModularUserDashboard() {
           return <DashboardReviews />;
         case 'curations':
           return <UserCurations onNavigateToTab={(tab) => setActiveSection(tab as DashboardSection)} />;
-        case 'bookstore':
-          return <UserBookstore />;
+        case 'earnings':
+          return <DashboardEarnings />;
         case 'events':
           return <UserEvents />;
         case 'notifications':
