@@ -7975,6 +7975,14 @@ export async function registerRoutes(
       if (!userId) return res.status(401).json({ ok: false, error: 'User ID required' });
       const { sourceType = 'podcast', feedUrl } = req.body;
       if (!feedUrl) return res.status(400).json({ ok: false, error: 'Feed URL is required' });
+      try {
+        const parsedUrl = new URL(feedUrl);
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+          return res.status(400).json({ ok: false, error: 'Ungültige URL. Bitte eine gültige HTTP/HTTPS-URL angeben.' });
+        }
+      } catch {
+        return res.status(400).json({ ok: false, error: 'Ungültige URL. Bitte eine gültige Feed-URL angeben.' });
+      }
       const { addContentSource } = await import('./services/podcastExtractor');
       const source = await addContentSource(userId, sourceType, feedUrl);
       return res.status(201).json({ ok: true, data: source });
