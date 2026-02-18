@@ -1008,6 +1008,104 @@ export async function registerRoutes(
   }
 
   // ==================================================================
+  // AWARDS TABLES
+  // ==================================================================
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS awards (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        slug TEXT UNIQUE,
+        issuer_name TEXT,
+        website_url TEXT,
+        description TEXT,
+        logo_url TEXT,
+        country TEXT,
+        tag_id INTEGER,
+        status TEXT DEFAULT 'active',
+        visibility TEXT DEFAULT 'visible',
+        display_order INTEGER DEFAULT 0,
+        publish_at TIMESTAMPTZ,
+        unpublish_at TIMESTAMPTZ,
+        deleted_at TIMESTAMPTZ,
+        deleted_by TEXT,
+        created_by TEXT,
+        updated_by TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS award_editions (
+        id SERIAL PRIMARY KEY,
+        award_id INTEGER NOT NULL REFERENCES awards(id) ON DELETE CASCADE,
+        year INTEGER NOT NULL,
+        label TEXT,
+        status TEXT DEFAULT 'active' CHECK (status IN ('active', 'archived', 'draft')),
+        visibility TEXT DEFAULT 'visible',
+        display_order INTEGER DEFAULT 0,
+        starts_at TIMESTAMPTZ,
+        ends_at TIMESTAMPTZ,
+        publish_at TIMESTAMPTZ,
+        unpublish_at TIMESTAMPTZ,
+        deleted_at TIMESTAMPTZ,
+        deleted_by TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(award_id, year)
+      )
+    `);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS award_outcomes (
+        id SERIAL PRIMARY KEY,
+        award_edition_id INTEGER NOT NULL REFERENCES award_editions(id) ON DELETE CASCADE,
+        outcome_type TEXT NOT NULL CHECK (outcome_type IN ('winner', 'shortlist', 'longlist', 'nominee', 'finalist', 'special')),
+        title TEXT,
+        result_status TEXT,
+        sort_order INTEGER DEFAULT 0,
+        display_order INTEGER DEFAULT 0,
+        publish_status TEXT DEFAULT 'published' CHECK (publish_status IN ('draft', 'scheduled', 'published', 'archived')),
+        status TEXT,
+        visibility TEXT,
+        scheduled_at TIMESTAMPTZ,
+        published_at TIMESTAMPTZ,
+        publish_at TIMESTAMPTZ,
+        unpublish_at TIMESTAMPTZ,
+        deleted_at TIMESTAMPTZ,
+        deleted_by TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS award_outcome_recipients (
+        id SERIAL PRIMARY KEY,
+        award_outcome_id INTEGER NOT NULL REFERENCES award_outcomes(id) ON DELETE CASCADE,
+        recipient_type TEXT DEFAULT 'book' CHECK (recipient_type IN ('book', 'person')),
+        book_id INTEGER,
+        person_id INTEGER,
+        recipient_name TEXT,
+        role TEXT,
+        notes TEXT,
+        sort_order INTEGER DEFAULT 0,
+        display_order INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'active',
+        visibility TEXT,
+        publish_at TIMESTAMPTZ,
+        unpublish_at TIMESTAMPTZ,
+        deleted_at TIMESTAMPTZ,
+        deleted_by TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        CHECK ((recipient_type = 'book' AND book_id IS NOT NULL) OR (recipient_type = 'person' AND (person_id IS NOT NULL OR recipient_name IS NOT NULL)))
+      )
+    `);
+    log.info('Awards tables verified');
+  } catch (err) {
+    log.warn('Could not create awards tables:', err);
+  }
+
+  // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
   const uploadsDir = path.resolve(process.cwd(), 'client/src/public/uploads/avatars');
@@ -2986,8 +3084,8 @@ export async function registerRoutes(
   app.get('/api/award_editions', async (_req: Request, res: Response) => {
     try {
       const result = await queryDB(
-        `SELECT e.id, e.award_id, e.year, e.theme, e.notes,
-                a.name AS award_name, a.visibility AS status
+        `SELECT e.id, e.award_id, e.year, e.label, e.status,
+                a.name AS award_name, a.visibility AS award_visibility
          FROM award_editions e
          JOIN awards a ON e.award_id = a.id
          ORDER BY a.name ASC, e.year DESC`,
