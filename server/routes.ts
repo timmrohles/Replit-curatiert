@@ -8108,7 +8108,8 @@ export async function registerRoutes(
 
       const result = await queryDB(
         `SELECT eb.*, ce.title as episode_title, ce.episode_number, ce.published_at as episode_date,
-                ce.content_url as episode_url, cs.title as source_title, cs.image_url as source_image,
+                ce.content_url as episode_url, ce.description as episode_description,
+                cs.title as source_title, cs.image_url as source_image,
                 cs.source_type
          FROM extracted_books eb
          JOIN content_episodes ce ON eb.episode_id = ce.id

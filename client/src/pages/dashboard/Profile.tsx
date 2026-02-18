@@ -251,6 +251,7 @@ export function DashboardProfile() {
   const [bookstoreSlug, setBookstoreSlug] = useState<string | null>(null);
   const [visibleTabs, setVisibleTabs] = useState({
     kurationen: true,
+    buchbesprechung: true,
     rezensionen: true,
     bewertungen: true,
     veranstaltungen: true,
@@ -549,6 +550,7 @@ export function DashboardProfile() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {([
             { key: 'kurationen', label: 'Kurationen' },
+            { key: 'buchbesprechung', label: 'Buchbesprechung' },
             { key: 'rezensionen', label: 'Rezensionen' },
             { key: 'bewertungen', label: 'Bewertungen' },
             { key: 'veranstaltungen', label: 'Veranstaltungen' },
