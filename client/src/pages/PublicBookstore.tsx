@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast, BookOpen, Star, CalendarDays, Clock, Video, Users, Download, Share2 } from 'lucide-react';
+import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast, BookOpen, Star, CalendarDays, Clock, Video, Users, Download, Share2, Search, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -338,6 +338,10 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [bsSearchQuery, setBsSearchQuery] = useState('');
+  const [bsSortOrder, setBsSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [bsCurrentPage, setBsCurrentPage] = useState(1);
+  const EPISODES_PER_PAGE = 10;
   const { toast } = useToast();
 
   const handleShare = async () => {
@@ -923,72 +927,187 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
           </section>
         )}
 
-        {activeTab === 'buchbesprechung' && hasContentBooks && (
-          <section className="max-w-7xl mx-auto px-0 md:px-2 py-4" data-testid="buchbesprechung-section">
-            {Object.entries(groupedByEpisode).map(([episodeId, episode]: [string, any]) => {
-              const episodeLabel = [
-                episode.sourceTitle,
-                episode.episodeNumber ? `Folge ${episode.episodeNumber}` : null,
-              ].filter(Boolean).join(' \u2013 ');
-              const episodeTitle = episodeLabel
-                ? `${episodeLabel}: ${episode.episodeTitle}`
-                : episode.episodeTitle;
+        {activeTab === 'buchbesprechung' && hasContentBooks && (() => {
+          const searchLower = bsSearchQuery.toLowerCase().trim();
+          const allEpisodes = Object.entries(groupedByEpisode);
 
-              return (
-                <div key={episodeId} data-testid={`episode-row-${episodeId}`}>
-                  <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-2">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <Podcast className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                      {episode.episodeDate && (
-                        <time className="text-xs text-muted-foreground">
-                          {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
-                        </time>
-                      )}
-                    </div>
-                    <h3 className="section-title text-foreground">
-                      {episode.episodeUrl ? (
-                        <a href={episode.episodeUrl} target="_blank" rel="noopener noreferrer" className="hover:text-cerulean transition-colors inline-flex items-center gap-1">
-                          {episodeTitle}
-                          <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
-                        </a>
-                      ) : episodeTitle}
-                    </h3>
-                    {episode.episodeDescription && (
-                      <Text as="p" variant="base" className="text-foreground/80 leading-relaxed mt-2 max-w-3xl line-clamp-3">
-                        {episode.episodeDescription}
-                      </Text>
-                    )}
-                    <div className="flex items-center gap-3 mt-3">
-                      {episode.sourceImage && (
-                        <img src={episode.sourceImage} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                      )}
-                      {episode.sourceTitle && (
-                        <Text as="span" variant="small" className="text-muted-foreground font-medium">
-                          {episode.sourceTitle}
+          const filteredEpisodes = searchLower
+            ? allEpisodes.filter(([, ep]: [string, any]) =>
+                ep.episodeTitle?.toLowerCase().includes(searchLower) ||
+                ep.sourceTitle?.toLowerCase().includes(searchLower) ||
+                ep.books.some((b: any) =>
+                  b.title?.toLowerCase().includes(searchLower) ||
+                  b.author?.toLowerCase().includes(searchLower)
+                )
+              )
+            : allEpisodes;
+
+          const sortedEpisodes = [...filteredEpisodes].sort(([, a]: [string, any], [, b]: [string, any]) => {
+            const dateA = a.episodeDate ? new Date(a.episodeDate).getTime() : 0;
+            const dateB = b.episodeDate ? new Date(b.episodeDate).getTime() : 0;
+            return bsSortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+          });
+
+          const totalPages = Math.max(1, Math.ceil(sortedEpisodes.length / EPISODES_PER_PAGE));
+          const safePage = Math.min(bsCurrentPage, totalPages);
+          if (safePage !== bsCurrentPage) {
+            setTimeout(() => setBsCurrentPage(safePage), 0);
+          }
+          const startIdx = (safePage - 1) * EPISODES_PER_PAGE;
+          const paginatedEpisodes = sortedEpisodes.slice(startIdx, startIdx + EPISODES_PER_PAGE);
+
+          return (
+            <section className="max-w-7xl mx-auto px-0 md:px-2 py-4" data-testid="buchbesprechung-section">
+              <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pb-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="text"
+                      value={bsSearchQuery}
+                      onChange={(e) => { setBsSearchQuery(e.target.value); setBsCurrentPage(1); }}
+                      placeholder="Buch, Autor oder Episode suchen\u2026"
+                      className="w-full pl-9 pr-4 py-2 rounded-md border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-cerulean/40"
+                      data-testid="input-buchbesprechung-search"
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => { setBsSortOrder(prev => prev === 'newest' ? 'oldest' : 'newest'); setBsCurrentPage(1); }}
+                    className="flex items-center gap-2 whitespace-nowrap"
+                    data-testid="button-buchbesprechung-sort"
+                  >
+                    <ArrowUpDown className="w-4 h-4" />
+                    {bsSortOrder === 'newest' ? 'Neueste zuerst' : 'Älteste zuerst'}
+                  </Button>
+                </div>
+                {searchLower && (
+                  <p className="text-xs text-muted-foreground mt-2" data-testid="text-search-results-count">
+                    {sortedEpisodes.length} {sortedEpisodes.length === 1 ? 'Ergebnis' : 'Ergebnisse'} gefunden
+                  </p>
+                )}
+              </div>
+
+              {paginatedEpisodes.length === 0 && (
+                <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-12 text-center" data-testid="buchbesprechung-empty">
+                  <Search className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground text-sm">Keine Episoden für &bdquo;{bsSearchQuery}&ldquo; gefunden.</p>
+                </div>
+              )}
+
+              {paginatedEpisodes.map(([episodeId, episode]: [string, any]) => {
+                const episodeLabel = [
+                  episode.sourceTitle,
+                  episode.episodeNumber ? `Folge ${episode.episodeNumber}` : null,
+                ].filter(Boolean).join(' \u2013 ');
+                const episodeTitle = episodeLabel
+                  ? `${episodeLabel}: ${episode.episodeTitle}`
+                  : episode.episodeTitle;
+
+                return (
+                  <div key={episodeId} data-testid={`episode-row-${episodeId}`}>
+                    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-2">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <Podcast className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        {episode.episodeDate && (
+                          <time className="text-xs text-muted-foreground">
+                            {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
+                          </time>
+                        )}
+                      </div>
+                      <h3 className="section-title text-foreground">
+                        {episode.episodeUrl ? (
+                          <a href={episode.episodeUrl} target="_blank" rel="noopener noreferrer" className="hover:text-cerulean transition-colors inline-flex items-center gap-1">
+                            {episodeTitle}
+                            <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                          </a>
+                        ) : episodeTitle}
+                      </h3>
+                      {episode.episodeDescription && (
+                        <Text as="p" variant="base" className="text-foreground/80 leading-relaxed mt-2 max-w-3xl line-clamp-3">
+                          {episode.episodeDescription}
                         </Text>
                       )}
+                      <div className="flex items-center gap-3 mt-3">
+                        {episode.sourceImage && (
+                          <img src={episode.sourceImage} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                        )}
+                        {episode.sourceTitle && (
+                          <Text as="span" variant="small" className="text-muted-foreground font-medium">
+                            {episode.sourceTitle}
+                          </Text>
+                        )}
+                      </div>
                     </div>
+                    <CreatorCarousel
+                      creatorAvatar={episode.sourceImage || profile.avatar_url || ''}
+                      creatorName={episode.sourceTitle || profile.display_name}
+                      creatorFocus=""
+                      occasion={episodeTitle}
+                      curationReason=""
+                      showSocials={false}
+                      isVerified={false}
+                      showHeader={false}
+                      books={mapExtractedBooksForCarousel(episode.books)}
+                      showCta={false}
+                      backgroundColor="white"
+                      useEditorialLayout={true}
+                      showVideo={false}
+                    />
                   </div>
-                  <CreatorCarousel
-                    creatorAvatar={episode.sourceImage || profile.avatar_url || ''}
-                    creatorName={episode.sourceTitle || profile.display_name}
-                    creatorFocus=""
-                    occasion={episodeTitle}
-                    curationReason=""
-                    showSocials={false}
-                    isVerified={false}
-                    showHeader={false}
-                    books={mapExtractedBooksForCarousel(episode.books)}
-                    showCta={false}
-                    backgroundColor="white"
-                    useEditorialLayout={true}
-                    showVideo={false}
-                  />
-                </div>
-              );
-            })}
-          </section>
-        )}
+                );
+              })}
+
+              {totalPages > 1 && (
+                <nav className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 flex items-center justify-center gap-2" data-testid="buchbesprechung-pagination">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={safePage <= 1}
+                    onClick={() => setBsCurrentPage(p => Math.max(1, p - 1))}
+                    data-testid="button-page-prev"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(p => p === 1 || p === totalPages || Math.abs(p - safePage) <= 2)
+                    .reduce((acc: (number | 'dots')[], p, idx, arr) => {
+                      if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('dots');
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, idx) =>
+                      item === 'dots' ? (
+                        <span key={`dots-${idx}`} className="px-1 text-muted-foreground text-sm select-none">&hellip;</span>
+                      ) : (
+                        <Button
+                          key={item}
+                          variant={item === safePage ? 'default' : 'outline'}
+                          size="icon"
+                          onClick={() => setBsCurrentPage(item as number)}
+                          data-testid={`button-page-${item}`}
+                        >
+                          {item}
+                        </Button>
+                      )
+                    )}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={safePage >= totalPages}
+                    onClick={() => setBsCurrentPage(p => Math.min(totalPages, p + 1))}
+                    data-testid="button-page-next"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground ml-3">
+                    Seite {safePage} von {totalPages}
+                  </span>
+                </nav>
+              )}
+            </section>
+          );
+        })()}
 
         <section className="bg-gray-50 dark:bg-muted/30 py-6 px-6 text-center" data-testid="disclaimer-section">
           <p className="text-xs text-muted-foreground max-w-3xl mx-auto">
