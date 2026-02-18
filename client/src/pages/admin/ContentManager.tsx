@@ -24,6 +24,7 @@ const AdminAuthorRequests = lazy(() => import('../../components/admin/AdminAutho
 const ContentReportsTab = lazy(() => import('../../components/admin/ContentReportsTab').then(m => ({ default: m.ContentReportsTab })));
 const AdminEventsTab = lazy(() => import('../../components/admin/AdminEventsTab').then(m => ({ default: m.AdminEventsTab })));
 const AdminContentSources = lazy(() => import('../../components/admin/AdminContentSources').then(m => ({ default: m.AdminContentSources })));
+const AdminUnmatchedBooks = lazy(() => import('../../components/admin/AdminUnmatchedBooks').then(m => ({ default: m.AdminUnmatchedBooks })));
 
 // ✅ Import types and API functions
 import type { Book, Curator, Tag, ONIXTag, MenuItem, Section, Page } from '../../utils/api';
@@ -47,6 +48,44 @@ import {
   moveSection
 } from '../../utils/api';
 import { TabErrorBoundary } from '../../components/admin/TabErrorBoundary';
+
+function BooksSubTabs() {
+  const [subTab, setSubTab] = useState<'all' | 'unmatched'>('all');
+  return (
+    <div>
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setSubTab('all')}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+          style={{
+            backgroundColor: subTab === 'all' ? '#247ba0' : '#f3f4f6',
+            color: subTab === 'all' ? '#fff' : '#6b7280',
+          }}
+          data-testid="button-books-subtab-all"
+        >
+          Alle Bücher
+        </button>
+        <button
+          onClick={() => setSubTab('unmatched')}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+          style={{
+            backgroundColor: subTab === 'unmatched' ? '#f59e0b' : '#f3f4f6',
+            color: subTab === 'unmatched' ? '#fff' : '#6b7280',
+          }}
+          data-testid="button-books-subtab-unmatched"
+        >
+          Nicht-gematched (Podcast)
+        </button>
+      </div>
+      {subTab === 'all' && <AdminBooksNeon />}
+      {subTab === 'unmatched' && (
+        <Suspense fallback={<div className="p-4 text-center" style={{ color: '#666' }}>Lädt...</div>}>
+          <AdminUnmatchedBooks />
+        </Suspense>
+      )}
+    </div>
+  );
+}
 
 /**
  * Content Manager - Admin Dashboard
@@ -801,7 +840,7 @@ export function ContentManager() {
           {activeTab === 'books' && (
             <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Bücher...</div>}>
               <TabErrorBoundary tabName="Bücher">
-                <AdminBooksNeon />
+                <BooksSubTabs />
               </TabErrorBoundary>
             </Suspense>
           )}

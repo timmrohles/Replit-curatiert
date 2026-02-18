@@ -336,9 +336,10 @@ ${textToAnalyze}`;
       try {
         coverUrl = await fetchCoverFromOpenLibrary(book.title || "", book.author || "");
       } catch {}
-      await queryDB(
+      const insertResult = await queryDB(
         `INSERT INTO extracted_books (episode_id, source_id, title, author, isbn, sentiment, recommendation_strength, host_quote, context_note, extraction_confidence, is_verified, is_visible, cover_url)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false, true, $11)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false, true, $11)
+         RETURNING id`,
         [
           episodeId,
           episode.source_id,
@@ -353,6 +354,14 @@ ${textToAnalyze}`;
           coverUrl,
         ]
       );
+      const newBookId = insertResult.rows[0]?.id;
+      if (newBookId && book.title && book.author) {
+        try {
+          await matchSingleBook(newBookId, book.title, book.author);
+        } catch (matchErr) {
+          console.log(`[BookMatcher] Auto-match failed for "${book.title}": ${(matchErr as Error).message}`);
+        }
+      }
     }
 
     await queryDB(
@@ -447,46 +456,160 @@ export async function getExtractedBooksForUser(userId: string) {
   }
 }
 
+function normalizeAuthor(author: string): string[] {
+  const trimmed = author.toLowerCase().trim();
+  const variants: string[] = [trimmed];
+  if (trimmed.includes(',')) {
+    const parts = trimmed.split(',').map(p => p.trim());
+    variants.push(parts.reverse().join(' '));
+  } else {
+    const parts = trimmed.split(/\s+/);
+    if (parts.length >= 2) {
+      variants.push(`${parts[parts.length - 1]}, ${parts.slice(0, -1).join(' ')}`);
+    }
+  }
+  return Array.from(new Set(variants));
+}
+
+function authorMatches(ebAuthor: string, bAuthor: string): boolean {
+  if (!ebAuthor || !bAuthor) return false;
+  const ebVariants = normalizeAuthor(ebAuthor);
+  const bVariants = normalizeAuthor(bAuthor);
+  for (const ev of ebVariants) {
+    for (const bv of bVariants) {
+      if (ev === bv) return true;
+      if (ev.includes(bv) || bv.includes(ev)) return true;
+    }
+  }
+  const ebLast = ebAuthor.toLowerCase().trim().split(/[\s,]+/).pop() || '';
+  const bLast = bAuthor.toLowerCase().trim().split(/[\s,]+/).filter(Boolean);
+  if (ebLast.length > 2 && bLast.some(p => p === ebLast)) return true;
+  return false;
+}
+
+export async function matchSingleBook(extractedBookId: number, title: string, author: string): Promise<number | null> {
+  try {
+    const exactResult = await queryDB(
+      `SELECT id, title, author, publisher FROM books
+       WHERE LOWER(TRIM(title)) = $1
+       AND (status IS NULL OR status != 'deleted')
+       LIMIT 20`,
+      [title.toLowerCase().trim()]
+    );
+    for (const row of exactResult.rows) {
+      if (authorMatches(author, row.author)) {
+        await queryDB(`UPDATE extracted_books SET matched_book_id = $1 WHERE id = $2`, [row.id, extractedBookId]);
+        return row.id;
+      }
+    }
+    if (exactResult.rows.length === 1) {
+      await queryDB(`UPDATE extracted_books SET matched_book_id = $1 WHERE id = $2`, [exactResult.rows[0].id, extractedBookId]);
+      return exactResult.rows[0].id;
+    }
+
+    const likeResult = await queryDB(
+      `SELECT id, title, author, publisher FROM books
+       WHERE LOWER(TRIM(title)) ILIKE $1
+       AND (status IS NULL OR status != 'deleted')
+       LIMIT 20`,
+      [title.toLowerCase().trim().replace(/[%_]/g, '\\$&')]
+    );
+    for (const row of likeResult.rows) {
+      if (authorMatches(author, row.author)) {
+        await queryDB(`UPDATE extracted_books SET matched_book_id = $1 WHERE id = $2`, [row.id, extractedBookId]);
+        return row.id;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.log(`[BookMatcher] Error matching "${title}" by ${author}: ${(error as Error).message}`);
+    return null;
+  }
+}
+
+export async function batchMatchBooks(): Promise<{ matched: number; unmatched: number; total: number }> {
+  let matched = 0, unmatched = 0;
+  try {
+    const result = await queryDB(
+      `SELECT id, title, author FROM extracted_books WHERE matched_book_id IS NULL ORDER BY id`
+    );
+    const total = result.rows.length;
+    console.log(`[BookMatcher] Batch matching ${total} unmatched books...`);
+
+    const titles = Array.from(new Set(result.rows.map((b: any) => b.title.toLowerCase().trim())));
+    const titleMap = new Map<string, Array<{ id: number; title: string; author: string; publisher: string }>>();
+
+    for (let i = 0; i < titles.length; i += 50) {
+      const chunk = titles.slice(i, i + 50);
+      const placeholders = chunk.map((_: string, idx: number) => `$${idx + 1}`).join(',');
+      const res = await queryDB(
+        `SELECT id, title, author, publisher FROM books WHERE LOWER(TRIM(title)) IN (${placeholders}) AND (status IS NULL OR status != 'deleted')`,
+        chunk
+      );
+      for (const row of res.rows) {
+        const key = (row.title as string).toLowerCase().trim();
+        if (!titleMap.has(key)) titleMap.set(key, []);
+        titleMap.get(key)!.push(row);
+      }
+    }
+
+    for (const book of result.rows) {
+      const key = (book.title as string).toLowerCase().trim();
+      const candidates = titleMap.get(key) || [];
+      let matchId: number | null = null;
+
+      for (const c of candidates) {
+        if (authorMatches(book.author, c.author)) {
+          matchId = c.id;
+          break;
+        }
+      }
+      if (!matchId && candidates.length === 1) {
+        matchId = candidates[0].id;
+      }
+
+      if (matchId) {
+        await queryDB(`UPDATE extracted_books SET matched_book_id = $1 WHERE id = $2`, [matchId, book.id]);
+        matched++;
+      } else {
+        unmatched++;
+      }
+    }
+
+    console.log(`[BookMatcher] Batch complete: ${matched} matched, ${unmatched} unmatched out of ${total}`);
+    return { matched, unmatched, total };
+  } catch (error) {
+    console.log(`[BookMatcher] Batch error: ${(error as Error).message}`);
+    throw error;
+  }
+}
+
 export async function matchBookToDatabase(title: string, author: string) {
   try {
-    console.log(`[PodcastExtractor] Matching book: "${title}" by ${author}`);
-
     const result = await queryDB(
-      `SELECT id, title, author, isbn13, cover_url
-       FROM books
-       WHERE LOWER(title) LIKE $1
-       OR similarity(LOWER(title), LOWER($2)) > 0.3
-       ORDER BY similarity(LOWER(title), LOWER($2)) DESC
-       LIMIT 5`,
-      [`%${title.toLowerCase()}%`, title]
+      `SELECT id, title, author, isbn13, cover_url, publisher FROM books
+       WHERE LOWER(TRIM(title)) = $1
+       AND (status IS NULL OR status != 'deleted')
+       LIMIT 10`,
+      [title.toLowerCase().trim()]
     );
-
-    if (result.rows.length === 0) {
-      const fallback = await queryDB(
-        `SELECT id, title, author, isbn13, cover_url
-         FROM books
-         WHERE LOWER(title) LIKE $1
-         LIMIT 5`,
-        [`%${title.toLowerCase().split(" ").slice(0, 3).join("%")}%`]
-      );
-      return fallback.rows;
+    if (result.rows.length > 0) {
+      const authorMatch = result.rows.find((r: any) => authorMatches(author, r.author));
+      if (authorMatch) return [authorMatch];
+      return result.rows.slice(0, 5);
     }
-
-    return result.rows;
+    const fallback = await queryDB(
+      `SELECT id, title, author, isbn13, cover_url, publisher FROM books
+       WHERE LOWER(TRIM(title)) ILIKE $1
+       AND (status IS NULL OR status != 'deleted')
+       LIMIT 5`,
+      [`%${title.toLowerCase().trim()}%`]
+    );
+    return fallback.rows;
   } catch (error) {
-    console.log(`[PodcastExtractor] Error matching book to database: ${(error as Error).message}`);
-    try {
-      const fallback = await queryDB(
-        `SELECT id, title, author, isbn13, cover_url
-         FROM books
-         WHERE LOWER(title) LIKE $1
-         LIMIT 5`,
-        [`%${title.toLowerCase()}%`]
-      );
-      return fallback.rows;
-    } catch {
-      return [];
-    }
+    console.log(`[BookMatcher] Error in matchBookToDatabase: ${(error as Error).message}`);
+    return [];
   }
 }
 

@@ -8118,23 +8118,55 @@ export async function registerRoutes(
                   ce.content_url as episode_url, ce.description as episode_description,
                   cs.title as source_title, cs.image_url as source_image,
                   cs.source_type,
-                  COALESCE(b1.cover_url, b2.cover_url, NULLIF(eb.cover_url, '')) as book_cover_url,
-                  COALESCE(b1.description, b2.description) as book_description,
-                  COALESCE(b1.isbn13, b2.isbn13) as book_isbn13,
-                  COALESCE(b1.publisher, b2.publisher) as book_publisher
+                  COALESCE(b1.cover_url, NULLIF(eb.cover_url, '')) as book_cover_url,
+                  COALESCE(b1.description, '') as book_description,
+                  COALESCE(b1.isbn13, '') as book_isbn13,
+                  COALESCE(b1.publisher, '') as book_publisher,
+                  eb.matched_book_id
            FROM extracted_books eb
            JOIN content_episodes ce ON eb.episode_id = ce.id
            JOIN content_sources cs ON eb.source_id = cs.id
            LEFT JOIN books b1 ON eb.matched_book_id = b1.id
-           LEFT JOIN books b2 ON eb.matched_book_id IS NULL
-             AND LOWER(TRIM(b2.title)) = LOWER(TRIM(eb.title))
-             AND LOWER(TRIM(b2.author)) = LOWER(TRIM(eb.author))
            WHERE cs.user_id = $1 AND cs.is_active = true AND eb.is_visible = true
            ORDER BY eb.id
          ) sub ORDER BY episode_date DESC NULLS LAST, id`,
         [userId]
       );
-      return res.json({ ok: true, data: result.rows });
+
+      let indieNames: string[] = [];
+      let spPatterns: Array<{ pattern: string; match_type: string }> = [];
+      try {
+        const [indieRes, spRes] = await Promise.all([
+          queryDB('SELECT name FROM indie_publishers'),
+          queryDB('SELECT pattern, match_type FROM selfpublisher_patterns'),
+        ]);
+        indieNames = (indieRes.rows || []).map((r: any) => r.name.toLowerCase());
+        spPatterns = spRes.rows || [];
+      } catch {}
+
+      const enriched = result.rows.map((row: any) => {
+        const publisher = (row.book_publisher || '').toLowerCase();
+        const author = (row.author || '').toLowerCase();
+        let isIndie = false;
+        let indieType: string | null = null;
+        if (publisher) {
+          const isIndieVerlag = indieNames.some(name => publisher === name);
+          const isSelfPublisher = spPatterns.some((sp: any) => {
+            if (sp.match_type === 'exact') return publisher === sp.pattern.toLowerCase();
+            return publisher.includes(sp.pattern.toLowerCase());
+          });
+          const isAuthorPublisher = author && (
+            author === publisher ||
+            publisher.includes(author) ||
+            (author.includes(',') && publisher.includes(author.split(',')[0].trim()))
+          );
+          isIndie = isIndieVerlag || isSelfPublisher || !!isAuthorPublisher;
+          indieType = isIndieVerlag ? 'indie_verlag' : (isSelfPublisher || isAuthorPublisher) ? 'selfpublisher' : null;
+        }
+        return { ...row, book_is_indie: isIndie, book_indie_type: indieType };
+      });
+
+      return res.json({ ok: true, data: enriched });
     } catch (error) {
       log.error('Public content books error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
@@ -8151,6 +8183,43 @@ export async function registerRoutes(
       return res.json({ ok: true, ...result });
     } catch (error) {
       log.error('Batch cover fetch error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/batch-match-books', async (req: Request, res: Response) => {
+    try {
+      const token = req.headers['x-admin-token'] as string;
+      if (!token || !(await verifyAdminToken(token))) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+      const { batchMatchBooks } = await import('./services/podcastExtractor');
+      const result = await batchMatchBooks();
+      return res.json({ ok: true, ...result });
+    } catch (error) {
+      log.error('Batch match books error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/admin/unmatched-books', async (req: Request, res: Response) => {
+    try {
+      const token = req.headers['x-admin-token'] as string;
+      if (!token || !(await verifyAdminToken(token))) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+      const result = await queryDB(
+        `SELECT eb.id, eb.title, eb.author, eb.isbn, eb.sentiment, eb.recommendation_strength,
+                eb.extraction_confidence, eb.cover_url, eb.created_at,
+                ce.title as episode_title, ce.published_at as episode_date,
+                cs.title as source_title, cs.source_type,
+                bp.display_name as owner_name, bp.slug as owner_slug
+         FROM extracted_books eb
+         JOIN content_episodes ce ON eb.episode_id = ce.id
+         JOIN content_sources cs ON eb.source_id = cs.id
+         LEFT JOIN bookstore_profiles bp ON bp.user_id = cs.user_id
+         WHERE eb.matched_book_id IS NULL
+         ORDER BY eb.title ASC`
+      );
+      return res.json({ ok: true, data: result.rows, total: result.rows.length });
+    } catch (error) {
+      log.error('Unmatched books error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });
