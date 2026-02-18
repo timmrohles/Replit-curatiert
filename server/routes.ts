@@ -7954,5 +7954,186 @@ export async function registerRoutes(
     }
   });
 
+  // ===== PODCAST / CONTENT EXTRACTION ROUTES =====
+
+  app.get('/api/content-sources', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(401).json({ ok: false, error: 'User ID required' });
+      const { getContentSources } = await import('./services/podcastExtractor');
+      const sources = await getContentSources(userId);
+      return res.json({ ok: true, data: sources });
+    } catch (error) {
+      log.error('Get content sources error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/content-sources', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(401).json({ ok: false, error: 'User ID required' });
+      const { sourceType = 'podcast', feedUrl } = req.body;
+      if (!feedUrl) return res.status(400).json({ ok: false, error: 'Feed URL is required' });
+      const { addContentSource } = await import('./services/podcastExtractor');
+      const source = await addContentSource(userId, sourceType, feedUrl);
+      return res.status(201).json({ ok: true, data: source });
+    } catch (error) {
+      log.error('Add content source error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.patch('/api/content-sources/:id', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(401).json({ ok: false, error: 'User ID required' });
+      const id = parseInt(req.params.id);
+      const ownership = await queryDB('SELECT id FROM content_sources WHERE id = $1 AND user_id = $2', [id, userId]);
+      if (ownership.rows.length === 0) return res.status(403).json({ ok: false, error: 'Not authorized' });
+      const { updateContentSource } = await import('./services/podcastExtractor');
+      const source = await updateContentSource(id, req.body);
+      return res.json({ ok: true, data: source });
+    } catch (error) {
+      log.error('Update content source error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/content-sources/:id', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(401).json({ ok: false, error: 'User ID required' });
+      const id = parseInt(req.params.id);
+      const ownership = await queryDB('SELECT id FROM content_sources WHERE id = $1 AND user_id = $2', [id, userId]);
+      if (ownership.rows.length === 0) return res.status(403).json({ ok: false, error: 'Not authorized' });
+      const { deleteContentSource } = await import('./services/podcastExtractor');
+      await deleteContentSource(id);
+      return res.json({ ok: true });
+    } catch (error) {
+      log.error('Delete content source error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/content-sources/:id/sync', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(401).json({ ok: false, error: 'User ID required' });
+      const id = parseInt(req.params.id);
+      const ownership = await queryDB('SELECT id FROM content_sources WHERE id = $1 AND user_id = $2', [id, userId]);
+      if (ownership.rows.length === 0) return res.status(403).json({ ok: false, error: 'Not authorized' });
+      const { syncAndProcessSource } = await import('./services/podcastExtractor');
+      const result = await syncAndProcessSource(id);
+      return res.json({ ok: true, data: result });
+    } catch (error) {
+      log.error('Sync content source error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/content-sources/:id/episodes', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(401).json({ ok: false, error: 'User ID required' });
+      const id = parseInt(req.params.id);
+      const ownership = await queryDB('SELECT id FROM content_sources WHERE id = $1 AND user_id = $2', [id, userId]);
+      if (ownership.rows.length === 0) return res.status(403).json({ ok: false, error: 'Not authorized' });
+      const { getEpisodesWithBooks } = await import('./services/podcastExtractor');
+      const episodes = await getEpisodesWithBooks(id);
+      return res.json({ ok: true, data: episodes });
+    } catch (error) {
+      log.error('Get episodes error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/content-sources/user/books', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(401).json({ ok: false, error: 'User ID required' });
+      const { getExtractedBooksForUser } = await import('./services/podcastExtractor');
+      const books = await getExtractedBooksForUser(userId);
+      return res.json({ ok: true, data: books });
+    } catch (error) {
+      log.error('Get extracted books error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.patch('/api/extracted-books/:id/verify', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(401).json({ ok: false, error: 'User ID required' });
+      const id = parseInt(req.params.id);
+      const { verified } = req.body;
+      const { verifyExtractedBook } = await import('./services/podcastExtractor');
+      const book = await verifyExtractedBook(id, verified !== false);
+      return res.json({ ok: true, data: book });
+    } catch (error) {
+      log.error('Verify extracted book error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.patch('/api/extracted-books/:id/visibility', async (req: Request, res: Response) => {
+    try {
+      const userId = req.headers['x-user-id'] as string;
+      if (!userId) return res.status(401).json({ ok: false, error: 'User ID required' });
+      const id = parseInt(req.params.id);
+      const { visible } = req.body;
+      const { toggleBookVisibility } = await import('./services/podcastExtractor');
+      const book = await toggleBookVisibility(id, visible !== false);
+      return res.json({ ok: true, data: book });
+    } catch (error) {
+      log.error('Toggle book visibility error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/public/content-books/:slug', async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      const profileResult = await queryDB('SELECT user_id FROM bookstore_profiles WHERE slug = $1 LIMIT 1', [slug]);
+      if (profileResult.rows.length === 0) return res.json({ ok: true, data: [] });
+      const userId = profileResult.rows[0].user_id;
+
+      const result = await queryDB(
+        `SELECT eb.*, ce.title as episode_title, ce.episode_number, ce.published_at as episode_date,
+                ce.content_url as episode_url, cs.title as source_title, cs.image_url as source_image,
+                cs.source_type
+         FROM extracted_books eb
+         JOIN content_episodes ce ON eb.episode_id = ce.id
+         JOIN content_sources cs ON eb.source_id = cs.id
+         WHERE cs.user_id = $1 AND cs.is_active = true AND eb.is_visible = true
+         ORDER BY ce.published_at DESC NULLS LAST, eb.id`,
+        [userId]
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Public content books error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/admin/content-sources', async (req: Request, res: Response) => {
+    try {
+      const token = req.headers['x-admin-token'] as string;
+      if (!token || !(await verifyAdminToken(token))) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+      const result = await queryDB(
+        `SELECT cs.*, bp.display_name, bp.slug,
+                (SELECT COUNT(*) FROM content_episodes WHERE source_id = cs.id) as episode_count,
+                (SELECT COUNT(*) FROM extracted_books WHERE source_id = cs.id) as book_count
+         FROM content_sources cs
+         LEFT JOIN bookstore_profiles bp ON bp.user_id = cs.user_id
+         ORDER BY cs.created_at DESC`
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Admin content sources error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
   return httpServer;
 }

@@ -18,7 +18,8 @@ import {
   Gift,
   Mail,
   PenTool,
-  Banknote
+  Banknote,
+  Rss
 } from 'lucide-react';
 import { DashboardHome } from './dashboard/DashboardHome';
 import { DashboardProfile } from './dashboard/Profile';
@@ -46,6 +47,7 @@ import { AuthorRequest } from './dashboard/AuthorRequest';
 import { UserCurations } from './dashboard/UserCurations';
 import { UserEvents } from './dashboard/UserEvents';
 import { DashboardEarnings } from './dashboard/Earnings';
+import { ContentSourcesManager } from './dashboard/ContentSources';
 import { Header } from '../components/layout/Header';
 import { Footer } from '../components/layout/Footer';
 import { Breadcrumb } from '../components/layout/Breadcrumb';
@@ -69,6 +71,7 @@ type DashboardSection =
   | 'reviews' 
   | 'curations'
   | 'earnings'
+  | 'content-sources'
   | 'events'
   | 'notifications' 
   | 'privacy'
@@ -164,6 +167,7 @@ export default function ModularUserDashboard() {
     { id: 'reviews', label: 'Rezensionen', icon: MessageSquare, group: 'core' },
     { id: 'curations', label: 'Kurationen', icon: BookOpen, group: 'core' },
     { id: 'events', label: 'Veranstaltungen', icon: Calendar, group: 'core' },
+    { id: 'content-sources', label: 'Content-Quellen', icon: Rss, group: 'core' },
     { id: 'earnings', label: 'Geld verdienen', icon: Banknote, group: 'core' },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, group: 'core' },
   ];
@@ -234,6 +238,8 @@ export default function ModularUserDashboard() {
           return <DashboardReviews />;
         case 'curations':
           return <UserCurations onNavigateToTab={(tab) => setActiveSection(tab as DashboardSection)} />;
+        case 'content-sources':
+          return <ContentSourcesManager />;
         case 'earnings':
           return <DashboardEarnings />;
         case 'events':

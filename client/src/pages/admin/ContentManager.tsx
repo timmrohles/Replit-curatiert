@@ -23,6 +23,7 @@ const AdminAffiliate = lazy(() => import('../../components/admin/AdminAffiliate'
 const AdminAuthorRequests = lazy(() => import('../../components/admin/AdminAuthorRequests').then(m => ({ default: m.AdminAuthorRequests })));
 const ContentReportsTab = lazy(() => import('../../components/admin/ContentReportsTab').then(m => ({ default: m.ContentReportsTab })));
 const AdminEventsTab = lazy(() => import('../../components/admin/AdminEventsTab').then(m => ({ default: m.AdminEventsTab })));
+const AdminContentSources = lazy(() => import('../../components/admin/AdminContentSources').then(m => ({ default: m.AdminContentSources })));
 
 // ✅ Import types and API functions
 import type { Book, Curator, Tag, ONIXTag, MenuItem, Section, Page } from '../../utils/api';
@@ -92,8 +93,8 @@ export function ContentManager() {
   };
   
   // ✅ URL-based tab navigation
-  type TabType = 'books' | 'curators' | 'storefronts' | 'navigation' | 'pages' | 'category-cards' | 'awards' | 'tags' | 'persons' | 'user-modules' | 'author-requests' | 'settings' | 'diagnostics' | 'affiliates' | 'sections' | 'site-banner' | 'meldungen' | 'events';
-  const validTabs: TabType[] = ['books', 'curators', 'storefronts', 'navigation', 'pages', 'category-cards', 'awards', 'tags', 'persons', 'user-modules', 'author-requests', 'settings', 'diagnostics', 'affiliates', 'sections', 'site-banner', 'meldungen', 'events'];
+  type TabType = 'books' | 'curators' | 'storefronts' | 'navigation' | 'pages' | 'category-cards' | 'awards' | 'tags' | 'persons' | 'user-modules' | 'author-requests' | 'settings' | 'diagnostics' | 'affiliates' | 'sections' | 'site-banner' | 'meldungen' | 'events' | 'content-sources';
+  const validTabs: TabType[] = ['books', 'curators', 'storefronts', 'navigation', 'pages', 'category-cards', 'awards', 'tags', 'persons', 'user-modules', 'author-requests', 'settings', 'diagnostics', 'affiliates', 'sections', 'site-banner', 'meldungen', 'events', 'content-sources'];
   
   const tabParam = searchParams.get('tab') as TabType;
   const activeTab: TabType = tabParam && validTabs.includes(tabParam) ? tabParam : 'books';
@@ -655,6 +656,18 @@ export function ContentManager() {
           >
             💼 Affiliates
           </button>
+
+          <button
+            onClick={() => setActiveTab('content-sources')}
+            className="px-4 py-2 rounded-lg transition-all text-sm"
+            style={{
+              backgroundColor: activeTab === 'content-sources' ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
+              color: '#3A3A3A',
+              fontFamily: 'Fjalla One'
+            }}
+          >
+            📻 Content-Quellen
+          </button>
           
           <button
             onClick={() => setActiveTab('sections')}
@@ -907,6 +920,15 @@ export function ContentManager() {
           {activeTab === 'affiliates' && (
             <Suspense fallback={<div className="p-8 text-center">Lade Affiliate-Verwaltung...</div>}>
               <AdminAffiliate />
+            </Suspense>
+          )}
+
+          {/* Content Sources Tab */}
+          {activeTab === 'content-sources' && (
+            <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Content-Quellen...</div>}>
+              <TabErrorBoundary tabName="Content-Quellen">
+                <AdminContentSources />
+              </TabErrorBoundary>
             </Suspense>
           )}
 

@@ -18,7 +18,7 @@ import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { Text } from '@/components/ui/typography';
 import { LikeButton } from '../components/favorites/LikeButton';
 
-type ProfileTab = 'kurationen' | 'rezensionen' | 'bewertungen' | 'veranstaltungen' | 'buchclub';
+type ProfileTab = 'kurationen' | 'rezensionen' | 'bewertungen' | 'veranstaltungen' | 'buchclub' | 'podcast';
 
 interface BookstoreProfile {
   id: number;
@@ -351,6 +351,34 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
     enabled: !!slug,
   });
 
+  const { data: contentBooksData } = useQuery<{ ok: boolean; data: any[] }>({
+    queryKey: ['/api/public/content-books', slug],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/content-books/${slug}`);
+      return res.json();
+    },
+    enabled: !!slug,
+  });
+
+  const contentBooks = contentBooksData?.data || [];
+  const hasContentBooks = contentBooks.length > 0;
+  const groupedByEpisode = contentBooks.reduce((acc: Record<string, { episodeTitle: string; episodeNumber: string | null; episodeDate: string | null; episodeUrl: string | null; sourceTitle: string | null; sourceImage: string | null; books: any[] }>, book: any) => {
+    const key = `${book.episode_id}`;
+    if (!acc[key]) {
+      acc[key] = {
+        episodeTitle: book.episode_title,
+        episodeNumber: book.episode_number,
+        episodeDate: book.episode_date,
+        episodeUrl: book.episode_url,
+        sourceTitle: book.source_title,
+        sourceImage: book.source_image,
+        books: [],
+      };
+    }
+    acc[key].books.push(book);
+    return acc;
+  }, {} as Record<string, any>);
+
   const profile = data?.data?.profile;
   const curations = data?.data?.curations || [];
   const socialLinks = profile?.social_links || {};
@@ -560,6 +588,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                 <div className="flex gap-2 flex-wrap justify-center">
                   {([
                     { id: 'kurationen' as ProfileTab, label: 'Kurationen' },
+                    ...(hasContentBooks ? [{ id: 'podcast' as ProfileTab, label: 'Podcast-Bücher' }] : []),
                     { id: 'rezensionen' as ProfileTab, label: 'Rezensionen' },
                     { id: 'bewertungen' as ProfileTab, label: 'Bewertungen' },
                     { id: 'veranstaltungen' as ProfileTab, label: 'Veranstaltungen' },
@@ -870,6 +899,93 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
               <Text as="p" variant="base" className="text-muted-foreground">
                 Noch keine Buchclub-Inhalte vorhanden.
               </Text>
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'podcast' && hasContentBooks && (
+          <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6" data-testid="podcast-books-section">
+            <div className="space-y-6">
+              {Object.entries(groupedByEpisode).map(([episodeId, episode]: [string, any]) => (
+                <div key={episodeId} className="rounded-lg border bg-card p-4 md:p-6" data-testid={`episode-card-${episodeId}`}>
+                  <div className="flex items-start gap-3 mb-4">
+                    {episode.sourceImage && (
+                      <img src={episode.sourceImage} alt="" className="w-12 h-12 rounded-md object-cover flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <Podcast className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        {episode.sourceTitle && (
+                          <span className="text-xs text-muted-foreground">{episode.sourceTitle}</span>
+                        )}
+                        {episode.episodeNumber && (
+                          <span className="text-xs bg-muted px-1.5 py-0.5 rounded">Folge {episode.episodeNumber}</span>
+                        )}
+                      </div>
+                      <h3 className="font-headline text-base md:text-lg text-foreground leading-tight">
+                        {episode.episodeUrl ? (
+                          <a href={episode.episodeUrl} target="_blank" rel="noopener noreferrer" className="hover:text-cerulean transition-colors inline-flex items-center gap-1">
+                            {episode.episodeTitle}
+                            <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                          </a>
+                        ) : episode.episodeTitle}
+                      </h3>
+                      {episode.episodeDate && (
+                        <time className="text-xs text-muted-foreground mt-0.5 block">
+                          {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
+                        </time>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">
+                    {episode.books.length} {episode.books.length === 1 ? 'besprochenes Buch' : 'besprochene Bücher'}
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {episode.books.map((book: any) => {
+                      const sentimentColors: Record<string, string> = {
+                        very_positive: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
+                        positive: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+                        neutral: 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-300',
+                        negative: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
+                        critical: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+                      };
+                      const sentimentLabels: Record<string, string> = {
+                        very_positive: 'Begeistert',
+                        positive: 'Positiv',
+                        neutral: 'Erwähnt',
+                        negative: 'Kritisch',
+                        critical: 'Negativ',
+                      };
+                      return (
+                        <div key={book.id} className="rounded-md border bg-background p-3 space-y-2" data-testid={`content-book-${book.id}`}>
+                          <div>
+                            <h4 className="font-medium text-sm text-foreground leading-tight">{book.title}</h4>
+                            {book.author && <p className="text-xs text-muted-foreground mt-0.5">{book.author}</p>}
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-xs px-1.5 py-0.5 rounded-full ${sentimentColors[book.sentiment] || sentimentColors.neutral}`}>
+                              {sentimentLabels[book.sentiment] || 'Erwähnt'}
+                            </span>
+                            <span className="text-xs text-amber-500" title={`Empfehlung: ${book.recommendation_strength}/5`}>
+                              {'★'.repeat(Math.min(book.recommendation_strength || 0, 5))}{'☆'.repeat(5 - Math.min(book.recommendation_strength || 0, 5))}
+                            </span>
+                          </div>
+                          {book.host_quote && (
+                            <blockquote className="text-xs italic text-muted-foreground border-l-2 border-muted pl-2">
+                              &bdquo;{book.host_quote}&ldquo;
+                            </blockquote>
+                          )}
+                          {book.context_note && (
+                            <p className="text-xs text-muted-foreground">{book.context_note}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}
