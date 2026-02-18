@@ -143,12 +143,24 @@ function EpisodeRow({ episodeId, episode, profile }: { episodeId: string; episod
   return (
     <div data-testid={`episode-row-${episodeId}`}>
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-2">
-        <h3 className="section-title text-foreground" data-testid={`episode-title-${episodeId}`}>
-          {episodeTitle}
+        <h3 className="section-title text-foreground flex items-center flex-wrap gap-x-2" data-testid={`episode-title-${episodeId}`}>
+          <span>{episodeTitle}</span>
           {episode.episodeDate && (
-            <span className="text-muted-foreground font-normal text-base ml-2">
+            <span className="text-muted-foreground font-normal text-base">
               vom {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
             </span>
+          )}
+          {episode.episodeUrl && (
+            <a
+              href={episode.episodeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors"
+              title="Zur Sendung"
+              data-testid={`link-episode-out-${episodeId}`}
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
           )}
         </h3>
 
