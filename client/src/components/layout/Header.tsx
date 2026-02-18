@@ -217,7 +217,7 @@ const NAVIGATION_ITEMS: NavMenuItem[] = [
   },
   {
     id: 'nav-buchbesprechungen',
-    name: 'Buchbesprechungen',
+    name: 'Shownotes',
     path: '/',
     subcategories: []
   },

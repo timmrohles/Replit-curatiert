@@ -562,7 +562,7 @@ export function DashboardProfile() {
           {(() => {
             const TAB_LABELS: Record<string, string> = {
               kurationen: 'Kurationen',
-              buchbesprechung: 'Buchbesprechung',
+              buchbesprechung: 'Shownotes',
               rezensionen: 'Rezensionen',
               bewertungen: 'Bewertungen',
               veranstaltungen: 'Veranstaltungen',
