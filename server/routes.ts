@@ -844,6 +844,12 @@ export async function registerRoutes(
     log.warn('Could not create content_reports table:', err);
   }
 
+  try {
+    await queryDB(`ALTER TABLE extracted_books ADD COLUMN IF NOT EXISTS cover_url TEXT`);
+  } catch (err) {
+    log.warn('Could not add cover_url to extracted_books:', err);
+  }
+
   // ==================================================================
   // EVENTS / VERANSTALTUNGEN TABLES
   // ==================================================================
@@ -8112,7 +8118,7 @@ export async function registerRoutes(
                   ce.content_url as episode_url, ce.description as episode_description,
                   cs.title as source_title, cs.image_url as source_image,
                   cs.source_type,
-                  COALESCE(b1.cover_url, b2.cover_url) as book_cover_url,
+                  COALESCE(b1.cover_url, b2.cover_url, NULLIF(eb.cover_url, '')) as book_cover_url,
                   COALESCE(b1.description, b2.description) as book_description,
                   COALESCE(b1.isbn13, b2.isbn13) as book_isbn13,
                   COALESCE(b1.publisher, b2.publisher) as book_publisher
@@ -8131,6 +8137,20 @@ export async function registerRoutes(
       return res.json({ ok: true, data: result.rows });
     } catch (error) {
       log.error('Public content books error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/batch-fetch-covers', async (req: Request, res: Response) => {
+    try {
+      const token = req.headers['x-admin-token'] as string;
+      if (!token || !(await verifyAdminToken(token))) return res.status(401).json({ ok: false, error: 'Unauthorized' });
+      const limit = Math.min(Number(req.body?.limit) || 50, 200);
+      const { batchFetchCovers } = await import('./services/podcastExtractor');
+      const result = await batchFetchCovers(limit);
+      return res.json({ ok: true, ...result });
+    } catch (error) {
+      log.error('Batch cover fetch error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });

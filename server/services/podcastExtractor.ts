@@ -332,9 +332,13 @@ ${textToAnalyze}`;
     }
 
     for (const book of extracted.books || []) {
+      let coverUrl: string | null = null;
+      try {
+        coverUrl = await fetchCoverFromOpenLibrary(book.title || "", book.author || "");
+      } catch {}
       await queryDB(
-        `INSERT INTO extracted_books (episode_id, source_id, title, author, isbn, sentiment, recommendation_strength, host_quote, context_note, extraction_confidence, is_verified, is_visible)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false, true)`,
+        `INSERT INTO extracted_books (episode_id, source_id, title, author, isbn, sentiment, recommendation_strength, host_quote, context_note, extraction_confidence, is_verified, is_visible, cover_url)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, false, true, $11)`,
         [
           episodeId,
           episode.source_id,
@@ -346,6 +350,7 @@ ${textToAnalyze}`;
           book.host_quote || null,
           book.context_note || null,
           book.confidence || 0.5,
+          coverUrl,
         ]
       );
     }
@@ -495,6 +500,56 @@ export async function verifyExtractedBook(bookId: number, verified: boolean) {
     return result.rows[0] || null;
   } catch (error) {
     console.log(`[PodcastExtractor] Error verifying book: ${(error as Error).message}`);
+    throw error;
+  }
+}
+
+export async function fetchCoverFromOpenLibrary(title: string, author: string): Promise<string | null> {
+  try {
+    const query = `${title} ${author}`.trim();
+    const url = `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=3&fields=cover_i,title,author_name`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const data = await res.json() as any;
+    const docs = data.docs || [];
+    for (const doc of docs) {
+      if (doc.cover_i) {
+        return `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function batchFetchCovers(limit = 50): Promise<{ updated: number; skipped: number; errors: number }> {
+  let updated = 0, skipped = 0, errors = 0;
+  try {
+    const result = await queryDB(
+      `SELECT id, title, author FROM extracted_books WHERE cover_url IS NULL AND is_visible = true ORDER BY id LIMIT $1`,
+      [limit]
+    );
+    console.log(`[PodcastExtractor] Batch cover fetch: ${result.rows.length} books without covers`);
+    for (const book of result.rows) {
+      try {
+        const coverUrl = await fetchCoverFromOpenLibrary(book.title, book.author);
+        if (coverUrl) {
+          await queryDB(`UPDATE extracted_books SET cover_url = $1 WHERE id = $2`, [coverUrl, book.id]);
+          updated++;
+        } else {
+          await queryDB(`UPDATE extracted_books SET cover_url = '' WHERE id = $1`, [book.id]);
+          skipped++;
+        }
+        await new Promise(r => setTimeout(r, 200));
+      } catch {
+        errors++;
+      }
+    }
+    console.log(`[PodcastExtractor] Batch cover fetch complete: ${updated} updated, ${skipped} not found, ${errors} errors`);
+    return { updated, skipped, errors };
+  } catch (error) {
+    console.log(`[PodcastExtractor] Batch cover fetch error: ${(error as Error).message}`);
     throw error;
   }
 }
