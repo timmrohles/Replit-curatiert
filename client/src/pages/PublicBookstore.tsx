@@ -79,22 +79,26 @@ interface BookstoreData {
 }
 
 function mapExtractedBooksForCarousel(books: any[]) {
-  return books.map(book => ({
-    id: String(book.id),
-    cover: '',
-    title: book.title || '',
-    author: book.author || '',
-    price: '',
-    isbn: book.isbn || undefined,
-    klappentext: book.context_note || undefined,
-    reviews: book.host_quote ? [{ source: book.source_title || 'Podcast', quote: book.host_quote }] : undefined,
-    followCount: 0,
-    awards: 0,
-    award_count: 0,
-    shortlists: 0,
-    longlists: 0,
-    nomination_count: 0,
-  }));
+  return books.map(book => {
+    const isbn = book.isbn?.replace(/[-\s]/g, '');
+    const cover = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg` : '';
+    return {
+      id: String(book.id),
+      cover,
+      title: book.title || '',
+      author: book.author || '',
+      price: '',
+      isbn: isbn || undefined,
+      klappentext: book.context_note || undefined,
+      reviews: book.host_quote ? [{ source: book.source_title || 'Podcast', quote: book.host_quote }] : undefined,
+      followCount: 0,
+      awards: 0,
+      award_count: 0,
+      shortlists: 0,
+      longlists: 0,
+      nomination_count: 0,
+    };
+  });
 }
 
 function mapBooksForCarousel(books: CurationBook[]) {
@@ -122,6 +126,87 @@ function mapBooksForCarousel(books: CurationBook[]) {
     indie_type: book.indie_type || null,
     is_hidden_gem: book.is_hidden_gem || false,
   }));
+}
+
+function EpisodeRow({ episodeId, episode, profile }: { episodeId: string; episode: any; profile: any }) {
+  const [descExpanded, setDescExpanded] = useState(false);
+  const episodeTitle = episode.episodeTitle || '';
+  const hasLongDesc = episode.episodeDescription && episode.episodeDescription.length > 300;
+  const descText = descExpanded || !hasLongDesc
+    ? episode.episodeDescription
+    : episode.episodeDescription.slice(0, 300) + '...';
+
+  return (
+    <div data-testid={`episode-row-${episodeId}`}>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-2">
+        <h3 className="section-title text-foreground" data-testid={`episode-title-${episodeId}`}>
+          {episodeTitle}
+        </h3>
+        {episode.episodeDescription && (
+          <div className="mt-2 max-w-3xl">
+            <Text as="p" variant="base" className="text-foreground/80 leading-relaxed">
+              {descText}
+            </Text>
+            {hasLongDesc && (
+              <button
+                onClick={() => setDescExpanded(!descExpanded)}
+                className="text-cerulean text-sm mt-1 hover:underline"
+                data-testid={`button-expand-desc-${episodeId}`}
+              >
+                {descExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen'} {descExpanded ? '\u2303' : '\u2304'}
+              </button>
+            )}
+          </div>
+        )}
+        <div className="flex items-center gap-3 mt-3 flex-wrap">
+          {episode.sourceImage && (
+            <img src={episode.sourceImage} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+          )}
+          {episode.episodeUrl ? (
+            <a
+              href={episode.episodeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-cerulean hover:underline transition-colors"
+              data-testid={`link-episode-${episodeId}`}
+            >
+              <Podcast className="w-4 h-4 flex-shrink-0" />
+              {episode.sourceTitle ? `${episode.sourceTitle}` : 'Zur Episode'}
+              {episode.episodeNumber && <span className="text-muted-foreground">&middot; Folge {episode.episodeNumber}</span>}
+              {episode.episodeDate && (
+                <span className="text-muted-foreground">&middot; {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+              )}
+              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+            </a>
+          ) : (
+            <Text as="span" variant="small" className="text-muted-foreground font-medium inline-flex items-center gap-1.5">
+              <Podcast className="w-4 h-4 flex-shrink-0" />
+              {episode.sourceTitle}
+              {episode.episodeNumber && <span>&middot; Folge {episode.episodeNumber}</span>}
+              {episode.episodeDate && (
+                <span>&middot; {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+              )}
+            </Text>
+          )}
+        </div>
+      </div>
+      <CreatorCarousel
+        creatorAvatar={episode.sourceImage || profile.avatar_url || ''}
+        creatorName={episode.sourceTitle || profile.display_name}
+        creatorFocus=""
+        occasion={episodeTitle}
+        curationReason=""
+        showSocials={false}
+        isVerified={false}
+        showHeader={false}
+        books={mapExtractedBooksForCarousel(episode.books)}
+        showCta={false}
+        backgroundColor="white"
+        useEditorialLayout={true}
+        showVideo={false}
+      />
+    </div>
+  );
 }
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
@@ -1003,16 +1088,16 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
 
           return (
             <section className="max-w-7xl mx-auto px-0 md:px-2 py-4" data-testid="buchbesprechung-section">
-              <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pb-4">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-4 pb-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-xl">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     <input
                       type="text"
                       value={bsSearchQuery}
                       onChange={(e) => { setBsSearchQuery(e.target.value); setBsCurrentPage(1); }}
-                      placeholder="Buch, Autor oder Episode suchen\u2026"
-                      className="w-full pl-9 pr-4 py-2 rounded-md border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-cerulean/40"
+                      placeholder="Suchen"
+                      className="w-full pl-9 pr-4 py-2 rounded-md border bg-white dark:bg-card text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-cerulean/40"
                       data-testid="input-buchbesprechung-search"
                     />
                   </div>
@@ -1040,68 +1125,9 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                 </div>
               )}
 
-              {paginatedEpisodes.map(([episodeId, episode]: [string, any]) => {
-                const episodeLabel = [
-                  episode.sourceTitle,
-                  episode.episodeNumber ? `Folge ${episode.episodeNumber}` : null,
-                ].filter(Boolean).join(' \u2013 ');
-                const episodeTitle = episodeLabel
-                  ? `${episodeLabel}: ${episode.episodeTitle}`
-                  : episode.episodeTitle;
-
-                return (
-                  <div key={episodeId} data-testid={`episode-row-${episodeId}`}>
-                    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-2">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <Podcast className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        {episode.episodeDate && (
-                          <time className="text-xs text-muted-foreground">
-                            {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
-                          </time>
-                        )}
-                      </div>
-                      <h3 className="section-title text-foreground">
-                        {episode.episodeUrl ? (
-                          <a href={episode.episodeUrl} target="_blank" rel="noopener noreferrer" className="hover:text-cerulean transition-colors inline-flex items-center gap-1">
-                            {episodeTitle}
-                            <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
-                          </a>
-                        ) : episodeTitle}
-                      </h3>
-                      {episode.episodeDescription && (
-                        <Text as="p" variant="base" className="text-foreground/80 leading-relaxed mt-2 max-w-3xl line-clamp-3">
-                          {episode.episodeDescription}
-                        </Text>
-                      )}
-                      <div className="flex items-center gap-3 mt-3">
-                        {episode.sourceImage && (
-                          <img src={episode.sourceImage} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-                        )}
-                        {episode.sourceTitle && (
-                          <Text as="span" variant="small" className="text-muted-foreground font-medium">
-                            {episode.sourceTitle}
-                          </Text>
-                        )}
-                      </div>
-                    </div>
-                    <CreatorCarousel
-                      creatorAvatar={episode.sourceImage || profile.avatar_url || ''}
-                      creatorName={episode.sourceTitle || profile.display_name}
-                      creatorFocus=""
-                      occasion={episodeTitle}
-                      curationReason=""
-                      showSocials={false}
-                      isVerified={false}
-                      showHeader={false}
-                      books={mapExtractedBooksForCarousel(episode.books)}
-                      showCta={false}
-                      backgroundColor="white"
-                      useEditorialLayout={true}
-                      showVideo={false}
-                    />
-                  </div>
-                );
-              })}
+              {paginatedEpisodes.map(([episodeId, episode]: [string, any]) => (
+                <EpisodeRow key={episodeId} episodeId={episodeId} episode={episode} profile={profile} />
+              ))}
 
               {totalPages > 1 && (
                 <nav className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 flex items-center justify-center gap-2" data-testid="buchbesprechung-pagination">
