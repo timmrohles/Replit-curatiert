@@ -1028,7 +1028,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                           className="flex gap-2 overflow-x-auto max-w-full select-none overscroll-x-contain pr-6 md:pr-0"
                           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
                         >
-                          {['Beliebtheit', 'Auszeichnungen', 'Independent', 'Hidden Gems', 'Aktuell'].map(chip => (
+                          {['Beliebtheit', 'Auszeichnungen', 'Hidden Gems', 'Aktuell'].map(chip => (
                             <button
                               key={chip}
                               className="sort-chip"

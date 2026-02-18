@@ -592,7 +592,6 @@ function ReadingStatusDropdown({
 const SORT_OPTIONS = [
   { id: 'popularity', label: 'Beliebtheit' },
   { id: 'awarded', label: 'Auszeichnungen' },
-  { id: 'independent', label: 'Independent' },
   { id: 'hidden-gems', label: 'Hidden Gems' },
   { id: 'trending', label: 'Aktuell' },
 ];

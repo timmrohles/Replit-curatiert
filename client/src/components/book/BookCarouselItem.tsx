@@ -1,6 +1,6 @@
 import React, { useState, memo, useEffect, useMemo, useCallback } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, ShoppingCart, Award } from 'lucide-react';
+import { Tags, ArrowRight, Quote, ShoppingCart, Award, Building2 } from 'lucide-react';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -274,6 +274,20 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
                 <Award className="w-5 h-5 md:w-6 md:h-6" />
               </button>
             )}
+            {/* Indie-Verlage Icon */}
+            {book.is_indie && (
+              <div
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg"
+                style={{ 
+                  backgroundColor: 'var(--color-teal, #70c1b3)',
+                  color: '#FFFFFF'
+                }}
+                title="Indie-Verlag"
+                data-testid="badge-indie-verlag"
+              >
+                <Building2 className="w-5 h-5 md:w-6 md:h-6" />
+              </div>
+            )}
           </div>
 
           {/* Cover Container - NO MORE FLIP */}
@@ -309,13 +323,8 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
             )}
             
             {/* Enrichment Badges - top right corner */}
-            {(book.is_indie || (book.award_count && book.award_count > 0) || book.is_hidden_gem) && (
+            {((book.award_count && book.award_count > 0) || book.is_hidden_gem) && (
               <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
-                {book.is_indie && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-teal, #70c1b3)', color: '#fff' }}>
-                    INDIE
-                  </div>
-                )}
                 {book.award_count !== undefined && book.award_count > 0 && (
                   <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold, #ffe066)', color: '#2a2a2a' }}>
                     AUSGEZEICHNET

@@ -250,34 +250,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
   // Define sort options with icons and tooltips
   // Use ONIX-based filters if available, otherwise fall back to default options
   const sortOptions = useMemo(() => {
-    // If ONIX filters are available, combine them with default options
-    if (onixFilterOptions.length > 0) {
-      return [
-        { 
-          id: 'popularity', 
-          label: 'Beliebtheit',
-          tooltip: 'Sortiert nach Saves, Interaktionen und Plattform-Engagement'
-        },
-        { 
-          id: 'awarded', 
-          label: 'Auszeichnungen',
-          tooltip: 'Sortiert nach Anzahl und Bedeutung von Preisen (Awards, Shortlists, Longlists)'
-        },
-        {
-          id: 'independent',
-          label: 'Independent',
-          tooltip: 'Zeigt nur Bücher von unabhängigen Indie-Verlagen'
-        },
-        ...onixFilterOptions.map(f => ({
-          id: f.id,
-          label: f.label,
-          tooltip: f.tooltip
-        }))
-      ];
-    }
-    
-    // Fallback: Standard options without ONIX
-    return [
+    const baseOptions = [
       { 
         id: 'popularity', 
         label: 'Beliebtheit',
@@ -287,11 +260,6 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         id: 'awarded', 
         label: 'Auszeichnungen',
         tooltip: 'Sortiert nach Anzahl und Bedeutung von Preisen (Awards, Shortlists, Longlists)'
-      },
-      {
-        id: 'independent',
-        label: 'Independent',
-        tooltip: 'Zeigt nur Bücher von unabhängigen Indie-Verlagen'
       },
       { 
         id: 'hidden-gems', 
@@ -304,6 +272,19 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         tooltip: 'Sortiert Neuerscheinungen nach Veröffentlichungszeitpunkt'
       },
     ];
+
+    if (onixFilterOptions.length > 0) {
+      return [
+        ...baseOptions,
+        ...onixFilterOptions.map(f => ({
+          id: f.id,
+          label: f.label,
+          tooltip: f.tooltip
+        }))
+      ];
+    }
+    
+    return baseOptions;
   }, [onixFilterOptions]);
 
   // Calculate contrast text color based on background
@@ -343,74 +324,30 @@ export const CreatorCarousel = memo(function CreatorCarousel({
   const sortedBooks = useMemo(() => {
     const booksCopy = [...books];
     
-    // Check if this is an ONIX filter
     if (sortBy.startsWith('onix-')) {
       const selectedTagId = sortBy.replace('onix-', '');
-      const selectedTag = onixTags.find(t => t.id === selectedTagId);
-      
-      if (selectedTag) {
-        // Filter books that have this ONIX tag
-        return booksCopy.filter(book => 
-          book.onixTagIds && book.onixTagIds.includes(selectedTagId)
-        );
-      }
+      return booksCopy.sort((a, b) => {
+        const hasA = a.onixTagIds?.includes(selectedTagId) ? 1 : 0;
+        const hasB = b.onixTagIds?.includes(selectedTagId) ? 1 : 0;
+        return hasB - hasA;
+      });
     }
     
     switch (sortBy) {
       case 'popularity':
-        // Beliebtheit = Anzahl der Follows
-        return booksCopy.sort((a, b) => {
-          const followsA = a.followCount ?? 0;
-          const followsB = b.followCount ?? 0;
-          return followsB - followsA;
-        });
+        return booksCopy.sort((a, b) => (b.followCount ?? 0) - (a.followCount ?? 0));
       
       case 'awarded':
-        // Auszeichnungen = Nur Bücher mit Awards anzeigen + sortiert nach Anzahl
-        return booksCopy
-          .filter(book => {
-            // Filter: Nur Bücher mit mindestens einem Award
-            const awardsCount = book.awards ?? 0;
-            return awardsCount > 0;
-          })
-          .sort((a, b) => {
-            // Sort: Nach Anzahl der Awards (meiste zuerst)
-            const awardsA = a.awards ?? 0;
-            const awardsB = b.awards ?? 0;
-            return awardsB - awardsA;
-          });
-      
-      case 'independent':
-        // Independent = Nur Bücher von Indie-Verlagen
-        // Filtert nach Tag "indie", "independent" oder "Independent"
-        return booksCopy.filter(book => {
-          if (!book.tags || book.tags.length === 0) return false;
-          return book.tags.some(tag => 
-            tag.toLowerCase() === 'indie' || 
-            tag.toLowerCase() === 'independent' ||
-            tag.toLowerCase() === 'indie-verlag' ||
-            tag.toLowerCase() === 'independentverlag'
-          );
-        });
+        return booksCopy.sort((a, b) => (b.awards ?? 0) - (a.awards ?? 0));
       
       case 'hidden-gems':
-        // Hidden Gems = (Shortlists + Longlists) - Awards
         return booksCopy.sort((a, b) => {
-          const shortlistsA = a.shortlists ?? 0;
-          const longlistsA = a.longlists ?? 0;
-          const awardsA = a.awards ?? 0;
-          const hiddenGemScoreA = (shortlistsA + longlistsA) - awardsA;
-          
-          const shortlistsB = b.shortlists ?? 0;
-          const longlistsB = b.longlists ?? 0;
-          const awardsB = b.awards ?? 0;
-          const hiddenGemScoreB = (shortlistsB + longlistsB) - awardsB;
-          
-          return hiddenGemScoreB - hiddenGemScoreA;
+          const scoreA = (a.shortlists ?? 0) + (a.longlists ?? 0) - (a.awards ?? 0);
+          const scoreB = (b.shortlists ?? 0) + (b.longlists ?? 0) - (b.awards ?? 0);
+          return scoreB - scoreA;
         });
       
       case 'trending':
-        // Relevant = Erscheinungsdatum (neueste zuerst)
         return booksCopy.sort((a, b) => {
           const dateA = a.releaseDate ? new Date(a.releaseDate).getTime() : 0;
           const dateB = b.releaseDate ? new Date(b.releaseDate).getTime() : 0;
@@ -418,7 +355,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         });
       
       default:
-        return booksCopy; // Keep original order
+        return booksCopy;
     }
   }, [books, sortBy, onixTags]);
 

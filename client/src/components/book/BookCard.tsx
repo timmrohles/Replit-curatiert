@@ -1,6 +1,6 @@
 import React, { memo, useState, useEffect, useMemo, useCallback } from 'react';
 import { useSafeNavigate, buildBookUrl } from '../../utils/routing';
-import { Info, Tags, Quote, Award, ArrowRight, ShoppingCart } from 'lucide-react';
+import { Info, Tags, Quote, Award, ArrowRight, ShoppingCart, Building2 } from 'lucide-react';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -256,6 +256,20 @@ export const BookCard = memo(function BookCard({
                 <Award className="w-5 h-5 md:w-6 md:h-6" />
               </button>
             )}
+            {/* Indie-Verlage Icon */}
+            {isIndie && (
+              <div
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg"
+                style={{ 
+                  backgroundColor: 'var(--color-teal, #70c1b3)',
+                  color: '#FFFFFF'
+                }}
+                title="Indie-Verlag"
+                data-testid="badge-indie-verlag"
+              >
+                <Building2 className="w-5 h-5 md:w-6 md:h-6" />
+              </div>
+            )}
           </div>
 
           {/* Cover Container - NO FLIP */}
@@ -291,13 +305,8 @@ export const BookCard = memo(function BookCard({
             )}
             
             {/* Enrichment Badges - top right corner */}
-            {(isIndie || (awardCount && awardCount > 0) || isHiddenGem) && (
+            {((awardCount && awardCount > 0) || isHiddenGem) && (
               <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
-                {isIndie && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-teal, #70c1b3)', color: '#fff' }}>
-                    INDIE
-                  </div>
-                )}
                 {awardCount !== undefined && awardCount > 0 && (
                   <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold, #ffe066)', color: '#2a2a2a' }}>
                     AUSGEZEICHNET
