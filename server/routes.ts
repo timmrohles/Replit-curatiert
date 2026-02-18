@@ -8107,15 +8107,25 @@ export async function registerRoutes(
       const userId = profileResult.rows[0].user_id;
 
       const result = await queryDB(
-        `SELECT eb.*, ce.title as episode_title, ce.episode_number, ce.published_at as episode_date,
-                ce.content_url as episode_url, ce.description as episode_description,
-                cs.title as source_title, cs.image_url as source_image,
-                cs.source_type
-         FROM extracted_books eb
-         JOIN content_episodes ce ON eb.episode_id = ce.id
-         JOIN content_sources cs ON eb.source_id = cs.id
-         WHERE cs.user_id = $1 AND cs.is_active = true AND eb.is_visible = true
-         ORDER BY ce.published_at DESC NULLS LAST, eb.id`,
+        `SELECT * FROM (
+           SELECT DISTINCT ON (eb.id) eb.*, ce.title as episode_title, ce.episode_number, ce.published_at as episode_date,
+                  ce.content_url as episode_url, ce.description as episode_description,
+                  cs.title as source_title, cs.image_url as source_image,
+                  cs.source_type,
+                  COALESCE(b1.cover_url, b2.cover_url) as book_cover_url,
+                  COALESCE(b1.description, b2.description) as book_description,
+                  COALESCE(b1.isbn13, b2.isbn13) as book_isbn13,
+                  COALESCE(b1.publisher, b2.publisher) as book_publisher
+           FROM extracted_books eb
+           JOIN content_episodes ce ON eb.episode_id = ce.id
+           JOIN content_sources cs ON eb.source_id = cs.id
+           LEFT JOIN books b1 ON eb.matched_book_id = b1.id
+           LEFT JOIN books b2 ON eb.matched_book_id IS NULL
+             AND LOWER(TRIM(b2.title)) = LOWER(TRIM(eb.title))
+             AND LOWER(TRIM(b2.author)) = LOWER(TRIM(eb.author))
+           WHERE cs.user_id = $1 AND cs.is_active = true AND eb.is_visible = true
+           ORDER BY eb.id
+         ) sub ORDER BY episode_date DESC NULLS LAST, id`,
         [userId]
       );
       return res.json({ ok: true, data: result.rows });

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast, BookOpen, Star, CalendarDays, Clock, Video, Users, Download, Share2, Search, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Globe, Instagram, ExternalLink, Loader2, Flag, Podcast, BookOpen, Star, CalendarDays, Clock, Video, Users, Download, Share2, Search, ArrowUpDown, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -80,8 +80,8 @@ interface BookstoreData {
 
 function mapExtractedBooksForCarousel(books: any[]) {
   return books.map(book => {
-    const isbn = book.isbn?.replace(/[-\s]/g, '');
-    const cover = isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg` : '';
+    const isbn = book.book_isbn13 || book.isbn?.replace(/[-\s]/g, '') || '';
+    const cover = book.book_cover_url || '';
     return {
       id: String(book.id),
       cover,
@@ -89,14 +89,18 @@ function mapExtractedBooksForCarousel(books: any[]) {
       author: book.author || '',
       price: '',
       isbn: isbn || undefined,
-      klappentext: book.context_note || undefined,
+      klappentext: book.book_description || book.context_note || undefined,
+      publisher: book.book_publisher || undefined,
       reviews: book.host_quote ? [{ source: book.source_title || 'Podcast', quote: book.host_quote }] : undefined,
       followCount: 0,
-      awards: 0,
-      award_count: 0,
-      shortlists: 0,
+      awards: book.book_award_count || 0,
+      award_count: book.book_award_count || 0,
+      shortlists: book.book_nomination_count || 0,
       longlists: 0,
-      nomination_count: 0,
+      nomination_count: book.book_nomination_count || 0,
+      is_indie: book.book_is_indie || false,
+      indie_type: book.book_indie_type || null,
+      is_hidden_gem: book.book_is_hidden_gem || false,
     };
   });
 }
@@ -131,10 +135,10 @@ function mapBooksForCarousel(books: CurationBook[]) {
 function EpisodeRow({ episodeId, episode, profile }: { episodeId: string; episode: any; profile: any }) {
   const [descExpanded, setDescExpanded] = useState(false);
   const episodeTitle = episode.episodeTitle || '';
-  const hasLongDesc = episode.episodeDescription && episode.episodeDescription.length > 300;
-  const descText = descExpanded || !hasLongDesc
-    ? episode.episodeDescription
-    : episode.episodeDescription.slice(0, 300) + '...';
+  const characterLimit = 330;
+  const hasLongDesc = episode.episodeDescription && episode.episodeDescription.length > characterLimit;
+
+  const sourceId = (episode.sourceTitle || '').toLowerCase().replace(/\s+/g, '-');
 
   return (
     <div data-testid={`episode-row-${episodeId}`}>
@@ -142,53 +146,97 @@ function EpisodeRow({ episodeId, episode, profile }: { episodeId: string; episod
         <h3 className="section-title text-foreground" data-testid={`episode-title-${episodeId}`}>
           {episodeTitle}
         </h3>
+
+        {(episode.sourceTitle || episode.episodeUrl) && (
+          <div className="w-full mt-4 mb-4">
+            <div className="flex gap-2 flex-wrap items-start">
+              <div
+                role="group"
+                className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
+                style={{ backgroundColor: 'var(--color-saffron)' }}
+              >
+                {episode.sourceImage && (
+                  <img src={episode.sourceImage} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0" />
+                )}
+                {episode.episodeUrl ? (
+                  <a
+                    href={episode.episodeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white font-normal whitespace-nowrap text-sm hover:underline inline-flex items-center gap-1"
+                    data-testid={`link-episode-${episodeId}`}
+                  >
+                    {episode.sourceTitle || 'Zur Episode'}
+                    <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                  </a>
+                ) : (
+                  <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                    {episode.sourceTitle}
+                  </Text>
+                )}
+                <LikeButton
+                  entityId={sourceId}
+                  entityType="creator"
+                  entityTitle={episode.sourceTitle || ''}
+                  entityImage={episode.sourceImage || ''}
+                  variant="minimal"
+                  size="sm"
+                  iconColor="#ffffff"
+                  backgroundColor="var(--color-saffron)"
+                />
+              </div>
+              {episode.episodeNumber && (
+                <div className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral select-none">
+                  <Podcast className="w-4 h-4 text-white flex-shrink-0" />
+                  <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                    Folge {episode.episodeNumber}
+                  </Text>
+                </div>
+              )}
+              {episode.episodeDate && (
+                <div className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral select-none">
+                  <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                    {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  </Text>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {episode.episodeDescription && (
-          <div className="mt-2 max-w-3xl">
-            <Text as="p" variant="base" className="text-foreground/80 leading-relaxed">
-              {descText}
+          <div className="w-full mt-4">
+            <Text
+              as="div"
+              variant="base"
+              style={
+                hasLongDesc && !descExpanded
+                  ? {
+                      maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+                      WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+                    }
+                  : undefined
+              }
+              className={`leading-relaxed ${
+                hasLongDesc && !descExpanded ? 'line-clamp-3' : ''
+              } text-black dark:text-foreground`}
+            >
+              {episode.episodeDescription}
             </Text>
             {hasLongDesc && (
               <button
                 onClick={() => setDescExpanded(!descExpanded)}
-                className="text-cerulean text-sm mt-1 hover:underline"
+                className="flex items-center gap-1 mt-2 text-cerulean hover:opacity-80 transition-colors"
                 data-testid={`button-expand-desc-${episodeId}`}
               >
-                {descExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen'} {descExpanded ? '\u2303' : '\u2304'}
+                <Text as="span" variant="small" className="text-cerulean !normal-case !tracking-normal !font-normal">
+                  {descExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen'}
+                </Text>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${descExpanded ? 'rotate-180' : ''}`} />
               </button>
             )}
           </div>
         )}
-        <div className="flex items-center gap-3 mt-3 flex-wrap">
-          {episode.sourceImage && (
-            <img src={episode.sourceImage} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
-          )}
-          {episode.episodeUrl ? (
-            <a
-              href={episode.episodeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-cerulean hover:underline transition-colors"
-              data-testid={`link-episode-${episodeId}`}
-            >
-              <Podcast className="w-4 h-4 flex-shrink-0" />
-              {episode.sourceTitle ? `${episode.sourceTitle}` : 'Zur Episode'}
-              {episode.episodeNumber && <span className="text-muted-foreground">&middot; Folge {episode.episodeNumber}</span>}
-              {episode.episodeDate && (
-                <span className="text-muted-foreground">&middot; {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-              )}
-              <ExternalLink className="w-3 h-3 flex-shrink-0" />
-            </a>
-          ) : (
-            <Text as="span" variant="small" className="text-muted-foreground font-medium inline-flex items-center gap-1.5">
-              <Podcast className="w-4 h-4 flex-shrink-0" />
-              {episode.sourceTitle}
-              {episode.episodeNumber && <span>&middot; Folge {episode.episodeNumber}</span>}
-              {episode.episodeDate && (
-                <span>&middot; {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-              )}
-            </Text>
-          )}
-        </div>
       </div>
       <CreatorCarousel
         creatorAvatar={episode.sourceImage || profile.avatar_url || ''}
@@ -517,7 +565,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
       }
       return vt[id] === true;
     });
-    if (visibleTabIds.length > 0 && !visibleTabIds.includes(activeTab)) {
+    if (visibleTabIds.length > 0) {
       setActiveTab(visibleTabIds[0] as ProfileTab);
     }
   }, [profile, hasContentBooks]);
@@ -1088,8 +1136,8 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
 
           return (
             <section className="max-w-7xl mx-auto px-0 md:px-2 py-4" data-testid="buchbesprechung-section">
-              <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-4 pb-4">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-xl">
+              <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-4 pb-4 flex justify-center">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full max-w-md">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     <input
