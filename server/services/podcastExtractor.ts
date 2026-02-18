@@ -69,7 +69,7 @@ export async function addContentSource(
 
     const result = await queryDB(
       `INSERT INTO content_sources (user_id, source_type, title, feed_url, website_url, image_url, description, is_active, sync_frequency)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, true, 'daily')
+       VALUES ($1, $2, $3, $4, $5, $6, $7, true, 'weekly')
        RETURNING *`,
       [userId, sourceType, title, feedUrl, websiteUrl, imageUrl, description]
     );
