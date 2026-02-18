@@ -477,6 +477,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
   const slug = overrideSlug || paramSlug;
   const navigate = useSafeNavigate();
   const [activeTab, setActiveTab] = useState<ProfileTab>('kurationen');
+  const [initialTabSet, setInitialTabSet] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [reportDetails, setReportDetails] = useState('');
@@ -517,7 +518,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
     enabled: !!slug,
   });
 
-  const { data: contentBooksData } = useQuery<{ ok: boolean; data: any[] }>({
+  const { data: contentBooksData, isFetched: contentBooksFetched } = useQuery<{ ok: boolean; data: any[] }>({
     queryKey: ['/api/public/content-books', slug],
     queryFn: async () => {
       const res = await fetch(`/api/public/content-books/${slug}`);
@@ -551,12 +552,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
   const socialLinks = profile?.social_links || {};
 
   useEffect(() => {
-    if (!profile) return;
-    const TAB_LABELS: Record<string, string> = {
-      kurationen: 'Kurationen', buchbesprechung: 'Buchbesprechung',
-      rezensionen: 'Rezensionen', bewertungen: 'Bewertungen',
-      veranstaltungen: 'Veranstaltungen', buchclub: 'Buchclub',
-    };
+    if (!profile || !contentBooksFetched || initialTabSet) return;
     const defaultOrder = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub'];
     const vt = profile.visible_tabs;
     const savedOrder = vt?._order;
@@ -578,7 +574,8 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
     if (visibleTabIds.length > 0) {
       setActiveTab(visibleTabIds[0] as ProfileTab);
     }
-  }, [profile, hasContentBooks]);
+    setInitialTabSet(true);
+  }, [profile, contentBooksFetched, hasContentBooks, initialTabSet]);
 
   const handleReportSubmit = async () => {
     if (!reportReason || !profile) return;
@@ -802,7 +799,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                     return order
                       .map(id => ({ id: id as ProfileTab, label: TAB_LABELS[id] || id }))
                       .filter(tab => {
-                        if (tab.id === 'buchbesprechung' && !hasContentBooks) return false;
+                        if (tab.id === 'buchbesprechung' && (!hasContentBooks || !contentBooksFetched)) return false;
                         if (!vt || Object.keys(vt).filter(k => k !== '_order').length === 0) {
                           if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
                           return true;
