@@ -145,6 +145,11 @@ function EpisodeRow({ episodeId, episode, profile }: { episodeId: string; episod
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 pb-2">
         <h3 className="section-title text-foreground" data-testid={`episode-title-${episodeId}`}>
           {episodeTitle}
+          {episode.episodeDate && (
+            <span className="text-muted-foreground font-normal text-base ml-2">
+              vom {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+            </span>
+          )}
         </h3>
 
         {(episode.sourceTitle || episode.episodeUrl) && (
@@ -190,13 +195,6 @@ function EpisodeRow({ episodeId, episode, profile }: { episodeId: string; episod
                   <Podcast className="w-4 h-4 text-white flex-shrink-0" />
                   <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
                     Folge {episode.episodeNumber}
-                  </Text>
-                </div>
-              )}
-              {episode.episodeDate && (
-                <div className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg bg-coral select-none">
-                  <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
-                    {new Date(episode.episodeDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
                   </Text>
                 </div>
               )}
