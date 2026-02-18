@@ -664,7 +664,12 @@ export function AdminAwardsNeon() {
             <div key={award.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold">{award.name}</h3>
+                  <div className="flex items-center gap-2">
+                    {award.logo_url && (
+                      <img src={award.logo_url} alt="" className="h-8 w-8 object-contain rounded" />
+                    )}
+                    <h3 className="text-lg font-semibold">{award.name}</h3>
+                  </div>
                   <p className="text-sm text-gray-600">Slug: {award.slug}</p>
                   {award.issuer_name && (
                     <p className="text-sm text-gray-600">Issuer: {award.issuer_name}</p>
@@ -999,6 +1004,29 @@ export function AdminAwardsNeon() {
                 onChange={(e) => setEditingAward({ ...editingAward, website_url: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Logo URL</label>
+              <input
+                type="url"
+                value={editingAward.logo_url || ''}
+                onChange={(e) => setEditingAward({ ...editingAward, logo_url: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg"
+                placeholder="https://example.com/logo.png"
+                data-testid="input-award-logo-url"
+              />
+              {editingAward.logo_url && (
+                <div className="mt-2 flex items-center gap-2">
+                  <img
+                    src={editingAward.logo_url}
+                    alt="Logo Vorschau"
+                    className="h-10 w-auto object-contain rounded border bg-white p-1"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="text-xs text-muted-foreground">Vorschau</span>
+                </div>
+              )}
             </div>
 
             <div>
