@@ -1,5 +1,4 @@
 import { useSafeNavigate } from '../../utils/routing';
-import { CoRatiertLogo } from '../common/CoRatiertLogo';
 import { Text } from '../ui/typography';
 import { Facebook, Twitter, Instagram, Youtube, Settings } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -99,18 +98,16 @@ export function Footer() {
                   className="text-left opacity-90 hover:opacity-100 transition-opacity"
                   data-testid="link-footer-home"
                 >
-                  <div className="flex flex-col gap-0.5">
-                    <Text 
-                      as="p"
-                      variant="xs"
-                      className="origin-left text-[#247ba0] scale-x-93"
+                  <div className="flex flex-col gap-0">
+                    <span className="text-[#247ba0] text-xs tracking-wide">
+                      Bücher besser finden
+                    </span>
+                    <span
+                      className="text-white text-3xl md:text-[2rem] lg:text-[2.3rem] uppercase leading-none"
+                      style={{ fontFamily: "'League Gothic', sans-serif" }}
                     >
-                      {t('footer.tagline')}
-                    </Text>
-                    <CoRatiertLogo 
-                      size="lg" 
-                      className="text-2xl md:text-[1.7rem] lg:text-[1.9rem]"
-                    />
+                      BACKLIST
+                    </span>
                   </div>
                 </button>
               </div>
