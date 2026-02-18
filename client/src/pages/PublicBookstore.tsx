@@ -33,7 +33,7 @@ interface BookstoreProfile {
   is_physical_store?: boolean;
   is_author?: boolean;
   show_buchclub?: boolean;
-  visible_tabs?: Record<string, boolean>;
+  visible_tabs?: Record<string, any>;
   social_links?: {
     website?: string;
     instagram?: string;
@@ -407,6 +407,36 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
   const curations = data?.data?.curations || [];
   const socialLinks = profile?.social_links || {};
 
+  useEffect(() => {
+    if (!profile) return;
+    const TAB_LABELS: Record<string, string> = {
+      kurationen: 'Kurationen', buchbesprechung: 'Buchbesprechung',
+      rezensionen: 'Rezensionen', bewertungen: 'Bewertungen',
+      veranstaltungen: 'Veranstaltungen', buchclub: 'Buchclub',
+    };
+    const defaultOrder = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub'];
+    const vt = profile.visible_tabs;
+    const savedOrder = vt?._order;
+    const order = Array.isArray(savedOrder) && savedOrder.length > 0
+      ? [...savedOrder.filter((k: string) => defaultOrder.includes(k)), ...defaultOrder.filter(k => !savedOrder.includes(k))]
+      : defaultOrder;
+    const visibleTabIds = order.filter(id => {
+      if (id === 'buchbesprechung' && !hasContentBooks) return false;
+      if (!vt || Object.keys(vt).filter(k => k !== '_order').length === 0) {
+        if (id === 'buchclub') return profile.is_author && profile.show_buchclub;
+        return true;
+      }
+      if (!(id in vt)) {
+        if (id === 'buchclub') return profile.is_author && profile.show_buchclub;
+        return true;
+      }
+      return vt[id] === true;
+    });
+    if (visibleTabIds.length > 0 && !visibleTabIds.includes(activeTab)) {
+      setActiveTab(visibleTabIds[0] as ProfileTab);
+    }
+  }, [profile, hasContentBooks]);
+
   const handleReportSubmit = async () => {
     if (!reportReason || !profile) return;
     setReportSubmitting(true);
@@ -610,22 +640,37 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
 
               <nav className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8" data-testid="profile-tabs" style={{ borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
                 <div className="flex gap-2 flex-wrap justify-center">
-                  {([
-                    { id: 'kurationen' as ProfileTab, label: 'Kurationen' },
-                    ...(hasContentBooks ? [{ id: 'buchbesprechung' as ProfileTab, label: 'Buchbesprechung' }] : []),
-                    { id: 'rezensionen' as ProfileTab, label: 'Rezensionen' },
-                    { id: 'bewertungen' as ProfileTab, label: 'Bewertungen' },
-                    { id: 'veranstaltungen' as ProfileTab, label: 'Veranstaltungen' },
-                    { id: 'buchclub' as ProfileTab, label: 'Buchclub' },
-                  ]).filter((tab) => {
+                  {(() => {
+                    const TAB_LABELS: Record<string, string> = {
+                      kurationen: 'Kurationen',
+                      buchbesprechung: 'Buchbesprechung',
+                      rezensionen: 'Rezensionen',
+                      bewertungen: 'Bewertungen',
+                      veranstaltungen: 'Veranstaltungen',
+                      buchclub: 'Buchclub',
+                    };
+                    const defaultOrder = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub'];
                     const vt = profile.visible_tabs;
-                    if (!vt || Object.keys(vt).length === 0) {
-                      if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
-                      if (tab.id === 'veranstaltungen') return true;
-                      return true;
-                    }
-                    return vt[tab.id] === true;
-                  }).map((tab) => (
+                    const savedOrder = vt?._order;
+                    const order = Array.isArray(savedOrder) && savedOrder.length > 0
+                      ? [...savedOrder.filter((k: string) => defaultOrder.includes(k)), ...defaultOrder.filter(k => !savedOrder.includes(k))]
+                      : defaultOrder;
+
+                    return order
+                      .map(id => ({ id: id as ProfileTab, label: TAB_LABELS[id] || id }))
+                      .filter(tab => {
+                        if (tab.id === 'buchbesprechung' && !hasContentBooks) return false;
+                        if (!vt || Object.keys(vt).filter(k => k !== '_order').length === 0) {
+                          if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
+                          return true;
+                        }
+                        if (!(tab.id in vt)) {
+                          if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
+                          return true;
+                        }
+                        return vt[tab.id] === true;
+                      });
+                  })().map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}

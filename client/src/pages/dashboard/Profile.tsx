@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Save, BookOpen, Mail, Phone, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon, ExternalLink, Globe, Instagram, Podcast, Check, Plus, Search, X, Store } from 'lucide-react';
+import { User, Save, BookOpen, Mail, Phone, AlertTriangle, Star, MessageSquare, Heart, Image as ImageIcon, ExternalLink, Globe, Instagram, Podcast, Check, Plus, Search, X, Store, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 import { UserBookstore } from './UserBookstore';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { LikeButton } from '../../components/favorites/LikeButton';
+import { Button } from '@/components/ui/button';
 import { Text } from '../../components/ui/typography';
 
 const TAG_COLORS = [
@@ -249,6 +250,7 @@ export function DashboardProfile() {
 
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [bookstoreSlug, setBookstoreSlug] = useState<string | null>(null);
+  const DEFAULT_TAB_ORDER = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub'];
   const [visibleTabs, setVisibleTabs] = useState({
     kurationen: true,
     buchbesprechung: true,
@@ -257,6 +259,8 @@ export function DashboardProfile() {
     veranstaltungen: true,
     buchclub: false,
   });
+  const [tabOrder, setTabOrder] = useState<string[]>(DEFAULT_TAB_ORDER);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
 
   const availableGenres = [
     'Belletristik',
@@ -307,7 +311,14 @@ export function DashboardProfile() {
           setBookstoreSlug(d.slug);
         }
         if (d.visible_tabs && typeof d.visible_tabs === 'object') {
-          setVisibleTabs(prev => ({ ...prev, ...d.visible_tabs }));
+          const { _order, ...tabFlags } = d.visible_tabs;
+          setVisibleTabs(prev => ({ ...prev, ...tabFlags }));
+          if (Array.isArray(_order) && _order.length > 0) {
+            const allKeys = DEFAULT_TAB_ORDER;
+            const validOrder = _order.filter((k: string) => allKeys.includes(k));
+            const missing = allKeys.filter(k => !validOrder.includes(k));
+            setTabOrder([...validOrder, ...missing]);
+          }
         }
       }
     } catch (err) {
@@ -384,7 +395,7 @@ export function DashboardProfile() {
           focus: curatorProfile.focus,
           avatar_url: curatorProfile.avatarUrl,
           socials: curatorProfile.socials,
-          visible_tabs: visibleTabs
+          visible_tabs: { ...visibleTabs, _order: tabOrder }
         })
       });
       const json = await resp.json();
@@ -539,45 +550,90 @@ export function DashboardProfile() {
         )}
       </section>
 
-      {/* Tab Visibility Settings */}
+      {/* Tab Visibility & Order Settings */}
       <div className="p-6">
         <h2 className="text-lg md:text-xl mb-3" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
           Sichtbare Tabs im öffentlichen Profil
         </h2>
         <p className="text-xs mb-4" style={{ color: '#6B7280' }}>
-          Wähle aus, welche Tabs auf deinem öffentlichen Profil angezeigt werden sollen.
+          Wähle aus, welche Tabs angezeigt werden sollen. Verschiebe sie per Drag & Drop oder mit den Pfeilen, um die Reihenfolge zu ändern.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          {([
-            { key: 'kurationen', label: 'Kurationen' },
-            { key: 'buchbesprechung', label: 'Buchbesprechung' },
-            { key: 'rezensionen', label: 'Rezensionen' },
-            { key: 'bewertungen', label: 'Bewertungen' },
-            { key: 'veranstaltungen', label: 'Veranstaltungen' },
-            { key: 'buchclub', label: 'Buchclub' },
-          ] as const).map((tab) => (
-            <label
-              key={tab.key}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition-colors"
-              style={{
-                borderColor: visibleTabs[tab.key] ? '#247ba0' : '#D1D5DB',
-                backgroundColor: visibleTabs[tab.key] ? 'rgba(36, 123, 160, 0.05)' : '#FFFFFF',
-              }}
-              data-testid={`checkbox-tab-${tab.key}`}
-              onClick={() => setVisibleTabs(prev => ({ ...prev, [tab.key]: !prev[tab.key] }))}
-            >
+        <div className="flex flex-col gap-2 max-w-lg">
+          {(() => {
+            const TAB_LABELS: Record<string, string> = {
+              kurationen: 'Kurationen',
+              buchbesprechung: 'Buchbesprechung',
+              rezensionen: 'Rezensionen',
+              bewertungen: 'Bewertungen',
+              veranstaltungen: 'Veranstaltungen',
+              buchclub: 'Buchclub',
+            };
+            const moveTab = (fromIdx: number, toIdx: number) => {
+              setTabOrder(prev => {
+                const next = [...prev];
+                const [item] = next.splice(fromIdx, 1);
+                next.splice(toIdx, 0, item);
+                return next;
+              });
+            };
+            return tabOrder.map((key, idx) => (
               <div
-                className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors"
+                key={key}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors select-none"
                 style={{
-                  borderColor: visibleTabs[tab.key] ? '#247ba0' : '#D1D5DB',
-                  backgroundColor: visibleTabs[tab.key] ? '#247ba0' : 'transparent',
+                  borderColor: (visibleTabs as any)[key] ? '#247ba0' : '#D1D5DB',
+                  backgroundColor: dragIdx === idx ? 'rgba(36, 123, 160, 0.12)' : (visibleTabs as any)[key] ? 'rgba(36, 123, 160, 0.05)' : '#FFFFFF',
                 }}
+                onDragOver={(e) => { e.preventDefault(); }}
+                onDrop={() => {
+                  if (dragIdx !== null && dragIdx !== idx) moveTab(dragIdx, idx);
+                  setDragIdx(null);
+                }}
+                data-testid={`tab-order-item-${key}`}
               >
-                {visibleTabs[tab.key] && <Check className="w-3.5 h-3.5 text-white" />}
+                <span
+                  draggable
+                  onDragStart={() => setDragIdx(idx)}
+                  onDragEnd={() => setDragIdx(null)}
+                  className="cursor-grab active:cursor-grabbing flex-shrink-0"
+                  data-testid={`drag-handle-${key}`}
+                >
+                  <GripVertical className="w-4 h-4" style={{ color: '#9CA3AF' }} />
+                </span>
+                <div
+                  className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer"
+                  style={{
+                    borderColor: (visibleTabs as any)[key] ? '#247ba0' : '#D1D5DB',
+                    backgroundColor: (visibleTabs as any)[key] ? '#247ba0' : 'transparent',
+                  }}
+                  onClick={(e) => { e.stopPropagation(); setVisibleTabs(prev => ({ ...prev, [key]: !(prev as any)[key] })); }}
+                  data-testid={`checkbox-tab-${key}`}
+                >
+                  {(visibleTabs as any)[key] && <Check className="w-3.5 h-3.5 text-white" />}
+                </div>
+                <span className="text-sm flex-1" style={{ color: '#3A3A3A' }}>{TAB_LABELS[key] || key}</span>
+                <span className="text-xs text-muted-foreground mr-1">{idx + 1}</span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={idx === 0}
+                  onClick={(e) => { e.stopPropagation(); moveTab(idx, idx - 1); }}
+                  data-testid={`button-tab-up-${key}`}
+                >
+                  <ChevronUp className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={idx === tabOrder.length - 1}
+                  onClick={(e) => { e.stopPropagation(); moveTab(idx, idx + 1); }}
+                  data-testid={`button-tab-down-${key}`}
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
               </div>
-              <span className="text-sm" style={{ color: '#3A3A3A' }}>{tab.label}</span>
-            </label>
-          ))}
+            ));
+          })()}
         </div>
       </div>
 
