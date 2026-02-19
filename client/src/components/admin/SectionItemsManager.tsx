@@ -99,9 +99,8 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
     try {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/sections/${sectionId}/items`, {
-        headers: {
-          'X-Admin-Token': token || '',
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -127,9 +126,8 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
     try {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/pages`, {
-        headers: {
-          'X-Admin-Token': token || '',
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (response.ok) {
@@ -147,7 +145,7 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
     setTagsLoading(true);
     try {
       // ✅ Use public Tags API (no auth required)
-      const response = await fetch(`${API_BASE_URL}/tags`);
+      const response = await fetch(`${API_BASE_URL}/tags`, { credentials: 'include' });
 
       console.log('📦 Tags API Response:', response.status, response.ok);
 
@@ -198,10 +196,8 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
 
       const response = await fetch(`${API_BASE_URL}/admin/items`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -229,10 +225,9 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       
       const response = await fetch(`${API_BASE_URL}/admin/items/${id}`, {
+            credentials: 'include',
         method: 'DELETE',
-        headers: {
-          'X-Admin-Token': token || '',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -271,10 +266,8 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
       await Promise.all([
         fetch(`${API_BASE_URL}/admin/items`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Admin-Token': token || '',
-          },
+          credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: updatedItems[currentIndex].id,
             section_id: sectionId,
@@ -292,10 +285,8 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
         }),
         fetch(`${API_BASE_URL}/admin/items`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Admin-Token': token || '',
-          },
+          credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: updatedItems[newIndex].id,
             section_id: sectionId,
@@ -481,10 +472,8 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
 
                   const response = await fetch(`${API_BASE_URL}/admin/items`, {
                     method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'X-Admin-Token': token || '',
-                    },
+                    credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
                   });
 

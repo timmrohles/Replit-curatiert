@@ -85,10 +85,8 @@ interface Book {
 const API_BASE = '/api';
 
 function getAdminHeaders(): HeadersInit {
-  const token = getAdminToken();
   return {
     'Content-Type': 'application/json',
-    'X-Admin-Token': token || '',
   };
 }
 
@@ -154,6 +152,7 @@ export function AdminAffiliate() {
       setError(null);
 
       const response = await fetch(`${API_BASE}/admin/affiliates`, {
+            credentials: 'include',
         headers: getAdminHeaders(),
       });
 
@@ -183,6 +182,7 @@ export function AdminAffiliate() {
       setError(null);
 
       const response = await fetch(`${API_BASE}/admin/book-affiliates`, {
+            credentials: 'include',
         headers: getAdminHeaders(),
       });
 
@@ -215,7 +215,7 @@ export function AdminAffiliate() {
     try {
       const response = await fetch(
         `${API_BASE}/books/search?q=${encodeURIComponent(query)}&limit=20`,
-        { headers: getAdminHeaders() }
+        { credentials: 'include', headers: getAdminHeaders() }
       );
       const data = await response.json();
       if (data.ok) {
@@ -246,8 +246,9 @@ export function AdminAffiliate() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/admin/affiliates`, {
-        method: 'POST',
-        headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify(editingAffiliate)
       });
       
@@ -281,6 +282,7 @@ export function AdminAffiliate() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/admin/affiliates/${id}`, {
+            credentials: 'include',
         method: 'DELETE',
         headers: getAdminHeaders()
       });
@@ -314,8 +316,9 @@ export function AdminAffiliate() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/admin/book-affiliates`, {
-        method: 'POST',
-        headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({
           book_id: selectedBook.id,
           affiliate_id: selectedAffiliateId,
@@ -359,8 +362,9 @@ export function AdminAffiliate() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/admin/book-affiliates/${editingAssignment.id}`, {
-        method: 'PUT',
-        headers: getAdminHeaders(),
+          method: 'PUT',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({
           merchant_product_id: editingAssignment.merchant_product_id || null,
           external_id: editingAssignment.external_id || null,
@@ -393,6 +397,7 @@ export function AdminAffiliate() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/admin/book-affiliates/${id}`, {
+            credentials: 'include',
         method: 'DELETE',
         headers: getAdminHeaders()
       });
@@ -1087,7 +1092,7 @@ export function AdminAffiliate() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE}/admin/affiliate-tracking?view=clicks&page=${page}&limit=50`, { headers: getAdminHeaders() });
+      const response = await fetch(`${API_BASE}/admin/affiliate-tracking?view=clicks&page=${page}&limit=50`, { credentials: 'include', headers: getAdminHeaders() });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const result = await response.json();
       if (!result.ok) throw new Error(result.error || 'Failed to load tracking data');
@@ -1106,7 +1111,7 @@ export function AdminAffiliate() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE}/admin/affiliate-tracking?view=orders&page=${page}&limit=50`, { headers: getAdminHeaders() });
+      const response = await fetch(`${API_BASE}/admin/affiliate-tracking?view=orders&page=${page}&limit=50`, { credentials: 'include', headers: getAdminHeaders() });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const result = await response.json();
       if (!result.ok) throw new Error(result.error || 'Failed to load orders');
@@ -1122,7 +1127,7 @@ export function AdminAffiliate() {
 
   async function fetchCreatorsList() {
     try {
-      const response = await fetch(`${API_BASE}/admin/affiliate-creators`, { headers: getAdminHeaders() });
+      const response = await fetch(`${API_BASE}/admin/affiliate-creators`, { credentials: 'include', headers: getAdminHeaders() });
       if (!response.ok) return;
       const result = await response.json();
       if (result.ok) setCreatorsList(Array.isArray(result.data) ? result.data : []);
@@ -1136,8 +1141,9 @@ export function AdminAffiliate() {
       setLoading(true);
       setError(null);
       const response = await fetch(`${API_BASE}/admin/affiliate-orders`, {
-        method: 'POST',
-        headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({
           creatorId: newOrder.creatorId,
           bookId: newOrder.bookId || null,
@@ -1168,8 +1174,9 @@ export function AdminAffiliate() {
     try {
       setLoading(true);
       const response = await fetch(`${API_BASE}/admin/affiliate-orders/${orderId}`, {
-        method: 'PATCH',
-        headers: getAdminHeaders(),
+          method: 'PATCH',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({ status }),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);

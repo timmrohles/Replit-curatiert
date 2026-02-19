@@ -48,8 +48,8 @@ export async function getAllTags(): Promise<import('../apiSchemas').Tag[]> {
   try {
     // ✅ MIGRATED: Use canonical /api/tags endpoint
     const response = await fetch(`${API_BASE_URL}/tags`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     
     if (!response.ok) {
@@ -80,6 +80,7 @@ export async function saveTag(tag: import('../apiSchemas').Tag): Promise<import(
     // ✅ MIGRATED: Use canonical /api/tags endpoint
     const response = await fetch(`${API_BASE_URL}/tags`, {
       method: 'POST',
+      credentials: 'include',
       headers: getAdminAuthHeaders(),
       body: JSON.stringify(tag),
     });
@@ -130,8 +131,8 @@ export async function getAllONIXTags(): Promise<import('../apiSchemas').ONIXTag[
       
       // ✅ MIGRATED: Use canonical /api/onix-tags endpoint
       const response = await fetch(`${API_BASE_URL}/onix-tags`, {
-        headers: {
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
       });
       
@@ -206,8 +207,8 @@ export function clearONIXTagsCache(): void {
 export async function getONIXTag(id: string): Promise<import('../apiSchemas').ONIXTag | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/onix-tags/${id}`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     
     if (!response.ok) {
@@ -228,6 +229,7 @@ export async function saveONIXTag(tag: Partial<import('../apiSchemas').ONIXTag>)
     // ✅ MIGRATED: Use canonical /api/onix-tags endpoint
     const response = await fetch(`${API_BASE_URL}/onix-tags`, {
       method: 'POST',
+      credentials: 'include',
       headers: getAdminAuthHeaders(),
       body: JSON.stringify(tag),
     });
@@ -255,10 +257,9 @@ export async function deleteONIXTag(id: string): Promise<boolean> {
   try {
     const token = localStorage.getItem('admin_token');
     const response = await fetch(`${API_BASE_URL}/onix-tags/${id}`, {
+          credentials: 'include',
       method: 'DELETE',
-      headers: {
-        'X-Admin-Token': token || '',
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
     
     if (!response.ok) {
@@ -295,10 +296,9 @@ export async function assignONIXTag(
   try {
     const token = localStorage.getItem('admin_token');
     const response = await fetch(`${API_BASE_URL}/onix-tags/${tagId}/assign`, {
+          credentials: 'include',
       method: 'POST',
-      headers: {
-        'X-Admin-Token': token || '',
-        'Content-Type': 'application/json',
+      headers: {'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         target_type: targetType,
@@ -324,10 +324,9 @@ export async function unassignONIXTag(
   try {
     const token = localStorage.getItem('admin_token');
     const response = await fetch(`${API_BASE_URL}/onix-tags/${tagId}/unassign`, {
+          credentials: 'include',
       method: 'DELETE',
-      headers: {
-        'X-Admin-Token': token || '',
-        'Content-Type': 'application/json',
+      headers: {'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         target_type: targetType,
@@ -356,8 +355,8 @@ export async function searchONIXTags(query: string, field?: string, limit?: numb
     });
     
     const response = await fetch(`${API_BASE_URL}/onix-tags/search?${params}`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     const result: ApiResponse<import('../apiSchemas').ONIXTag[]> = await response.json();
     return result.data || [];

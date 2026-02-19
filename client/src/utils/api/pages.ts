@@ -20,9 +20,7 @@ export type { Page } from '../apiSchemas';
 export async function getAllPages(): Promise<import('../apiSchemas').Page[]> {
   try {
     // ✅ NEUE API: Admin List Endpoint mit draft+published
-    const response = await fetch(`${API_BASE_URL}/admin/pages`, {
-      headers: getAdminAuthHeaders(),
-    });
+    const response = await fetch(`${API_BASE_URL}/admin/pages`, { credentials: 'include', headers: getAdminAuthHeaders() });
     
     if (!response.ok) {
       console.warn(`Pages endpoint returned ${response.status}`);
@@ -46,9 +44,7 @@ export async function getAllPages(): Promise<import('../apiSchemas').Page[]> {
 
 export async function getPage(id: string): Promise<import('../apiSchemas').Page | null> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/pages/${id}`, {
-      headers: getAdminAuthHeaders(),
-    });
+    const response = await fetch(`${API_BASE_URL}/admin/pages/${id}`, { credentials: 'include', headers: getAdminAuthHeaders() });
     
     if (!response.ok) {
       console.error(`Failed to fetch page: ${response.status}`);
@@ -76,6 +72,7 @@ export async function savePage(page: Partial<import('../apiSchemas').Page>): Pro
     console.log('🔍 Page data:', page);
     
     const response = await fetch(url, {
+          credentials: 'include',
       method,
       headers: getAdminAuthHeaders(),
       body: JSON.stringify(page),
@@ -106,6 +103,7 @@ export async function deletePage(id: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/pages/${id}`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: getAdminAuthHeaders(),
     });
     

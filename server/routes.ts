@@ -7,6 +7,7 @@ import multer from "multer";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
+import { isImpersonating, maskSensitiveData } from "./replit_integrations/auth/routes";
 
 const log = {
   info: (...args: unknown[]) => console.log('[INFO]', ...args),
@@ -133,6 +134,13 @@ async function tryAuditLog(action: string, entityType: string, entityId: string 
 }
 
 async function requireAdminGuard(req: Request, res: Response): Promise<boolean> {
+  if (req.isAuthenticated && req.isAuthenticated() && req.user) {
+    const user = req.user as any;
+    if (user.role === 'admin' || user.role === 'super_admin') {
+      return true;
+    }
+  }
+
   const token = (req.headers['x-admin-token'] as string) || req.body?.token || "";
 
   if (!token) {
@@ -6676,7 +6684,11 @@ export async function registerRoutes(
       if (result.rows.length === 0) {
         return res.json({ ok: true, data: null });
       }
-      res.json({ ok: true, data: result.rows[0] });
+      let data = result.rows[0];
+      if (isImpersonating(req)) {
+        data = maskSensitiveData(data);
+      }
+      res.json({ ok: true, data });
     } catch (error) {
       log.error('Affiliate creator profile fetch error:', error);
       res.status(500).json({ ok: false, error: 'Internal server error' });

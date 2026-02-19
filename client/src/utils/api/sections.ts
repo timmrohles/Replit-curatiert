@@ -43,8 +43,8 @@ export async function getAllSections(status?: 'active' | 'archived' | 'scheduled
       : `${API_BASE_URL}/sections`;
     
     const response = await fetch(url, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     
     if (!response.ok) {
@@ -65,8 +65,8 @@ export async function getAllSections(status?: 'active' | 'archived' | 'scheduled
 export async function getSection(id: string): Promise<import('../apiSchemas').Section | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/sections/${id}`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     
     if (!response.ok) {
@@ -94,6 +94,7 @@ export async function saveSection(section: Partial<import('../apiSchemas').Secti
     console.log(`${isUpdate ? '📝' : '➕'} ${isUpdate ? 'Updating' : 'Creating'} section:`, section.id || 'new');
     
     const response = await fetch(url, {
+          credentials: 'include',
       method,
       headers: getAdminAuthHeaders(),
       body: JSON.stringify(section),
@@ -121,6 +122,7 @@ export async function deleteSection(id: string): Promise<boolean> {
     
     const response = await fetch(`${API_BASE_URL}/sections/${id}`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: getAdminAuthHeaders(),
     });
     

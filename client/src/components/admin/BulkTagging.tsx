@@ -51,10 +51,7 @@ interface BulkTaggingProps {
 export function BulkTagging({ onClose }: BulkTaggingProps) {
   const API_BASE = '/api';
 
-  const getHeaders = () => ({
-    'X-Admin-Token': localStorage.getItem('admin_token') || '',
-    'Content-Type': 'application/json'
-  });
+  const getHeaders = () => ({ 'Content-Type': 'application/json' });
 
   // State
   const [tags, setTags] = useState<Tag[]>([]);
@@ -86,9 +83,7 @@ export function BulkTagging({ onClose }: BulkTaggingProps) {
 
   async function loadTags() {
     try {
-      const response = await fetch(`${API_BASE}/tags`, {
-        headers: getHeaders()
-      });
+      const response = await fetch(`${API_BASE}/tags`, { credentials: 'include', headers: getHeaders() });
       const data = await response.json();
       if (data.success) {
         setTags(data.data || []);
@@ -120,9 +115,7 @@ export function BulkTagging({ onClose }: BulkTaggingProps) {
       // Limit to first 50 for preview
       params.append('limit', '50');
       
-      const response = await fetch(`${API_BASE}/books/search?${params}`, {
-        headers: getHeaders()
-      });
+      const response = await fetch(`${API_BASE}/books/search?${params}`, { credentials: 'include', headers: getHeaders() });
       
       const result = await response.json();
       
@@ -187,9 +180,7 @@ export function BulkTagging({ onClose }: BulkTaggingProps) {
       if (isbnFilter) params.append('isbn', isbnFilter);
       params.append('limit', '200'); // Max 200 for now
 
-      const response = await fetch(`${API_BASE}/books/search?${params}`, {
-        headers: getHeaders()
-      });
+      const response = await fetch(`${API_BASE}/books/search?${params}`, { credentials: 'include', headers: getHeaders() });
       
       const result = await response.json();
       
@@ -224,8 +215,9 @@ export function BulkTagging({ onClose }: BulkTaggingProps) {
       for (const tagId of selectedTagIds) {
         try {
           const assignResponse = await fetch(`${API_BASE}/tags/${tagId}/assign`, {
-            method: 'POST',
-            headers: getHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getHeaders(),
             body: JSON.stringify({
               book_ids: bookIds,
               source: 'bulk'

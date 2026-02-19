@@ -29,8 +29,8 @@ export interface Review {
 export async function getAllReviews(): Promise<Review[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/reviews`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     const result: ApiResponse<Review[]> = await response.json();
     return result.data || [];
@@ -43,8 +43,8 @@ export async function getAllReviews(): Promise<Review[]> {
 export async function getReviewsByBook(bookId: string): Promise<Review[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/reviews/book/${bookId}`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     const result: ApiResponse<Review[]> = await response.json();
     return result.data || [];
@@ -57,8 +57,8 @@ export async function getReviewsByBook(bookId: string): Promise<Review[]> {
 export async function getReviewsByCurator(curatorId: string): Promise<Review[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/reviews/curator/${curatorId}`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     const result: ApiResponse<Review[]> = await response.json();
     return result.data || [];
@@ -72,6 +72,7 @@ export async function saveReview(review: Review): Promise<Review | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/reviews`, {
       method: 'POST',
+      credentials: 'include',
       headers: getAdminAuthHeaders(),
       body: JSON.stringify(review),
     });

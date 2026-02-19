@@ -169,9 +169,8 @@ export function AdminBooksNeon() {
   const loadTags = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/tags`, {
-        headers: {
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       if (!response.ok) {
         console.warn('Failed to load tags:', response.status);
@@ -191,9 +190,8 @@ export function AdminBooksNeon() {
   const loadStats = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/books?limit=10000`, {
-        headers: {
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       if (!response.ok) {
         console.warn('Failed to load stats:', response.status);
@@ -230,9 +228,8 @@ export function AdminBooksNeon() {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/books?limit=25`, {
-        headers: {
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       if (!response.ok) throw new Error('Failed to load books');
       const data = await response.json();
@@ -254,9 +251,8 @@ export function AdminBooksNeon() {
       // For now, just load all books and filter client-side
       // TODO: Add search endpoint to backend
       const response = await fetch(`${API_BASE_URL}/books?limit=100`, {
-        headers: {
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (!response.ok) throw new Error('Search failed');
@@ -301,9 +297,8 @@ export function AdminBooksNeon() {
     // Load editorial data
     try {
       const response = await fetch(`${API_BASE_URL}/books/${book.id}/editorial`, {
-        headers: {
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (response.ok) {
@@ -320,9 +315,8 @@ export function AdminBooksNeon() {
     // Load tags with origin
     try {
       const response = await fetch(`${API_BASE_URL}/books/${book.id}/tags`, {
-        headers: {
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (response.ok) {
@@ -350,10 +344,8 @@ export function AdminBooksNeon() {
       // Save editorial data
       const response = await fetch(`${API_BASE_URL}/books/${editingBook.id}/editorial`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': adminToken,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editingEditorial),
       });
       
@@ -366,10 +358,8 @@ export function AdminBooksNeon() {
       const manualTags = selectedTags.filter(t => t.origin === 'manual');
       await fetch(`${API_BASE_URL}/books/${editingBook.id}/tags`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': adminToken,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tags: manualTags }),
       });
       

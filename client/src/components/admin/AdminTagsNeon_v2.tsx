@@ -95,9 +95,8 @@ export function AdminTagsNeon() {
     try {
       const url = `${API_BASE_URL}/tags${showDeleted ? '?include_deleted=true' : ''}`;
       const response = await fetch(url, {
-        headers: {
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (!response.ok) throw new Error('Failed to load tags');
@@ -140,11 +139,10 @@ export function AdminTagsNeon() {
     
     try {
       const response = await fetch(`${API_BASE_URL}/tags`, {
+            credentials: 'include',
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+          'Content-Type': 'application/json' },
         body: JSON.stringify(editingTag),
       });
       
@@ -182,10 +180,9 @@ export function AdminTagsNeon() {
     
     try {
       const response = await fetch(`${API_BASE_URL}/tags/${tag.id}`, {
+            credentials: 'include',
         method: 'DELETE',
-        headers: {
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (!response.ok) {
@@ -216,10 +213,9 @@ export function AdminTagsNeon() {
     
     try {
       const response = await fetch(`${API_BASE_URL}/tags/${tag.id}/restore`, {
+            credentials: 'include',
         method: 'POST',
-        headers: {
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (!response.ok) {
@@ -250,11 +246,10 @@ export function AdminTagsNeon() {
     
     try {
       const response = await fetch(`${API_BASE_URL}/tags/${deletingTag.id}?force=true`, {
+            credentials: 'include',
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-        },
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: deleteReason }),
       });
       
@@ -770,8 +765,9 @@ export function AdminTagsNeon() {
                           try {
                             const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '';
                             const res = await fetch('/api/admin/upload/tag-image', {
+                                  credentials: 'include',
                               method: 'POST',
-                              headers: { 'X-Admin-Token': token || '' },
+                              headers: { 'Content-Type': 'application/json' },
                               body: formData,
                             });
                             const data = await res.json();

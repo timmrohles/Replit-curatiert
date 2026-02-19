@@ -57,9 +57,8 @@ export function AdminEventsTab() {
       }
 
       const response = await fetch('/api/admin/events', {
-        headers: {
-          'X-Admin-Token': token,
-        },
+        credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -92,10 +91,8 @@ export function AdminEventsTab() {
 
       const response = await fetch(`/api/admin/events/${eventId}/toggle-publish`, {
         method: 'PUT',
-        headers: {
-          'X-Admin-Token': token,
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_published: !currentStatus }),
       });
 
@@ -128,9 +125,8 @@ export function AdminEventsTab() {
 
       const response = await fetch(`/api/admin/events/${eventId}`, {
         method: 'DELETE',
-        headers: {
-          'X-Admin-Token': token,
-        },
+        credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {

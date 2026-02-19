@@ -52,7 +52,8 @@ export function CategoryCardsManager({ pages = [] }: CategoryCardsManagerProps) 
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/admin/category-cards`, {
-        headers: { 'X-Admin-Token': getToken() }
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
       });
       if (!response.ok) {
         setCards([]);
@@ -77,7 +78,8 @@ export function CategoryCardsManager({ pages = [] }: CategoryCardsManagerProps) 
     try {
       const response = await fetch(
         `${API_BASE}/unsplash/search?query=${encodeURIComponent(unsplashSearch)}`,
-        { headers: { 'X-Admin-Token': getToken() } }
+        { credentials: 'include',
+        headers: { 'Content-Type': 'application/json' } }
       );
       const data = await response.json();
       if (data.success) {
@@ -114,10 +116,8 @@ export function CategoryCardsManager({ pages = [] }: CategoryCardsManagerProps) 
 
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': getToken()
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editingCard.name?.trim(),
           image_url: editingCard.image_url || null,
@@ -149,7 +149,8 @@ export function CategoryCardsManager({ pages = [] }: CategoryCardsManagerProps) 
     try {
       const response = await fetch(`${API_BASE}/admin/category-cards/${id}`, {
         method: 'DELETE',
-        headers: { 'X-Admin-Token': getToken() }
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
       });
       if (response.ok) {
         loadCards();
@@ -163,10 +164,8 @@ export function CategoryCardsManager({ pages = [] }: CategoryCardsManagerProps) 
     try {
       await fetch(`${API_BASE}/admin/category-cards/${card.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': getToken()
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_active: !card.is_active })
       });
       loadCards();

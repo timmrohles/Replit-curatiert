@@ -105,31 +105,35 @@ export function ContentManager() {
   const safeNav = useSafeNavigate(); // ✅ SAFE ROUTING
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // ✅ CRASH-SAFE: Simple auth check without external hook
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [adminUser, setAdminUser] = useState<{ id: string; username: string; role: string } | null>(null);
   
   useEffect(() => {
-    // Check for NEON token (new system) or fallback to old token
-    const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
-    if (!token) {
-      console.log('⚠️ ContentManager: No token found - redirecting to login...');
-      // 🔧 FIX: Immediate redirect to avoid unnecessary rendering
-      setAuthLoading(false);
-      safeNav('/sys-mgmt-xK9/login');
-      return;
-    }
-    console.log('✅ ContentManager: Token found, user authenticated');
-    setIsAuthenticated(true);
-    setAuthLoading(false);
-  }, []); // ✅ EMPTY DEPS - only run once on mount, not on every safeNav change
+    const checkOIDCSession = async () => {
+      try {
+        const res = await fetch('/api/auth/user', { credentials: 'include' });
+        if (res.status === 401) {
+          window.location.href = '/api/login';
+          return;
+        }
+        const user = await res.json();
+        if (user && (user.role === 'admin' || user.role === 'super_admin')) {
+          setAdminUser({ id: user.id, username: user.firstName || user.email || 'Admin', role: user.role });
+          setIsAuthenticated(true);
+          setAuthLoading(false);
+        } else {
+          window.location.href = '/api/login';
+        }
+      } catch {
+        window.location.href = '/api/login';
+      }
+    };
+    checkOIDCSession();
+  }, []);
   
   const logout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_neon_token');
-    localStorage.removeItem('admin_neon_expires');
-    localStorage.removeItem('admin_last_activity');
-    safeNav('/sys-mgmt-xK9/login'); // ✅ SAFE ROUTING
+    window.location.href = '/api/logout';
   };
   
   // ✅ URL-based tab navigation
@@ -647,7 +651,7 @@ export function ContentManager() {
               fontFamily: 'Fjalla One'
             }}
           >
-            Kuratoren
+            User
           </button>
           <button
             onClick={() => setActiveTab('storefronts')}

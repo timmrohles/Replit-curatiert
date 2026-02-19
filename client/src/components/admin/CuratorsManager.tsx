@@ -39,9 +39,7 @@ export function CuratorsManager() {
     loadCurators();
   }, []);
 
-  const getAdminHeaders = () => ({
-    'X-Admin-Token': localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '',
-    'Content-Type': 'application/json'
+  const getAdminHeaders = () => ({'Content-Type': 'application/json'
   });
 
   const uploadAvatar = async (file: File) => {
@@ -53,7 +51,8 @@ export function CuratorsManager() {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '';
       const response = await fetch(`${API_BASE_URL}/admin/upload/avatar`, {
         method: 'POST',
-        headers: { 'X-Admin-Token': token },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: formData,
       });
 
@@ -81,8 +80,8 @@ export function CuratorsManager() {
     try {
       console.log('🔄 Loading curators from /api/curators...');
       const response = await fetch(`${API_BASE_URL}/curators`, {
-        headers: {
-        }
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
       });
 
       console.log('📡 Response status:', response.status);
@@ -161,8 +160,9 @@ export function CuratorsManager() {
       console.log('📤 Sending curator payload:', JSON.stringify(backendCurator, null, 2));
       
       const response = await fetch(`${API_BASE_URL}/curators`, {
-        method: 'POST',
-        headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify(backendCurator)
       });
 
@@ -190,6 +190,7 @@ export function CuratorsManager() {
 
     try {
       const response = await fetch(`${API_BASE_URL}/curators/${id}`, {
+            credentials: 'include',
         method: 'DELETE',
         headers: getAdminHeaders()
       });
@@ -212,7 +213,8 @@ export function CuratorsManager() {
   const runHealthCheck = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/health`, {
-        headers: { }
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
       });
       const data = await response.json();
       setDebugInfo({ type: 'health', data });
@@ -226,7 +228,8 @@ export function CuratorsManager() {
   const runSchemaCheck = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/curators/debug/schema`, {
-        headers: { }
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
       });
       const data = await response.json();
       setDebugInfo({ type: 'schema', data });

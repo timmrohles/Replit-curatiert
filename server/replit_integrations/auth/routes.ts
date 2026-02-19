@@ -2,6 +2,38 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { authStorage } from "./storage";
 import { isAuthenticated } from "./replitAuth";
 
+const SENSITIVE_FIELDS = [
+  "iban", "bic", "account_holder", "accountHolder",
+  "tax_number", "taxNumber", "tax_id", "taxId", "vat_id", "vatId",
+  "tax_status", "taxStatus", "tax_country", "taxCountry",
+  "tax_self_responsible", "taxSelfResponsible",
+  "phone", "payout_country", "payoutCountry",
+  "min_payout_accepted", "minPayoutAccepted",
+  "currency",
+];
+
+function maskSensitiveValue(key: string, value: any): any {
+  if (value === null || value === undefined) return value;
+  if (typeof value === "boolean") return "***";
+  if (typeof value === "string") {
+    if (value.length <= 2) return "***";
+    return value[0] + "*".repeat(Math.min(value.length - 2, 10)) + value[value.length - 1];
+  }
+  return "***";
+}
+
+export function maskSensitiveData(data: any): any {
+  if (!data || typeof data !== "object") return data;
+  if (Array.isArray(data)) return data.map(item => maskSensitiveData(item));
+  const masked = { ...data };
+  for (const key of Object.keys(masked)) {
+    if (SENSITIVE_FIELDS.includes(key)) {
+      masked[key] = maskSensitiveValue(key, masked[key]);
+    }
+  }
+  return masked;
+}
+
 export const requireRole = (...roles: string[]) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const user = req.user as any;
@@ -20,6 +52,18 @@ export const requireRole = (...roles: string[]) => {
   };
 };
 
+export function getEffectiveUserId(req: any): string {
+  const session = req.session as any;
+  if (session?.impersonateUserId) {
+    return session.impersonateUserId;
+  }
+  return req.user?.claims?.sub;
+}
+
+export function isImpersonating(req: any): boolean {
+  return !!(req.session as any)?.impersonateUserId;
+}
+
 export function registerAuthRoutes(app: Express): void {
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
@@ -28,10 +72,72 @@ export function registerAuthRoutes(app: Express): void {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      const session = req.session as any;
+      if (session?.impersonateUserId) {
+        const impersonatedUser = await authStorage.getUser(session.impersonateUserId);
+        if (impersonatedUser) {
+          return res.json({
+            ...impersonatedUser,
+            _impersonating: true,
+            _realAdmin: {
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              role: user.role,
+            },
+          });
+        }
+      }
       res.json(user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.post("/api/admin/impersonate/:userId", isAuthenticated, requireRole("super_admin"), async (req: any, res) => {
+    try {
+      const targetUserId = req.params.userId;
+      const adminUserId = req.user.claims.sub;
+
+      if (targetUserId === adminUserId) {
+        return res.status(400).json({ message: "Eigenes Konto kann nicht impersoniert werden" });
+      }
+
+      const targetUser = await authStorage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "Benutzer nicht gefunden" });
+      }
+
+      (req.session as any).impersonateUserId = targetUserId;
+      console.log(`[AUDIT] Super-Admin ${adminUserId} started impersonating user ${targetUserId} (${targetUser.email || targetUser.firstName})`);
+
+      res.json({
+        success: true,
+        message: `Impersoniere ${targetUser.firstName || targetUser.email || targetUserId}`,
+        user: targetUser,
+      });
+    } catch (error) {
+      console.error("Error starting impersonation:", error);
+      res.status(500).json({ message: "Impersonation fehlgeschlagen" });
+    }
+  });
+
+  app.post("/api/admin/stop-impersonate", isAuthenticated, async (req: any, res) => {
+    try {
+      const session = req.session as any;
+      const wasImpersonating = session.impersonateUserId;
+      delete session.impersonateUserId;
+
+      if (wasImpersonating) {
+        console.log(`[AUDIT] Super-Admin ${req.user.claims.sub} stopped impersonating user ${wasImpersonating}`);
+      }
+
+      const user = await authStorage.getUser(req.user.claims.sub);
+      res.json({ success: true, user });
+    } catch (error) {
+      console.error("Error stopping impersonation:", error);
+      res.status(500).json({ message: "Fehler beim Beenden der Impersonation" });
     }
   });
 

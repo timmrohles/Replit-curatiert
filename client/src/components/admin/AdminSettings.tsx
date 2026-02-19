@@ -38,9 +38,7 @@ interface TrackingSettings {
 function getAdminHeaders(): Record<string, string> {
   const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '';
   return {
-    'Content-Type': 'application/json',
-    'X-Admin-Token': token,
-  };
+    'Content-Type': 'application/json' };
 }
 
 interface AdminSettingsProps {
@@ -87,7 +85,7 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
   const loadTrackingSettings = async () => {
     setTrackingLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/tracking-settings`, { headers: getAdminHeaders() });
+      const res = await fetch(`${API_BASE_URL}/admin/tracking-settings`, { credentials: 'include', headers: getAdminHeaders() });
       const data = await res.json();
       if (data.ok && data.data) {
         setTrackingSettings(data.data);
@@ -101,7 +99,7 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
 
   const fetchMyIp = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/my-ip`, { headers: getAdminHeaders() });
+      const res = await fetch(`${API_BASE_URL}/admin/my-ip`, { credentials: 'include', headers: getAdminHeaders() });
       const data = await res.json();
       if (data.ok) setMyIp(data.ip);
     } catch { /* ignore */ }
@@ -112,8 +110,9 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
     setTrackingMessage(null);
     try {
       const res = await fetch(`${API_BASE_URL}/admin/tracking-settings`, {
-        method: 'PATCH',
-        headers: getAdminHeaders(),
+          method: 'PATCH',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify(updates),
       });
       const data = await res.json();
@@ -172,7 +171,7 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
   const loadIndiePublishers = async () => {
     setIndieLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/indie-publishers`, { headers: getAdminHeaders() });
+      const res = await fetch(`${API_BASE_URL}/admin/indie-publishers`, { credentials: 'include', headers: getAdminHeaders() });
       const data = await res.json();
       if (data.ok) setIndiePublishers(data.data || []);
     } catch (err) {
@@ -186,7 +185,9 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
     if (!newIndieName.trim()) return;
     try {
       const res = await fetch(`${API_BASE_URL}/admin/indie-publishers`, {
-        method: 'POST', headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({ name: newIndieName.trim(), source: 'manual' }),
       });
       const data = await res.json();
@@ -206,7 +207,9 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
   const removeIndiePublisher = async (id: number) => {
     try {
       const res = await fetch(`${API_BASE_URL}/admin/indie-publishers/${id}`, {
-        method: 'DELETE', headers: getAdminHeaders(),
+          method: 'DELETE',
+          credentials: 'include',
+          headers: getAdminHeaders(),
       });
       const data = await res.json();
       if (data.ok) setIndiePublishers(prev => prev.filter(p => p.id !== id));
@@ -237,7 +240,9 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
       }).filter(p => p.name);
 
       const res = await fetch(`${API_BASE_URL}/admin/indie-publishers/bulk`, {
-        method: 'POST', headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({ publishers, replace }),
       });
       const data = await res.json();
@@ -260,7 +265,7 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
     setFuzzyResults(null);
     setFuzzySummary(null);
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/indie-publishers/fuzzy-match`, { headers: getAdminHeaders() });
+      const res = await fetch(`${API_BASE_URL}/admin/indie-publishers/fuzzy-match`, { credentials: 'include', headers: getAdminHeaders() });
       const data = await res.json();
       if (data.ok) {
         setFuzzyResults(data.results);
@@ -278,7 +283,7 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
   const loadSpPatterns = async () => {
     setSpLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/selfpublisher-patterns`, { headers: getAdminHeaders() });
+      const res = await fetch(`${API_BASE_URL}/admin/selfpublisher-patterns`, { credentials: 'include', headers: getAdminHeaders() });
       const data = await res.json();
       if (data.ok) setSpPatterns(data.data || []);
     } catch (err) {
@@ -292,7 +297,9 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
     if (!newSpPattern.trim()) return;
     try {
       const res = await fetch(`${API_BASE_URL}/admin/selfpublisher-patterns`, {
-        method: 'POST', headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({ pattern: newSpPattern.trim(), match_type: 'contains' }),
       });
       const data = await res.json();
@@ -312,7 +319,9 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
   const removeSpPattern = async (id: number) => {
     try {
       const res = await fetch(`${API_BASE_URL}/admin/selfpublisher-patterns/${id}`, {
-        method: 'DELETE', headers: getAdminHeaders(),
+          method: 'DELETE',
+          credentials: 'include',
+          headers: getAdminHeaders(),
       });
       const data = await res.json();
       if (data.ok) setSpPatterns(prev => prev.filter(p => p.id !== id));
@@ -352,6 +361,7 @@ export function AdminSettings({ onClose }: AdminSettingsProps) {
       }
       
       const response = await fetch(`${API_BASE_URL}/admin/change-password`, {
+            credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword, token }),

@@ -26,8 +26,8 @@ export interface CuratedList {
 export async function getAllLists(): Promise<CuratedList[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/lists`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     const result: ApiResponse<CuratedList[]> = await response.json();
     return result.data || [];
@@ -40,8 +40,8 @@ export async function getAllLists(): Promise<CuratedList[]> {
 export async function getList(id: string): Promise<CuratedList | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/lists/${id}`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     const result: ApiResponse<CuratedList> = await response.json();
     return result.data || null;
@@ -55,6 +55,7 @@ export async function saveList(list: CuratedList): Promise<CuratedList | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/lists`, {
       method: 'POST',
+      credentials: 'include',
       headers: getAdminAuthHeaders(),
       body: JSON.stringify(list),
     });

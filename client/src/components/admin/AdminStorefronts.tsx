@@ -56,9 +56,7 @@ interface SearchResult {
 
 const getAdminHeaders = (): Record<string, string> => {
   const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
-  return {
-    'X-Admin-Token': token || '',
-    'Content-Type': 'application/json',
+  return {'Content-Type': 'application/json',
   };
 };
 
@@ -81,6 +79,7 @@ export function AdminStorefronts() {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/admin/storefronts`, {
+            credentials: 'include',
         headers: getAdminHeaders(),
       });
       const data = await response.json();
@@ -96,7 +95,7 @@ export function AdminStorefronts() {
 
   const loadCurators = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/curators`);
+      const response = await fetch(`${API_BASE_URL}/curators`, { credentials: 'include' });
       const data = await response.json();
       if (data.ok && data.data) {
         setCurators(
@@ -120,6 +119,7 @@ export function AdminStorefronts() {
   const loadStorefrontDetail = async (id: string) => {
     try {
       const response = await fetch(`${API_BASE_URL}/admin/storefronts/${id}`, {
+            credentials: 'include',
         headers: getAdminHeaders(),
       });
       const data = await response.json();
@@ -143,8 +143,9 @@ export function AdminStorefronts() {
 
     try {
       const response = await fetch(`${API_BASE_URL}/admin/storefronts`, {
-        method: 'POST',
-        headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({
           id: editingStorefront.id || undefined,
           curator_id: Number(editingStorefront.curator_id),
@@ -178,8 +179,9 @@ export function AdminStorefronts() {
     if (!confirm('Bookstore wirklich löschen?')) return;
     try {
       const response = await fetch(`${API_BASE_URL}/admin/storefronts/${id}`, {
-        method: 'DELETE',
-        headers: getAdminHeaders(),
+          method: 'DELETE',
+          credentials: 'include',
+          headers: getAdminHeaders(),
       });
       const data = await response.json();
       if (data.ok) {
@@ -203,8 +205,9 @@ export function AdminStorefronts() {
 
     try {
       const response = await fetch(`${API_BASE_URL}/admin/storefronts/${storefrontId}/series`, {
-        method: 'POST',
-        headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({
           id: editingSeries.id || undefined,
           title: editingSeries.title.trim(),
@@ -232,7 +235,8 @@ export function AdminStorefronts() {
     try {
       const response = await fetch(
         `${API_BASE_URL}/admin/storefronts/${storefrontId}/series/${seriesId}`,
-        { method: 'DELETE', headers: getAdminHeaders() }
+        {
+          credentials: 'include',
       );
       const data = await response.json();
       if (data.ok) {
@@ -251,7 +255,8 @@ export function AdminStorefronts() {
     setBookSearchLoading(true);
     try {
       const response = await fetch(
-        `${API_BASE_URL}/books/search?q=${encodeURIComponent(query)}&limit=10`
+        `${API_BASE_URL}/books/search?q=${encodeURIComponent(query)}&limit=10`,
+        { credentials: 'include' }
       );
       const data = await response.json();
       if (data.ok && data.data) {
@@ -272,6 +277,7 @@ export function AdminStorefronts() {
         `${API_BASE_URL}/admin/storefronts/${storefrontId}/series/${seriesId}/books`,
         {
           method: 'POST',
+          credentials: 'include',
           headers: getAdminHeaders(),
           body: JSON.stringify({ book_id: bookId, display_order: 0 }),
         }
@@ -293,7 +299,8 @@ export function AdminStorefronts() {
     try {
       const response = await fetch(
         `${API_BASE_URL}/admin/storefronts/${storefrontId}/series/${seriesId}/books/${bookId}`,
-        { method: 'DELETE', headers: getAdminHeaders() }
+        {
+          credentials: 'include',
       );
       const data = await response.json();
       if (data.ok) {

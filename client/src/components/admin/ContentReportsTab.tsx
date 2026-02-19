@@ -31,9 +31,8 @@ export function ContentReportsTab() {
       }
 
       const response = await fetch('/api/admin/content-reports', {
-        headers: {
-          'X-Admin-Token': token,
-        },
+        credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -66,10 +65,8 @@ export function ContentReportsTab() {
 
       const response = await fetch(`/api/admin/content-reports/${reportId}`, {
         method: 'PUT',
-        headers: {
-          'X-Admin-Token': token,
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: newStatus,
           reviewedBy: 'admin',

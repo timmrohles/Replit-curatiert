@@ -61,8 +61,8 @@ export function PagesTabContent({
       setMenuItemsError(null);
       
       const response = await fetch(`${API_BASE_URL}/navigation/items`, {
-        headers: {
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (response.ok) {
@@ -87,9 +87,8 @@ export function PagesTabContent({
       setExistingLinksLoading(true);
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/pages/${pageId}/navigation-links`, {
-        headers: {
-          'X-Admin-Token': token || '',
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (response.ok) {
@@ -119,14 +118,12 @@ export function PagesTabContent({
     // If navigation integration is active and we have a page ID
     if (showInNavigation && selectedParentMenuId && editingPage?.id) {
       try {
-        // ✅ FIX: Use proper auth headers (both Authorization + X-Admin-Token)
+        // Use session-based auth via credentials: 'include'
         const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
         const response = await fetch(`${API_BASE_URL}/admin/menu-items/${selectedParentMenuId}/link-page`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Admin-Token': token || '',
-          },
+          credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             pageId: editingPage.id,
           }),
@@ -181,10 +178,9 @@ export function PagesTabContent({
     try {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/menu-items/${menuItemId}/unlink-page`, {
+            credentials: 'include',
         method: 'DELETE',
-        headers: {
-          'X-Admin-Token': token || '',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (response.ok) {

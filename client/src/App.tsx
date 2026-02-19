@@ -13,6 +13,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { LocaleLayout } from './components/layout/LocaleLayout';
 import { DEFAULT_LOCALE, isValidLocale, LocaleProvider } from './utils/LocaleContext';
 import { Loader2 } from 'lucide-react';
+import { ImpersonationBanner } from './components/ImpersonationBanner';
 
 const CMSHomepage = React.lazy(() => import('./components/cms/CMSHomepage').then(m => ({ default: m.CMSHomepage })));
 const HomepageFeedView = React.lazy(() => import('./pages/dashboard/HomepageFeedView').then(m => ({ default: m.HomepageFeedView })));
@@ -198,6 +199,7 @@ function App() {
       <HelmetProvider>
         <ThemeProvider>
           <QueryClientProvider client={queryClient}>
+            <ImpersonationBanner />
             <FavoritesProvider>
               <ReadingListProvider>
               <CartProvider>

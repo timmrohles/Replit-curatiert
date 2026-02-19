@@ -21,9 +21,7 @@ export type { Curator } from '../apiSchemas';
 export async function getAllCurators(): Promise<import('../apiSchemas').Curator[]> {
   try {
     // ✅ ADMIN AUTH: Use admin headers for content manager
-    const response = await fetch(`${API_BASE_URL}/curators`, {
-      headers: getAdminAuthHeaders(),
-    });
+    const response = await fetch(`${API_BASE_URL}/curators`, { credentials: 'include', headers: getAdminAuthHeaders() });
     
     if (!response.ok) {
       console.error('❌ Failed to fetch curators:', response.status, response.statusText);
@@ -48,8 +46,8 @@ export async function getCurator(id: string): Promise<import('../apiSchemas').Cu
   try {
     // ✅ MIGRATED: Use canonical /api/curators/:id endpoint
     const response = await fetch(`${API_BASE_URL}/curators/${id}`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     const result: ApiResponse<import('../apiSchemas').Curator> = await response.json();
     
@@ -67,6 +65,7 @@ export async function saveCurator(curator: import('../apiSchemas').Curator): Pro
   try {
     const response = await fetch(`${API_BASE_URL}/curators`, {
       method: 'POST',
+      credentials: 'include',
       headers: getAdminAuthHeaders(),
       body: JSON.stringify(curator),
     });
@@ -90,6 +89,7 @@ export async function deleteCurator(id: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/curators/${id}`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: getAdminAuthHeaders(),
     });
     const result: ApiResponse<{ id: string }> = await response.json();
@@ -112,10 +112,9 @@ export async function uploadCuratorAvatar(file: File): Promise<string | null> {
     // ✅ FIXED: Use correct token fallback chain
     const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
     const response = await fetch(`${API_BASE_URL}/curators/upload-avatar`, {
+          credentials: 'include',
       method: 'POST',
-      headers: {
-        'X-Admin-Token': token || '',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: formData,
     });
     

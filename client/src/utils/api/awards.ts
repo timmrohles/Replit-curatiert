@@ -77,6 +77,7 @@ export interface BookAward {
 export async function getBookAwards(bookId: number | string): Promise<BookAward[]> {
   try {
     const response = await fetch(`${BASE_URL}/awards/books/${bookId}`, {
+          credentials: 'include',
       headers
     });
 
@@ -105,6 +106,7 @@ export async function getBookAwards(bookId: number | string): Promise<BookAward[
 export async function getAllAwards(): Promise<Award[]> {
   try {
     const response = await fetch(`${BASE_URL}/awards?limit=100`, {
+          credentials: 'include',
       headers
     });
 
@@ -294,18 +296,17 @@ export function clearAwardsCache(): void {
 }
 
 function getAdminHeaders(): HeadersInit {
-  const token = localStorage.getItem('admin_token') || localStorage.getItem('admin_neon_token') || '';
   return {
-    ...headers,
-    'X-Admin-Token': token,
+    'Content-Type': 'application/json',
   };
 }
 
 export async function saveAward(award: Partial<Award>): Promise<Award | null> {
   try {
     const response = await fetch(`${BASE_URL}/awards`, {
-      method: 'POST',
-      headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
       body: JSON.stringify(award),
     });
     const data = await response.json();
@@ -321,8 +322,9 @@ export async function saveAward(award: Partial<Award>): Promise<Award | null> {
 export async function deleteAward(id: string | number): Promise<boolean> {
   try {
     const response = await fetch(`${BASE_URL}/awards/${id}`, {
-      method: 'DELETE',
-      headers: getAdminHeaders(),
+          method: 'DELETE',
+          credentials: 'include',
+          headers: getAdminHeaders(),
     });
     const data = await response.json();
     if (data.success) clearAwardsCache();
@@ -336,8 +338,9 @@ export async function deleteAward(id: string | number): Promise<boolean> {
 export async function toggleAwardVisibility(id: string | number, visible: boolean): Promise<boolean> {
   try {
     const response = await fetch(`${BASE_URL}/awards/${id}/visibility`, {
-      method: 'PATCH',
-      headers: getAdminHeaders(),
+          method: 'PATCH',
+          credentials: 'include',
+          headers: getAdminHeaders(),
       body: JSON.stringify({ visible }),
     });
     const data = await response.json();
@@ -357,7 +360,8 @@ export async function uploadAwardLogo(file: File): Promise<string | null> {
     const token = localStorage.getItem('admin_token') || localStorage.getItem('admin_neon_token') || '';
     const response = await fetch(`${BASE_URL}/admin/awards/upload-logo`, {
       method: 'POST',
-      headers: { 'X-Admin-Token': token },
+      credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       body: formData,
     });
     const data = await response.json();

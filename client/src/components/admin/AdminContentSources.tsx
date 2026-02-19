@@ -161,6 +161,7 @@ export function AdminContentSources() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/admin/content-sources`, {
+            credentials: 'include',
         headers: getAdminHeaders(),
       });
 

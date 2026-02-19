@@ -33,7 +33,8 @@ export function AdminUnmatchedBooks() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/unmatched-books`, {
-        headers: { 'X-Admin-Token': adminToken }
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
       });
       const data = await res.json();
       if (data.ok) {
@@ -53,7 +54,8 @@ export function AdminUnmatchedBooks() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/admin/batch-match-books`, {
         method: 'POST',
-        headers: { 'X-Admin-Token': adminToken, 'Content-Type': 'application/json' }
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
       });
       const data = await res.json();
       if (data.ok) {

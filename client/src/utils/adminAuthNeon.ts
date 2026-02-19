@@ -32,6 +32,7 @@ export async function loginAdminNeon(password: string): Promise<{ success: boole
   try {
     // ✅ MIGRATED: Use canonical /api/admin/auth/login endpoint
     const response = await fetch(`${API_BASE_URL}/admin/auth/login`, {
+          credentials: 'include',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -75,9 +76,8 @@ export async function logoutAdminNeon(): Promise<void> {
     try {
       await fetch(`${API_BASE_URL}/admin/auth/neon/logout`, {
         method: 'POST',
-        headers: {
-          'X-Admin-Token': token
-        }
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
       });
     } catch (error) {
       logError('Logout error:', error);
@@ -99,6 +99,7 @@ export async function verifyAdminNeonToken(): Promise<boolean> {
   try {
     // ✅ MIGRATED: Use canonical /api/admin/auth/verify endpoint
     const response = await fetch(`${API_BASE_URL}/admin/auth/verify`, {
+          credentials: 'include',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

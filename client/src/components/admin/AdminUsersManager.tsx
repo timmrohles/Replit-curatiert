@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Search, ChevronLeft, ChevronRight, Shield, ShieldCheck, User, UserX, Trash2 } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Shield, ShieldCheck, User, UserX, Trash2, Eye } from 'lucide-react';
+import { useAuth } from '../../hooks/use-auth';
 
 interface UserRecord {
   id: string;
@@ -34,6 +35,8 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export function AdminUsersManager() {
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.role === 'super_admin';
   const [data, setData] = useState<UsersResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -115,6 +118,25 @@ export function AdminUsersManager() {
       else {
         const err = await res.json();
         alert(err.message || 'Fehler beim Loschen');
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const startImpersonation = async (userId: string) => {
+    if (!confirm('Möchtest du diesen Benutzer wirklich impersonieren? Sensible Daten (IBAN, Steuer etc.) werden maskiert.')) return;
+    setActionLoading(userId);
+    try {
+      const res = await fetch(`/api/admin/impersonate/${userId}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        window.location.href = '/dashboard';
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Impersonation fehlgeschlagen');
       }
     } finally {
       setActionLoading(null);
@@ -241,15 +263,28 @@ export function AdminUsersManager() {
                       {u.createdAt ? new Date(u.createdAt).toLocaleDateString('de-DE') : '-'}
                     </td>
                     <td className="py-3">
-                      <button
-                        onClick={() => deleteUser(u.id)}
-                        disabled={actionLoading === u.id}
-                        className="p-1 rounded hover:bg-red-50 text-red-500"
-                        title="Benutzer loschen"
-                        data-testid={`button-delete-user-${u.id}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {isSuperAdmin && u.id !== currentUser?.id && (
+                          <button
+                            onClick={() => startImpersonation(u.id)}
+                            disabled={actionLoading === u.id}
+                            className="p-1 rounded hover:bg-blue-50 text-blue-500"
+                            title="Als Benutzer anmelden (Impersonieren)"
+                            data-testid={`button-impersonate-user-${u.id}`}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteUser(u.id)}
+                          disabled={actionLoading === u.id}
+                          className="p-1 rounded hover:bg-red-50 text-red-500"
+                          title="Benutzer loschen"
+                          data-testid={`button-delete-user-${u.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

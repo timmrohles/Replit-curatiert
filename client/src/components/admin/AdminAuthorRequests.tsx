@@ -35,7 +35,8 @@ export function AdminAuthorRequests() {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/admin/author-requests?status=${statusFilter}`, {
-        headers: { 'X-Admin-Token': getAdminToken() },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       const data = await res.json();
       if (data.ok) {
@@ -52,11 +53,10 @@ export function AdminAuthorRequests() {
     setActionLoading(id);
     try {
       const res = await fetch(`${API_BASE}/admin/author-requests/${id}/approve`, {
+            credentials: 'include',
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': getAdminToken(),
-        },
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ note: noteInputs[id] || '' }),
       });
       const data = await res.json();
@@ -72,11 +72,10 @@ export function AdminAuthorRequests() {
     setActionLoading(id);
     try {
       const res = await fetch(`${API_BASE}/admin/author-requests/${id}/reject`, {
+            credentials: 'include',
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': getAdminToken(),
-        },
+          'Content-Type': 'application/json' },
         body: JSON.stringify({ note: noteInputs[id] || '' }),
       });
       const data = await res.json();

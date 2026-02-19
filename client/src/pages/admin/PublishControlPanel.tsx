@@ -78,10 +78,9 @@ export default function PublishControlPanel() {
       const url = `/api/${endpoint}`;
 
       const response = await fetch(url, {
+            credentials: 'include',
         method: "POST",
-        headers: {
-          "X-Admin-Token": adminToken,
-          "Content-Type": "application/json",
+        headers: {"Content-Type": "application/json",
         },
       });
 

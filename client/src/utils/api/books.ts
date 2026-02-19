@@ -21,8 +21,8 @@ export type { Book } from '../apiSchemas';
 export async function getAllBooks(): Promise<Book[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/books`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     
     // Check if response is actually JSON
@@ -60,8 +60,8 @@ export async function getAllBooks(): Promise<Book[]> {
 export async function getBook(id: string): Promise<Book | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/books/${id}`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
     const result = await safeJsonParse<Book>(response);
     
@@ -86,6 +86,7 @@ export async function getBooksBatch(ids: string[]): Promise<Book[]> {
     if (ids.length === 0) return [];
     
     const response = await fetch(`${API_BASE_URL}/books/batch`, {
+          credentials: 'include',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -104,6 +105,7 @@ export async function saveBook(book: Book): Promise<Book | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/books`, {
       method: 'POST',
+      credentials: 'include',
       headers: getAdminAuthHeaders(),
       body: JSON.stringify(book),
     });
@@ -126,10 +128,9 @@ export async function uploadBookCover(file: File): Promise<string | null> {
     
     const token = localStorage.getItem('admin_token');
     const response = await fetch(`${API_BASE_URL}/books/upload-cover`, {
+          credentials: 'include',
       method: 'POST',
-      headers: {
-        'X-Admin-Token': token || '',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: formData,
     });
     

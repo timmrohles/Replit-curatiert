@@ -93,10 +93,7 @@ export function AdminPersons() {
 
   const API_BASE = '/api';
 
-  const getHeaders = () => ({
-    'X-Admin-Token': localStorage.getItem('admin_token') || '',
-    'Content-Type': 'application/json'
-  });
+  const getHeaders = () => ({ 'Content-Type': 'application/json' });
 
   // ==================================================================
   // LOAD DATA
@@ -115,9 +112,7 @@ export function AdminPersons() {
       params.append('limit', String(limit));
       params.append('offset', String(offset));
 
-      const response = await fetch(`${API_BASE}/persons?${params}`, {
-        headers: getHeaders()
-      });
+      const response = await fetch(`${API_BASE}/persons?${params}`, { credentials: 'include', headers: getHeaders() });
       
       if (!response.ok) {
         const text = await response.text();
@@ -145,9 +140,7 @@ export function AdminPersons() {
   async function loadPersonAwards(personId: string) {
     setLoadingAwards(true);
     try {
-      const response = await fetch(`${API_BASE}/persons/${personId}`, {
-        headers: getHeaders()
-      });
+      const response = await fetch(`${API_BASE}/persons/${personId}`, { credentials: 'include', headers: getHeaders() });
       
       if (!response.ok) {
         console.error(`❌ Load person awards failed: HTTP ${response.status}`);
@@ -182,8 +175,9 @@ export function AdminPersons() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/persons`, {
-        method: 'POST',
-        headers: getHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getHeaders(),
         body: JSON.stringify(editingPerson)
       });
       
@@ -216,10 +210,7 @@ export function AdminPersons() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/persons/${id}`, {
-        method: 'DELETE',
-        headers: getHeaders()
-      });
+      const response = await fetch(`${API_BASE}/persons/${id}`, { method: 'DELETE', credentials: 'include', headers: getHeaders() });
       
       if (!response.ok) {
         const text = await response.text();

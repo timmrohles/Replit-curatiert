@@ -218,10 +218,8 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
     try {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/sections/${sectionId}/items`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (response.ok) {
@@ -241,6 +239,7 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/books/search?q=${encodeURIComponent(searchQuery)}&limit=10`, {
+            credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -301,10 +300,8 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
       
       const response = await fetch(`${API_BASE_URL}/admin/sections/${sectionId}/items`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       
@@ -329,10 +326,8 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/items/${itemId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       
       if (response.ok) {
@@ -362,19 +357,15 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
       
       await fetch(`${API_BASE_URL}/admin/items/${currentItem.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sort_order: targetItem.sort_order }),
       });
       
       await fetch(`${API_BASE_URL}/admin/items/${targetItem.id}`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sort_order: currentItem.sort_order }),
       });
       
@@ -985,10 +976,8 @@ function MultiSelectCategories({ selectedIds, onChange }: { selectedIds: number[
     try {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/categories`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       const result = await response.json();
       setCategories(result.data || []);
@@ -1065,6 +1054,7 @@ function MultiSelectTags({ selectedIds, onChange }: { selectedIds: number[]; onC
   const loadTags = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/onix-tags`, {
+            credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1094,10 +1084,8 @@ function MultiSelectTags({ selectedIds, onChange }: { selectedIds: number[]; onC
       const newVisible = !tag.visible;
       const resp = await fetch(`${API_BASE_URL}/onix-tags/${tag.id}/visibility`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': adminToken,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visible: newVisible }),
       });
       if (resp.ok) {
@@ -1199,6 +1187,7 @@ function MultiSelectAwardDefinitions({ selectedIds, onChange }: { selectedIds: n
   const loadDefinitions = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/awards`, {
+            credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1228,10 +1217,8 @@ function MultiSelectAwardDefinitions({ selectedIds, onChange }: { selectedIds: n
       const newVisible = !def.visible;
       const resp = await fetch(`${API_BASE_URL}/awards/${def.id}/visibility`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': adminToken,
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ visible: newVisible }),
       });
       if (resp.ok) {
@@ -1332,6 +1319,7 @@ function MultiSelectAwardInstances({ selectedIds, onChange }: { selectedIds: num
   const loadInstances = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/award_editions`, {
+            credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1418,6 +1406,7 @@ function MultiSelectPublishers({ selectedIds, onChange }: { selectedIds: number[
   const loadPublishers = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/publishers`, {
+            credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -1509,6 +1498,7 @@ function ExcludeBooksPicker({ selectedIds, onChange }: ExcludeBooksPickerProps) 
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/books/search?q=${encodeURIComponent(searchQuery)}&limit=10`, {
+            credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

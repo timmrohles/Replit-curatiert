@@ -85,9 +85,7 @@ function getCreatorAuthHeaders(): HeadersInit {
 function getAdminAuthHeaders(): HeadersInit {
   const token = localStorage.getItem('admin_token');
   return {
-    'Content-Type': 'application/json',
-    'X-Admin-Token': token || '',
-  };
+    'Content-Type': 'application/json' };
 }
 
 /**
@@ -116,6 +114,7 @@ async function safeJsonParse<T>(response: Response): Promise<ApiResponse<T> | nu
 export async function getCreatorStorefronts(): Promise<Storefront[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/creator/storefronts`, {
+          credentials: 'include',
       headers: getCreatorAuthHeaders(),
     });
 
@@ -133,6 +132,7 @@ export async function getCreatorStorefronts(): Promise<Storefront[]> {
 export async function getCreatorStorefront(id: string): Promise<Storefront | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/creator/storefronts/${id}`, {
+          credentials: 'include',
       headers: getCreatorAuthHeaders(),
     });
 
@@ -152,6 +152,7 @@ export async function createStorefront(data: Partial<Storefront>): Promise<Store
     console.log('📤 Creating storefront:', data);
     
     const response = await fetch(`${API_BASE_URL}/creator/storefronts`, {
+          credentials: 'include',
       method: 'POST',
       headers: getCreatorAuthHeaders(),
       body: JSON.stringify(data),
@@ -182,6 +183,7 @@ export async function updateStorefront(id: string, data: Partial<Storefront>): P
     console.log('📤 Updating storefront:', id, data);
     
     const response = await fetch(`${API_BASE_URL}/creator/storefronts/${id}`, {
+          credentials: 'include',
       method: 'PUT',
       headers: getCreatorAuthHeaders(),
       body: JSON.stringify(data),
@@ -212,6 +214,7 @@ export async function deleteStorefront(id: string): Promise<boolean> {
     console.log('📤 Deleting storefront:', id);
     
     const response = await fetch(`${API_BASE_URL}/creator/storefronts/${id}`, {
+          credentials: 'include',
       method: 'DELETE',
       headers: getCreatorAuthHeaders(),
     });
@@ -236,6 +239,7 @@ export async function publishStorefront(id: string, isPublished: boolean): Promi
     console.log('📤 Publishing storefront:', id, isPublished);
     
     const response = await fetch(`${API_BASE_URL}/creator/storefronts/${id}/publish`, {
+          credentials: 'include',
       method: 'POST',
       headers: getCreatorAuthHeaders(),
       body: JSON.stringify({ is_published: isPublished }),
@@ -268,8 +272,8 @@ export async function publishStorefront(id: string, isPublished: boolean): Promi
 export async function getPublicStorefront(slug: string): Promise<Storefront | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/storefronts/${slug}`, {
-      headers: {
-      },
+          credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
     });
 
     const result = await safeJsonParse<Storefront>(response);
@@ -289,9 +293,7 @@ export async function getPublicStorefront(slug: string): Promise<Storefront | nu
  */
 export async function getAllStorefrontsAdmin(): Promise<Storefront[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/admin/storefronts`, {
-      headers: getAdminAuthHeaders(),
-    });
+    const response = await fetch(`${API_BASE_URL}/admin/storefronts`, { credentials: 'include', headers: getAdminAuthHeaders() });
 
     const result = await safeJsonParse<Storefront[]>(response);
     return result?.data || [];
@@ -308,6 +310,7 @@ export async function deleteStorefrontAdmin(id: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/admin/storefronts/${id}`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: getAdminAuthHeaders(),
     });
 

@@ -30,14 +30,9 @@ export function getPublicHeaders(): HeadersInit {
   };
 }
 
-export function getAdminHeaders(token?: string): HeadersInit {
-  const adminToken = token || (typeof window !== 'undefined' 
-    ? (localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || localStorage.getItem('neon_admin_token'))
-    : null);
-  
+export function getAdminHeaders(): HeadersInit {
   return {
     'Content-Type': 'application/json',
-    'X-Admin-Token': adminToken || '',
   };
 }
 
@@ -169,13 +164,14 @@ export async function apiFetch<T = any>(
   try {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers = {
-      ...(isAdmin ? getAdminHeaders(token) : getPublicHeaders()),
+      ...(isAdmin ? getAdminHeaders() : getPublicHeaders()),
       ...customHeaders,
     };
 
     const response = await fetch(url, {
       method,
       headers,
+      credentials: 'include',
       body: body ? JSON.stringify(body) : undefined,
     });
 

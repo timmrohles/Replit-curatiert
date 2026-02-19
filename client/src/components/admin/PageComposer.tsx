@@ -137,7 +137,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
     try {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const res = await fetch(`${API_BASE_URL}/curators`, {
-        headers: { 'X-Admin-Token': token || '' },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
       if (res.ok) {
         const result = await res.json();
@@ -167,10 +168,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
     try {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/pages/${page.id}/sections`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -323,10 +322,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
 
       const response = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -362,10 +359,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
       
       const response = await fetch(`${API_BASE_URL}/admin/sections/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -398,10 +393,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
       // Use standard sections endpoint (URL fixed with correct function name)
       const response = await fetch(`${API_BASE_URL}/admin/pages/${page.id}/sections`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -444,10 +437,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
       // Batch update via reorder endpoint
       const response = await fetch(`${API_BASE_URL}/admin/pages/${page.id}/sections/reorder`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': token || '',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sectionOrders: updates }),
       });
       

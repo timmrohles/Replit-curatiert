@@ -51,9 +51,8 @@ export function SiteBannerTab() {
       setError(null);
 
       const response = await fetch(`${API_BASE_URL}/site-config/banners`, {
-        headers: {
-          'X-Admin-Token': getAdminToken(),
-        },
+            credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -144,11 +143,10 @@ export function SiteBannerTab() {
       const method = isCreating ? 'POST' : 'PUT';
 
       const response = await fetch(endpoint, {
+            credentials: 'include',
         method,
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': getAdminToken(),
-        },
+          'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editingBanner.name.trim(),
           message: editingBanner.message.trim(),
@@ -192,10 +190,9 @@ export function SiteBannerTab() {
 
     try {
       const response = await fetch(`${API_BASE_URL}/site-config/banner/${id}`, {
+            credentials: 'include',
         method: 'DELETE',
-        headers: {
-          'X-Admin-Token': getAdminToken(),
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
       if (!response.ok) {
@@ -213,11 +210,10 @@ export function SiteBannerTab() {
   const handleToggleVisibility = async (banner: Banner) => {
     try {
       const response = await fetch(`${API_BASE_URL}/site-config/banner/${banner.id}`, {
+            credentials: 'include',
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'X-Admin-Token': getAdminToken(),
-        },
+          'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...banner,
           visible: !banner.visible,

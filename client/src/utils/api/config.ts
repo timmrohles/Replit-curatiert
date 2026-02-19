@@ -22,11 +22,8 @@ console.log('🚀 API MODULE LOADED - VERSION 2.1.0 - ZOD VALIDATION ACTIVE');
  * Used for all admin-protected endpoints
  */
 export function getAdminAuthHeaders(): HeadersInit {
-  // ✅ FIXED: Check for NEON token first (new system), then fallback to old token
-  const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
   return {
     'Content-Type': 'application/json',
-    'X-Admin-Token': token || '',
   };
 }
 

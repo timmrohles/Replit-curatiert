@@ -147,10 +147,7 @@ export function AdminAwardsNeon() {
 
   const API_BASE = '/api';
 
-  const getHeaders = () => ({
-    'X-Admin-Token': localStorage.getItem('admin_token') || '',
-    'Content-Type': 'application/json'
-  });
+  const getHeaders = () => ({ 'Content-Type': 'application/json' });
 
   // ==================================================================
   // LOAD DATA
@@ -176,9 +173,7 @@ export function AdminAwardsNeon() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/awards`, {
-        headers: getHeaders()
-      });
+      const response = await fetch(`${API_BASE}/awards`, { credentials: 'include', headers: getHeaders() });
       const data = await response.json();
       // ✅ FIX: Backend gibt "ok" zurück, nicht "success"
       if (data.ok || data.success) {
@@ -198,9 +193,7 @@ export function AdminAwardsNeon() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/awards/${awardId}/editions`, {
-        headers: getHeaders()
-      });
+      const response = await fetch(`${API_BASE}/awards/${awardId}/editions`, { credentials: 'include', headers: getHeaders() });
       const data = await response.json();
       if (data.success) {
         // ✅ CRASH-SAFE: Ensure editions is always an array
@@ -222,7 +215,7 @@ export function AdminAwardsNeon() {
     try {
       const response = await fetch(
         `${API_BASE}/awards/${selectedAward!.id}/editions/${editionId}/outcomes`,
-        { headers: getHeaders() }
+        { credentials: 'include', headers: getHeaders() }
       );
       const data = await response.json();
       if (data.success) {
@@ -245,7 +238,7 @@ export function AdminAwardsNeon() {
     try {
       const response = await fetch(
         `${API_BASE}/awards/${selectedAward!.id}/editions/${selectedEdition!.id}/outcomes/${outcomeId}/recipients`,
-        { headers: getHeaders() }
+        { credentials: 'include', headers: getHeaders() }
       );
       const data = await response.json();
       if (data.success) {
@@ -277,8 +270,9 @@ export function AdminAwardsNeon() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE}/awards`, {
-        method: 'POST',
-        headers: getHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getHeaders(),
         body: JSON.stringify(editingAward)
       });
       const data = await response.json();
@@ -309,6 +303,7 @@ export function AdminAwardsNeon() {
         `${API_BASE}/awards/${selectedAward!.id}/editions`,
         {
           method: 'POST',
+          credentials: 'include',
           headers: getHeaders(),
           body: JSON.stringify(editingEdition)
         }
@@ -341,6 +336,7 @@ export function AdminAwardsNeon() {
         `${API_BASE}/awards/${selectedAward!.id}/editions/${selectedEdition!.id}/outcomes`,
         {
           method: 'POST',
+          credentials: 'include',
           headers: getHeaders(),
           body: JSON.stringify(editingOutcome)
         }
@@ -383,6 +379,7 @@ export function AdminAwardsNeon() {
         `${API_BASE}/awards/${selectedAward!.id}/editions/${selectedEdition!.id}/outcomes/${selectedOutcome!.id}/recipients`,
         {
           method: 'POST',
+          credentials: 'include',
           headers: getHeaders(),
           body: JSON.stringify(editingRecipient)
         }
@@ -412,10 +409,7 @@ export function AdminAwardsNeon() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/awards/${id}`, {
-        method: 'DELETE',
-        headers: getHeaders()
-      });
+      const response = await fetch(`${API_BASE}/awards/${id}`, { method: 'DELETE', credentials: 'include', headers: getHeaders() });
       const data = await response.json();
       if (data.success) {
         setSuccess('Award deleted');
@@ -438,7 +432,7 @@ export function AdminAwardsNeon() {
     try {
       const response = await fetch(
         `${API_BASE}/awards/${selectedAward!.id}/editions/${id}`,
-        { method: 'DELETE', headers: getHeaders() }
+        { method: 'DELETE', credentials: 'include', headers: getHeaders() }
       );
       const data = await response.json();
       if (data.success) {
@@ -462,7 +456,7 @@ export function AdminAwardsNeon() {
     try {
       const response = await fetch(
         `${API_BASE}/awards/${selectedAward!.id}/editions/${selectedEdition!.id}/outcomes/${id}`,
-        { method: 'DELETE', headers: getHeaders() }
+        { method: 'DELETE', credentials: 'include', headers: getHeaders() }
       );
       const data = await response.json();
       if (data.success) {
@@ -486,7 +480,7 @@ export function AdminAwardsNeon() {
     try {
       const response = await fetch(
         `${API_BASE}/awards/${selectedAward!.id}/editions/${selectedEdition!.id}/outcomes/${selectedOutcome!.id}/recipients/${id}`,
-        { method: 'DELETE', headers: getHeaders() }
+        { method: 'DELETE', credentials: 'include', headers: getHeaders() }
       );
       const data = await response.json();
       if (data.success) {
@@ -515,7 +509,7 @@ export function AdminAwardsNeon() {
     try {
       const response = await fetch(
         `${API_BASE}/books?search=${encodeURIComponent(query)}&limit=10`,
-        { headers: getHeaders() }
+        { credentials: 'include', headers: getHeaders() }
       );
       const data = await response.json();
       if (data.success) {
@@ -539,6 +533,7 @@ export function AdminAwardsNeon() {
         `${API_BASE}/persons/search`,
         {
           method: 'POST',
+          credentials: 'include',
           headers: getHeaders(),
           body: JSON.stringify({ query, limit: 10 })
         }

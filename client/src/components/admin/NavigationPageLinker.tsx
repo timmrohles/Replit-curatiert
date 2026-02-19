@@ -49,9 +49,8 @@ export function NavigationPageLinker({
       try {
         const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
         const response = await fetch(`${API_BASE_URL}/admin/pages`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
         });
 
         if (response.ok) {
@@ -89,10 +88,8 @@ export function NavigationPageLinker({
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/menu-items/${menuItemId}/link-page`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           page_id: selectedPageId,
         }),

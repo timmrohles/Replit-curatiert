@@ -92,10 +92,8 @@ function getApiBase(): string {
 }
 
 function getAdminHeaders(): HeadersInit {
-  const token = getAdminToken();
   return {
     'Content-Type': 'application/json',
-    'X-Admin-Token': token || '',
   };
 }
 
@@ -750,6 +748,7 @@ export function AdminNavigationV2() {
       setError(null);
 
       const response = await fetch(`${getApiBase()}/navigation/admin/items`, {
+            credentials: 'include',
         headers: getAdminHeaders(),
       });
 
@@ -916,8 +915,9 @@ export function AdminNavigationV2() {
       };
 
       const response = await fetch(`${getApiBase()}/navigation/admin/items`, {
-        method: 'POST',
-        headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify(payload),
       });
 
@@ -950,8 +950,9 @@ export function AdminNavigationV2() {
 
     try {
       const response = await fetch(`${getApiBase()}/navigation/admin/items/${id}`, {
-        method: 'DELETE',
-        headers: getAdminHeaders(),
+          method: 'DELETE',
+          credentials: 'include',
+          headers: getAdminHeaders(),
       });
 
       if (!response.ok) {
@@ -996,8 +997,9 @@ export function AdminNavigationV2() {
       };
 
       const response = await fetch(`${getApiBase()}/navigation/admin/items`, {
-        method: 'POST',
-        headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify(payload),
       });
 
@@ -1022,8 +1024,9 @@ export function AdminNavigationV2() {
   const moveItem = async (itemId: number, newOrder: number, newParentId: number | null) => {
     try {
       const response = await fetch(`${getApiBase()}/navigation/admin/items`, {
-        method: 'POST',
-        headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({
           id: itemId,
           display_order: newOrder,
@@ -1045,8 +1048,9 @@ export function AdminNavigationV2() {
   const reorderItems = async (reorderedItems: { id: number; display_order: number; parent_id: number | null }[]) => {
     try {
       const response = await fetch(`${getApiBase()}/navigation/admin/items/reorder`, {
-        method: 'POST',
-        headers: getAdminHeaders(),
+          method: 'POST',
+          credentials: 'include',
+          headers: getAdminHeaders(),
         body: JSON.stringify({ items: reorderedItems }),
       });
 
@@ -1102,6 +1106,7 @@ export function AdminNavigationV2() {
   const exportFallback = async () => {
     try {
       const response = await fetch(`${getApiBase()}/navigation`, {
+            credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
 

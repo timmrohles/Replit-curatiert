@@ -102,10 +102,8 @@ class AwardsAPI {
   }
 
   private getAdminHeaders(): HeadersInit {
-    const token = localStorage.getItem('admin_token');
     return {
       ...this.headers,
-      'X-Admin-Token': token || '',
     };
   }
 
@@ -130,6 +128,7 @@ class AwardsAPI {
   // Admin Auth
   async login(password: string): Promise<{ token: string; expiresAt: string }> {
     const response = await fetch(`${this.baseUrl}/admin/auth/neon/login`, {
+          credentials: 'include',
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify({ password })
@@ -146,7 +145,8 @@ class AwardsAPI {
       ? `${this.baseUrl}/awards?search=${encodeURIComponent(search)}`
       : `${this.baseUrl}/awards`;
     
-    const response = await fetch(url, { headers: this.headers });
+    const response = await fetch(url, {
+          credentials: 'include', headers: this.headers });
     const data = await response.json();
     if (!data.ok) throw new Error(data.error?.message || 'Failed to fetch awards');
     return data.data.awards;
@@ -154,6 +154,7 @@ class AwardsAPI {
 
   async getAwardEditions(awardId: number): Promise<AwardEdition[]> {
     const response = await fetch(`${this.baseUrl}/awards/${awardId}/editions`, {
+          credentials: 'include',
       headers: this.headers
     });
     const data = await response.json();
@@ -163,6 +164,7 @@ class AwardsAPI {
 
   async getEditionOutcomes(editionId: number): Promise<AwardOutcome[]> {
     const response = await fetch(`${this.baseUrl}/awards/editions/${editionId}/outcomes`, {
+          credentials: 'include',
       headers: this.headers
     });
     const data = await response.json();
@@ -175,7 +177,8 @@ class AwardsAPI {
     const url = `${this.baseUrl}/awards/search/books?q=${encodeURIComponent(query)}&limit=10`;
     console.log('📡 Fetching URL:', url);
     
-    const response = await fetch(url, { headers: this.headers });
+    const response = await fetch(url, {
+          credentials: 'include', headers: this.headers });
     const data = await response.json();
     
     console.log('📦 Search response:', data);
@@ -196,6 +199,7 @@ class AwardsAPI {
   async checkAwardDuplicate(name: string, slug?: string): Promise<{ exists: boolean; award: Award | null }> {
     const response = await fetch(`${this.baseUrl}/admin/awards/check-duplicate`, {
       method: 'POST',
+      credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders(),
       body: JSON.stringify({ name, slug })
     });
@@ -208,6 +212,7 @@ class AwardsAPI {
   async checkBookRecipient(bookId: number, awardId: number): Promise<{ exists: boolean; recipient: any | null }> {
     const response = await fetch(`${this.baseUrl}/admin/awards/check-book-recipient`, {
       method: 'POST',
+      credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders(),
       body: JSON.stringify({ book_id: bookId, award_id: awardId })
     });
@@ -222,6 +227,7 @@ class AwardsAPI {
     
     const response = await fetch(`${this.baseUrl}/admin/awards`, {
       method: 'POST',
+      credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders(),
       body: JSON.stringify(award)
     });
@@ -238,6 +244,7 @@ class AwardsAPI {
   async updateAward(id: number, award: Partial<Award>): Promise<Award> {
     const response = await fetch(`${this.baseUrl}/admin/awards/${id}`, {
       method: 'PUT',
+      credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders(),
       body: JSON.stringify(award)
     });
@@ -254,6 +261,7 @@ class AwardsAPI {
   async deleteAward(id: number): Promise<void> {
     const response = await fetch(`${this.baseUrl}/admin/awards/${id}`, {
       method: 'DELETE',
+      credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders()
     });
     
@@ -268,6 +276,7 @@ class AwardsAPI {
   async createEdition(awardId: number, edition: Partial<AwardEdition>): Promise<AwardEdition> {
     const response = await fetch(`${this.baseUrl}/admin/awards/${awardId}/editions`, {
       method: 'POST',
+      credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders(),
       body: JSON.stringify(edition)
     });
@@ -284,6 +293,7 @@ class AwardsAPI {
   async createOutcome(editionId: number, outcome: Partial<AwardOutcome>): Promise<AwardOutcome> {
     const response = await fetch(`${this.baseUrl}/admin/awards/editions/${editionId}/outcomes`, {
       method: 'POST',
+      credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders(),
       body: JSON.stringify(outcome)
     });
@@ -302,6 +312,7 @@ class AwardsAPI {
     
     const response = await fetch(`${this.baseUrl}/admin/awards/outcomes/${outcomeId}/recipients`, {
       method: 'POST',
+      credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders(),
       body: JSON.stringify(recipient)
     });
@@ -318,6 +329,7 @@ class AwardsAPI {
   async testCreateOutcome(): Promise<any> {
     const response = await fetch(`${this.baseUrl}/admin/awards/test`, {
       method: 'POST',
+      credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders(),
     });
     const data = await this.safeJsonParse(response);
@@ -327,6 +339,7 @@ class AwardsAPI {
 
   async testCreateOutcomePublic(): Promise<any> {
     const response = await fetch(`${this.baseUrl}/awards/test-public`, {
+          credentials: 'include',
       method: 'POST',
       headers: this.headers,
     });
@@ -338,6 +351,7 @@ class AwardsAPI {
   async removeRecipient(recipientId: number): Promise<void> {
     const response = await fetch(`${this.baseUrl}/admin/awards/recipients/${recipientId}`, {
       method: 'DELETE',
+      credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders()
     });
     
