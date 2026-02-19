@@ -20,7 +20,7 @@ export function AdminLogin() {
       } catch {
       }
       setStatus('redirecting');
-      window.location.href = '/api/login';
+      window.location.href = '/api/login?returnTo=/sys-mgmt-xK9/content-manager';
     };
     checkSession();
   }, []);

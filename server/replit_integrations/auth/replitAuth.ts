@@ -196,6 +196,10 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/login", (req, res, next) => {
     ensureStrategy(req);
+    const returnTo = req.query.returnTo as string;
+    if (returnTo && returnTo.startsWith("/")) {
+      (req.session as any).returnTo = returnTo;
+    }
     const authOptions: any = {
       scope: providerConfig.scopes,
     };
