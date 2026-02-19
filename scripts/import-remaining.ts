@@ -106,8 +106,8 @@ async function main() {
       let awardId = existingAwards.get(award.slug);
       if (!awardId) {
         const ins = await client.query(
-          `INSERT INTO awards (name, slug, website_url, description, country, created_at, updated_at) VALUES ($1,$2,$3,$4,$5,NOW(),NOW()) RETURNING id`,
-          [award.name, award.slug, award.url, award.description, award.category.includes("International") ? "International" : "Deutschland"]
+          `INSERT INTO awards (name, slug, description, country, created_at, updated_at) VALUES ($1,$2,$3,$4,NOW(),NOW()) RETURNING id`,
+          [award.name, award.slug, award.description, award.category.includes("International") ? "International" : "Deutschland"]
         );
         awardId = ins.rows[0].id;
         existingAwards.set(award.slug, awardId);

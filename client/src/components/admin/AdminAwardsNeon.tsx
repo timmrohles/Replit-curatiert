@@ -1035,14 +1035,51 @@ export function AdminAwardsNeon() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Country</label>
-              <input
-                type="text"
+              <label className="block text-sm font-medium mb-1">Land</label>
+              <select
                 value={editingAward.country || ''}
                 onChange={(e) => setEditingAward({ ...editingAward, country: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-                placeholder="e.g., Germany"
-              />
+                className="w-full px-3 py-2 border rounded-lg bg-white"
+                data-testid="select-award-country"
+              >
+                <option value="">-- Land wählen --</option>
+                <option value="Deutschland">Deutschland</option>
+                <option value="Österreich">Österreich</option>
+                <option value="Schweiz">Schweiz</option>
+                <option value="USA">USA</option>
+                <option value="Großbritannien">Großbritannien</option>
+                <option value="Frankreich">Frankreich</option>
+                <option value="Spanien">Spanien</option>
+                <option value="Italien">Italien</option>
+                <option value="Niederlande">Niederlande</option>
+                <option value="Belgien">Belgien</option>
+                <option value="Schweden">Schweden</option>
+                <option value="Norwegen">Norwegen</option>
+                <option value="Dänemark">Dänemark</option>
+                <option value="Finnland">Finnland</option>
+                <option value="Island">Island</option>
+                <option value="Polen">Polen</option>
+                <option value="Tschechien">Tschechien</option>
+                <option value="Ungarn">Ungarn</option>
+                <option value="Russland">Russland</option>
+                <option value="Japan">Japan</option>
+                <option value="China">China</option>
+                <option value="Indien">Indien</option>
+                <option value="Kanada">Kanada</option>
+                <option value="Australien">Australien</option>
+                <option value="Neuseeland">Neuseeland</option>
+                <option value="Irland">Irland</option>
+                <option value="Portugal">Portugal</option>
+                <option value="Brasilien">Brasilien</option>
+                <option value="Argentinien">Argentinien</option>
+                <option value="Mexiko">Mexiko</option>
+                <option value="Israel">Israel</option>
+                <option value="Türkei">Türkei</option>
+                <option value="Südafrika">Südafrika</option>
+                <option value="Nigeria">Nigeria</option>
+                <option value="Ägypten">Ägypten</option>
+                <option value="International">International</option>
+              </select>
             </div>
           </div>
 

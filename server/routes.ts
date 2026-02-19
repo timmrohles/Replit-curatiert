@@ -4402,7 +4402,23 @@ export async function registerRoutes(
   // ==================================================================
   app.get('/api/persons', async (_req: Request, res: Response) => {
     try {
-      const result = await queryDB('SELECT * FROM persons ORDER BY name ASC', []);
+      const result = await queryDB(`
+        SELECT p.id, p.name, p.slug, p.created_at, p.updated_at,
+          (SELECT json_agg(json_build_object(
+            'award_name', a.name,
+            'year', ae.year,
+            'outcome', ao.title,
+            'book_id', ar.book_id,
+            'notes', ar.notes
+          ) ORDER BY ae.year DESC)
+          FROM award_recipients ar
+          JOIN award_outcomes ao ON ao.id = ar.award_outcome_id
+          JOIN award_editions ae ON ae.id = ao.award_edition_id
+          JOIN awards a ON a.id = ae.award_id
+          WHERE ar.person_id = p.id) as awards
+        FROM persons p
+        ORDER BY p.name ASC
+      `, []);
       return res.json({ ok: true, data: result.rows });
     } catch (error) {
       return res.json({ ok: true, data: [] });

@@ -192,7 +192,7 @@ async function scrapeAward(info: { name: string; url: string; category: string }
   return {
     name: info.name,
     slug,
-    url: info.url,
+    source_url: info.url,
     category: info.category,
     description: descParagraphs.slice(0, 2).join(" "),
     editions,
