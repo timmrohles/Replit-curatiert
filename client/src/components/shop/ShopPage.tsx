@@ -453,7 +453,7 @@ export function ShopPage() {
             </form>
           </div>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-wrap" style={{ scrollbarWidth: 'none' }}>
             <FilterDropdown
               label="Kategorien"
               options={categoryOptions}
@@ -507,9 +507,20 @@ export function ShopPage() {
               onToggle={(v) => toggleFilter(selectedMedia, v, setSelectedMedia)}
               totalLabel="Medien"
             />
+            {hasActiveFilters && (
+              <button
+                onClick={clearAllFilters}
+                className="text-xs flex items-center gap-1 hover:opacity-70 transition-opacity px-3 py-2 flex-shrink-0 whitespace-nowrap"
+                style={{ color: 'var(--color-teal)' }}
+                data-testid="button-clear-filters"
+              >
+                <X className="w-3.5 h-3.5" />
+                Zurücksetzen
+              </button>
+            )}
+          </div>
 
-            <div className="h-6 w-px bg-foreground/15 flex-shrink-0" />
-
+          <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
             <Text variant="xs" className="whitespace-nowrap text-foreground/50 flex-shrink-0 !font-semibold">Sortieren:</Text>
             {sortOptions.map((option) => (
               <button
@@ -525,18 +536,6 @@ export function ShopPage() {
                 </Text>
               </button>
             ))}
-
-            {hasActiveFilters && (
-              <button
-                onClick={clearAllFilters}
-                className="text-xs flex items-center gap-1 hover:opacity-70 transition-opacity px-3 py-2 flex-shrink-0 whitespace-nowrap"
-                style={{ color: 'var(--color-teal)' }}
-                data-testid="button-clear-filters"
-              >
-                <X className="w-3.5 h-3.5" />
-                Zurücksetzen
-              </button>
-            )}
           </div>
 
           {allSelectedFilters.length > 0 && (
