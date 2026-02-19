@@ -1125,29 +1125,33 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
                 <div
                   role="group"
                   key={tag.entityId}
-                  className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none cursor-pointer transition-all duration-200 hover-elevate"
+                  className={`px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none ${isCuratorSection ? '' : 'cursor-pointer transition-all duration-200 hover-elevate'}`}
                   style={{ backgroundColor: tag.color }}
                 >
                   <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
                     {tag.label}
                   </Text>
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="p-0.5 rounded-full transition-colors"
-                    style={{ color: 'rgba(255,255,255,0.7)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
-                    data-testid={`button-remove-tag-${tag.entityId}`}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+                  {!isCuratorSection && (
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      className="p-0.5 rounded-full transition-colors"
+                      style={{ color: 'rgba(255,255,255,0.7)' }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                      data-testid={`button-remove-tag-${tag.entityId}`}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               ))}
-              <TagPickerDropdown
-                sectionId={section.id}
-                onAdd={handleAddTag}
-                existingIds={existingIds}
-              />
+              {!isCuratorSection && (
+                <TagPickerDropdown
+                  sectionId={section.id}
+                  onAdd={handleAddTag}
+                  existingIds={existingIds}
+                />
+              )}
             </div>
           </div>
         )}
