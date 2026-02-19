@@ -29,8 +29,10 @@ function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoadin
   const [isOpen, setIsOpen] = useState(false);
   const [filterSearch, setFilterSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -44,8 +46,12 @@ function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoadin
   }, []);
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+    if (isOpen) {
+      if (buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        setPanelPos({ top: rect.bottom + 4, left: rect.left });
+      }
+      if (inputRef.current) inputRef.current.focus();
     }
   }, [isOpen]);
 
@@ -67,8 +73,9 @@ function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoadin
   const testId = label.toLowerCase().replace(/[^a-z]/g, '');
 
   return (
-    <div className="relative flex-shrink-0" ref={dropdownRef}>
+    <div className="flex-shrink-0" ref={dropdownRef}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="inline-flex items-center gap-2 px-4 py-2.5 border bg-card text-sm font-medium transition-colors hover-elevate whitespace-nowrap"
@@ -92,8 +99,8 @@ function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoadin
 
       {isOpen && (
         <div
-          className="absolute top-full left-0 mt-1 w-80 max-h-96 overflow-hidden bg-card border shadow-lg z-50 flex flex-col"
-          style={{ borderColor: 'var(--color-border)', borderRadius: '4px' }}
+          className="fixed w-80 max-h-96 overflow-hidden bg-card border shadow-lg flex flex-col"
+          style={{ borderColor: 'var(--color-border)', borderRadius: '4px', zIndex: 9999, top: panelPos.top, left: panelPos.left }}
         >
           <div className="p-3 border-b" style={{ borderColor: 'var(--color-border)' }}>
             <div className="relative">
@@ -218,6 +225,7 @@ export function ShopPage() {
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
 
+  const [selectedCurators, setSelectedCurators] = useState<string[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
@@ -226,6 +234,7 @@ export function ShopPage() {
   const [selectedAwards, setSelectedAwards] = useState<string[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
 
+  const [curatorOptions, setCuratorOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [themeOptions, setThemeOptions] = useState<string[]>([]);
   const [seriesOptions] = useState<string[]>([]);
@@ -243,13 +252,18 @@ export function ShopPage() {
     const safeFetch = (url: string) => fetch(url).then(r => r.json()).catch(() => ({ ok: false, data: [] }));
 
     Promise.all([
+      safeFetch('/api/curators'),
       safeFetch('/api/categories?include_drafts=true'),
       safeFetch('/api/onix-tags'),
       safeFetch('/api/public/content-source-names'),
       safeFetch('/api/books/filter/authors?limit=50'),
       safeFetch('/api/books/filter/publishers?limit=50'),
       safeFetch('/api/awards'),
-    ]).then(([catData, tagsData, mediaData, authorsData, pubsData, awardsData]) => {
+    ]).then(([curatorsData, catData, tagsData, mediaData, authorsData, pubsData, awardsData]) => {
+      const curators = (curatorsData?.data || []).map((c: any) => c.name).filter(Boolean);
+      const uniqueCurators = [...new Set(curators)].sort((a: string, b: string) => a.localeCompare(b, 'de'));
+      if (uniqueCurators.length > 0) setCuratorOptions(uniqueCurators);
+
       const cats = (catData?.data || []).map((c: any) => c.name || c).sort((a: string, b: string) => a.localeCompare(b, 'de'));
       if (cats.length > 0) setCategoryOptions(cats);
 
@@ -374,11 +388,12 @@ export function ShopPage() {
     }
   });
 
-  const hasActiveFilters = selectedCategories.length > 0 || selectedThemes.length > 0 ||
+  const hasActiveFilters = selectedCurators.length > 0 || selectedCategories.length > 0 || selectedThemes.length > 0 ||
     selectedSeries.length > 0 || selectedPublishers.length > 0 || selectedAuthors.length > 0 ||
     selectedAwards.length > 0 || selectedMedia.length > 0;
 
   const clearAllFilters = () => {
+    setSelectedCurators([]);
     setSelectedCategories([]);
     setSelectedThemes([]);
     setSelectedSeries([]);
@@ -397,6 +412,7 @@ export function ShopPage() {
   ];
 
   const allSelectedFilters = [
+    ...selectedCurators.map(v => ({ label: v, type: 'curator' as const })),
     ...selectedCategories.map(v => ({ label: v, type: 'category' as const })),
     ...selectedThemes.map(v => ({ label: v, type: 'theme' as const })),
     ...selectedSeries.map(v => ({ label: v, type: 'series' as const })),
@@ -453,7 +469,14 @@ export function ShopPage() {
             </form>
           </div>
 
-          <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-wrap" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+            <FilterDropdown
+              label="Kuratoren"
+              options={curatorOptions}
+              selected={selectedCurators}
+              onToggle={(v) => toggleFilter(selectedCurators, v, setSelectedCurators)}
+              totalLabel="Kurator*innen"
+            />
             <FilterDropdown
               label="Kategorien"
               options={categoryOptions}
@@ -546,6 +569,7 @@ export function ShopPage() {
                   variant="secondary"
                   className="gap-1 cursor-pointer"
                   onClick={() => {
+                    if (f.type === 'curator') toggleFilter(selectedCurators, f.label, setSelectedCurators);
                     if (f.type === 'category') toggleFilter(selectedCategories, f.label, setSelectedCategories);
                     if (f.type === 'theme') toggleFilter(selectedThemes, f.label, setSelectedThemes);
                     if (f.type === 'series') toggleFilter(selectedSeries, f.label, setSelectedSeries);
