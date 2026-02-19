@@ -8,11 +8,58 @@ import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
 
+type AuthProvider = "replit" | "auth0" | "custom";
+
+interface OidcProviderConfig {
+  provider: AuthProvider;
+  issuerUrl: string;
+  clientId: string;
+  clientSecret?: string;
+  scopes: string[];
+  endSessionSupported: boolean;
+}
+
+function getProviderConfig(): OidcProviderConfig {
+  const customIssuer = process.env.OIDC_ISSUER_URL;
+  const customClientId = process.env.OIDC_CLIENT_ID;
+  const customClientSecret = process.env.OIDC_CLIENT_SECRET;
+
+  if (customIssuer && customClientId) {
+    const isAuth0 = customIssuer.includes("auth0.com");
+    return {
+      provider: isAuth0 ? "auth0" : "custom",
+      issuerUrl: customIssuer,
+      clientId: customClientId,
+      clientSecret: customClientSecret,
+      scopes: ["openid", "email", "profile", "offline_access"],
+      endSessionSupported: !isAuth0,
+    };
+  }
+
+  return {
+    provider: "replit",
+    issuerUrl: process.env.ISSUER_URL ?? "https://replit.com/oidc",
+    clientId: process.env.REPL_ID!,
+    clientSecret: undefined,
+    scopes: ["openid", "email", "profile", "offline_access"],
+    endSessionSupported: true,
+  };
+}
+
+const providerConfig = getProviderConfig();
+
 const getOidcConfig = memoize(
   async () => {
+    if (providerConfig.clientSecret) {
+      return await client.discovery(
+        new URL(providerConfig.issuerUrl),
+        providerConfig.clientId,
+        providerConfig.clientSecret
+      );
+    }
     return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
+      new URL(providerConfig.issuerUrl),
+      providerConfig.clientId
     );
   },
   { maxAge: 3600 * 1000 }
@@ -36,7 +83,7 @@ export function getSession() {
     cookie: {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? "lax" : "lax",
+      sameSite: "lax",
       maxAge: sessionTtl,
     },
   });
@@ -52,14 +99,56 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
+function normalizeUserClaims(claims: any): {
+  id: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  profileImageUrl?: string;
+} {
+  const id = claims["sub"];
+  const email = claims["email"];
+
+  let firstName: string | undefined;
+  let lastName: string | undefined;
+  let profileImageUrl: string | undefined;
+
+  switch (providerConfig.provider) {
+    case "auth0":
+      firstName = claims["given_name"];
+      lastName = claims["family_name"];
+      profileImageUrl = claims["picture"];
+      if (!firstName && !lastName && claims["name"]) {
+        const parts = (claims["name"] as string).split(" ");
+        firstName = parts[0];
+        lastName = parts.slice(1).join(" ") || undefined;
+      }
+      break;
+
+    case "replit":
+      firstName = claims["first_name"];
+      lastName = claims["last_name"];
+      profileImageUrl = claims["profile_image_url"];
+      break;
+
+    case "custom":
+      firstName = claims["given_name"] || claims["first_name"];
+      lastName = claims["family_name"] || claims["last_name"];
+      profileImageUrl = claims["picture"] || claims["profile_image_url"];
+      if (!firstName && !lastName && claims["name"]) {
+        const parts = (claims["name"] as string).split(" ");
+        firstName = parts[0];
+        lastName = parts.slice(1).join(" ") || undefined;
+      }
+      break;
+  }
+
+  return { id, email, firstName, lastName, profileImageUrl };
+}
+
 async function upsertUser(claims: any) {
-  await authStorage.upsertUser({
-    id: claims["sub"],
-    email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    profileImageUrl: claims["profile_image_url"],
-  });
+  const normalized = normalizeUserClaims(claims);
+  await authStorage.upsertUser(normalized);
 }
 
 export async function setupAuth(app: Express) {
@@ -80,19 +169,20 @@ export async function setupAuth(app: Express) {
     verified(null, user);
   };
 
-  // Keep track of registered strategies
   const registeredStrategies = new Set<string>();
 
-  // Helper function to ensure strategy exists for a domain
-  const ensureStrategy = (domain: string) => {
-    const strategyName = `replitauth:${domain}`;
+  const ensureStrategy = (req: any) => {
+    const domain = req.hostname;
+    const strategyName = `oidcauth:${domain}`;
     if (!registeredStrategies.has(strategyName)) {
+      const callbackURL = process.env.OIDC_CALLBACK_URL
+        || `${req.protocol}://${domain}/api/callback`;
       const strategy = new Strategy(
         {
           name: strategyName,
           config,
-          scope: "openid email profile offline_access",
-          callbackURL: `https://${domain}/api/callback`,
+          scope: providerConfig.scopes.join(" "),
+          callbackURL,
         },
         verify
       );
@@ -105,16 +195,19 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
-      prompt: "login consent",
-      scope: ["openid", "email", "profile", "offline_access"],
-    })(req, res, next);
+    ensureStrategy(req);
+    const authOptions: any = {
+      scope: providerConfig.scopes,
+    };
+    if (providerConfig.provider === "replit") {
+      authOptions.prompt = "login consent";
+    }
+    passport.authenticate(`oidcauth:${req.hostname}`, authOptions)(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    ensureStrategy(req);
+    passport.authenticate(`oidcauth:${req.hostname}`, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);
@@ -122,12 +215,22 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
-      res.redirect(
-        client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
-          post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
-        }).href
-      );
+      if (providerConfig.endSessionSupported) {
+        res.redirect(
+          client.buildEndSessionUrl(config, {
+            client_id: providerConfig.clientId,
+            post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+          }).href
+        );
+      } else if (providerConfig.provider === "auth0") {
+        const returnTo = encodeURIComponent(`${req.protocol}://${req.hostname}`);
+        const baseUrl = providerConfig.issuerUrl.replace(/\/$/, "");
+        res.redirect(
+          `${baseUrl}/v2/logout?client_id=${providerConfig.clientId}&returnTo=${returnTo}`
+        );
+      } else {
+        res.redirect("/");
+      }
     });
   });
 }
@@ -160,3 +263,5 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return;
   }
 };
+
+export { providerConfig };
