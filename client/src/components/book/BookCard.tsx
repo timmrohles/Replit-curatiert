@@ -452,21 +452,13 @@ export const BookCard = memo(function BookCard({
       <div className={`${viewMode === 'compact' ? 'px-1.5 md:px-2 pb-1.5 md:pb-2' : 'px-2 md:px-3 pb-2 md:pb-3'} flex flex-col gap-1 ${viewMode === 'compact' ? 'min-h-[160px] md:min-h-[180px]' : 'min-h-[200px] md:min-h-[220px]'}`}>
         {/* Content-Bereich mit flex-grow - passt sich an */}
         <div className={`flex flex-col ${viewMode === 'compact' ? 'gap-1.5' : 'gap-2'} ${viewMode === 'compact' ? 'h-[7.5rem]' : 'h-[9rem]'}`}>
-          <Heading 
-            as="h4" 
-            variant={viewMode === 'compact' ? 'h5' : 'h4'}
-            className={`text-foreground line-clamp-2 !normal-case ${viewMode === 'compact' ? 'min-h-[3.5rem]' : 'min-h-[3rem]'}`}
-          >
+          <p className="book-card-title flex-shrink-0">
             {title}
-          </Heading>
+          </p>
           
-          <Text 
-            as="p" 
-            variant={viewMode === 'compact' ? 'small' : 'base'}
-            className={`text-foreground-muted !normal-case !font-bold !tracking-normal line-clamp-2 ${viewMode === 'compact' ? 'min-h-[2rem]' : 'min-h-[2.5rem]'}`}
-          >
+          <p className="book-card-author flex-shrink-0">
             {author}
-          </Text>
+          </p>
           
           {/* Publisher - IMMER anzeigen für einheitliche Höhe */}
           <Text 

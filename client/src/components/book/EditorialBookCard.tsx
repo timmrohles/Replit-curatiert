@@ -323,22 +323,13 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
 
         {/* Titel & Autor UNTER dem Cover */}
         <div className="flex flex-col gap-0.5 mt-3">
-          <Heading 
-            as="p" 
-            variant="h4" 
-            className="text-foreground line-clamp-2 normal-case"
-            style={{ minHeight: '2.8em', lineHeight: '1.4em' }}
-          >
+          <p className="book-card-title">
             {book.title}
-          </Heading>
+          </p>
           
-          <Text 
-            as="p" 
-            variant="small" 
-            className="text-gray-500 normal-case font-bold tracking-normal line-clamp-1"
-          >
+          <p className="book-card-author">
             {book.author}
-          </Text>
+          </p>
         </div>
 
         {/* Klappentext */}
@@ -346,17 +337,12 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
           {displayDescription ? (
             <>
               <div className={`flex-1 ${isKlappentextExpanded ? '' : 'overflow-hidden'}`}>
-                <Text 
-                  as="p" 
-                  variant="small" 
+                <p 
                   ref={klappentextRef}
-                  className={`!text-[0.8rem] md:!text-[0.85rem] leading-relaxed ${isKlappentextExpanded ? '' : 'line-clamp-[8]'}`}
-                  style={{ 
-                    color: 'var(--color-foreground-muted)'
-                  }}
+                  className={`book-card-klappentext ${isKlappentextExpanded ? '' : 'line-clamp-[8]'}`}
                 >
                   {displayDescription}
-                </Text>
+                </p>
               </div>
               {(isKlappentextOverflowing || isKlappentextExpanded) && (
                 <button

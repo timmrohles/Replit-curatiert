@@ -125,10 +125,10 @@ export function OwnBooksSection({
 
                 {/* Book Info */}
                 <div className="p-4 flex flex-col flex-1">
-                  <h3 className="text-foreground mb-1 line-clamp-2 leading-snug h-[3rem]">
+                  <p className="book-card-title mb-1">
                     {book.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3">{book.author}</p>
+                  </p>
+                  <p className="book-card-author mb-3">{book.author}</p>
                   
                   {/* Additional Info */}
                   <div className="flex flex-col flex-1">
