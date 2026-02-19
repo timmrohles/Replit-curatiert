@@ -26,64 +26,98 @@ function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownPr
   const [isOpen, setIsOpen] = useState(false);
   const [filterSearch, setFilterSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setFilterSearch('');
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredOptions = options.filter(opt =>
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isOpen]);
+
+  const sortedOptions = [...options].sort((a, b) => a.localeCompare(b, 'de'));
+
+  const filteredOptions = sortedOptions.filter(opt =>
     opt.toLowerCase().includes(filterSearch.toLowerCase())
   );
 
   const hasSelection = selected.length > 0;
+  const testId = label.toLowerCase().replace(/[^a-z]/g, '');
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="sort-chip flex items-center gap-1.5"
-        aria-pressed={hasSelection}
-        data-testid={`filter-dropdown-${label.toLowerCase().replace(/[^a-z]/g, '')}`}
+        className="inline-flex items-center gap-2 px-4 py-2.5 border bg-card text-sm font-medium transition-colors hover-elevate"
+        style={{
+          borderColor: hasSelection ? 'var(--color-blue)' : 'var(--color-border)',
+          borderRadius: '4px',
+        }}
+        data-testid={`filter-dropdown-${testId}`}
       >
-        <Text as="span" variant="xs" className="whitespace-nowrap !normal-case !tracking-normal !font-semibold">
-          {label}
-        </Text>
+        <span className="whitespace-nowrap">{label}</span>
         {hasSelection && (
-          <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold"
-            style={{ backgroundColor: 'var(--color-blue)', color: 'white' }}>
+          <span
+            className="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-sm text-[11px] font-bold"
+            style={{ backgroundColor: 'var(--color-blue)', color: 'white' }}
+          >
             {selected.length}
           </span>
         )}
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-64 max-h-72 overflow-hidden bg-card border rounded-md shadow-lg z-50 flex flex-col"
-          style={{ borderColor: 'var(--color-border)' }}>
-          {options.length > 8 && (
-            <div className="p-2 border-b" style={{ borderColor: 'var(--color-border)' }}>
+        <div
+          className="absolute top-full left-0 mt-1 w-80 max-h-96 overflow-hidden bg-card border shadow-lg z-50 flex flex-col"
+          style={{ borderColor: 'var(--color-border)', borderRadius: '4px' }}
+        >
+          <div className="p-3 border-b" style={{ borderColor: 'var(--color-border)' }}>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
               <input
+                ref={inputRef}
                 type="text"
                 value={filterSearch}
                 onChange={(e) => setFilterSearch(e.target.value)}
-                placeholder="Suchen..."
-                className="w-full px-2 py-1.5 text-sm bg-background border rounded-md"
-                style={{ borderColor: 'var(--color-border)' }}
-                data-testid={`filter-search-${label.toLowerCase().replace(/[^a-z]/g, '')}`}
+                placeholder={`${label} suchen...`}
+                className="w-full pl-9 pr-3 py-2 text-sm bg-background border"
+                style={{ borderColor: 'var(--color-border)', borderRadius: '4px' }}
+                data-testid={`filter-search-${testId}`}
               />
             </div>
-          )}
+            {hasSelection && (
+              <button
+                type="button"
+                onClick={() => {
+                  selected.forEach(s => onToggle(s));
+                }}
+                className="mt-2 text-xs hover:opacity-70 transition-opacity"
+                style={{ color: 'var(--color-teal)' }}
+                data-testid={`filter-clear-${testId}`}
+              >
+                Auswahl aufheben ({selected.length})
+              </button>
+            )}
+          </div>
+
           <div className="overflow-y-auto flex-1">
             {filteredOptions.length === 0 ? (
-              <div className="p-3 text-center">
-                <Text variant="small" className="text-foreground/50">Keine Optionen gefunden</Text>
+              <div className="p-4 text-center">
+                <Text variant="small" className="text-foreground/50">
+                  Keine Ergebnisse für &quot;{filterSearch}&quot;
+                </Text>
               </div>
             ) : (
               filteredOptions.map(option => {
@@ -93,11 +127,17 @@ function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownPr
                     key={option}
                     type="button"
                     onClick={() => onToggle(option)}
-                    className="w-full text-left px-3 py-2 text-sm hover-elevate flex items-center gap-2"
+                    className="w-full text-left px-4 py-2.5 text-sm hover-elevate flex items-center gap-3"
                     data-testid={`filter-option-${option.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
                   >
-                    <span className={`w-4 h-4 rounded-sm border flex-shrink-0 flex items-center justify-center ${isSelected ? 'border-transparent' : ''}`}
-                      style={isSelected ? { backgroundColor: 'var(--color-blue)', borderColor: 'var(--color-blue)' } : { borderColor: 'var(--color-border)' }}>
+                    <span
+                      className="w-[18px] h-[18px] border flex-shrink-0 flex items-center justify-center"
+                      style={{
+                        borderRadius: '3px',
+                        backgroundColor: isSelected ? 'var(--color-blue)' : 'transparent',
+                        borderColor: isSelected ? 'var(--color-blue)' : 'var(--color-border)',
+                      }}
+                    >
                       {isSelected && (
                         <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -109,6 +149,12 @@ function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownPr
                 );
               })
             )}
+          </div>
+
+          <div className="p-2 border-t text-center" style={{ borderColor: 'var(--color-border)' }}>
+            <Text variant="xs" className="text-foreground/40">
+              {filteredOptions.length} von {options.length} {label === 'Autor' ? 'Autor*innen' : label === 'Verlag' ? 'Verlage' : 'Einträge'}
+            </Text>
           </div>
         </div>
       )}
@@ -128,6 +174,10 @@ interface APIBook {
   description: string | null;
   availability: string | null;
   language: string | null;
+  is_indie?: boolean;
+  indie_type?: string | null;
+  award_count?: number;
+  nomination_count?: number;
 }
 
 function apiBookToCarouselItem(book: APIBook): BookCarouselItemData {
@@ -150,15 +200,33 @@ export function ShopPage() {
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [books, setBooks] = useState<APIBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 48;
+  const PAGE_SIZE = 50;
 
   const [selectedPublishers, setSelectedPublishers] = useState<string[]>([]);
+  const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
+  const [selectedAwards, setSelectedAwards] = useState<string[]>([]);
 
   const [publisherOptions, setPublisherOptions] = useState<string[]>([]);
+  const [authorOptions, setAuthorOptions] = useState<string[]>([]);
+  const [awardOptions, setAwardOptions] = useState<string[]>([]);
 
   const searchQuery = searchParams.get('q') || '';
+
+  useEffect(() => {
+    fetch('/api/onix-tags')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) {
+          const awards = (data.data || [])
+            .filter((t: any) => t.tag_type === 'award')
+            .map((t: any) => t.name)
+            .sort((a: string, b: string) => a.localeCompare(b, 'de'));
+          setAwardOptions(awards);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchBooks = useCallback(async (query: string, offset: number) => {
     setIsLoading(true);
@@ -175,16 +243,15 @@ export function ShopPage() {
         } else {
           setBooks(prev => [...prev, ...fetched]);
         }
-        setTotalCount(data.total || fetched.length);
 
-        const pubs = Array.from(new Set(fetched.map((b: APIBook) => b.publisher).filter(Boolean))).sort() as string[];
+        const pubs = Array.from(new Set(fetched.map((b: APIBook) => b.publisher).filter(Boolean))) as string[];
+        const authors = Array.from(new Set(fetched.map((b: APIBook) => b.author).filter(Boolean))) as string[];
         if (offset === 0) {
           setPublisherOptions(pubs);
+          setAuthorOptions(authors);
         } else {
-          setPublisherOptions(prev => {
-            const combined = new Set([...prev, ...pubs]);
-            return Array.from(combined).sort();
-          });
+          setPublisherOptions(prev => Array.from(new Set([...prev, ...pubs])));
+          setAuthorOptions(prev => Array.from(new Set([...prev, ...authors])));
         }
       }
     } catch (err) {
@@ -226,6 +293,9 @@ export function ShopPage() {
     if (selectedPublishers.length > 0 && !selectedPublishers.includes(book.publisher)) {
       return false;
     }
+    if (selectedAuthors.length > 0 && !selectedAuthors.includes(book.author)) {
+      return false;
+    }
     return true;
   });
 
@@ -234,16 +304,20 @@ export function ShopPage() {
       case 'newest':
         return b.id - a.id;
       case 'popularity':
-        return (b.title || '').localeCompare(a.title || '');
+        return (a.title || '').localeCompare(b.title || '', 'de');
+      case 'awarded':
+        return (b.award_count || 0) - (a.award_count || 0);
       default:
         return 0;
     }
   });
 
-  const hasActiveFilters = selectedPublishers.length > 0;
+  const hasActiveFilters = selectedPublishers.length > 0 || selectedAuthors.length > 0 || selectedAwards.length > 0;
 
   const clearAllFilters = () => {
     setSelectedPublishers([]);
+    setSelectedAuthors([]);
+    setSelectedAwards([]);
   };
 
   const sortOptions: { id: SortOption; label: string }[] = [
@@ -253,6 +327,12 @@ export function ShopPage() {
     { id: 'critics', label: 'Kritiker-Lieblinge' },
     { id: 'hidden-gems', label: 'Hidden Gems' },
     { id: 'trending', label: 'Aktuell' },
+  ];
+
+  const allSelectedFilters = [
+    ...selectedPublishers.map(v => ({ label: v, type: 'publisher' as const })),
+    ...selectedAuthors.map(v => ({ label: v, type: 'author' as const })),
+    ...selectedAwards.map(v => ({ label: v, type: 'award' as const })),
   ];
 
   return (
@@ -302,7 +382,7 @@ export function ShopPage() {
             </form>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap"
               style={{ scrollbarWidth: 'none' }}>
               {sortOptions.map((option) => (
@@ -320,34 +400,55 @@ export function ShopPage() {
                 </button>
               ))}
             </div>
+          </div>
 
-            <div className="h-6 w-px bg-foreground/15 hidden md:block" />
-
+          <div className="flex flex-wrap items-center gap-2">
             <FilterDropdown
               label="Verlag"
               options={publisherOptions}
               selected={selectedPublishers}
               onToggle={(v) => toggleFilter(selectedPublishers, v, setSelectedPublishers)}
             />
+            <FilterDropdown
+              label="Autor"
+              options={authorOptions}
+              selected={selectedAuthors}
+              onToggle={(v) => toggleFilter(selectedAuthors, v, setSelectedAuthors)}
+            />
+            <FilterDropdown
+              label="Auszeichnung"
+              options={awardOptions}
+              selected={selectedAwards}
+              onToggle={(v) => toggleFilter(selectedAwards, v, setSelectedAwards)}
+            />
 
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
-                className="text-xs flex items-center gap-1 hover:opacity-70 transition-opacity px-2 py-1"
+                className="text-xs flex items-center gap-1 hover:opacity-70 transition-opacity px-3 py-2"
                 style={{ color: 'var(--color-teal)' }}
                 data-testid="button-clear-filters"
               >
-                <X className="w-3 h-3" />
-                Zurücksetzen
+                <X className="w-3.5 h-3.5" />
+                Alle zurücksetzen
               </button>
             )}
           </div>
 
-          {hasActiveFilters && (
+          {allSelectedFilters.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {selectedPublishers.map(pub => (
-                <Badge key={pub} variant="secondary" className="gap-1 cursor-pointer" onClick={() => toggleFilter(selectedPublishers, pub, setSelectedPublishers)}>
-                  {pub}
+              {allSelectedFilters.map(f => (
+                <Badge
+                  key={`${f.type}-${f.label}`}
+                  variant="secondary"
+                  className="gap-1 cursor-pointer"
+                  onClick={() => {
+                    if (f.type === 'publisher') toggleFilter(selectedPublishers, f.label, setSelectedPublishers);
+                    if (f.type === 'author') toggleFilter(selectedAuthors, f.label, setSelectedAuthors);
+                    if (f.type === 'award') toggleFilter(selectedAwards, f.label, setSelectedAwards);
+                  }}
+                >
+                  {f.label}
                   <X className="w-3 h-3" />
                 </Badge>
               ))}
@@ -372,7 +473,7 @@ export function ShopPage() {
             </div>
           ) : sortedBooks.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
                 {sortedBooks.map(book => (
                   <BookCarouselItem
                     key={book.id}
