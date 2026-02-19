@@ -2599,7 +2599,7 @@ export async function registerRoutes(
   app.get('/api/public/content-source-names', async (_req: Request, res: Response) => {
     try {
       const result = await queryDB(
-        `SELECT DISTINCT source_type, name FROM content_sources WHERE deleted_at IS NULL ORDER BY name`,
+        `SELECT DISTINCT source_type, title AS name FROM content_sources WHERE is_active = true ORDER BY title`,
         []
       );
       return res.json({ ok: true, data: result.rows });

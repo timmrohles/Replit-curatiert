@@ -240,19 +240,20 @@ export function ShopPage() {
   const searchQuery = searchParams.get('q') || '';
 
   useEffect(() => {
+    const safeFetch = (url: string) => fetch(url).then(r => r.json()).catch(() => ({ ok: false, data: [] }));
+
     Promise.all([
-      fetch('/api/categories?include_drafts=true').then(r => r.json()),
-      fetch('/api/onix-tags').then(r => r.json()),
-      fetch('/api/public/content-source-names').then(r => r.json()),
-      fetch('/api/books/filter/authors?limit=50').then(r => r.json()),
-      fetch('/api/books/filter/publishers?limit=50').then(r => r.json()),
+      safeFetch('/api/categories?include_drafts=true'),
+      safeFetch('/api/onix-tags'),
+      safeFetch('/api/public/content-source-names'),
+      safeFetch('/api/books/filter/authors?limit=50'),
+      safeFetch('/api/books/filter/publishers?limit=50'),
     ]).then(([catData, tagsData, mediaData, authorsData, pubsData]) => {
-      if (catData.ok) {
-        const cats = (catData.data || []).map((c: any) => c.name || c).sort((a: string, b: string) => a.localeCompare(b, 'de'));
-        setCategoryOptions(cats);
-      }
-      if (tagsData.ok) {
-        const tags = tagsData.data || [];
+      const cats = (catData?.data || []).map((c: any) => c.name || c).sort((a: string, b: string) => a.localeCompare(b, 'de'));
+      if (cats.length > 0) setCategoryOptions(cats);
+
+      const tags = tagsData?.data || [];
+      if (tags.length > 0) {
         const themes = tags
           .filter((t: any) => ['topic', 'genre', 'audience', 'feature', 'publisher_cluster'].includes(t.tag_type))
           .map((t: any) => t.name)
@@ -264,17 +265,13 @@ export function ShopPage() {
         setThemeOptions(themes);
         setAwardOptions(awards);
       }
-      if (mediaData.ok) {
-        const media = (mediaData.data || []).map((m: any) => m.name).sort((a: string, b: string) => a.localeCompare(b, 'de'));
-        setMediaOptions(media);
-      }
-      if (authorsData.ok) {
-        setAuthorOptions(authorsData.data || []);
-      }
-      if (pubsData.ok) {
-        setPublisherOptions(pubsData.data || []);
-      }
-    }).catch(() => {});
+
+      const media = (mediaData?.data || []).map((m: any) => m.name || m.title).filter(Boolean).sort((a: string, b: string) => a.localeCompare(b, 'de'));
+      if (media.length > 0) setMediaOptions(media);
+
+      if (authorsData?.data?.length > 0) setAuthorOptions(authorsData.data);
+      if (pubsData?.data?.length > 0) setPublisherOptions(pubsData.data);
+    });
   }, []);
 
   const searchAuthors = useCallback((q: string) => {
