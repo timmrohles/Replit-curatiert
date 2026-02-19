@@ -21,7 +21,8 @@ export type FrontendEntityType =
   | "storefront"
   | "topic"
   | "award"        // UI: "Auszeichnung"
-  | "media";       // UI: "Medienformat" (Hörbuch, E-Book, etc.)
+  | "media"        // UI: "Medienformat" (Hörbuch, E-Book, etc.)
+  | "event";       // UI: "Veranstaltung"
 
 /**
  * Backend Entity Types (Database-facing)
@@ -54,6 +55,7 @@ const ENTITY_TYPE_MAP: Record<FrontendEntityType, BackendEntityType> = {
   topic: "tag",
   award: "award",
   media: "tag",
+  event: "tag",
 };
 
 /**

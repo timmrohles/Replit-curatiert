@@ -455,24 +455,28 @@ function TagPickerDropdown({
             </div>
           </div>
           {showPopular && (
-            <div className="px-3 pt-1 pb-1.5">
+            <div className="px-3 pt-1 pb-2">
               <div className="text-xs font-semibold mb-2" style={{ color: '#9CA3AF' }}>
                 Beliebt bei anderen Nutzer:innen
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {popularItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleSelect(item)}
-                    className="px-2.5 py-1 rounded-full text-xs font-medium transition-colors border"
-                    style={{ color: '#3A3A3A', borderColor: '#D1D5DB', backgroundColor: 'rgba(255,255,255,0.6)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#247ba0'; e.currentTarget.style.color = '#fff'; e.currentTarget.style.borderColor = '#247ba0'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.6)'; e.currentTarget.style.color = '#3A3A3A'; e.currentTarget.style.borderColor = '#D1D5DB'; }}
-                    data-testid={`popular-${item.id}`}
-                  >
-                    {item.title}
-                  </button>
-                ))}
+                {popularItems.map((item, idx) => {
+                  const tagColor = item.color || TAG_COLORS[idx % TAG_COLORS.length];
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleSelect(item)}
+                      className="px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 shadow-sm hover:shadow-md hover:scale-105"
+                      style={{ backgroundColor: tagColor, color: '#ffffff', border: 'none' }}
+                      data-testid={`popular-${item.id}`}
+                    >
+                      <span className="truncate max-w-[140px]">{item.title}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 flex-shrink-0" style={{ opacity: 0.8 }}>
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                      </svg>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -482,28 +486,29 @@ function TagPickerDropdown({
             </div>
           )}
           {!isSearching && suggestions.length > 0 && (
-            <div className="max-h-48 overflow-y-auto">
-              {suggestions.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleSelect(item)}
-                  className="w-full px-3 py-2 text-left text-sm flex items-center gap-2 transition-colors"
-                  style={{ color: '#3A3A3A' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  data-testid={`suggestion-${item.id}`}
-                >
-                  {item.image && (
-                    <img src={item.image} alt="" className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{item.title}</div>
-                    {item.subtitle && (
-                      <div className="truncate text-xs" style={{ color: '#9CA3AF' }}>{item.subtitle}</div>
-                    )}
-                  </div>
-                </button>
-              ))}
+            <div className="max-h-48 overflow-y-auto px-3 py-2">
+              <div className="flex flex-wrap gap-1.5">
+                {suggestions.map((item, idx) => {
+                  const tagColor = item.color || TAG_COLORS[idx % TAG_COLORS.length];
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleSelect(item)}
+                      className="px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 shadow-sm hover:shadow-md hover:scale-105"
+                      style={{ backgroundColor: tagColor, color: '#ffffff', border: 'none' }}
+                      data-testid={`suggestion-${item.id}`}
+                    >
+                      {item.image && (
+                        <img src={item.image} alt="" className="w-5 h-5 rounded-full object-cover flex-shrink-0 border border-white/30" />
+                      )}
+                      <span className="truncate max-w-[140px]">{item.title}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3 flex-shrink-0" style={{ opacity: 0.8 }}>
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                      </svg>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
           {!isSearching && query.length >= 2 && suggestions.length === 0 && (
