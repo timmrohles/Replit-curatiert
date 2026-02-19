@@ -188,7 +188,7 @@ export function HorizontalBookRow({ books, title, description }: HorizontalBookR
         )}
 
         {/* Horizontal Scroll Container */}
-        <div className="relative">
+        <div className="relative z-0">
           {/* Left Arrow - Desktop */}
           {canScrollLeft && books.length >= 6 && (
             <button

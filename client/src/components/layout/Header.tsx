@@ -501,7 +501,7 @@ export function Header({
       </a>
       <header
         className={`header-bg border-b border-gray-600 transition-all duration-300 ${
-          isSticky ? "sticky top-0 z-50 shadow-md" : ""
+          isSticky ? "sticky top-0 z-50 shadow-md" : "relative z-50"
         }`}
       >
         <div className="max-w-[1440px] mx-auto px-3 md:px-6 lg:px-8">
