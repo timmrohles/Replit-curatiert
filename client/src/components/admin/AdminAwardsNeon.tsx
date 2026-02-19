@@ -21,6 +21,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { getAdminToken } from '../../utils/adminToken';
 import {
   Plus,
   Edit2,
@@ -152,7 +153,12 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
 
   const API_BASE = '/api';
 
-  const getHeaders = () => ({ 'Content-Type': 'application/json' });
+  const getHeaders = () => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const token = getAdminToken();
+    if (token) headers['x-admin-token'] = token;
+    return headers;
+  };
 
   const extractError = (err: unknown): string => {
     if (typeof err === 'string') return err;
