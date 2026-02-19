@@ -773,43 +773,63 @@ function CurationsBrowser() {
   return (
     <div className="w-full">
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setFilterCurator(null)}
-          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
-            filterCurator === null ? 'shadow-md' : 'shadow-sm opacity-70 hover:opacity-100'
-          }`}
-          style={{
-            backgroundColor: filterCurator === null ? 'var(--color-cerulean, #247ba0)' : 'rgba(36,123,160,0.15)',
-            color: filterCurator === null ? '#ffffff' : 'var(--color-cerulean, #247ba0)',
-          }}
+          onKeyDown={(e) => { if (e.key === 'Enter') setFilterCurator(null); }}
+          className={`px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none cursor-pointer transition-all duration-200 hover-elevate ${filterCurator !== null ? 'opacity-60' : ''}`}
+          style={{ backgroundColor: 'var(--color-cerulean, #247ba0)' }}
           data-testid="filter-curations-all"
         >
-          Alle
-        </button>
-        {uniqueCurators.map((cur) => (
-          <button
-            key={cur.name}
-            onClick={() => setFilterCurator(filterCurator === cur.name ? null : cur.name)}
-            className={`rounded-full text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 px-2.5 py-1 ${
-              filterCurator === cur.name ? 'shadow-md' : 'shadow-sm opacity-70 hover:opacity-100'
-            }`}
-            style={{
-              backgroundColor: filterCurator === cur.name ? 'var(--color-cerulean, #247ba0)' : 'rgba(36,123,160,0.15)',
-              color: filterCurator === cur.name ? '#ffffff' : 'var(--color-cerulean, #247ba0)',
-            }}
-            data-testid={`filter-curator-${cur.name.toLowerCase().replace(/\s+/g, '-')}`}
-          >
-            <div className="w-4 h-4 rounded-full overflow-hidden flex-shrink-0">
-              <ImageWithFallback src={cur.avatar} alt={cur.name} className="w-full h-full object-cover" />
+          <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+            Alle
+          </Text>
+        </div>
+        {uniqueCurators.map((cur, idx) => {
+          const isActive = filterCurator === cur.name;
+          const badgeColor = TAG_COLORS[(idx + 1) % TAG_COLORS.length];
+          return (
+            <div
+              role="group"
+              key={cur.name}
+              className={`px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none cursor-pointer transition-all duration-200 hover-elevate ${!isActive && filterCurator !== null ? 'opacity-60' : ''}`}
+              style={{ backgroundColor: badgeColor }}
+              data-testid={`filter-curator-${cur.name.toLowerCase().replace(/\s+/g, '-')}`}
+            >
+              <div
+                className="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-white/40"
+                onClick={() => setFilterCurator(isActive ? null : cur.name)}
+                style={{ cursor: 'pointer' }}
+              >
+                <ImageWithFallback src={cur.avatar} alt={cur.name} className="w-full h-full object-cover" />
+              </div>
+              <Text
+                as="span"
+                variant="small"
+                className="text-white font-normal whitespace-nowrap cursor-pointer"
+                onClick={() => setFilterCurator(isActive ? null : cur.name)}
+              >
+                {cur.name}
+              </Text>
+              <LikeButton
+                entityId={`curator-${cur.name.toLowerCase().replace(/\s+/g, '-')}`}
+                entityType="creator"
+                entityTitle={cur.name}
+                entityImage={cur.avatar}
+                variant="minimal"
+                size="sm"
+                iconColor="#ffffff"
+                backgroundColor={badgeColor}
+              />
             </div>
-            <span className="truncate max-w-[100px]">{cur.name}</span>
-          </button>
-        ))}
+          );
+        })}
 
         <div className="ml-auto flex items-center gap-1">
           <button
             onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
-            className="px-2 py-1 rounded-md text-xs font-medium inline-flex items-center gap-1 transition-colors"
+            className="px-3 py-1.5 rounded-full text-xs font-medium inline-flex items-center gap-1.5 transition-colors border border-transparent shadow-sm"
             style={{ color: 'var(--color-cerulean, #247ba0)' }}
             data-testid="sort-curations"
           >
@@ -821,22 +841,22 @@ function CurationsBrowser() {
 
       <CuratorSectionHeader curator={currentCuration.curator} />
 
-      <div className="flex flex-wrap gap-1.5 mt-3 mb-2">
+      <div className="flex flex-wrap gap-2 mt-3 mb-2 items-center">
         {currentCuration.tags.map((tag, idx) => (
-          <span
+          <div
+            role="group"
             key={tag}
-            className="px-2.5 py-1 rounded-full text-xs font-medium"
-            style={{
-              backgroundColor: TAG_COLORS[idx % TAG_COLORS.length],
-              color: '#ffffff',
-            }}
+            className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
+            style={{ backgroundColor: TAG_COLORS[idx % TAG_COLORS.length] }}
           >
-            {tag}
-          </span>
+            <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+              {tag}
+            </Text>
+          </div>
         ))}
-        <span className="px-2.5 py-1 text-xs" style={{ color: '#9CA3AF' }}>
+        <Text as="span" variant="small" className="whitespace-nowrap" style={{ color: '#9CA3AF' }}>
           Gemerkt am {savedDate}
-        </span>
+        </Text>
       </div>
 
       <div className="mb-4">
