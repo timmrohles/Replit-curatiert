@@ -54,12 +54,18 @@ interface MockCuration {
   tags: string[];
 }
 
+function makeInitialsAvatar(name: string, bgColor = '#247ba0'): string {
+  const initials = name.split(/\s+/).map(w => w[0]?.toUpperCase() || '').slice(0, 2).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128"><rect width="128" height="128" rx="64" fill="${bgColor}"/><text x="64" y="64" dy=".35em" text-anchor="middle" fill="#fff" font-family="Inter,sans-serif" font-size="48" font-weight="600">${initials}</text></svg>`;
+  return `data:image/svg+xml;base64,${btoa(svg)}`;
+}
+
 const MOCK_CURATIONS: MockCuration[] = [
   {
     id: 'cur-1',
     curator: {
       name: 'coratiert Redaktion',
-      avatar: '/uploads/avatars/coratiert-redaktion.jpg',
+      avatar: makeInitialsAvatar('coratiert Redaktion', '#247ba0'),
       focus: 'Die Allzweckwaffe unter den Redakteur*innen',
       isVerified: true,
       occasion: 'Neue Bücher für Leseratten',
@@ -72,7 +78,7 @@ const MOCK_CURATIONS: MockCuration[] = [
     id: 'cur-2',
     curator: {
       name: 'Elena Hartmann',
-      avatar: '',
+      avatar: makeInitialsAvatar('Elena Hartmann', '#70c1b3'),
       focus: 'Belletristik & Literarische Fiction',
       isVerified: false,
       occasion: 'Lesetipps im Frühling',
@@ -85,7 +91,7 @@ const MOCK_CURATIONS: MockCuration[] = [
     id: 'cur-3',
     curator: {
       name: 'coratiert Redaktion',
-      avatar: '/uploads/avatars/coratiert-redaktion.jpg',
+      avatar: makeInitialsAvatar('coratiert Redaktion', '#247ba0'),
       focus: 'Die Allzweckwaffe unter den Redakteur*innen',
       isVerified: true,
       occasion: 'Sachbuch-Highlights 2026',
@@ -98,7 +104,7 @@ const MOCK_CURATIONS: MockCuration[] = [
     id: 'cur-4',
     curator: {
       name: 'Markus Weber',
-      avatar: '',
+      avatar: makeInitialsAvatar('Markus Weber', '#8b5cf6'),
       focus: 'Krimi & Thriller',
       isVerified: true,
       occasion: 'Die besten Krimis des Winters',
@@ -111,7 +117,7 @@ const MOCK_CURATIONS: MockCuration[] = [
 
 const MOCK_SPONSOR: MockCurator = {
   name: 'Klett-Cotta Verlag',
-  avatar: '',
+  avatar: makeInitialsAvatar('Klett-Cotta Verlag', '#e8a838'),
   focus: 'Literatur, Sachbuch & Fantasy',
   isVerified: true,
   occasion: 'Neuerscheinungen im Herbst 2025',
