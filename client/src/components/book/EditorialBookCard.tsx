@@ -10,6 +10,7 @@ import { getAllONIXTags, ONIXTag } from '../../utils/api';
 import { ONIX_TAG_COLORS, ONIX_TAG_ICONS } from '../../utils/tag-colors';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { LikeButton } from '../favorites/LikeButton';
+import { useTextOverflow } from '../../hooks/useTextOverflow';
 
 interface ActiveAffiliate {
   id: number;
@@ -95,6 +96,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
   const [showInfoOverlay, setShowInfoOverlay] = useState(false);
   const [isKlappentextExpanded, setIsKlappentextExpanded] = useState(false);
   const [affiliates, setAffiliates] = useState<ActiveAffiliate[]>([]);
+  const { textRef: klappentextRef, isOverflowing: isKlappentextOverflowing } = useTextOverflow<HTMLParagraphElement>();
 
   useEffect(() => {
     getAllONIXTags()
@@ -347,6 +349,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
                 <Text 
                   as="p" 
                   variant="small" 
+                  ref={klappentextRef}
                   className={`!text-[0.8rem] md:!text-[0.85rem] leading-relaxed ${isKlappentextExpanded ? '' : 'line-clamp-[8]'}`}
                   style={{ 
                     color: 'var(--color-foreground-muted)'
@@ -355,18 +358,20 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
                   {displayDescription}
                 </Text>
               </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsKlappentextExpanded(!isKlappentextExpanded);
-                }}
-                className="flex items-center gap-1 mt-2 text-cerulean hover:opacity-80 transition-colors"
-              >
-                <Text as="span" variant="small" className="text-cerulean !normal-case !tracking-normal !font-normal">
-                  {isKlappentextExpanded ? 'Weniger lesen' : 'Mehr lesen'}
-                </Text>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isKlappentextExpanded ? 'rotate-180' : ''}`} />
-              </button>
+              {(isKlappentextOverflowing || isKlappentextExpanded) && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsKlappentextExpanded(!isKlappentextExpanded);
+                  }}
+                  className="flex items-center gap-1 mt-2 text-cerulean hover:opacity-80 transition-colors"
+                >
+                  <Text as="span" variant="small" className="text-cerulean !normal-case !tracking-normal !font-normal">
+                    {isKlappentextExpanded ? 'Weniger lesen' : 'Mehr lesen'}
+                  </Text>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isKlappentextExpanded ? 'rotate-180' : ''}`} />
+                </button>
+              )}
             </>
           ) : (
             <div className="flex-1" />

@@ -11,6 +11,7 @@ import { OptimizedImage } from '../common/OptimizedImage';
 import { LikeButton } from '../favorites/LikeButton';
 import { ReadingListButton } from '../reading-list/ReadingListButton';
 import { SerieBadgeComponent } from '../common/SerieBadge';
+import { useTextOverflow } from '../../hooks/useTextOverflow';
 
 interface ActiveAffiliate {
   id: number;
@@ -119,6 +120,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
   const [hasMounted, setHasMounted] = useState(false);
   const [isKlappentextExpanded, setIsKlappentextExpanded] = useState(false);
   const [affiliates, setAffiliates] = useState<ActiveAffiliate[]>([]);
+  const { textRef: klappentextRef, isOverflowing: isKlappentextOverflowing } = useTextOverflow<HTMLParagraphElement>();
 
   // Fetch ONIX Tags and Affiliates
   useEffect(() => {
@@ -505,6 +507,7 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
                 <Text 
                   as="p" 
                   variant="small" 
+                  ref={klappentextRef}
                   className={`!leading-snug ${isKlappentextExpanded ? '' : 'line-clamp-6 md:line-clamp-5'}`}
                   style={{ 
                     color: 'var(--color-foreground-muted)'
@@ -513,17 +516,19 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
                   {book.klappentext || book.shortDescription}
                 </Text>
               </div>
-              <button
-                onClick={handleKlappentextToggle}
-                className="text-left underline hover:no-underline transition-all mt-0.5 flex-shrink-0"
-                style={{
-                  color: '#247ba0',
-                  fontSize: '0.875rem',
-                  lineHeight: '1.25rem'
-                }}
-              >
-                {isKlappentextExpanded ? 'Weniger lesen' : 'Mehr lesen'}
-              </button>
+              {(isKlappentextOverflowing || isKlappentextExpanded) && (
+                <button
+                  onClick={handleKlappentextToggle}
+                  className="text-left underline hover:no-underline transition-all mt-0.5 flex-shrink-0"
+                  style={{
+                    color: '#247ba0',
+                    fontSize: '0.875rem',
+                    lineHeight: '1.25rem'
+                  }}
+                >
+                  {isKlappentextExpanded ? 'Weniger lesen' : 'Mehr lesen'}
+                </button>
+              )}
             </div>
           )}
         </div>

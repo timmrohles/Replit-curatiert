@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { useTheme } from "../../utils/ThemeContext";
+import { useTextOverflow } from "../../hooks/useTextOverflow";
 
 export interface Review {
   id: string;
@@ -17,7 +18,7 @@ interface ReviewCardProps {
 export function ReviewCard({ review }: ReviewCardProps) {
   const { resolvedTheme } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
-  const isLongComment = (review.comment?.length || 0) > 200;
+  const { textRef: commentRef, isOverflowing: isCommentOverflowing } = useTextOverflow<HTMLParagraphElement>();
 
   return (
     <div className="review-card bg-muted/50">
@@ -32,18 +33,16 @@ export function ReviewCard({ review }: ReviewCardProps) {
       
       {/* Comment with fade-out effect */}
       <div className="relative">
-        <p className={`review-text ${!isExpanded && isLongComment ? 'line-clamp-4' : ''}`}>
+        <p ref={commentRef} className={`review-text ${!isExpanded ? 'line-clamp-4' : ''}`}>
           {review.comment || ''}
         </p>
         
-        {/* Fade-out gradient overlay */}
-        {!isExpanded && isLongComment && (
+        {!isExpanded && isCommentOverflowing && (
           <div className="review-comment-fade" />
         )}
       </div>
       
-      {/* Read more / Read less button */}
-      {isLongComment && (
+      {(isCommentOverflowing || isExpanded) && (
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
