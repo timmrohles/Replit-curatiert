@@ -237,6 +237,7 @@ export function AdminStorefronts() {
         `${API_BASE_URL}/admin/storefronts/${storefrontId}/series/${seriesId}`,
         {
           credentials: 'include',
+        }
       );
       const data = await response.json();
       if (data.ok) {
@@ -301,6 +302,7 @@ export function AdminStorefronts() {
         `${API_BASE_URL}/admin/storefronts/${storefrontId}/series/${seriesId}/books/${bookId}`,
         {
           credentials: 'include',
+        }
       );
       const data = await response.json();
       if (data.ok) {
