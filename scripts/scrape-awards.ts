@@ -143,9 +143,20 @@ async function scrapeAward(info: { name: string; url: string; category: string }
         title = cellTexts[2] || null;
         isbn = cellLinks[2] ? extractIsbnFromUrl(cellLinks[2]) : null;
       } else if (cellTexts.length === 2) {
-        author = cellTexts[0];
-        title = cellTexts[1] || null;
-        isbn = cellLinks[1] ? extractIsbnFromUrl(cellLinks[1]) : null;
+        const firstVal = cellTexts[0];
+        const py = parseInt(firstVal);
+        if (py >= 1900 && py <= 2030 && firstVal.match(/^\d{4}$/)) {
+          yearFromRow = py;
+          author = cellTexts[1];
+          title = null;
+        } else if (firstVal.match(/^\d+\.?$/)) {
+          author = cellTexts[1];
+          title = null;
+        } else {
+          author = cellTexts[0];
+          title = cellTexts[1] || null;
+          isbn = cellLinks[1] ? extractIsbnFromUrl(cellLinks[1]) : null;
+        }
       }
 
       if (!author || author.length < 2) return;

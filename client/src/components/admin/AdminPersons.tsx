@@ -5,11 +5,6 @@
  * 
  * Features:
  * - CRUD für Persons (Autoren, Übersetzer, etc.)
- * - Photo Upload/URL
- * - Bio Editor
- * - Born/Died Years
- * - Nationality
- * - Website
  * - Liste der Awards pro Person
  * - Search & Filter
  * - Delete Protection (wenn in Awards verwendet)
@@ -27,14 +22,9 @@ import {
   X,
   Search,
   User,
-  Calendar,
-  Globe,
   Award as AwardIcon,
-  ExternalLink,
   AlertCircle,
-  Check,
-  Upload,
-  Image as ImageIcon
+  Check
 } from 'lucide-react';
 // TYPES
 // ==================================================================
@@ -43,12 +33,6 @@ interface Person {
   id: string;
   name: string;
   slug: string;
-  bio?: string;
-  born_year?: number;
-  died_year?: number;
-  nationality?: string;
-  photo_url?: string;
-  website_url?: string;
   awards_count?: number;
   created_at?: string;
   updated_at?: string;
@@ -73,16 +57,13 @@ export function AdminPersons() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Search & Pagination
   const [searchQuery, setSearchQuery] = useState('');
   const [total, setTotal] = useState(0);
   const [limit] = useState(50);
   const [offset, setOffset] = useState(0);
 
-  // Edit Modal
   const [editingPerson, setEditingPerson] = useState<Partial<Person> | null>(null);
 
-  // View Awards Modal
   const [viewingPerson, setViewingPerson] = useState<Person | null>(null);
   const [personAwards, setPersonAwards] = useState<PersonAward[]>([]);
   const [loadingAwards, setLoadingAwards] = useState(false);
@@ -116,21 +97,20 @@ export function AdminPersons() {
       
       if (!response.ok) {
         const text = await response.text();
-        console.error(`❌ Load persons failed: HTTP ${response.status}`, text.substring(0, 200));
+        console.error(`Load persons failed: HTTP ${response.status}`, text.substring(0, 200));
         setError(`Failed to load persons (HTTP ${response.status})`);
         return;
       }
       
       const data = await response.json();
       if (data.ok) {
-        // Backend returns {ok: true, data: [...]} (array directly in data)
         setPersons(Array.isArray(data.data) ? data.data : []);
         setTotal(data.data?.length || 0);
       } else {
         setError(data.error?.message || 'Failed to load persons');
       }
     } catch (err) {
-      console.error('❌ Load persons error:', err);
+      console.error('Load persons error:', err);
       setError(String(err));
     } finally {
       setLoading(false);
@@ -143,19 +123,18 @@ export function AdminPersons() {
       const response = await fetch(`${API_BASE}/persons/${personId}`, { credentials: 'include', headers: getHeaders() });
       
       if (!response.ok) {
-        console.error(`❌ Load person awards failed: HTTP ${response.status}`);
+        console.error(`Load person awards failed: HTTP ${response.status}`);
         setPersonAwards([]);
         return;
       }
       
       const data = await response.json();
       if (data.success) {
-        // ✅ CRASH-SAFE: Ensure awards is always an array
         setPersonAwards(Array.isArray(data.data.awards) ? data.data.awards : []);
       }
     } catch (err) {
-      console.error('❌ Failed to load person awards:', err);
-      setPersonAwards([]); // ✅ CRASH-SAFE: Set empty array on error
+      console.error('Failed to load person awards:', err);
+      setPersonAwards([]);
     } finally {
       setLoadingAwards(false);
     }
@@ -178,12 +157,12 @@ export function AdminPersons() {
           method: 'POST',
           credentials: 'include',
           headers: getHeaders(),
-        body: JSON.stringify(editingPerson)
+        body: JSON.stringify({ name: editingPerson.name })
       });
       
       if (!response.ok) {
         const text = await response.text();
-        console.error(`❌ Save person failed: HTTP ${response.status}`, text.substring(0, 300));
+        console.error(`Save person failed: HTTP ${response.status}`, text.substring(0, 300));
         setError(`Failed to save person (HTTP ${response.status})`);
         return;
       }
@@ -197,7 +176,7 @@ export function AdminPersons() {
         setError(data.error || 'Failed to save person');
       }
     } catch (err) {
-      console.error('❌ Save person error:', err);
+      console.error('Save person error:', err);
       setError(String(err));
     } finally {
       setLoading(false);
@@ -214,7 +193,7 @@ export function AdminPersons() {
       
       if (!response.ok) {
         const text = await response.text();
-        console.error(`❌ Delete person failed: HTTP ${response.status}`, text.substring(0, 200));
+        console.error(`Delete person failed: HTTP ${response.status}`, text.substring(0, 200));
         setError(`Failed to delete person (HTTP ${response.status})`);
         return;
       }
@@ -227,7 +206,7 @@ export function AdminPersons() {
         setError(data.error || 'Failed to delete person');
       }
     } catch (err) {
-      console.error('❌ Delete person error:', err);
+      console.error('Delete person error:', err);
       setError(String(err));
     } finally {
       setLoading(false);
@@ -249,60 +228,54 @@ export function AdminPersons() {
   // RENDER
   // ==================================================================
 
-  // ✅ CRASH-SAFE: Ensure persons is always an array
   const safePersons = Array.isArray(persons) ? persons : [];
   const filteredPersons = safePersons;
 
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <User className="w-7 h-7" />
-            Persons Management
+            Personen-Verwaltung
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            Manage persons (authors, translators, etc.) for awards
+            Autoren, Übersetzer und Preisträger verwalten
           </p>
         </div>
         <button
           onClick={() => setEditingPerson({ name: '', slug: '' })}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2"
+          data-testid="button-new-person"
         >
           <Plus className="w-4 h-4" />
-          New Person
+          Neue Person
         </button>
       </div>
 
       {/* Error/Success Messages */}
       {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
           <div className="flex-1">
-            <p className="font-medium text-red-800">Error</p>
+            <p className="font-medium text-red-800">Fehler</p>
             <p className="text-sm text-red-700">{error}</p>
           </div>
-          <button
-            onClick={() => setError(null)}
-            className="p-1 hover:bg-red-100 rounded"
-          >
+          <button onClick={() => setError(null)} className="p-1 hover:bg-red-100 rounded">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {success && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md flex items-start gap-3">
           <Check className="w-5 h-5 text-green-600 mt-0.5" />
           <div className="flex-1">
-            <p className="font-medium text-green-800">Success</p>
+            <p className="font-medium text-green-800">Erfolg</p>
             <p className="text-sm text-green-700">{success}</p>
           </div>
-          <button
-            onClick={() => setSuccess(null)}
-            className="p-1 hover:bg-green-100 rounded"
-          >
+          <button onClick={() => setSuccess(null)} className="p-1 hover:bg-green-100 rounded">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -314,126 +287,89 @@ export function AdminPersons() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search persons..."
+            placeholder="Person suchen..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
               setOffset(0);
             }}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg"
+            className="w-full pl-10 pr-4 py-2 border rounded-md"
+            data-testid="input-search-persons"
           />
         </div>
       </div>
 
       {/* Stats */}
-      <div className="mb-6 p-4 bg-blue-50 rounded-lg flex items-center justify-between">
+      <div className="mb-6 p-4 bg-blue-50 rounded-md flex items-center justify-between flex-wrap gap-2">
         <div>
           <div className="text-2xl font-bold text-blue-900">{total}</div>
-          <div className="text-sm text-blue-700">Total Persons</div>
+          <div className="text-sm text-blue-700">Personen gesamt</div>
         </div>
         <div className="text-sm text-blue-600">
-          Showing {offset + 1}-{Math.min(offset + limit, total)} of {total}
+          Zeige {offset + 1}-{Math.min(offset + limit, total)} von {total}
         </div>
       </div>
 
       {/* Persons List */}
-      {loading && <div className="text-center py-8">Loading...</div>}
+      {loading && <div className="text-center py-8">Laden...</div>}
 
       {!loading && filteredPersons.length === 0 && (
         <div className="text-center py-8 text-gray-500">
-          No persons found. Create your first person!
+          Keine Personen gefunden.
         </div>
       )}
 
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         {filteredPersons.map((person) => (
           <div
             key={person.id}
-            className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+            className="border rounded-md p-4 hover:shadow-sm transition-shadow"
+            data-testid={`card-person-${person.id}`}
           >
-            <div className="flex items-start gap-4">
-              {/* Photo */}
+            <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
-                {person.photo_url ? (
-                  <img
-                    src={person.photo_url}
-                    alt={person.name}
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
-                    <User className="w-8 h-8 text-gray-400" />
-                  </div>
-                )}
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                  <User className="w-5 h-5 text-gray-400" />
+                </div>
               </div>
 
-              {/* Info */}
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">{person.name}</h3>
-                <p className="text-sm text-gray-600">Slug: {person.slug}</p>
-
-                {person.nationality && (
-                  <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                    <Globe className="w-3 h-3" />
-                    {person.nationality}
-                  </p>
-                )}
-
-                {(person.born_year || person.died_year) && (
-                  <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                    <Calendar className="w-3 h-3" />
-                    {person.born_year || '?'} - {person.died_year || 'present'}
-                  </p>
-                )}
-
-                {person.bio && (
-                  <p className="text-sm text-gray-700 mt-2 line-clamp-2">{person.bio}</p>
-                )}
-
-                {person.website_url && (
-                  <a
-                    href={person.website_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:underline flex items-center gap-1 mt-2"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    Website
-                  </a>
-                )}
-
-                <div className="mt-3 flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold truncate">{person.name}</h3>
+                <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
                   <span className="flex items-center gap-1">
-                    <AwardIcon className="w-4 h-4" />
-                    {person.awards_count || 0} awards
+                    <AwardIcon className="w-3.5 h-3.5" />
+                    {person.awards_count || 0} Preise
                   </span>
                 </div>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-2">
-                {person.awards_count && person.awards_count > 0 && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {(person.awards_count ?? 0) > 0 && (
                   <button
                     onClick={() => {
                       setViewingPerson(person);
                       loadPersonAwards(person.id);
                     }}
-                    className="px-3 py-1.5 bg-purple-50 text-purple-700 rounded hover:bg-purple-100 text-sm"
+                    className="px-3 py-1.5 bg-purple-50 text-purple-700 rounded-md hover:bg-purple-100 text-sm"
+                    data-testid={`button-view-awards-${person.id}`}
                   >
-                    View Awards
+                    Preise anzeigen
                   </button>
                 )}
                 <button
                   onClick={() => setEditingPerson(person)}
-                  className="p-2 hover:bg-gray-100 rounded"
-                  title="Edit"
+                  className="p-2 hover:bg-gray-100 rounded-md"
+                  title="Bearbeiten"
+                  data-testid={`button-edit-person-${person.id}`}
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => deletePerson(person.id)}
-                  className="p-2 hover:bg-red-50 rounded text-red-600"
-                  title="Delete"
+                  className="p-2 hover:bg-red-50 rounded-md text-red-600"
+                  title="Löschen"
+                  data-testid={`button-delete-person-${person.id}`}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -449,58 +385,57 @@ export function AdminPersons() {
           <button
             onClick={() => goToPage(currentPage - 1)}
             disabled={currentPage === 1}
-            className="px-3 py-1.5 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Previous
+            Zurück
           </button>
           <span className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
+            Seite {currentPage} von {totalPages}
           </span>
           <button
             onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className="px-3 py-1.5 border rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-3 py-1.5 border rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Next
+            Weiter
           </button>
         </div>
       )}
 
       {/* ==================================================================
-          EDIT PERSON MODAL
+          EDIT PERSON MODAL - Only Name field
           ================================================================== */}
       {editingPerson && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+          <div className="bg-white rounded-md max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold">
-                {editingPerson.id ? 'Edit Person' : 'New Person'}
+                {editingPerson.id ? 'Person bearbeiten' : 'Neue Person'}
               </h3>
               <button
                 onClick={() => setEditingPerson(null)}
-                className="p-2 hover:bg-gray-100 rounded"
+                className="p-2 hover:bg-gray-100 rounded-md"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="space-y-4">
-              {/* Name */}
               <div>
                 <label className="block text-sm font-medium mb-1">Name *</label>
                 <input
                   type="text"
                   value={editingPerson.name || ''}
                   onChange={(e) => setEditingPerson({ ...editingPerson, name: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="e.g., Jenny Erpenbeck"
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="z.B. Jenny Erpenbeck"
+                  data-testid="input-person-name"
                 />
               </div>
 
-              {/* Slug Preview - Always shown, calculated from name */}
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-500">
-                  Slug Preview <span className="text-xs">(auto-generated from name)</span>
+                  Slug <span className="text-xs">(automatisch generiert)</span>
                 </label>
                 <input
                   type="text"
@@ -518,100 +453,10 @@ export function AdminPersons() {
                       .replace(/[^a-z0-9-]/g, '')
                       .replace(/-+/g, '-')
                       .replace(/^-|-$/g, '');
-                    return slugifiedName || 'will-be-auto-generated';
+                    return slugifiedName || 'wird-automatisch-generiert';
                   })()}
                   disabled
-                  className="w-full px-3 py-2 border rounded-lg bg-gray-50 text-gray-600 font-mono text-sm cursor-not-allowed"
-                />
-              </div>
-
-              {/* Bio */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Biography</label>
-                <textarea
-                  value={editingPerson.bio || ''}
-                  onChange={(e) => setEditingPerson({ ...editingPerson, bio: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  rows={4}
-                  placeholder="Short biography..."
-                />
-              </div>
-
-              {/* Years */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Born Year</label>
-                  <input
-                    type="number"
-                    value={editingPerson.born_year || ''}
-                    onChange={(e) => setEditingPerson({ 
-                      ...editingPerson, 
-                      born_year: e.target.value ? parseInt(e.target.value) : undefined 
-                    })}
-                    className="w-full px-3 py-2 border rounded-lg"
-                    placeholder="e.g., 1967"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Died Year</label>
-                  <input
-                    type="number"
-                    value={editingPerson.died_year || ''}
-                    onChange={(e) => setEditingPerson({ 
-                      ...editingPerson, 
-                      died_year: e.target.value ? parseInt(e.target.value) : undefined 
-                    })}
-                    className="w-full px-3 py-2 border rounded-lg"
-                    placeholder="e.g., 2023"
-                  />
-                </div>
-              </div>
-
-              {/* Nationality */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Nationality</label>
-                <input
-                  type="text"
-                  value={editingPerson.nationality || ''}
-                  onChange={(e) => setEditingPerson({ ...editingPerson, nationality: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="e.g., German"
-                />
-              </div>
-
-              {/* Photo URL */}
-              <div>
-                <label className="block text-sm font-medium mb-1 flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4" />
-                  Photo URL
-                </label>
-                <input
-                  type="url"
-                  value={editingPerson.photo_url || ''}
-                  onChange={(e) => setEditingPerson({ ...editingPerson, photo_url: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="https://..."
-                />
-                {editingPerson.photo_url && (
-                  <div className="mt-2">
-                    <img
-                      src={editingPerson.photo_url}
-                      alt="Preview"
-                      className="w-24 h-24 rounded-full object-cover"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Website */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Website URL</label>
-                <input
-                  type="url"
-                  value={editingPerson.website_url || ''}
-                  onChange={(e) => setEditingPerson({ ...editingPerson, website_url: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="https://..."
+                  className="w-full px-3 py-2 border rounded-md bg-gray-50 text-gray-600 font-mono text-sm cursor-not-allowed"
                 />
               </div>
             </div>
@@ -620,16 +465,17 @@ export function AdminPersons() {
               <button
                 onClick={savePerson}
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                data-testid="button-save-person"
               >
                 <Save className="w-4 h-4" />
-                Save Person
+                Speichern
               </button>
               <button
                 onClick={() => setEditingPerson(null)}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 border rounded-md hover:bg-gray-50"
               >
-                Cancel
+                Abbrechen
               </button>
             </div>
           </div>
@@ -641,61 +487,52 @@ export function AdminPersons() {
           ================================================================== */}
       {viewingPerson && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+          <div className="bg-white rounded-md max-w-lg w-full max-h-[80vh] overflow-y-auto p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold">
-                Awards for {viewingPerson.name}
+                Preise: {viewingPerson.name}
               </h3>
               <button
-                onClick={() => {
-                  setViewingPerson(null);
-                  setPersonAwards([]);
-                }}
-                className="p-2 hover:bg-gray-100 rounded"
+                onClick={() => setViewingPerson(null)}
+                className="p-2 hover:bg-gray-100 rounded-md"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {loadingAwards && <div className="text-center py-8">Loading awards...</div>}
+            {loadingAwards && <div className="text-center py-4">Laden...</div>}
 
             {!loadingAwards && personAwards.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                No awards found for this person.
+              <div className="text-center py-4 text-gray-500">
+                Keine Preise zugeordnet.
               </div>
             )}
 
-            <div className="space-y-4">
-              {personAwards.map((award, index) => (
-                <div key={index} className="border rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <AwardIcon className="w-5 h-5 text-yellow-600 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="font-semibold">{award.award_name}</h4>
+            <div className="space-y-3">
+              {personAwards.map((award, idx) => (
+                <div key={idx} className="border rounded-md p-3">
+                  <div className="flex items-start gap-2">
+                    <AwardIcon className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium">{award.award_name}</p>
                       <p className="text-sm text-gray-600">
-                        {award.edition_year} - {award.outcome_name}
+                        {award.edition_year} &middot; {award.outcome_name}
                       </p>
                       {award.notes && (
-                        <p className="text-sm text-gray-700 mt-2">{award.notes}</p>
+                        <p className="text-sm text-gray-500 mt-1">{award.notes}</p>
                       )}
-                      <p className="text-xs text-gray-500 mt-2">
-                        Added {new Date(award.created_at).toLocaleDateString()}
-                      </p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex items-center gap-3 mt-6">
+            <div className="mt-6">
               <button
-                onClick={() => {
-                  setViewingPerson(null);
-                  setPersonAwards([]);
-                }}
-                className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
+                onClick={() => setViewingPerson(null)}
+                className="w-full px-4 py-2 border rounded-md hover:bg-gray-50"
               >
-                Close
+                Schließen
               </button>
             </div>
           </div>
