@@ -167,6 +167,11 @@ const SECTION_TO_ENTITY_TYPES: Record<string, FrontendEntityType[]> = {
 
 const READING_SECTIONS: ReadingStatus[] = ['currently_reading', 'already_read', 'want_to_read'];
 
+const BOOK_ONLY_SECTIONS = new Set([
+  'favorites', 'reading_list', 'currently_reading', 'already_read',
+  'want_to_read', 'recommendations', 'sponsored',
+]);
+
 const READING_STATUS_OPTIONS: { id: ReadingStatus; label: string; icon: typeof BookOpen }[] = [
   { id: 'currently_reading', label: 'Lese ich zurzeit', icon: BookOpen },
   { id: 'already_read', label: 'Habe ich gelesen', icon: BookCheck },
@@ -1018,6 +1023,8 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
   const isSponsoredSection = section.id === 'sponsored';
   const isEventsSection = section.id === 'followed_events';
   const isReadingSection = READING_SECTIONS.includes(section.id as ReadingStatus);
+  const isBookOnlySection = BOOK_ONLY_SECTIONS.has(section.id);
+  const showTagBar = !isBookOnlySection;
   const books = useMemo(() => getMockBooksForSection(section.id), [section.id]);
   const tags = useMemo(() => favoritesToTags(favorites, section.id), [favorites, section.id]);
   const existingIds = useMemo(() => new Set(tags.map((t) => t.entityId)), [tags]);
@@ -1090,69 +1097,40 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         ) : null}
 
-        <div className="w-full mt-4 mb-4">
-          <div className="flex gap-2 flex-wrap items-center">
-            {isCuratorSection && curator && (
-              <div
-                role="group"
-                className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
-                style={{ backgroundColor: 'var(--color-saffron, #e8a838)' }}
-              >
-                <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
-                  {curator.name}
-                </Text>
-                <LikeButton
-                  entityId={`curator-${curator.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  entityType="creator"
-                  entityTitle={curator.name}
-                  entityImage={curator.avatar}
-                  variant="minimal"
-                  size="sm"
-                  iconColor="#ffffff"
-                  backgroundColor="var(--color-saffron)"
-                />
-              </div>
-            )}
-            {isSponsoredSection && (
-              <div
-                role="group"
-                className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
-                style={{ backgroundColor: 'var(--color-saffron, #e8a838)' }}
-              >
-                <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
-                  {MOCK_SPONSOR.name}
-                </Text>
-                <LikeButton
-                  entityId={`sponsor-${MOCK_SPONSOR.name.toLowerCase().replace(/\s+/g, '-')}`}
-                  entityType="creator"
-                  entityTitle={MOCK_SPONSOR.name}
-                  entityImage={MOCK_SPONSOR.avatar}
-                  variant="minimal"
-                  size="sm"
-                  iconColor="#ffffff"
-                  backgroundColor="var(--color-saffron)"
-                />
-              </div>
-            )}
-            {tags.map((tag) => (
-              <div
-                role="group"
-                key={tag.entityId}
-                className={`px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none ${isSponsoredSection ? '' : 'cursor-pointer transition-all duration-200 hover-elevate'}`}
-                style={{ backgroundColor: tag.color }}
-              >
-                <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
-                  {tag.label}
-                </Text>
-                {isReadingSection && (
-                  <ReadingStatusDropdown
-                    bookId={tag.entityId}
-                    bookTitle={tag.label}
-                    currentStatus={section.id as ReadingStatus}
-                    onStatusChange={handleReadingStatusChange}
+        {showTagBar && (
+          <div className="w-full mt-4 mb-4">
+            <div className="flex gap-2 flex-wrap items-center">
+              {isCuratorSection && curator && (
+                <div
+                  role="group"
+                  className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
+                  style={{ backgroundColor: 'var(--color-saffron, #e8a838)' }}
+                >
+                  <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                    {curator.name}
+                  </Text>
+                  <LikeButton
+                    entityId={`curator-${curator.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    entityType="creator"
+                    entityTitle={curator.name}
+                    entityImage={curator.avatar}
+                    variant="minimal"
+                    size="sm"
+                    iconColor="#ffffff"
+                    backgroundColor="var(--color-saffron)"
                   />
-                )}
-                {!isSponsoredSection && (
+                </div>
+              )}
+              {tags.map((tag) => (
+                <div
+                  role="group"
+                  key={tag.entityId}
+                  className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none cursor-pointer transition-all duration-200 hover-elevate"
+                  style={{ backgroundColor: tag.color }}
+                >
+                  <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                    {tag.label}
+                  </Text>
                   <button
                     onClick={() => handleRemoveTag(tag)}
                     className="p-0.5 rounded-full transition-colors"
@@ -1163,18 +1141,16 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
-                )}
-              </div>
-            ))}
-            {!isSponsoredSection && (
+                </div>
+              ))}
               <TagPickerDropdown
                 sectionId={section.id}
                 onAdd={handleAddTag}
                 existingIds={existingIds}
               />
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
 
         {!isCuratorSection && !isSponsoredSection && (
