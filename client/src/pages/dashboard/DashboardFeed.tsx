@@ -659,7 +659,12 @@ function getMockBooksForSection(sectionId: FeedSectionType): BookCarouselItemDat
   return shuffled;
 }
 
-function CuratorSectionHeader({ curator, isSponsored }: { curator: MockCurator; isSponsored?: boolean }) {
+function CuratorSectionHeader({ curator, isSponsored, tags, description }: {
+  curator: MockCurator;
+  isSponsored?: boolean;
+  tags?: string[];
+  description?: string;
+}) {
   return (
     <div className="w-full text-base leading-normal text-left">
       <div className="flex items-center gap-3 md:gap-4 lg:gap-6">
@@ -696,15 +701,62 @@ function CuratorSectionHeader({ curator, isSponsored }: { curator: MockCurator; 
           </div>
         </div>
       </div>
-      <div className="w-full mt-4 md:mt-6 isolate">
-        <h3 className="section-title mb-4 text-foreground">
+
+      <div className="w-full mt-4 md:mt-5 isolate">
+        <h3 className="section-title text-foreground">
           {curator.occasion}
         </h3>
       </div>
-      {curator.curationReason && (
-        <div className="w-full">
+
+      {tags && tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-3 items-center">
+          <div
+            role="group"
+            className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
+            style={{ backgroundColor: 'var(--color-saffron, #e8a838)' }}
+          >
+            <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+              {curator.name}
+            </Text>
+            <LikeButton
+              entityId={`curator-${curator.name.toLowerCase().replace(/\s+/g, '-')}`}
+              entityType="creator"
+              entityTitle={curator.name}
+              entityImage={curator.avatar}
+              variant="minimal"
+              size="sm"
+              iconColor="#ffffff"
+              backgroundColor="var(--color-saffron)"
+            />
+          </div>
+          {tags.map((tag, idx) => (
+            <div
+              role="group"
+              key={tag}
+              className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
+              style={{ backgroundColor: TAG_COLORS[(idx + 1) % TAG_COLORS.length] }}
+            >
+              <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
+                {tag}
+              </Text>
+              <LikeButton
+                entityId={`tag-${tag.toLowerCase().replace(/\s+/g, '-')}`}
+                entityType="genre"
+                entityTitle={tag}
+                variant="minimal"
+                size="sm"
+                iconColor="#ffffff"
+                backgroundColor={TAG_COLORS[(idx + 1) % TAG_COLORS.length]}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {(description || curator.curationReason) && (
+        <div className="w-full mt-3">
           <Text as="div" variant="base" className="leading-relaxed text-black line-clamp-3">
-            {curator.curationReason}
+            {description || curator.curationReason}
           </Text>
         </div>
       )}
@@ -839,21 +891,15 @@ function CurationsBrowser() {
         </div>
       </div>
 
-      <CuratorSectionHeader curator={currentCuration.curator} />
+      <div className="mt-6">
+        <CuratorSectionHeader
+          curator={currentCuration.curator}
+          tags={currentCuration.tags}
+          description={currentCuration.curator.curationReason}
+        />
+      </div>
 
-      <div className="flex flex-wrap gap-2 mt-3 mb-2 items-center">
-        {currentCuration.tags.map((tag, idx) => (
-          <div
-            role="group"
-            key={tag}
-            className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
-            style={{ backgroundColor: TAG_COLORS[idx % TAG_COLORS.length] }}
-          >
-            <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
-              {tag}
-            </Text>
-          </div>
-        ))}
+      <div className="mt-2 mb-1">
         <Text as="span" variant="small" className="whitespace-nowrap" style={{ color: '#9CA3AF' }}>
           Gemerkt am {savedDate}
         </Text>
