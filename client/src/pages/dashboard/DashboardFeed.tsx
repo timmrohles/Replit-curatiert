@@ -47,22 +47,65 @@ interface MockCurator {
   curationReason: string;
 }
 
-const MOCK_CURATORS: MockCurator[] = [
+interface MockCuration {
+  id: string;
+  curator: MockCurator;
+  savedAt: string;
+  tags: string[];
+}
+
+const MOCK_CURATIONS: MockCuration[] = [
   {
-    name: 'coratiert Redaktion',
-    avatar: '/uploads/avatars/coratiert-redaktion.jpg',
-    focus: 'Die Allzweckwaffe unter den Redakteur*innen',
-    isVerified: true,
-    occasion: 'Neue Bücher für Leseratten',
-    curationReason: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren.',
+    id: 'cur-1',
+    curator: {
+      name: 'coratiert Redaktion',
+      avatar: '/uploads/avatars/coratiert-redaktion.jpg',
+      focus: 'Die Allzweckwaffe unter den Redakteur*innen',
+      isVerified: true,
+      occasion: 'Neue Bücher für Leseratten',
+      curationReason: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.',
+    },
+    savedAt: '2026-02-18T10:00:00Z',
+    tags: ['Belletristik', 'Neuerscheinungen'],
   },
   {
-    name: 'Elena Hartmann',
-    avatar: '',
-    focus: 'Belletristik & Literarische Fiction',
-    isVerified: false,
-    occasion: 'Lesetipps im Frühling',
-    curationReason: 'Meine persönlichen Empfehlungen für gemütliche Lesestunden.',
+    id: 'cur-2',
+    curator: {
+      name: 'Elena Hartmann',
+      avatar: '',
+      focus: 'Belletristik & Literarische Fiction',
+      isVerified: false,
+      occasion: 'Lesetipps im Frühling',
+      curationReason: 'Meine persönlichen Empfehlungen für gemütliche Lesestunden.',
+    },
+    savedAt: '2026-02-15T14:30:00Z',
+    tags: ['Frühling', 'Literatur'],
+  },
+  {
+    id: 'cur-3',
+    curator: {
+      name: 'coratiert Redaktion',
+      avatar: '/uploads/avatars/coratiert-redaktion.jpg',
+      focus: 'Die Allzweckwaffe unter den Redakteur*innen',
+      isVerified: true,
+      occasion: 'Sachbuch-Highlights 2026',
+      curationReason: 'Die spannendsten Sachbücher des Jahres, handverlesen von unserer Redaktion.',
+    },
+    savedAt: '2026-02-10T09:00:00Z',
+    tags: ['Sachbuch', 'Wissen'],
+  },
+  {
+    id: 'cur-4',
+    curator: {
+      name: 'Markus Weber',
+      avatar: '',
+      focus: 'Krimi & Thriller',
+      isVerified: true,
+      occasion: 'Die besten Krimis des Winters',
+      curationReason: 'Spannung pur für lange Winterabende – meine Top-Empfehlungen aus dem Krimi-Genre.',
+    },
+    savedAt: '2026-01-28T16:00:00Z',
+    tags: ['Krimi', 'Thriller', 'Winter'],
   },
 ];
 
@@ -669,6 +712,166 @@ function CuratorSectionHeader({ curator, isSponsored }: { curator: MockCurator; 
   );
 }
 
+function CurationsBrowser() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [filterCurator, setFilterCurator] = useState<string | null>(null);
+
+  const sortedCurations = useMemo(() => {
+    let list = [...MOCK_CURATIONS];
+    if (filterCurator) {
+      list = list.filter((c) => c.curator.name === filterCurator);
+    }
+    list.sort((a, b) => {
+      const diff = new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime();
+      return sortOrder === 'newest' ? diff : -diff;
+    });
+    return list;
+  }, [sortOrder, filterCurator]);
+
+  const uniqueCurators = useMemo(() => {
+    const seen = new Map<string, MockCurator>();
+    for (const c of MOCK_CURATIONS) {
+      if (!seen.has(c.curator.name)) seen.set(c.curator.name, c.curator);
+    }
+    return Array.from(seen.values());
+  }, []);
+
+  const totalCount = sortedCurations.length;
+  const safeIndex = Math.min(currentIndex, Math.max(0, totalCount - 1));
+  const currentCuration = sortedCurations[safeIndex];
+
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [filterCurator, sortOrder]);
+
+  const goNext = () => setCurrentIndex((i) => Math.min(i + 1, totalCount - 1));
+  const goPrev = () => setCurrentIndex((i) => Math.max(i - 1, 0));
+
+  const CURATION_SECTION_POOL: FeedSectionType[] = ['favorites', 'reading_list', 'currently_reading', 'already_read'];
+  const books = useMemo(() => {
+    if (!currentCuration) return [];
+    const idx = MOCK_CURATIONS.indexOf(currentCuration);
+    const sectionType = CURATION_SECTION_POOL[idx % CURATION_SECTION_POOL.length];
+    return getMockBooksForSection(sectionType);
+  }, [currentCuration]);
+
+  if (totalCount === 0) {
+    return (
+      <div className="py-6 text-center">
+        <Text as="p" variant="base" className="text-muted-foreground">
+          {filterCurator ? 'Keine Kurationen von diesem Kurator gemerkt.' : 'Du hast noch keine Kurationen gemerkt.'}
+        </Text>
+      </div>
+    );
+  }
+
+  const savedDate = new Date(currentCuration.savedAt).toLocaleDateString('de-DE', {
+    day: '2-digit', month: 'short', year: 'numeric',
+  });
+
+  return (
+    <div className="w-full">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <button
+          onClick={() => setFilterCurator(null)}
+          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+            filterCurator === null ? 'shadow-md' : 'shadow-sm opacity-70 hover:opacity-100'
+          }`}
+          style={{
+            backgroundColor: filterCurator === null ? 'var(--color-cerulean, #247ba0)' : 'rgba(36,123,160,0.15)',
+            color: filterCurator === null ? '#ffffff' : 'var(--color-cerulean, #247ba0)',
+          }}
+          data-testid="filter-curations-all"
+        >
+          Alle
+        </button>
+        {uniqueCurators.map((cur) => (
+          <button
+            key={cur.name}
+            onClick={() => setFilterCurator(filterCurator === cur.name ? null : cur.name)}
+            className={`rounded-full text-xs font-medium transition-all duration-200 inline-flex items-center gap-1.5 px-2.5 py-1 ${
+              filterCurator === cur.name ? 'shadow-md' : 'shadow-sm opacity-70 hover:opacity-100'
+            }`}
+            style={{
+              backgroundColor: filterCurator === cur.name ? 'var(--color-cerulean, #247ba0)' : 'rgba(36,123,160,0.15)',
+              color: filterCurator === cur.name ? '#ffffff' : 'var(--color-cerulean, #247ba0)',
+            }}
+            data-testid={`filter-curator-${cur.name.toLowerCase().replace(/\s+/g, '-')}`}
+          >
+            <div className="w-4 h-4 rounded-full overflow-hidden flex-shrink-0">
+              <ImageWithFallback src={cur.avatar} alt={cur.name} className="w-full h-full object-cover" />
+            </div>
+            <span className="truncate max-w-[100px]">{cur.name}</span>
+          </button>
+        ))}
+
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
+            className="px-2 py-1 rounded-md text-xs font-medium inline-flex items-center gap-1 transition-colors"
+            style={{ color: 'var(--color-cerulean, #247ba0)' }}
+            data-testid="sort-curations"
+          >
+            <ArrowDownUp className="w-3.5 h-3.5" />
+            {sortOrder === 'newest' ? 'Neueste' : 'Älteste'}
+          </button>
+        </div>
+      </div>
+
+      <CuratorSectionHeader curator={currentCuration.curator} />
+
+      <div className="flex flex-wrap gap-1.5 mt-3 mb-2">
+        {currentCuration.tags.map((tag, idx) => (
+          <span
+            key={tag}
+            className="px-2.5 py-1 rounded-full text-xs font-medium"
+            style={{
+              backgroundColor: TAG_COLORS[idx % TAG_COLORS.length],
+              color: '#ffffff',
+            }}
+          >
+            {tag}
+          </span>
+        ))}
+        <span className="px-2.5 py-1 text-xs" style={{ color: '#9CA3AF' }}>
+          Gemerkt am {savedDate}
+        </span>
+      </div>
+
+      <div className="mb-4">
+        <FeedBookCarousel books={books} />
+      </div>
+
+      {totalCount > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-2 mb-2">
+          <button
+            onClick={goPrev}
+            disabled={safeIndex === 0}
+            className="p-1.5 rounded-full transition-colors disabled:opacity-30"
+            style={{ color: 'var(--color-cerulean, #247ba0)' }}
+            data-testid="curations-prev"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="m15 18-6-6 6-6" /></svg>
+          </button>
+          <Text as="span" variant="small" className="tabular-nums" style={{ color: '#6B7280' }}>
+            {safeIndex + 1} / {totalCount}
+          </Text>
+          <button
+            onClick={goNext}
+            disabled={safeIndex >= totalCount - 1}
+            className="p-1.5 rounded-full transition-colors disabled:opacity-30"
+            style={{ color: 'var(--color-cerulean, #247ba0)' }}
+            data-testid="curations-next"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="m9 18 6-6-6-6" /></svg>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface MockEvent {
   id: string;
   title: string;
@@ -1028,8 +1231,6 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
   const books = useMemo(() => getMockBooksForSection(section.id), [section.id]);
   const tags = useMemo(() => favoritesToTags(favorites, section.id), [favorites, section.id]);
   const existingIds = useMemo(() => new Set(tags.map((t) => t.entityId)), [tags]);
-  const curatorIndex = 0;
-  const curator = MOCK_CURATORS[curatorIndex];
 
   const handleAddTag = useCallback((item: FavoriteItem) => {
     toggleFavorite(item);
@@ -1083,79 +1284,56 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           <div className="flex items-center gap-3 mb-4">
             <h2 className="section-title text-foreground">
               {section.label}
+              {isCuratorSection && (
+                <span className="ml-2 text-sm font-normal" style={{ color: '#9CA3AF' }}>
+                  ({MOCK_CURATIONS.length})
+                </span>
+              )}
             </h2>
           </div>
         </div>
 
-        {(isCuratorSection && curator) ? (
-          <div className="w-full mb-4 md:mb-6">
-            <CuratorSectionHeader curator={curator} />
-          </div>
+        {isCuratorSection ? (
+          <CurationsBrowser />
         ) : isSponsoredSection ? (
           <div className="w-full mb-4 md:mb-6">
             <CuratorSectionHeader curator={MOCK_SPONSOR} isSponsored />
           </div>
         ) : null}
 
-        {showTagBar && (
+        {!isCuratorSection && showTagBar && (
           <div className="w-full mt-4 mb-4">
             <div className="flex gap-2 flex-wrap items-center">
-              {isCuratorSection && curator && (
-                <div
-                  role="group"
-                  className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none"
-                  style={{ backgroundColor: 'var(--color-saffron, #e8a838)' }}
-                >
-                  <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
-                    {curator.name}
-                  </Text>
-                  <LikeButton
-                    entityId={`curator-${curator.name.toLowerCase().replace(/\s+/g, '-')}`}
-                    entityType="creator"
-                    entityTitle={curator.name}
-                    entityImage={curator.avatar}
-                    variant="minimal"
-                    size="sm"
-                    iconColor="#ffffff"
-                    backgroundColor="var(--color-saffron)"
-                  />
-                </div>
-              )}
               {tags.map((tag) => (
                 <div
                   role="group"
                   key={tag.entityId}
-                  className={`px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none ${isCuratorSection ? '' : 'cursor-pointer transition-all duration-200 hover-elevate'}`}
+                  className="px-3 py-1.5 border border-transparent rounded-full inline-flex items-center gap-2 shadow-lg select-none cursor-pointer transition-all duration-200 hover-elevate"
                   style={{ backgroundColor: tag.color }}
                 >
                   <Text as="span" variant="small" className="text-white font-normal whitespace-nowrap">
                     {tag.label}
                   </Text>
-                  {!isCuratorSection && (
-                    <button
-                      onClick={() => handleRemoveTag(tag)}
-                      className="p-0.5 rounded-full transition-colors"
-                      style={{ color: 'rgba(255,255,255,0.7)' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
-                      data-testid={`button-remove-tag-${tag.entityId}`}
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    className="p-0.5 rounded-full transition-colors"
+                    style={{ color: 'rgba(255,255,255,0.7)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = '#ffffff'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                    data-testid={`button-remove-tag-${tag.entityId}`}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               ))}
-              {!isCuratorSection && (
-                <TagPickerDropdown
-                  sectionId={section.id}
-                  onAdd={handleAddTag}
-                  existingIds={existingIds}
-                />
-              )}
+              <TagPickerDropdown
+                sectionId={section.id}
+                onAdd={handleAddTag}
+                existingIds={existingIds}
+              />
             </div>
           </div>
         )}
-
 
         {!isCuratorSection && !isSponsoredSection && (
           <div className="w-full mt-2 mb-4">
@@ -1165,17 +1343,19 @@ function FeedSection({ section, isEditMode, onToggleVisibility, onTogglePublic }
           </div>
         )}
 
-        {!isEventsSection && (
+        {!isCuratorSection && !isEventsSection && (
           <SortChips sortBy={sortBy} setSortBy={setSortBy} />
         )}
 
-        <div className="mb-4">
-          {isEventsSection ? (
-            <FeedEventCarousel events={MOCK_EVENTS} />
-          ) : (
-            <FeedBookCarousel books={books} />
-          )}
-        </div>
+        {!isCuratorSection && (
+          <div className="mb-4">
+            {isEventsSection ? (
+              <FeedEventCarousel events={MOCK_EVENTS} />
+            ) : (
+              <FeedBookCarousel books={books} />
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
