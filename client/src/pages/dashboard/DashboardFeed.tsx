@@ -65,7 +65,7 @@ const MOCK_CURATIONS: MockCuration[] = [
     id: 'cur-1',
     curator: {
       name: 'coratiert Redaktion',
-      avatar: makeInitialsAvatar('coratiert Redaktion', '#247ba0'),
+      avatar: '/uploads/avatars/avatar-1770722388675-897448268.jpg',
       focus: 'Die Allzweckwaffe unter den Redakteur*innen',
       isVerified: true,
       occasion: 'Neue Bücher für Leseratten',
@@ -77,9 +77,9 @@ const MOCK_CURATIONS: MockCuration[] = [
   {
     id: 'cur-2',
     curator: {
-      name: 'Elena Hartmann',
-      avatar: makeInitialsAvatar('Elena Hartmann', '#70c1b3'),
-      focus: 'Belletristik & Literarische Fiction',
+      name: 'Timm Rohles',
+      avatar: '/uploads/avatars/avatar-1771340372534-30413376.webp',
+      focus: 'Krimi & Spannung',
       isVerified: false,
       occasion: 'Lesetipps im Frühling',
       curationReason: 'Meine persönlichen Empfehlungen für gemütliche Lesestunden.',
@@ -91,7 +91,7 @@ const MOCK_CURATIONS: MockCuration[] = [
     id: 'cur-3',
     curator: {
       name: 'coratiert Redaktion',
-      avatar: makeInitialsAvatar('coratiert Redaktion', '#247ba0'),
+      avatar: '/uploads/avatars/avatar-1770722388675-897448268.jpg',
       focus: 'Die Allzweckwaffe unter den Redakteur*innen',
       isVerified: true,
       occasion: 'Sachbuch-Highlights 2026',
@@ -103,9 +103,9 @@ const MOCK_CURATIONS: MockCuration[] = [
   {
     id: 'cur-4',
     curator: {
-      name: 'Markus Weber',
-      avatar: makeInitialsAvatar('Markus Weber', '#8b5cf6'),
-      focus: 'Krimi & Thriller',
+      name: 'Westart Lesen',
+      avatar: 'https://api.ardmediathek.de/image-service/images/urn:ard:image:9b982a7fc555a314?w=448&ch=5f1c013368336656',
+      focus: 'Literatur & Kultur',
       isVerified: true,
       occasion: 'Die besten Krimis des Winters',
       curationReason: 'Spannung pur für lange Winterabende – meine Top-Empfehlungen aus dem Krimi-Genre.',
