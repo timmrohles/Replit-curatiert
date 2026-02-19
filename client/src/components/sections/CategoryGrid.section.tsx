@@ -44,7 +44,7 @@ export function CategoryGrid({ section }: CategoryGridProps) {
       <div className="max-w-[1440px] mx-auto">
         {title && (
           <h2
-            className="text-2xl md:text-3xl lg:text-4xl mb-6 md:mb-8"
+            className="text-2xl md:text-3xl lg:text-4xl mb-6 md:mb-8 text-center"
             style={{ fontFamily: 'Fjalla One', color: 'var(--foreground, #2a2a2a)' }}
             data-testid="category-grid-title"
           >
