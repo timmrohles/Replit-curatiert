@@ -248,7 +248,8 @@ export function ShopPage() {
       safeFetch('/api/public/content-source-names'),
       safeFetch('/api/books/filter/authors?limit=50'),
       safeFetch('/api/books/filter/publishers?limit=50'),
-    ]).then(([catData, tagsData, mediaData, authorsData, pubsData]) => {
+      safeFetch('/api/awards'),
+    ]).then(([catData, tagsData, mediaData, authorsData, pubsData, awardsData]) => {
       const cats = (catData?.data || []).map((c: any) => c.name || c).sort((a: string, b: string) => a.localeCompare(b, 'de'));
       if (cats.length > 0) setCategoryOptions(cats);
 
@@ -258,13 +259,14 @@ export function ShopPage() {
           .filter((t: any) => ['topic', 'genre', 'audience', 'feature', 'publisher_cluster'].includes(t.tag_type))
           .map((t: any) => t.name)
           .sort((a: string, b: string) => a.localeCompare(b, 'de'));
-        const awards = tags
-          .filter((t: any) => t.tag_type === 'award')
-          .map((t: any) => t.name)
-          .sort((a: string, b: string) => a.localeCompare(b, 'de'));
         setThemeOptions(themes);
-        setAwardOptions(awards);
       }
+
+      const awardNames = new Set<string>();
+      (tags || []).filter((t: any) => t.tag_type === 'award').forEach((t: any) => awardNames.add(t.name));
+      (awardsData?.data || []).forEach((a: any) => { if (a.name) awardNames.add(a.name); });
+      const sortedAwards = [...awardNames].sort((a, b) => a.localeCompare(b, 'de'));
+      if (sortedAwards.length > 0) setAwardOptions(sortedAwards);
 
       const media = (mediaData?.data || []).map((m: any) => m.name || m.title).filter(Boolean).sort((a: string, b: string) => a.localeCompare(b, 'de'));
       if (media.length > 0) setMediaOptions(media);
