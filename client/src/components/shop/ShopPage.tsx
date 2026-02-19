@@ -503,7 +503,7 @@ export function ShopPage() {
             </form>
           </div>
 
-          <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
             <FilterDropdown
               label="Kuratoren"
               options={curatorOptions}
@@ -584,7 +584,7 @@ export function ShopPage() {
             )}
           </div>
 
-          <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
             <Text variant="xs" className="whitespace-nowrap text-foreground/50 flex-shrink-0 !font-semibold">Sortieren:</Text>
             {sortOptions.map((option) => (
               <button
