@@ -347,21 +347,21 @@ export function GenreCarouselSection({ backgroundColor = 'var(--charcoal)', titl
             {genreScrollLeft > 0 && (
               <button 
                 onClick={() => scrollGenreCarousel('left')}
-                className="flex absolute left-2 md:left-0 top-1/2 -translate-y-1/2 md:-translate-x-6 z-[2] w-12 h-12 rounded-full bg-white shadow-lg items-center justify-center hover:bg-gray-50 transition-all"
-                style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                className="flex absolute left-2 md:left-0 top-1/2 -translate-y-1/2 md:-translate-x-6 z-[2] w-12 h-12 rounded-full items-center justify-center hover:scale-110 transition-all"
+                style={{ backgroundColor: '#1a1a1a', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 18l-6-6 6-6" stroke="var(--charcoal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M15 18l-6-6 6-6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
             )}
             <button 
               onClick={() => scrollGenreCarousel('right')}
-              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-[2] w-12 h-12 rounded-full bg-white shadow-lg items-center justify-center hover:bg-gray-50 transition-all"
-              style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 z-[2] w-12 h-12 rounded-full items-center justify-center hover:scale-110 transition-all"
+              style={{ backgroundColor: '#1a1a1a', boxShadow: '0 4px 12px rgba(0,0,0,0.25)' }}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 18l6-6-6-6" stroke="var(--charcoal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 18l6-6-6-6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           </div>

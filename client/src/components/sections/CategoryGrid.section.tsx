@@ -56,15 +56,16 @@ export function CategoryGrid({ section }: CategoryGridProps) {
           {canScrollLeft && (
             <button
               onClick={() => scroll('left')}
-              className="absolute left-0 top-0 bottom-0 z-10 w-12 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
               style={{
-                background: 'linear-gradient(to right, rgba(247,244,239,0.95), transparent)',
+                backgroundColor: '#1a1a1a',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
               }}
               aria-label="Nach links scrollen"
               data-testid="category-scroll-left"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M15 18l-6-6 6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" stroke="var(--charcoal, #2a2a2a)" />
+                <path d="M15 18l-6-6 6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" stroke="#ffffff" />
               </svg>
             </button>
           )}
@@ -160,12 +161,16 @@ export function CategoryGrid({ section }: CategoryGridProps) {
           {canScrollRight && (
             <button
               onClick={() => scroll('right')}
-              className="absolute right-0 top-0 bottom-0 z-10 w-12 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
+              style={{
+                backgroundColor: '#1a1a1a',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              }}
               aria-label="Nach rechts scrollen"
               data-testid="category-scroll-right"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M9 18l6-6-6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" stroke="var(--charcoal, #2a2a2a)" />
+                <path d="M9 18l6-6-6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" stroke="#ffffff" />
               </svg>
             </button>
           )}

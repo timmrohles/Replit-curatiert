@@ -194,7 +194,7 @@ export function MostRecommended({ books = defaultBooks, onViewAll }: MostRecomme
               aria-label="Vorherige Bücher"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18l-6-6 6-6" className="dark:stroke-white" stroke="#3A3A3A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M15 18l-6-6 6-6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           )}
@@ -206,7 +206,7 @@ export function MostRecommended({ books = defaultBooks, onViewAll }: MostRecomme
               aria-label="Vorherige Bücher"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18l-6-6 6-6" className="dark:stroke-white" stroke="#3A3A3A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M15 18l-6-6 6-6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           )}
@@ -220,7 +220,7 @@ export function MostRecommended({ books = defaultBooks, onViewAll }: MostRecomme
               aria-label="Nächste Bücher"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 18l6-6-6-6" className="dark:stroke-white" stroke="#3A3A3A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 18l6-6-6-6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           )}
@@ -232,7 +232,7 @@ export function MostRecommended({ books = defaultBooks, onViewAll }: MostRecomme
               aria-label="Nächste Bücher"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 18l6-6-6-6" className="dark:stroke-white" stroke="#3A3A3A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9 18l6-6-6-6" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           )}

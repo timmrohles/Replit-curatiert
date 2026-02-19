@@ -275,17 +275,22 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 2;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 9999px;
-  border: 2px solid var(--charcoal);
-  background-color: white;
+  border: none;
+  background-color: #1a1a1a;
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.carousel-nav-arrow svg path {
+  stroke: #ffffff !important;
 }
 
 .carousel-nav-arrow:hover {
@@ -298,27 +303,4 @@
 
 .carousel-nav-arrow-right {
   right: 8px;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .carousel-nav-arrow {
-    background-color: #2a2a2a;
-    border-color: white;
-  }
-  
-  /* ✅ FIX: SVG-Pfeile weiß machen im Dark Mode */
-  .carousel-nav-arrow svg path {
-    stroke: white !important;
-  }
-}
-
-/* ✅ FIX: Auch für .dark Klasse Support */
-.dark .carousel-nav-arrow {
-  background-color: #2a2a2a;
-  border-color: white;
-}
-
-.dark .carousel-nav-arrow svg path {
-  stroke: white !important;
 }
