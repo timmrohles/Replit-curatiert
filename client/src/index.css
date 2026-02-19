@@ -578,8 +578,8 @@ h3.section-title {
 /* 📚 BOOK CARD - Einheitliche Buch-Karten-Elemente */
 .book-card-title {
   font-family: var(--font-headline);
-  font-weight: 700;
-  font-size: 1.15rem;
+  font-weight: 400;
+  font-size: clamp(1rem, 0.95rem + 0.25vw, 1.25rem);
   line-height: 1.3;
   color: #3a3a3a;
   text-transform: none;
