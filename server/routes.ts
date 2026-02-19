@@ -2555,14 +2555,15 @@ export async function registerRoutes(
       const q = (req.query.q as string) || '';
       const limit = parseInt((req.query.limit as string) || '50');
       let result;
+      const authorClean = `author IS NOT NULL AND author != '' AND author NOT LIKE '%<span%' AND author NOT LIKE '%</%' AND author NOT LIKE '(%' AND author NOT LIKE '#%' AND author NOT LIKE '$%' AND author ~ '^[a-zA-ZÀ-ÿ]' AND author NOT LIKE '%;%' AND length(author) > 2 AND length(author) < 100`;
       if (q) {
         result = await queryDB(
-          `SELECT DISTINCT author FROM books WHERE author IS NOT NULL AND author != '' AND author NOT LIKE '%<span%' AND author NOT LIKE '%</%' AND author ILIKE $1 ORDER BY author LIMIT $2`,
+          `SELECT DISTINCT author FROM books WHERE ${authorClean} AND author ILIKE $1 ORDER BY author LIMIT $2`,
           [`%${q}%`, limit]
         );
       } else {
         result = await queryDB(
-          `SELECT DISTINCT author FROM books WHERE author IS NOT NULL AND author != '' AND author NOT LIKE '%<span%' AND author NOT LIKE '%</%' ORDER BY author LIMIT $1`,
+          `SELECT DISTINCT author FROM books WHERE ${authorClean} ORDER BY author LIMIT $1`,
           [limit]
         );
       }
@@ -2578,14 +2579,15 @@ export async function registerRoutes(
       const q = (req.query.q as string) || '';
       const limit = parseInt((req.query.limit as string) || '50');
       let result;
+      const pubClean = `publisher IS NOT NULL AND publisher != '' AND publisher != '-' AND publisher ~ '^[a-zA-ZÀ-ÿ]' AND length(publisher) > 2 AND length(publisher) < 120`;
       if (q) {
         result = await queryDB(
-          `SELECT DISTINCT publisher FROM books WHERE publisher IS NOT NULL AND publisher != '' AND publisher ILIKE $1 ORDER BY publisher LIMIT $2`,
+          `SELECT DISTINCT publisher FROM books WHERE ${pubClean} AND publisher ILIKE $1 ORDER BY publisher LIMIT $2`,
           [`%${q}%`, limit]
         );
       } else {
         result = await queryDB(
-          `SELECT DISTINCT publisher FROM books WHERE publisher IS NOT NULL AND publisher != '' ORDER BY publisher LIMIT $1`,
+          `SELECT DISTINCT publisher FROM books WHERE ${pubClean} ORDER BY publisher LIMIT $1`,
           [limit]
         );
       }

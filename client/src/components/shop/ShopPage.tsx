@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { useSafeNavigate } from '../../utils/routing';
 import { Search, X, ChevronDown, Loader2 } from 'lucide-react';
@@ -28,32 +29,58 @@ interface FilterDropdownProps {
 function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoading, totalLabel }: FilterDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filterSearch, setFilterSearch] = useState('');
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-  const [panelPos, setPanelPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  const updatePosition = useCallback(() => {
+    if (!buttonRef.current || !panelRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const panelW = 320;
+    let left = rect.left;
+    if (left + panelW > window.innerWidth - 8) {
+      left = window.innerWidth - panelW - 8;
+    }
+    if (left < 8) left = 8;
+    panelRef.current.style.top = `${rect.bottom + 4}px`;
+    panelRef.current.style.left = `${left}px`;
+  }, []);
 
   useEffect(() => {
+    if (!isOpen) return;
+    requestAnimationFrame(() => {
+      updatePosition();
+      if (inputRef.current) inputRef.current.focus();
+    });
+
+    const onScrollOrResize = () => updatePosition();
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
+
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (buttonRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setIsOpen(false);
+      setFilterSearch('');
+    }
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
         setIsOpen(false);
         setFilterSearch('');
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('keydown', handleEscape);
 
-  useEffect(() => {
-    if (isOpen) {
-      if (buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        setPanelPos({ top: rect.bottom + 4, left: rect.left });
-      }
-      if (inputRef.current) inputRef.current.focus();
-    }
-  }, [isOpen]);
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isOpen, updatePosition]);
 
   const handleSearchChange = (value: string) => {
     setFilterSearch(value);
@@ -73,7 +100,7 @@ function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoadin
   const testId = label.toLowerCase().replace(/[^a-z]/g, '');
 
   return (
-    <div className="flex-shrink-0" ref={dropdownRef}>
+    <div className="flex-shrink-0">
       <button
         ref={buttonRef}
         type="button"
@@ -97,10 +124,11 @@ function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoadin
         <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div
+          ref={panelRef}
           className="fixed w-80 max-h-96 overflow-hidden bg-card border shadow-lg flex flex-col"
-          style={{ borderColor: 'var(--color-border)', borderRadius: '4px', zIndex: 9999, top: panelPos.top, left: panelPos.left }}
+          style={{ borderColor: 'var(--color-border)', borderRadius: '4px', zIndex: 9999 }}
         >
           <div className="p-3 border-b" style={{ borderColor: 'var(--color-border)' }}>
             <div className="relative">
@@ -178,7 +206,8 @@ function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoadin
               {filterSearch && ' gefunden'}
             </Text>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -233,6 +262,9 @@ export function ShopPage() {
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
   const [selectedAwards, setSelectedAwards] = useState<string[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
+  const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
+
+  const formatOptions = ['Hardcover', 'Softcover', 'eBook', 'Hörbuch'];
 
   const [curatorOptions, setCuratorOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
@@ -390,7 +422,7 @@ export function ShopPage() {
 
   const hasActiveFilters = selectedCurators.length > 0 || selectedCategories.length > 0 || selectedThemes.length > 0 ||
     selectedSeries.length > 0 || selectedPublishers.length > 0 || selectedAuthors.length > 0 ||
-    selectedAwards.length > 0 || selectedMedia.length > 0;
+    selectedAwards.length > 0 || selectedMedia.length > 0 || selectedFormats.length > 0;
 
   const clearAllFilters = () => {
     setSelectedCurators([]);
@@ -401,6 +433,7 @@ export function ShopPage() {
     setSelectedAuthors([]);
     setSelectedAwards([]);
     setSelectedMedia([]);
+    setSelectedFormats([]);
   };
 
   const sortOptions: { id: SortOption; label: string }[] = [
@@ -420,6 +453,7 @@ export function ShopPage() {
     ...selectedPublishers.map(v => ({ label: v, type: 'publisher' as const })),
     ...selectedAwards.map(v => ({ label: v, type: 'award' as const })),
     ...selectedMedia.map(v => ({ label: v, type: 'media' as const })),
+    ...selectedFormats.map(v => ({ label: v, type: 'format' as const })),
   ];
 
   return (
@@ -524,11 +558,18 @@ export function ShopPage() {
               totalLabel="Auszeichnungen"
             />
             <FilterDropdown
-              label="Medien"
+              label="Podcasts"
               options={mediaOptions}
               selected={selectedMedia}
               onToggle={(v) => toggleFilter(selectedMedia, v, setSelectedMedia)}
-              totalLabel="Medien"
+              totalLabel="Podcasts"
+            />
+            <FilterDropdown
+              label="Medienarten"
+              options={formatOptions}
+              selected={selectedFormats}
+              onToggle={(v) => toggleFilter(selectedFormats, v, setSelectedFormats)}
+              totalLabel="Medienarten"
             />
             {hasActiveFilters && (
               <button
@@ -577,6 +618,7 @@ export function ShopPage() {
                     if (f.type === 'author') toggleFilter(selectedAuthors, f.label, setSelectedAuthors);
                     if (f.type === 'award') toggleFilter(selectedAwards, f.label, setSelectedAwards);
                     if (f.type === 'media') toggleFilter(selectedMedia, f.label, setSelectedMedia);
+                    if (f.type === 'format') toggleFilter(selectedFormats, f.label, setSelectedFormats);
                   }}
                 >
                   {f.label}
