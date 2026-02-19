@@ -193,7 +193,7 @@ export function CMSHomepage() {
       <Header isHomePage={true} />
 
       {/* Main Content */}
-      <main id="main-content" className="min-h-screen">
+      <main id="main-content" className="min-h-screen relative z-0">
         {/* Page Title - hidden for homepage (slug "/") */}
         {page.title && page.title !== '/' && page.slug !== '/' && (
           <div className="container mx-auto px-4 py-12">
