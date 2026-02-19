@@ -114,7 +114,7 @@ export function ContentManager() {
       try {
         const res = await fetch('/api/auth/user', { credentials: 'include' });
         if (res.status === 401) {
-          window.location.href = '/api/login';
+          window.location.href = '/api/login?returnTo=/sys-mgmt-xK9/content-manager';
           return;
         }
         const user = await res.json();
@@ -123,10 +123,10 @@ export function ContentManager() {
           setIsAuthenticated(true);
           setAuthLoading(false);
         } else {
-          window.location.href = '/api/login';
+          window.location.href = '/sys-mgmt-xK9/login';
         }
       } catch {
-        window.location.href = '/api/login';
+        window.location.href = '/api/login?returnTo=/sys-mgmt-xK9/content-manager';
       }
     };
     checkOIDCSession();
