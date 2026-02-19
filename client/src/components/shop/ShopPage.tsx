@@ -13,20 +13,24 @@ import { InfoBar } from '../layout/InfoBar';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 
-type SortOption = 'newest' | 'popularity' | 'awarded' | 'critics' | 'hidden-gems' | 'trending';
+type SortOption = 'popularity' | 'awarded' | 'hidden-gems' | 'az' | 'date';
 
 interface FilterDropdownProps {
   label: string;
   options: string[];
   selected: string[];
   onToggle: (value: string) => void;
+  onSearch?: (query: string) => void;
+  isLoading?: boolean;
+  totalLabel?: string;
 }
 
-function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownProps) {
+function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoading, totalLabel }: FilterDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [filterSearch, setFilterSearch] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -45,28 +49,36 @@ function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownPr
     }
   }, [isOpen]);
 
-  const sortedOptions = [...options].sort((a, b) => a.localeCompare(b, 'de'));
+  const handleSearchChange = (value: string) => {
+    setFilterSearch(value);
+    if (onSearch) {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => onSearch(value), 300);
+    }
+  };
 
-  const filteredOptions = sortedOptions.filter(opt =>
-    opt.toLowerCase().includes(filterSearch.toLowerCase())
-  );
+  const localFiltered = onSearch
+    ? options
+    : [...options].filter(opt => opt.toLowerCase().includes(filterSearch.toLowerCase()));
+
+  const sortedOptions = [...localFiltered].sort((a, b) => a.localeCompare(b, 'de'));
 
   const hasSelection = selected.length > 0;
   const testId = label.toLowerCase().replace(/[^a-z]/g, '');
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative flex-shrink-0" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 border bg-card text-sm font-medium transition-colors hover-elevate"
+        className="inline-flex items-center gap-2 px-4 py-2.5 border bg-card text-sm font-medium transition-colors hover-elevate whitespace-nowrap"
         style={{
           borderColor: hasSelection ? 'var(--color-blue)' : 'var(--color-border)',
           borderRadius: '4px',
         }}
         data-testid={`filter-dropdown-${testId}`}
       >
-        <span className="whitespace-nowrap">{label}</span>
+        <span>{label}</span>
         {hasSelection && (
           <span
             className="inline-flex items-center justify-center min-w-[20px] h-[20px] rounded-sm text-[11px] font-bold"
@@ -90,7 +102,7 @@ function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownPr
                 ref={inputRef}
                 type="text"
                 value={filterSearch}
-                onChange={(e) => setFilterSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder={`${label} suchen...`}
                 className="w-full pl-9 pr-3 py-2 text-sm bg-background border"
                 style={{ borderColor: 'var(--color-border)', borderRadius: '4px' }}
@@ -100,9 +112,7 @@ function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownPr
             {hasSelection && (
               <button
                 type="button"
-                onClick={() => {
-                  selected.forEach(s => onToggle(s));
-                }}
+                onClick={() => { selected.forEach(s => onToggle(s)); }}
                 className="mt-2 text-xs hover:opacity-70 transition-opacity"
                 style={{ color: 'var(--color-teal)' }}
                 data-testid={`filter-clear-${testId}`}
@@ -113,14 +123,18 @@ function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownPr
           </div>
 
           <div className="overflow-y-auto flex-1">
-            {filteredOptions.length === 0 ? (
+            {isLoading ? (
+              <div className="p-4 flex items-center justify-center">
+                <Loader2 className="w-5 h-5 animate-spin text-foreground/40" />
+              </div>
+            ) : sortedOptions.length === 0 ? (
               <div className="p-4 text-center">
                 <Text variant="small" className="text-foreground/50">
-                  Keine Ergebnisse für &quot;{filterSearch}&quot;
+                  {filterSearch ? `Keine Ergebnisse für "${filterSearch}"` : 'Keine Einträge'}
                 </Text>
               </div>
             ) : (
-              filteredOptions.map(option => {
+              sortedOptions.map(option => {
                 const isSelected = selected.includes(option);
                 return (
                   <button
@@ -153,7 +167,8 @@ function FilterDropdown({ label, options, selected, onToggle }: FilterDropdownPr
 
           <div className="p-2 border-t text-center" style={{ borderColor: 'var(--color-border)' }}>
             <Text variant="xs" className="text-foreground/40">
-              {filteredOptions.length} von {options.length} {label === 'Autor' ? 'Autor*innen' : label === 'Verlag' ? 'Verlage' : 'Einträge'}
+              {sortedOptions.length} {totalLabel || 'Einträge'}
+              {filterSearch && ' gefunden'}
             </Text>
           </div>
         </div>
@@ -197,35 +212,91 @@ export function ShopPage() {
   const navigate = useSafeNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get('q') || '');
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [sortBy, setSortBy] = useState<SortOption>('popularity');
   const [books, setBooks] = useState<APIBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const PAGE_SIZE = 50;
 
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
+  const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
   const [selectedPublishers, setSelectedPublishers] = useState<string[]>([]);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
   const [selectedAwards, setSelectedAwards] = useState<string[]>([]);
+  const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
 
-  const [publisherOptions, setPublisherOptions] = useState<string[]>([]);
-  const [authorOptions, setAuthorOptions] = useState<string[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+  const [themeOptions, setThemeOptions] = useState<string[]>([]);
+  const [seriesOptions] = useState<string[]>([]);
   const [awardOptions, setAwardOptions] = useState<string[]>([]);
+  const [mediaOptions, setMediaOptions] = useState<string[]>([]);
+
+  const [authorOptions, setAuthorOptions] = useState<string[]>([]);
+  const [authorLoading, setAuthorLoading] = useState(false);
+  const [publisherOptions, setPublisherOptions] = useState<string[]>([]);
+  const [publisherLoading, setPublisherLoading] = useState(false);
 
   const searchQuery = searchParams.get('q') || '';
 
   useEffect(() => {
-    fetch('/api/onix-tags')
+    Promise.all([
+      fetch('/api/categories?include_drafts=true').then(r => r.json()),
+      fetch('/api/onix-tags').then(r => r.json()),
+      fetch('/api/public/content-source-names').then(r => r.json()),
+      fetch('/api/books/filter/authors?limit=50').then(r => r.json()),
+      fetch('/api/books/filter/publishers?limit=50').then(r => r.json()),
+    ]).then(([catData, tagsData, mediaData, authorsData, pubsData]) => {
+      if (catData.ok) {
+        const cats = (catData.data || []).map((c: any) => c.name || c).sort((a: string, b: string) => a.localeCompare(b, 'de'));
+        setCategoryOptions(cats);
+      }
+      if (tagsData.ok) {
+        const tags = tagsData.data || [];
+        const themes = tags
+          .filter((t: any) => ['topic', 'genre', 'audience', 'feature', 'publisher_cluster'].includes(t.tag_type))
+          .map((t: any) => t.name)
+          .sort((a: string, b: string) => a.localeCompare(b, 'de'));
+        const awards = tags
+          .filter((t: any) => t.tag_type === 'award')
+          .map((t: any) => t.name)
+          .sort((a: string, b: string) => a.localeCompare(b, 'de'));
+        setThemeOptions(themes);
+        setAwardOptions(awards);
+      }
+      if (mediaData.ok) {
+        const media = (mediaData.data || []).map((m: any) => m.name).sort((a: string, b: string) => a.localeCompare(b, 'de'));
+        setMediaOptions(media);
+      }
+      if (authorsData.ok) {
+        setAuthorOptions(authorsData.data || []);
+      }
+      if (pubsData.ok) {
+        setPublisherOptions(pubsData.data || []);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const searchAuthors = useCallback((q: string) => {
+    setAuthorLoading(true);
+    fetch(`/api/books/filter/authors?q=${encodeURIComponent(q)}&limit=50`)
       .then(r => r.json())
       .then(data => {
-        if (data.ok) {
-          const awards = (data.data || [])
-            .filter((t: any) => t.tag_type === 'award')
-            .map((t: any) => t.name)
-            .sort((a: string, b: string) => a.localeCompare(b, 'de'));
-          setAwardOptions(awards);
-        }
+        if (data.ok) setAuthorOptions(data.data || []);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setAuthorLoading(false));
+  }, []);
+
+  const searchPublishers = useCallback((q: string) => {
+    setPublisherLoading(true);
+    fetch(`/api/books/filter/publishers?q=${encodeURIComponent(q)}&limit=50`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok) setPublisherOptions(data.data || []);
+      })
+      .catch(() => {})
+      .finally(() => setPublisherLoading(false));
   }, []);
 
   const fetchBooks = useCallback(async (query: string, offset: number) => {
@@ -242,16 +313,6 @@ export function ShopPage() {
           setBooks(fetched);
         } else {
           setBooks(prev => [...prev, ...fetched]);
-        }
-
-        const pubs = Array.from(new Set(fetched.map((b: APIBook) => b.publisher).filter(Boolean))) as string[];
-        const authors = Array.from(new Set(fetched.map((b: APIBook) => b.author).filter(Boolean))) as string[];
-        if (offset === 0) {
-          setPublisherOptions(pubs);
-          setAuthorOptions(authors);
-        } else {
-          setPublisherOptions(prev => Array.from(new Set([...prev, ...pubs])));
-          setAuthorOptions(prev => Array.from(new Set([...prev, ...authors])));
         }
       }
     } catch (err) {
@@ -301,38 +362,49 @@ export function ShopPage() {
 
   const sortedBooks = [...filteredBooks].sort((a, b) => {
     switch (sortBy) {
-      case 'newest':
-        return b.id - a.id;
-      case 'popularity':
+      case 'az':
         return (a.title || '').localeCompare(b.title || '', 'de');
+      case 'date':
+        return b.id - a.id;
       case 'awarded':
         return (b.award_count || 0) - (a.award_count || 0);
+      case 'popularity':
+      case 'hidden-gems':
       default:
         return 0;
     }
   });
 
-  const hasActiveFilters = selectedPublishers.length > 0 || selectedAuthors.length > 0 || selectedAwards.length > 0;
+  const hasActiveFilters = selectedCategories.length > 0 || selectedThemes.length > 0 ||
+    selectedSeries.length > 0 || selectedPublishers.length > 0 || selectedAuthors.length > 0 ||
+    selectedAwards.length > 0 || selectedMedia.length > 0;
 
   const clearAllFilters = () => {
+    setSelectedCategories([]);
+    setSelectedThemes([]);
+    setSelectedSeries([]);
     setSelectedPublishers([]);
     setSelectedAuthors([]);
     setSelectedAwards([]);
+    setSelectedMedia([]);
   };
 
   const sortOptions: { id: SortOption; label: string }[] = [
-    { id: 'newest', label: 'Neueste' },
     { id: 'popularity', label: 'Beliebtheit' },
     { id: 'awarded', label: 'Auszeichnungen' },
-    { id: 'critics', label: 'Kritiker-Lieblinge' },
     { id: 'hidden-gems', label: 'Hidden Gems' },
-    { id: 'trending', label: 'Aktuell' },
+    { id: 'az', label: 'A-Z' },
+    { id: 'date', label: 'Veröffentlichung' },
   ];
 
   const allSelectedFilters = [
-    ...selectedPublishers.map(v => ({ label: v, type: 'publisher' as const })),
+    ...selectedCategories.map(v => ({ label: v, type: 'category' as const })),
+    ...selectedThemes.map(v => ({ label: v, type: 'theme' as const })),
+    ...selectedSeries.map(v => ({ label: v, type: 'series' as const })),
     ...selectedAuthors.map(v => ({ label: v, type: 'author' as const })),
+    ...selectedPublishers.map(v => ({ label: v, type: 'publisher' as const })),
     ...selectedAwards.map(v => ({ label: v, type: 'award' as const })),
+    ...selectedMedia.map(v => ({ label: v, type: 'media' as const })),
   ];
 
   return (
@@ -382,55 +454,88 @@ export function ShopPage() {
             </form>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap"
-              style={{ scrollbarWidth: 'none' }}>
-              {sortOptions.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => setSortBy(option.id)}
-                  className="sort-chip"
-                  aria-pressed={sortBy === option.id}
-                  data-testid={`sort-${option.id}`}
-                >
-                  <Text as="span" variant="xs" className="whitespace-nowrap !normal-case !tracking-normal !font-semibold">
-                    {option.label}
-                  </Text>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
             <FilterDropdown
-              label="Verlag"
-              options={publisherOptions}
-              selected={selectedPublishers}
-              onToggle={(v) => toggleFilter(selectedPublishers, v, setSelectedPublishers)}
+              label="Kategorien"
+              options={categoryOptions}
+              selected={selectedCategories}
+              onToggle={(v) => toggleFilter(selectedCategories, v, setSelectedCategories)}
+              totalLabel="Kategorien"
             />
             <FilterDropdown
-              label="Autor"
+              label="Themen"
+              options={themeOptions}
+              selected={selectedThemes}
+              onToggle={(v) => toggleFilter(selectedThemes, v, setSelectedThemes)}
+              totalLabel="Themen"
+            />
+            <FilterDropdown
+              label="Buchreihen"
+              options={seriesOptions}
+              selected={selectedSeries}
+              onToggle={(v) => toggleFilter(selectedSeries, v, setSelectedSeries)}
+              totalLabel="Buchreihen"
+            />
+            <FilterDropdown
+              label="Autoren"
               options={authorOptions}
               selected={selectedAuthors}
               onToggle={(v) => toggleFilter(selectedAuthors, v, setSelectedAuthors)}
+              onSearch={searchAuthors}
+              isLoading={authorLoading}
+              totalLabel="Autor*innen"
             />
             <FilterDropdown
-              label="Auszeichnung"
+              label="Verlage"
+              options={publisherOptions}
+              selected={selectedPublishers}
+              onToggle={(v) => toggleFilter(selectedPublishers, v, setSelectedPublishers)}
+              onSearch={searchPublishers}
+              isLoading={publisherLoading}
+              totalLabel="Verlage"
+            />
+            <FilterDropdown
+              label="Auszeichnungen"
               options={awardOptions}
               selected={selectedAwards}
               onToggle={(v) => toggleFilter(selectedAwards, v, setSelectedAwards)}
+              totalLabel="Auszeichnungen"
             />
+            <FilterDropdown
+              label="Medien"
+              options={mediaOptions}
+              selected={selectedMedia}
+              onToggle={(v) => toggleFilter(selectedMedia, v, setSelectedMedia)}
+              totalLabel="Medien"
+            />
+
+            <div className="h-6 w-px bg-foreground/15 flex-shrink-0" />
+
+            <Text variant="xs" className="whitespace-nowrap text-foreground/50 flex-shrink-0 !font-semibold">Sortieren:</Text>
+            {sortOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setSortBy(option.id)}
+                className="sort-chip flex-shrink-0"
+                aria-pressed={sortBy === option.id}
+                data-testid={`sort-${option.id}`}
+              >
+                <Text as="span" variant="xs" className="whitespace-nowrap !normal-case !tracking-normal !font-semibold">
+                  {option.label}
+                </Text>
+              </button>
+            ))}
 
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
-                className="text-xs flex items-center gap-1 hover:opacity-70 transition-opacity px-3 py-2"
+                className="text-xs flex items-center gap-1 hover:opacity-70 transition-opacity px-3 py-2 flex-shrink-0 whitespace-nowrap"
                 style={{ color: 'var(--color-teal)' }}
                 data-testid="button-clear-filters"
               >
                 <X className="w-3.5 h-3.5" />
-                Alle zurücksetzen
+                Zurücksetzen
               </button>
             )}
           </div>
@@ -443,9 +548,13 @@ export function ShopPage() {
                   variant="secondary"
                   className="gap-1 cursor-pointer"
                   onClick={() => {
+                    if (f.type === 'category') toggleFilter(selectedCategories, f.label, setSelectedCategories);
+                    if (f.type === 'theme') toggleFilter(selectedThemes, f.label, setSelectedThemes);
+                    if (f.type === 'series') toggleFilter(selectedSeries, f.label, setSelectedSeries);
                     if (f.type === 'publisher') toggleFilter(selectedPublishers, f.label, setSelectedPublishers);
                     if (f.type === 'author') toggleFilter(selectedAuthors, f.label, setSelectedAuthors);
                     if (f.type === 'award') toggleFilter(selectedAwards, f.label, setSelectedAwards);
+                    if (f.type === 'media') toggleFilter(selectedMedia, f.label, setSelectedMedia);
                   }}
                 >
                   {f.label}

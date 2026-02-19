@@ -2547,6 +2547,68 @@ export async function registerRoutes(
     }
   });
 
+  // BOOKS - FILTER DATA ENDPOINTS
+  // ==================================================================
+
+  app.get('/api/books/filter/authors', async (req: Request, res: Response) => {
+    try {
+      const q = (req.query.q as string) || '';
+      const limit = parseInt((req.query.limit as string) || '50');
+      let result;
+      if (q) {
+        result = await queryDB(
+          `SELECT DISTINCT author FROM books WHERE author IS NOT NULL AND author != '' AND author NOT LIKE '%<span%' AND author NOT LIKE '%</%' AND author ILIKE $1 ORDER BY author LIMIT $2`,
+          [`%${q}%`, limit]
+        );
+      } else {
+        result = await queryDB(
+          `SELECT DISTINCT author FROM books WHERE author IS NOT NULL AND author != '' AND author NOT LIKE '%<span%' AND author NOT LIKE '%</%' ORDER BY author LIMIT $1`,
+          [limit]
+        );
+      }
+      return res.json({ ok: true, data: result.rows.map((r: any) => r.author) });
+    } catch (error) {
+      log.error('Books filter authors error:', error);
+      return res.status(500).json({ ok: false, error: String(error), data: [] });
+    }
+  });
+
+  app.get('/api/books/filter/publishers', async (req: Request, res: Response) => {
+    try {
+      const q = (req.query.q as string) || '';
+      const limit = parseInt((req.query.limit as string) || '50');
+      let result;
+      if (q) {
+        result = await queryDB(
+          `SELECT DISTINCT publisher FROM books WHERE publisher IS NOT NULL AND publisher != '' AND publisher ILIKE $1 ORDER BY publisher LIMIT $2`,
+          [`%${q}%`, limit]
+        );
+      } else {
+        result = await queryDB(
+          `SELECT DISTINCT publisher FROM books WHERE publisher IS NOT NULL AND publisher != '' ORDER BY publisher LIMIT $1`,
+          [limit]
+        );
+      }
+      return res.json({ ok: true, data: result.rows.map((r: any) => r.publisher) });
+    } catch (error) {
+      log.error('Books filter publishers error:', error);
+      return res.status(500).json({ ok: false, error: String(error), data: [] });
+    }
+  });
+
+  app.get('/api/public/content-source-names', async (_req: Request, res: Response) => {
+    try {
+      const result = await queryDB(
+        `SELECT DISTINCT source_type, name FROM content_sources WHERE deleted_at IS NULL ORDER BY name`,
+        []
+      );
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Public content source names error:', error);
+      return res.json({ ok: true, data: [] });
+    }
+  });
+
   // BOOKS
   // ==================================================================
   app.get('/api/books', async (req: Request, res: Response) => {
@@ -4097,15 +4159,17 @@ export async function registerRoutes(
   // ==================================================================
   // CATEGORIES
   // ==================================================================
-  app.get('/api/categories', async (_req: Request, res: Response) => {
+  app.get('/api/categories', async (req: Request, res: Response) => {
     try {
+      const includeDrafts = req.query.include_drafts === 'true';
+      const statusFilter = includeDrafts ? '' : "AND status = 'published'";
       const result = await queryDB(
         `SELECT
           id, name, slug, parent_id,
           display_order, status, visibility, created_at, updated_at
         FROM categories
         WHERE deleted_at IS NULL
-          AND status = 'published'
+          ${statusFilter}
           AND visibility = 'visible'
         ORDER BY display_order ASC, name ASC`,
         []
