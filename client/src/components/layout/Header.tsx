@@ -437,16 +437,16 @@ export function Header({
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      navigate(`/bücher?q=${encodeURIComponent(searchQuery.trim())}`);
+      navigate(`/buecher?q=${encodeURIComponent(searchQuery.trim())}`);
     } else {
-      navigate('/bücher');
+      navigate('/buecher');
     }
     setShowSuggestions(false);
   };
 
   const handleSuggestionClick = (suggestion: string) => {
     setSearchQuery(suggestion);
-    navigate(`/bücher?q=${encodeURIComponent(suggestion)}`);
+    navigate(`/buecher?q=${encodeURIComponent(suggestion)}`);
     setShowSuggestions(false);
   };
 

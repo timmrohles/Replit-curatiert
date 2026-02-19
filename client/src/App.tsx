@@ -229,7 +229,7 @@ function App() {
                       <Route path="creator/:creatorId" element={<S><CreatorStorefront /></S>} />
                       <Route path="storefront/:creatorId" element={<S><CreatorStorefront /></S>} />
                       <Route path="events" element={<S><EventsPage onGoBack={() => {}} /></S>} />
-                      <Route path="bücher" element={<S><ShopPage /></S>} />
+                      <Route path="buecher" element={<S><ShopPage /></S>} />
 
                       <Route path="impressum" element={<S><ImpressumPage /></S>} />
                       <Route path="datenschutz" element={<S><DatenschutzPage /></S>} />

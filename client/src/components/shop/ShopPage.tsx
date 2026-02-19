@@ -166,9 +166,9 @@ export function ShopPage() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchInput.trim()) {
-      navigate(`/bücher?q=${encodeURIComponent(searchInput.trim())}`);
+      navigate(`/buecher?q=${encodeURIComponent(searchInput.trim())}`);
     } else {
-      navigate('/bücher');
+      navigate('/buecher');
     }
   };
 

@@ -38,7 +38,7 @@ const FALLBACK_FOOTER_GROUPS: FooterGroup[] = [
       { id: -20, name: 'Alle Kurator:innen', path: '/curators', icon: null },
       { id: -21, name: 'Alle Kurationen', path: '/kurationen', icon: null },
       { id: -22, name: 'Alle Bookstores', path: '/storefronts', icon: null },
-      { id: -23, name: 'Alle Bücher', path: '/bücher', icon: null },
+      { id: -23, name: 'Alle Bücher', path: '/buecher', icon: null },
       { id: -24, name: 'Alle Autor:innen', path: '/authors', icon: null },
       { id: -25, name: 'Alle Verlage', path: '/publishers', icon: null },
       { id: -26, name: 'Alle Events', path: '/events', icon: null },

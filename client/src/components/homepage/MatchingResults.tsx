@@ -628,7 +628,7 @@ export function MatchingResults({
         </button>
 
         <button
-          onClick={() => navigate('/bücher')}
+          onClick={() => navigate('/buecher')}
           className="px-6 py-3 bg-[#5a9690] text-white rounded-lg hover:bg-[#4a8580] transition-colors flex items-center justify-center gap-2"
           style={{ fontFamily: 'Fjalla One' }}
         >

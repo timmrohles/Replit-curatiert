@@ -2230,7 +2230,7 @@ export async function registerRoutes(
         { parent: 'footer-entdecken', name: 'Alle Kurator:innen', slug: 'footer-alle-kuratoren', path: '/curators', order: 1 },
         { parent: 'footer-entdecken', name: 'Alle Kurationen', slug: 'footer-alle-kurationen', path: '/kurationen', order: 2 },
         { parent: 'footer-entdecken', name: 'Alle Bookstores', slug: 'footer-alle-bookstores', path: '/storefronts', order: 3 },
-        { parent: 'footer-entdecken', name: 'Alle Bücher', slug: 'footer-alle-buecher', path: '/bücher', order: 4 },
+        { parent: 'footer-entdecken', name: 'Alle Bücher', slug: 'footer-alle-buecher', path: '/buecher', order: 4 },
         { parent: 'footer-entdecken', name: 'Alle Autor:innen', slug: 'footer-alle-autoren', path: '/authors', order: 5 },
         { parent: 'footer-entdecken', name: 'Alle Verlage', slug: 'footer-alle-verlage', path: '/publishers', order: 6 },
         { parent: 'footer-entdecken', name: 'Alle Events', slug: 'footer-alle-events', path: '/events', order: 7 },
