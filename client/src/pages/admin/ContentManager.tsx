@@ -88,11 +88,55 @@ function BooksSubTabs() {
   );
 }
 
+function BenutzerSubTabs() {
+  const [subTab, setSubTab] = useState<'users' | 'curators'>('users');
+  return (
+    <div>
+      <div className="flex gap-2 mb-4">
+        <button
+          onClick={() => setSubTab('users')}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+          style={{
+            backgroundColor: subTab === 'users' ? '#247ba0' : '#f3f4f6',
+            color: subTab === 'users' ? '#fff' : '#6b7280',
+          }}
+          data-testid="button-benutzer-subtab-users"
+        >
+          Benutzerverwaltung
+        </button>
+        <button
+          onClick={() => setSubTab('curators')}
+          className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+          style={{
+            backgroundColor: subTab === 'curators' ? '#247ba0' : '#f3f4f6',
+            color: subTab === 'curators' ? '#fff' : '#6b7280',
+          }}
+          data-testid="button-benutzer-subtab-curators"
+        >
+          Kuratoren
+        </button>
+      </div>
+      {subTab === 'users' && (
+        <Suspense fallback={<div className="p-4 text-center" style={{ color: '#666' }}>Lädt...</div>}>
+          <TabErrorBoundary tabName="Benutzer">
+            <AdminUsersManager />
+          </TabErrorBoundary>
+        </Suspense>
+      )}
+      {subTab === 'curators' && (
+        <Suspense fallback={<div className="p-4 text-center" style={{ color: '#666' }}>Lädt...</div>}>
+          <TabErrorBoundary tabName="Kuratoren">
+            <CuratorsManager />
+          </TabErrorBoundary>
+        </Suspense>
+      )}
+    </div>
+  );
+}
+
 /**
  * Content Manager - Admin Dashboard
- * Hier können Admins Bücher, Kuratoren, Tags und Navigation verwalten
- * 
- * VERSION: 3.0.0 - SECTIONS TAB V3 CACHE-BUSTING (2026-01-19)
+ * Hier konnen Admins Bucher, Kuratoren, Tags und Navigation verwalten
  */
 
 // Drag and Drop Item Types
@@ -137,8 +181,8 @@ export function ContentManager() {
   };
   
   // ✅ URL-based tab navigation
-  type TabType = 'books' | 'curators' | 'storefronts' | 'navigation' | 'pages' | 'category-cards' | 'awards' | 'tags' | 'persons' | 'user-modules' | 'author-requests' | 'settings' | 'diagnostics' | 'affiliates' | 'sections' | 'site-banner' | 'meldungen' | 'events' | 'content-sources' | 'users';
-  const validTabs: TabType[] = ['books', 'curators', 'storefronts', 'navigation', 'pages', 'category-cards', 'awards', 'tags', 'persons', 'user-modules', 'author-requests', 'settings', 'diagnostics', 'affiliates', 'sections', 'site-banner', 'meldungen', 'events', 'content-sources', 'users'];
+  type TabType = 'books' | 'curators' | 'storefronts' | 'navigation' | 'pages' | 'category-cards' | 'awards' | 'tags' | 'persons' | 'user-modules' | 'author-requests' | 'settings' | 'diagnostics' | 'affiliates' | 'sections' | 'site-banner' | 'meldungen' | 'events' | 'content-sources';
+  const validTabs: TabType[] = ['books', 'curators', 'storefronts', 'navigation', 'pages', 'category-cards', 'awards', 'tags', 'persons', 'user-modules', 'author-requests', 'settings', 'diagnostics', 'affiliates', 'sections', 'site-banner', 'meldungen', 'events', 'content-sources'];
   
   const tabParam = searchParams.get('tab') as TabType;
   const activeTab: TabType = tabParam && validTabs.includes(tabParam) ? tabParam : 'books';
@@ -650,8 +694,9 @@ export function ContentManager() {
               color: '#3A3A3A',
               fontFamily: 'Fjalla One'
             }}
+            data-testid="button-tab-benutzer"
           >
-            User
+            Benutzer
           </button>
           <button
             onClick={() => setActiveTab('storefronts')}
@@ -837,18 +882,6 @@ export function ContentManager() {
           >
             📅 Veranstaltungen
           </button>
-          <button
-            onClick={() => setActiveTab('users')}
-            className="px-4 py-2 rounded-lg transition-all text-sm"
-            style={{
-              backgroundColor: activeTab === 'users' ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
-              color: '#3A3A3A',
-              fontFamily: 'Fjalla One'
-            }}
-            data-testid="button-tab-users"
-          >
-            👤 Benutzer
-          </button>
         </div>
 
         {/* Content */}
@@ -862,13 +895,9 @@ export function ContentManager() {
             </Suspense>
           )}
 
-          {/* Curators Tab */}
+          {/* Benutzer Tab with Sub-Tabs */}
           {activeTab === 'curators' && (
-            <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Kuratoren...</div>}>
-              <TabErrorBoundary tabName="Kuratoren">
-                <CuratorsManager />
-              </TabErrorBoundary>
-            </Suspense>
+            <BenutzerSubTabs />
           )}
 
           {/* Storefronts Tab */}
@@ -1033,14 +1062,6 @@ export function ContentManager() {
             </Suspense>
           )}
 
-          {/* Users Tab */}
-          {activeTab === 'users' && (
-            <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Benutzer...</div>}>
-              <TabErrorBoundary tabName="Benutzer">
-                <AdminUsersManager />
-              </TabErrorBoundary>
-            </Suspense>
-          )}
         </div>
       </div>
     </div>

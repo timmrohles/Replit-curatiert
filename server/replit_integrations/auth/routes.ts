@@ -143,13 +143,15 @@ export function registerAuthRoutes(app: Express): void {
 
   app.get("/api/admin/users", isAuthenticated, requireRole("admin", "super_admin"), async (req: any, res) => {
     try {
-      const { page = "1", limit = "25", search, role, status } = req.query;
+      const { page = "1", limit = "25", search, role, status, sort, order } = req.query;
       const users = await authStorage.listUsers({
         page: parseInt(page as string),
         limit: parseInt(limit as string),
         search: search as string,
         role: role as string,
         status: status as string,
+        sort: sort as string,
+        order: order as string,
       });
       res.json(users);
     } catch (error) {

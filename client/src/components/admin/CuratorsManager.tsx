@@ -31,7 +31,6 @@ export function CuratorsManager() {
   const [editingCurator, setEditingCurator] = useState<Partial<Curator> | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -209,54 +208,6 @@ export function CuratorsManager() {
     }
   };
 
-  // 🔧 DEBUG FUNCTIONS
-  const runHealthCheck = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/health`, {
-            credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const data = await response.json();
-      setDebugInfo({ type: 'health', data });
-      toast.success(`Health Check OK: ${data.version}`);
-    } catch (error) {
-      toast.error('Health Check failed');
-      console.error(error);
-    }
-  };
-
-  const runSchemaCheck = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/curators/debug/schema`, {
-            credentials: 'include',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      const data = await response.json();
-      setDebugInfo({ type: 'schema', data });
-      
-      const diagnosis = data.data?.diagnosis;
-      if (diagnosis?.problem?.includes('❌')) {
-        toast.error(diagnosis.problem);
-      } else {
-        toast.success(diagnosis?.problem || 'Schema OK');
-      }
-    } catch (error) {
-      toast.error('Schema Check failed');
-      console.error(error);
-    }
-  };
-
-  const runAutoFix = async () => {
-    toast.info('ℹ️ Auto-Fix not needed - using individual columns');
-    setDebugInfo({ 
-      type: 'info', 
-      data: { 
-        message: 'Schema uses individual columns (instagram, youtube, tiktok, podcast, website) instead of JSONB',
-        status: '✅ No migration needed'
-      } 
-    });
-  };
-
   const filteredCurators = curators.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.focus?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -292,43 +243,6 @@ export function CuratorsManager() {
             Neuer Kurator
           </button>
         </div>
-      </div>
-
-      {/* 🔧 DEBUG PANEL */}
-      <div className="mb-6 p-4 border rounded-lg" style={{ borderColor: '#E5E7EB', backgroundColor: '#FFF9E6' }}>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-sm" style={{ color: '#3A3A3A' }}>
-            🔧 Debug Tools
-          </h3>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={runHealthCheck}
-            className="px-3 py-1.5 rounded text-sm"
-            style={{ backgroundColor: '#70c1b3', color: '#FFFFFF' }}
-          >
-            Health Check
-          </button>
-          <button
-            onClick={runSchemaCheck}
-            className="px-3 py-1.5 rounded text-sm"
-            style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-          >
-            Schema Check
-          </button>
-          <button
-            onClick={runAutoFix}
-            className="px-3 py-1.5 rounded text-sm"
-            style={{ backgroundColor: '#F4B942', color: '#3A3A3A' }}
-          >
-            Auto-Fix Schema
-          </button>
-        </div>
-        {debugInfo && (
-          <div className="mt-3 p-3 rounded text-xs font-mono overflow-x-auto" style={{ backgroundColor: '#FFFFFF' }}>
-            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-          </div>
-        )}
       </div>
 
       {/* Search */}
