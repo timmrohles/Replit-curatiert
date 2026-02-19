@@ -2948,15 +2948,8 @@ export async function registerRoutes(
 
   app.post('/api/awards', async (req: Request, res: Response) => {
     try {
-      const adminToken = req.headers['x-admin-token'] as string;
-      if (!adminToken) {
-        return res.status(401).json({ success: false, error: 'Unauthorized: Admin token required' });
-      }
-
-      const isValid = await verifyAdminToken(adminToken);
-      if (!isValid) {
-        return res.status(401).json({ success: false, error: 'Unauthorized: Invalid admin token' });
-      }
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
 
       const body = req.body;
       const { id, name, issuer_name, website_url, description, logo_url, country } = body;
@@ -3021,10 +3014,8 @@ export async function registerRoutes(
 
   app.delete('/api/awards/:id', async (req: Request, res: Response) => {
     try {
-      const adminToken = req.headers['x-admin-token'] as string;
-      if (!adminToken || !(await verifyAdminToken(adminToken))) {
-        return res.status(401).json({ success: false, error: 'Unauthorized' });
-      }
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
 
       const id = req.params.id;
       const awardResult = await queryDB('SELECT tag_id FROM awards WHERE id = $1', [id]);
@@ -3054,10 +3045,8 @@ export async function registerRoutes(
 
   app.patch('/api/awards/:id/visibility', async (req: Request, res: Response) => {
     try {
-      const adminToken = req.headers['x-admin-token'] as string;
-      if (!adminToken || !(await verifyAdminToken(adminToken))) {
-        return res.status(401).json({ success: false, error: 'Unauthorized' });
-      }
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
 
       const id = req.params.id;
       const { visible } = req.body;
@@ -3122,6 +3111,8 @@ export async function registerRoutes(
 
   app.post('/api/awards/:awardId/editions', async (req: Request, res: Response) => {
     try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
       const awardId = req.params.awardId;
       const body = req.body;
       const { id, year, theme, notes } = body;
@@ -3161,6 +3152,8 @@ export async function registerRoutes(
 
   app.delete('/api/awards/:awardId/editions/:id', async (req: Request, res: Response) => {
     try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
       const id = req.params.id;
       const awardId = req.params.awardId;
       const result = await queryDB(
@@ -3195,6 +3188,8 @@ export async function registerRoutes(
 
   app.post('/api/awards/:awardId/editions/:editionId/outcomes', async (req: Request, res: Response) => {
     try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
       const editionId = req.params.editionId;
       const body = req.body;
       const { id, name, display_order, result_status, announced_at, notes } = body;
@@ -3234,6 +3229,8 @@ export async function registerRoutes(
 
   app.delete('/api/awards/:awardId/editions/:editionId/outcomes/:id', async (req: Request, res: Response) => {
     try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
       const id = req.params.id;
       const editionId = req.params.editionId;
       const result = await queryDB(
@@ -3277,6 +3274,8 @@ export async function registerRoutes(
 
   app.post('/api/awards/:awardId/editions/:editionId/outcomes/:outcomeId/recipients', async (req: Request, res: Response) => {
     try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
       const outcomeId = req.params.outcomeId;
       const body = req.body;
       const { recipient_kind, book_id, person_id, notes } = body;
@@ -3308,6 +3307,8 @@ export async function registerRoutes(
 
   app.delete('/api/awards/:awardId/editions/:editionId/outcomes/:outcomeId/recipients/:id', async (req: Request, res: Response) => {
     try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
       const id = req.params.id;
       const outcomeId = req.params.outcomeId;
       const result = await queryDB(
@@ -3398,15 +3399,8 @@ export async function registerRoutes(
 
   app.post('/api/curators', async (req: Request, res: Response) => {
     try {
-      const adminToken = req.headers['x-admin-token'] as string;
-      if (!adminToken) {
-        return res.status(401).json({ ok: false, error: 'Unauthorized: Admin token required' });
-      }
-
-      const isValid = await verifyAdminToken(adminToken);
-      if (!isValid) {
-        return res.status(401).json({ ok: false, error: 'Unauthorized: Invalid admin token' });
-      }
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
 
       const body = req.body;
       const {
@@ -3529,15 +3523,8 @@ export async function registerRoutes(
 
   app.delete('/api/curators/:id', async (req: Request, res: Response) => {
     try {
-      const adminToken = req.headers['x-admin-token'] as string;
-      if (!adminToken) {
-        return res.status(401).json({ ok: false, error: 'Unauthorized: Admin token required' });
-      }
-
-      const isValid = await verifyAdminToken(adminToken);
-      if (!isValid) {
-        return res.status(401).json({ ok: false, error: 'Unauthorized: Invalid admin token' });
-      }
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
 
       const id = req.params.id;
       const result = await queryDB(
