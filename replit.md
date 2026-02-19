@@ -23,7 +23,8 @@ The platform is built with a modern web stack, featuring a React frontend and an
 -   **Framework**: Express.js, serving on port 5000.
 -   **Database Integration**: `pg` Pool for PostgreSQL.
 -   **API**: Over 80 routes prefixed with `/api/` for public data access, admin functionalities (CRUD for various content types), and content tracking.
--   **Authentication**: Token-based admin authentication using `X-Admin-Token`.
+-   **Authentication**: Dual auth system: (1) Replit OIDC for user login via `openid-client` + `passport` + `express-session` (session stored in `sessions` table via `connect-pg-simple`), and (2) legacy token-based admin auth using `X-Admin-Token` for the admin panel. Users table (`users`) has `role` column (`user`/`admin`/`super_admin`) and `is_active` flag. Auth files: `server/replit_integrations/auth/` (replitAuth.ts, storage.ts, routes.ts). Frontend: `useAuth` hook at `client/src/hooks/use-auth.ts`. Login via `/api/login`, callback via `/api/callback`, logout via `/api/logout`, user info via `/api/auth/user`. Admin user CRUD: GET/PATCH/DELETE `/api/admin/users`. Role-based middleware via `requireRole()`.
+-   **User Management**: Admin UI tab "Benutzer" (`AdminUsersManager.tsx`) in ContentManager for listing, searching, filtering, role changes, status toggles, and user deletion.
 
 **Core Features & Design Patterns**:
 -   **Dynamic Content Management**: Pages and sections are dynamically rendered based on database configurations, driven by `UniversalSectionRenderer`.

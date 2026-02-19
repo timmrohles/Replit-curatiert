@@ -17,6 +17,7 @@ import { CreatorCarousel } from '../components/creator/CreatorCarousel';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { Text } from '@/components/ui/typography';
 import { LikeButton } from '../components/favorites/LikeButton';
+import { useAuth } from '../hooks/use-auth';
 
 type ProfileTab = 'kurationen' | 'rezensionen' | 'bewertungen' | 'veranstaltungen' | 'buchclub' | 'buchbesprechung';
 
@@ -282,7 +283,8 @@ function PublicEventCard({ event, profileName }: { event: any; profileName: stri
   const isFull = event.max_participants ? localParticipantCount >= event.max_participants : false;
   const entryFee = parseFloat(String(event.entry_fee || 0));
 
-  const userId = 'demo-user-123';
+  const { user: authUser } = useAuth();
+  const userId = authUser?.id || 'demo-user-123';
 
   useEffect(() => {
     fetch(`/api/user-events/${event.id}/booking-status?userId=${userId}`)

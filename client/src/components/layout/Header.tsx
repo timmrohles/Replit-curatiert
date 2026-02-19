@@ -8,10 +8,11 @@ import { FavoritesPanel } from "../favorites/FavoritesPanel";
 import { useFavorites } from "../favorites/FavoritesContext";
 import { ThemeToggle } from "../common/ThemeToggle";
 import { useTheme } from "../../utils/ThemeContext";
-import { Moon, Sun, Search, Heart, Menu, X, ChevronDown, ShoppingCart, User, Sliders, Star, Store, Bell, MoreHorizontal } from "lucide-react";
+import { Moon, Sun, Search, Heart, Menu, X, ChevronDown, ShoppingCart, User, LogIn, LogOut, Sliders, Star, Store, Bell, MoreHorizontal } from "lucide-react";
 import { RegionSwitcher } from "./RegionSwitcher";
-import { useNavigationV2, FALLBACK_NAVIGATION_V2 } from "../../utils/useNavigation"; // ✅ Clean import (no V2 suffix)
-import { logger } from "../../utils/logger"; // ✅ Add logger for debugging
+import { useNavigationV2, FALLBACK_NAVIGATION_V2 } from "../../utils/useNavigation";
+import { logger } from "../../utils/logger";
+import { useAuth } from "../../hooks/use-auth";
 
 interface HeaderProps {
   isHomePage?: boolean;
@@ -246,6 +247,7 @@ export function Header({
   const isDashboard = location.pathname.startsWith('/dashboard');
   const { favoriteCount } = useFavorites();
   const { resolvedTheme, toggleTheme } = useTheme();
+  const { user: authUser, isAuthenticated: isLoggedIn, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFavoritesPanelOpen, setIsFavoritesPanelOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -594,14 +596,31 @@ export function Header({
                 {/* Theme Toggle */}
                 <ThemeToggle />
                 
-                <button
-                  onClick={() => navigate('/dashboard')}
-                  className="rounded-lg w-11 h-11 md:w-12 md:h-12 lg:w-14 lg:h-14 transition-all hover:scale-105 flex items-center justify-center bg-foreground hover:opacity-90"
-                  aria-label={t('header.openDashboard')}
-                  title="Dashboard"
-                >
-                  <User className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-background" style={{ strokeWidth: 1.5 }} />
-                </button>
+                {isLoggedIn ? (
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="rounded-lg w-11 h-11 md:w-12 md:h-12 lg:w-14 lg:h-14 transition-all hover:scale-105 flex items-center justify-center bg-foreground hover:opacity-90"
+                    aria-label={t('header.openDashboard')}
+                    title="Dashboard"
+                    data-testid="button-header-dashboard"
+                  >
+                    {authUser?.profileImageUrl ? (
+                      <img src={authUser.profileImageUrl} alt="" className="w-7 h-7 md:w-8 md:h-8 lg:w-9 lg:h-9 rounded-full object-cover" />
+                    ) : (
+                      <User className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-background" style={{ strokeWidth: 1.5 }} />
+                    )}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { window.location.href = '/api/login'; }}
+                    className="rounded-lg w-11 h-11 md:w-12 md:h-12 lg:w-14 lg:h-14 transition-all hover:scale-105 flex items-center justify-center bg-foreground hover:opacity-90"
+                    aria-label="Anmelden"
+                    title="Anmelden"
+                    data-testid="button-header-login"
+                  >
+                    <LogIn className="w-5 h-5 md:w-6 md:h-6 lg:w-7 lg:h-7 text-background" style={{ strokeWidth: 1.5 }} />
+                  </button>
+                )}
                 <div className="relative">
                   <button
                     onClick={() => setIsFavoritesPanelOpen(true)}

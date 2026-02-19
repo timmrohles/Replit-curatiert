@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Calendar, MapPin, Video, Users, Clock, Plus, X, Edit2, Trash2, ExternalLink, Download, ChevronDown, ChevronUp, Globe, Lock, BookOpen, Send, XCircle, CalendarClock, MessageSquare, UserMinus, AlertTriangle, Search, Image as ImageIcon } from 'lucide-react';
 import { Heading, Text } from '../../components/ui/typography';
+import { useAuth } from '../../hooks/use-auth';
 
 const API_BASE = '/api';
-const USER_ID = 'demo-user-123';
 
 const EVENT_TYPES = [
   { value: 'lesung', label: 'Lesung' },
@@ -116,6 +116,8 @@ function getEventTypeLabel(type: string): string {
 }
 
 export function UserEvents() {
+  const { user: authUser } = useAuth();
+  const USER_ID = authUser?.id || 'demo-user-123';
   const [events, setEvents] = useState<UserEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

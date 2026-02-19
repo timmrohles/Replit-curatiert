@@ -25,6 +25,7 @@ const ContentReportsTab = lazy(() => import('../../components/admin/ContentRepor
 const AdminEventsTab = lazy(() => import('../../components/admin/AdminEventsTab').then(m => ({ default: m.AdminEventsTab })));
 const AdminContentSources = lazy(() => import('../../components/admin/AdminContentSources').then(m => ({ default: m.AdminContentSources })));
 const AdminUnmatchedBooks = lazy(() => import('../../components/admin/AdminUnmatchedBooks').then(m => ({ default: m.AdminUnmatchedBooks })));
+const AdminUsersManager = lazy(() => import('../../components/admin/AdminUsersManager').then(m => ({ default: m.AdminUsersManager })));
 
 // ✅ Import types and API functions
 import type { Book, Curator, Tag, ONIXTag, MenuItem, Section, Page } from '../../utils/api';
@@ -132,8 +133,8 @@ export function ContentManager() {
   };
   
   // ✅ URL-based tab navigation
-  type TabType = 'books' | 'curators' | 'storefronts' | 'navigation' | 'pages' | 'category-cards' | 'awards' | 'tags' | 'persons' | 'user-modules' | 'author-requests' | 'settings' | 'diagnostics' | 'affiliates' | 'sections' | 'site-banner' | 'meldungen' | 'events' | 'content-sources';
-  const validTabs: TabType[] = ['books', 'curators', 'storefronts', 'navigation', 'pages', 'category-cards', 'awards', 'tags', 'persons', 'user-modules', 'author-requests', 'settings', 'diagnostics', 'affiliates', 'sections', 'site-banner', 'meldungen', 'events', 'content-sources'];
+  type TabType = 'books' | 'curators' | 'storefronts' | 'navigation' | 'pages' | 'category-cards' | 'awards' | 'tags' | 'persons' | 'user-modules' | 'author-requests' | 'settings' | 'diagnostics' | 'affiliates' | 'sections' | 'site-banner' | 'meldungen' | 'events' | 'content-sources' | 'users';
+  const validTabs: TabType[] = ['books', 'curators', 'storefronts', 'navigation', 'pages', 'category-cards', 'awards', 'tags', 'persons', 'user-modules', 'author-requests', 'settings', 'diagnostics', 'affiliates', 'sections', 'site-banner', 'meldungen', 'events', 'content-sources', 'users'];
   
   const tabParam = searchParams.get('tab') as TabType;
   const activeTab: TabType = tabParam && validTabs.includes(tabParam) ? tabParam : 'books';
@@ -832,6 +833,18 @@ export function ContentManager() {
           >
             📅 Veranstaltungen
           </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className="px-4 py-2 rounded-lg transition-all text-sm"
+            style={{
+              backgroundColor: activeTab === 'users' ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
+              color: '#3A3A3A',
+              fontFamily: 'Fjalla One'
+            }}
+            data-testid="button-tab-users"
+          >
+            👤 Benutzer
+          </button>
         </div>
 
         {/* Content */}
@@ -1012,6 +1025,15 @@ export function ContentManager() {
             <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Veranstaltungen...</div>}>
               <TabErrorBoundary tabName="Veranstaltungen">
                 <AdminEventsTab />
+              </TabErrorBoundary>
+            </Suspense>
+          )}
+
+          {/* Users Tab */}
+          {activeTab === 'users' && (
+            <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Benutzer...</div>}>
+              <TabErrorBoundary tabName="Benutzer">
+                <AdminUsersManager />
               </TabErrorBoundary>
             </Suspense>
           )}

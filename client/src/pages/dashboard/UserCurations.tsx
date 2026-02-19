@@ -3,9 +3,9 @@ import { Plus, Edit, Trash2, X, Search, GripVertical, BookOpen, ChevronRight, Ch
 import { Text, Heading } from '@/components/ui/typography';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { EditorialBookCard } from '@/components/book/EditorialBookCard';
+import { useAuth } from '../../hooks/use-auth';
 
 const API_BASE = '/api';
-const USER_ID = 'demo-user-123';
 
 interface BookstoreProfileData {
   id: number;
@@ -293,6 +293,8 @@ interface UserCurationsProps {
 }
 
 export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
+  const { user: authUser } = useAuth();
+  const USER_ID = authUser?.id || 'demo-user-123';
   const [curations, setCurations] = useState<Curation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

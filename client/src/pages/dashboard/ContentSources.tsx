@@ -3,9 +3,9 @@ import {
   Rss, Plus, RefreshCw, Trash2, Eye, EyeOff, Check, ChevronDown, ChevronUp,
   Loader2, Lock, Star, Radio, Globe, Youtube, X
 } from 'lucide-react';
+import { useAuth } from '../../hooks/use-auth';
 
 const API_BASE = '/api';
-const USER_ID = 'demo-user-123';
 
 interface ContentSource {
   id: number;
@@ -127,6 +127,8 @@ function RenderStars({ count }: { count: number }) {
 }
 
 export function ContentSourcesManager() {
+  const { user: authUser } = useAuth();
+  const USER_ID = authUser?.id || 'demo-user-123';
   const [sources, setSources] = useState<ContentSource[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);

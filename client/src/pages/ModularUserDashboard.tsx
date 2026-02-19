@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from '../utils/routing';
+import { useAuth } from '../hooks/use-auth';
 import { 
   User, 
   Star, 
@@ -105,8 +106,9 @@ export default function ModularUserDashboard() {
   const { t } = useTranslation();
   const navigate = useSafeNavigate();
   const location = useLocation();
+  const { user: authUser, isLoading: authLoading, isAuthenticated } = useAuth();
   
-  const userId = 'demo-user-123';
+  const userId = authUser?.id || 'demo-user-123';
   
   const [activeSection, setActiveSection] = useState<DashboardSection>('home');
   const [userModules, setUserModules] = useState<UserModule[]>([]);
@@ -344,10 +346,27 @@ export default function ModularUserDashboard() {
     );
   };
 
-  if (loadingModules) {
+  if (authLoading || loadingModules) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F9FAFB' }}>
         <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: '#247ba0' }}></div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ backgroundColor: '#F9FAFB' }}>
+        <h2 className="text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>Bitte melde dich an</h2>
+        <p className="text-sm text-gray-500">Du musst angemeldet sein, um dein Dashboard zu nutzen.</p>
+        <button
+          onClick={() => { window.location.href = '/api/login'; }}
+          className="px-6 py-3 rounded-lg text-white text-sm font-medium"
+          style={{ backgroundColor: '#247ba0' }}
+          data-testid="button-dashboard-login"
+        >
+          Anmelden
+        </button>
       </div>
     );
   }

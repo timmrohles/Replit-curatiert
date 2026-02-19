@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useAuth } from '../../hooks/use-auth';
 import { useDashboardFeed, type FeedSectionType, type ReadingStatus, type FeedSortOrder } from './DashboardFeedContext';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -1047,7 +1048,8 @@ function EventCard({ event }: { event: MockEvent }) {
   const typeLabel = EVENT_TYPE_LABELS[event.event_type] || event.event_type;
   const spotsLeft = event.max_participants ? event.max_participants - localParticipantCount : null;
 
-  const userId = 'demo-user-123';
+  const { user: authUser } = useAuth();
+  const userId = authUser?.id || 'demo-user-123';
   const numericId = parseInt(String(event.id));
   const isRealEvent = !isNaN(numericId);
 

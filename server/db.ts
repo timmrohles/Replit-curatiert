@@ -1,7 +1,9 @@
 import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import * as schema from "@shared/schema";
 
 const pool = new Pool({
-  connectionString: process.env.NEON_DATABASE_URL,
+  connectionString: process.env.NEON_DATABASE_URL || process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
   max: 10,
   idleTimeoutMillis: 30000,
@@ -11,6 +13,8 @@ const pool = new Pool({
 pool.on("error", (err) => {
   console.error("[DB] Unexpected pool error:", err.message);
 });
+
+export const db = drizzle(pool, { schema });
 
 export async function queryDB(text: string, params: unknown[] = []) {
   const client = await pool.connect();

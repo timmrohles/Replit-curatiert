@@ -5,6 +5,7 @@ import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { LikeButton } from '../../components/favorites/LikeButton';
 import { Button } from '@/components/ui/button';
 import { Text } from '../../components/ui/typography';
+import { useAuth } from '../../hooks/use-auth';
 
 const TAG_COLORS = [
   'var(--vibrant-coral, #f25f5c)',
@@ -203,6 +204,8 @@ function GenrePickerDropdown({
 const CURATOR_STORAGE_KEY = 'coratiert-curator-id';
 
 export function DashboardProfile() {
+  const { user: authUser } = useAuth();
+  const userId = authUser?.id || 'demo-user-123';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -388,7 +391,7 @@ export function DashboardProfile() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           curatorId: curatorId || undefined,
-          userId: 'demo-user-123',
+          userId,
           name: publicName,
           email: profile.email,
           bio: curatorProfile.bio,

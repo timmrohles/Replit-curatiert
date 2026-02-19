@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, Eye, ShoppingCart, Euro, BarChart3, MousePointerClick, BookOpen, Clock, Loader2, Copy, CheckCircle } from 'lucide-react';
+import { useAuth } from '../../../hooks/use-auth';
 
 interface ClickStats {
   total_clicks: string;
@@ -40,6 +41,8 @@ interface StatsData {
 }
 
 export function CreatorAnalytics() {
+  const { user: authUser } = useAuth();
+  const userId = authUser?.id || 'demo-user-123';
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [creatorSlug, setCreatorSlug] = useState<string>('');
@@ -49,8 +52,8 @@ export function CreatorAnalytics() {
     async function loadStats() {
       try {
         const [statsRes, profileRes] = await Promise.all([
-          fetch('/api/affiliate/creator-stats?userId=demo-user-123'),
-          fetch('/api/bookstore/profile?userId=demo-user-123')
+          fetch(`/api/affiliate/creator-stats?userId=${encodeURIComponent(userId)}`),
+          fetch(`/api/bookstore/profile?userId=${encodeURIComponent(userId)}`)
         ]);
         const statsData = await statsRes.json();
         const profileData = await profileRes.json();

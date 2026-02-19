@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { User, Save, Banknote, Shield, CreditCard, FileText, BarChart3, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { CreatorAnalytics } from './creator/CreatorAnalytics';
+import { useAuth } from '../../hooks/use-auth';
 
 export function DashboardEarnings() {
+  const { user: authUser } = useAuth();
+  const userId = authUser?.id || 'demo-user-123';
   const [affiliateExpanded, setAffiliateExpanded] = useState<Record<string, boolean>>({});
   const [affiliateSaving, setAffiliateSaving] = useState(false);
   const [affiliateMessage, setAffiliateMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -23,7 +26,7 @@ export function DashboardEarnings() {
     if (!affiliateLoaded) {
       (async () => {
         try {
-          const res = await fetch('/api/affiliate-creator-profile?userId=demo-user-123');
+          const res = await fetch(`/api/affiliate-creator-profile?userId=${encodeURIComponent(userId)}`);
           const json = await res.json();
           if (json.ok && json.data) {
             const d = json.data;
@@ -59,7 +62,7 @@ export function DashboardEarnings() {
       const res = await fetch('/api/affiliate-creator-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: 'demo-user-123', ...affiliate }),
+        body: JSON.stringify({ userId, ...affiliate }),
       });
       const json = await res.json();
       if (json.ok) {

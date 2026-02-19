@@ -6,9 +6,9 @@ import {
 } from 'lucide-react';
 import { useDashboardFeed } from './DashboardFeedContext';
 import { Text } from '../../components/ui/typography';
+import { useAuth } from '../../hooks/use-auth';
 
 const API_BASE = '/api';
-const USER_ID = 'demo-user-123';
 const CURATOR_STORAGE_KEY = 'coratiert-curator-id';
 
 interface SocialLinks {
@@ -66,6 +66,8 @@ interface ProfileCheck {
 }
 
 export function UserBookstore() {
+  const { user: authUser } = useAuth();
+  const USER_ID = authUser?.id || 'demo-user-123';
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
