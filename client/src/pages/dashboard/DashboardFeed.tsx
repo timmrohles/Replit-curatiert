@@ -897,7 +897,9 @@ function CurationsBrowser() {
         </div>
       </div>
 
-      <div className="mt-6">
+      <div className="my-5 border-t" style={{ borderColor: 'rgba(0,0,0,0.15)' }} />
+
+      <div className="mt-0">
         <CuratorSectionHeader
           curator={currentCuration.curator}
           tags={currentCuration.tags}
