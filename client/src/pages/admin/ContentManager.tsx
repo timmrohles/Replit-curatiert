@@ -197,6 +197,7 @@ export function ContentManager() {
   const setActiveTab = (tab: TabType) => {
     setSearchParams({ tab });
   };
+  const [navigateToAwardId, setNavigateToAwardId] = useState<number | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
   const [curators, setCurators] = useState<Curator[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -942,7 +943,7 @@ export function ContentManager() {
           {activeTab === 'awards' && (
             <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Awards...</div>}>
               <TabErrorBoundary tabName="Awards">
-                <AdminAwardsNeon />
+                <AdminAwardsNeon initialAwardId={navigateToAwardId} />
               </TabErrorBoundary>
             </Suspense>
           )}
@@ -960,7 +961,10 @@ export function ContentManager() {
           {activeTab === 'persons' && (
             <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Persons...</div>}>
               <TabErrorBoundary tabName="Persons">
-                <AdminPersons />
+                <AdminPersons onNavigateToAward={(awardId) => {
+                  setNavigateToAwardId(awardId);
+                  setActiveTab('awards');
+                }} />
               </TabErrorBoundary>
             </Suspense>
           )}

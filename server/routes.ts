@@ -4400,14 +4400,34 @@ export async function registerRoutes(
   // ==================================================================
   // PERSONS
   // ==================================================================
-  app.get('/api/persons', async (_req: Request, res: Response) => {
+  app.get('/api/persons', async (req: Request, res: Response) => {
     try {
+      const search = (req.query.search as string) || '';
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      let whereClause = '';
+      const params: any[] = [];
+      if (search) {
+        params.push(`%${search}%`);
+        whereClause = `WHERE p.name ILIKE $${params.length}`;
+      }
+
+      const countResult = await queryDB(
+        `SELECT count(*) FROM persons p ${whereClause}`, params
+      );
+      const total = parseInt(countResult.rows[0].count);
+
+      params.push(limit, offset);
       const result = await queryDB(`
         SELECT p.id, p.name, p.slug, p.created_at, p.updated_at,
           (SELECT json_agg(json_build_object(
+            'recipient_id', ar.id,
+            'award_id', a.id,
             'award_name', a.name,
             'year', ae.year,
             'outcome', ao.title,
+            'outcome_type', ao.outcome_type,
             'book_id', ar.book_id,
             'notes', ar.notes
           ) ORDER BY ae.year DESC)
@@ -4417,11 +4437,14 @@ export async function registerRoutes(
           JOIN awards a ON a.id = ae.award_id
           WHERE ar.person_id = p.id) as awards
         FROM persons p
+        ${whereClause}
         ORDER BY p.name ASC
-      `, []);
-      return res.json({ ok: true, data: result.rows });
+        LIMIT $${params.length - 1} OFFSET $${params.length}
+      `, params);
+      return res.json({ ok: true, data: result.rows, total });
     } catch (error) {
-      return res.json({ ok: true, data: [] });
+      log.error('Persons list error:', error);
+      return res.json({ ok: true, data: [], total: 0 });
     }
   });
 
@@ -4477,6 +4500,20 @@ export async function registerRoutes(
       return res.json({ success: true, data: { id } });
     } catch (error) {
       log.error('Person delete error:', error);
+      return res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  app.delete('/api/award-recipients/:id', async (req: Request, res: Response) => {
+    try {
+      const id = req.params.id;
+      const result = await queryDB('DELETE FROM award_recipients WHERE id = $1 RETURNING id', [id]);
+      if (result.rows.length === 0) {
+        return res.status(404).json({ success: false, error: 'Recipient not found' });
+      }
+      return res.json({ success: true });
+    } catch (error) {
+      log.error('Recipient delete error:', error);
       return res.status(500).json({ success: false, error: String(error) });
     }
   });

@@ -162,6 +162,12 @@ async function scrapeAward(info: { name: string; url: string; category: string }
       if (!author || author.length < 2) return;
       if (["autor", "preisträger", "laudator"].includes(author.toLowerCase())) return;
 
+      // Strip parenthesized suffixes like (Deutschland), (Förderpreis), etc.
+      const parenIdx = author.indexOf("(");
+      if (parenIdx > 0 && author.endsWith(")")) {
+        author = author.substring(0, parenIdx).trim();
+      }
+
       const effectiveYear = yearFromRow || currentYear;
       if (!effectiveYear) return;
       if (!currentLevel) currentLevel = "Gewinner";

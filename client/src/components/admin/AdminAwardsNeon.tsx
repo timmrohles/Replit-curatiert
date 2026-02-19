@@ -110,9 +110,14 @@ interface Person {
 // COMPONENT
 // ==================================================================
 
-export function AdminAwardsNeon() {
+interface AdminAwardsNeonProps {
+  initialAwardId?: number | null;
+}
+
+export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
   const [view, setView] = useState<'awards' | 'editions' | 'outcomes' | 'recipients'>('awards');
   const [selectedAward, setSelectedAward] = useState<Award | null>(null);
+  const [pendingAwardId, setPendingAwardId] = useState<number | null>(initialAwardId || null);
   const [selectedEdition, setSelectedEdition] = useState<Edition | null>(null);
   const [selectedOutcome, setSelectedOutcome] = useState<Outcome | null>(null);
 
@@ -156,6 +161,26 @@ export function AdminAwardsNeon() {
   useEffect(() => {
     if (view === 'awards') loadAwards();
   }, [view]);
+
+  useEffect(() => {
+    if (pendingAwardId && awards.length > 0) {
+      const found = awards.find(a => a.id === pendingAwardId);
+      if (found) {
+        setSelectedAward(found);
+        setView('editions');
+        setPendingAwardId(null);
+      }
+    }
+  }, [pendingAwardId, awards]);
+
+  useEffect(() => {
+    if (initialAwardId && initialAwardId !== pendingAwardId) {
+      setPendingAwardId(initialAwardId);
+      if (view !== 'awards') {
+        setView('awards');
+      }
+    }
+  }, [initialAwardId]);
 
   useEffect(() => {
     if (view === 'editions' && selectedAward) loadEditions(selectedAward.id);

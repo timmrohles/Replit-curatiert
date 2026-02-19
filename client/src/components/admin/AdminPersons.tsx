@@ -6,12 +6,13 @@
  * Features:
  * - CRUD für Persons (Autoren, Übersetzer, etc.)
  * - Inline-Anzeige aller Preise pro Person (Name, Jahr, Matching-Status)
- * - Search & Filter
- * - Delete Protection (wenn in Awards verwendet)
+ * - Klick auf Preis navigiert zum Preis-Tab
+ * - Bearbeitung der Preis-Zuordnungen (entfernen)
+ * - Search, Pagination
  * ==================================================================
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   Edit2,
@@ -24,16 +25,21 @@ import {
   AlertCircle,
   Check,
   BookOpen,
-  BookX
+  BookX,
+  ExternalLink,
+  Unlink
 } from 'lucide-react';
 
 // TYPES
 // ==================================================================
 
 interface PersonAwardInline {
+  recipient_id: number;
+  award_id: number;
   award_name: string;
   year: number;
   outcome: string;
+  outcome_type: string;
   book_id: number | null;
   notes: string | null;
 }
@@ -47,11 +53,15 @@ interface Person {
   updated_at?: string;
 }
 
+interface AdminPersonsProps {
+  onNavigateToAward?: (awardId: number) => void;
+}
+
 // ==================================================================
 // COMPONENT
 // ==================================================================
 
-export function AdminPersons() {
+export function AdminPersons({ onNavigateToAward }: AdminPersonsProps) {
   const [persons, setPersons] = useState<Person[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,11 +85,7 @@ export function AdminPersons() {
   // LOAD DATA
   // ==================================================================
 
-  useEffect(() => {
-    loadPersons();
-  }, [searchQuery, offset]);
-
-  async function loadPersons() {
+  const loadPersons = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -99,7 +105,7 @@ export function AdminPersons() {
       if (data.ok) {
         const list = Array.isArray(data.data) ? data.data : [];
         setPersons(list);
-        setTotal(list.length);
+        setTotal(data.total ?? list.length);
       } else {
         setError(data.error?.message || 'Laden fehlgeschlagen');
       }
@@ -108,7 +114,11 @@ export function AdminPersons() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [searchQuery, offset, limit]);
+
+  useEffect(() => {
+    loadPersons();
+  }, [loadPersons]);
 
   // ==================================================================
   // SAVE/DELETE
@@ -177,6 +187,37 @@ export function AdminPersons() {
     }
   }
 
+  async function removeRecipient(recipientId: number) {
+    if (!confirm('Preis-Zuordnung entfernen?')) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE}/award-recipients/${recipientId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: getHeaders()
+      });
+
+      if (!response.ok) {
+        setError(`Entfernen fehlgeschlagen (HTTP ${response.status})`);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setSuccess('Preis-Zuordnung entfernt');
+        loadPersons();
+      } else {
+        setError(data.error || 'Entfernen fehlgeschlagen');
+      }
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // ==================================================================
   // PAGINATION
   // ==================================================================
@@ -204,7 +245,7 @@ export function AdminPersons() {
             Personen-Verwaltung
           </h2>
           <p className="text-sm text-gray-600 mt-1">
-            Autoren, Übersetzer und Preisträger verwalten
+            Autoren, Übersetzer und Preisträger verwalten &middot; {total} Personen
           </p>
         </div>
         <button
@@ -262,17 +303,6 @@ export function AdminPersons() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="mb-6 p-4 bg-blue-50 rounded-md flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <div className="text-2xl font-bold text-blue-900">{total}</div>
-          <div className="text-sm text-blue-700">Personen gesamt</div>
-        </div>
-        <div className="text-sm text-blue-600">
-          Zeige {Math.min(offset + 1, total)}-{Math.min(offset + limit, total)} von {total}
-        </div>
-      </div>
-
       {/* Persons List */}
       {loading && <div className="text-center py-8">Laden...</div>}
 
@@ -306,16 +336,19 @@ export function AdminPersons() {
                     <h3 className="text-base font-semibold">{person.name}</h3>
                     {awards.length > 0 && (
                       <div className="flex items-center gap-2 text-xs">
+                        <span className="text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                          {awards.length} {awards.length === 1 ? 'Preis' : 'Preise'}
+                        </span>
                         {matchedCount > 0 && (
                           <span className="flex items-center gap-0.5 text-green-700 bg-green-50 px-1.5 py-0.5 rounded">
                             <BookOpen className="w-3 h-3" />
-                            {matchedCount} gematcht
+                            {matchedCount}
                           </span>
                         )}
                         {unmatchedCount > 0 && (
                           <span className="flex items-center gap-0.5 text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded">
                             <BookX className="w-3 h-3" />
-                            {unmatchedCount} offen
+                            {unmatchedCount}
                           </span>
                         )}
                       </div>
@@ -325,10 +358,18 @@ export function AdminPersons() {
                   {/* Awards inline */}
                   {awards.length > 0 && (
                     <div className="mt-2 space-y-1">
-                      {awards.map((award, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                      {awards.map((award) => (
+                        <div key={award.recipient_id} className="flex items-center gap-2 text-sm text-gray-600 group">
                           <AwardIcon className="w-3.5 h-3.5 text-yellow-600 flex-shrink-0" />
-                          <span className="font-medium text-gray-800">{award.award_name}</span>
+                          <button
+                            onClick={() => onNavigateToAward?.(award.award_id)}
+                            className="font-medium text-gray-800 hover:text-blue-600 hover:underline cursor-pointer flex items-center gap-1"
+                            title={`Zum Preis "${award.award_name}" wechseln`}
+                            data-testid={`link-award-${award.award_id}`}
+                          >
+                            {award.award_name}
+                            <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
                           <span className="text-gray-400">{award.year}</span>
                           <span className="text-gray-500">&middot; {award.outcome}</span>
                           {award.book_id ? (
@@ -345,6 +386,14 @@ export function AdminPersons() {
                               {award.notes}
                             </span>
                           )}
+                          <button
+                            onClick={() => removeRecipient(award.recipient_id)}
+                            className="p-0.5 hover:bg-red-50 rounded text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+                            title="Preis-Zuordnung entfernen"
+                            data-testid={`button-unlink-recipient-${award.recipient_id}`}
+                          >
+                            <Unlink className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -360,7 +409,7 @@ export function AdminPersons() {
                   <button
                     onClick={() => setEditingPerson(person)}
                     className="p-2 hover:bg-gray-100 rounded-md"
-                    title="Bearbeiten"
+                    title="Name bearbeiten"
                     data-testid={`button-edit-person-${person.id}`}
                   >
                     <Edit2 className="w-4 h-4" />
@@ -368,7 +417,7 @@ export function AdminPersons() {
                   <button
                     onClick={() => deletePerson(person.id)}
                     className="p-2 hover:bg-red-50 rounded-md text-red-600"
-                    title="Löschen"
+                    title="Person löschen"
                     data-testid={`button-delete-person-${person.id}`}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -404,7 +453,7 @@ export function AdminPersons() {
       )}
 
       {/* ==================================================================
-          EDIT PERSON MODAL - Only Name field
+          EDIT PERSON MODAL - Name editing
           ================================================================== */}
       {editingPerson && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -460,6 +509,43 @@ export function AdminPersons() {
                   className="w-full px-3 py-2 border rounded-md bg-gray-50 text-gray-600 font-mono text-sm cursor-not-allowed"
                 />
               </div>
+
+              {/* Show existing awards in edit mode */}
+              {editingPerson.id && editingPerson.awards && editingPerson.awards.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Zugeordnete Preise</label>
+                  <div className="space-y-1 text-sm border rounded-md p-3 bg-gray-50 max-h-48 overflow-y-auto">
+                    {editingPerson.awards.map((award) => (
+                      <div key={award.recipient_id} className="flex items-center justify-between gap-2 py-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <AwardIcon className="w-3.5 h-3.5 text-yellow-600 flex-shrink-0" />
+                          <span className="truncate">{award.award_name}</span>
+                          <span className="text-gray-400 flex-shrink-0">{award.year}</span>
+                          <span className="text-gray-500 flex-shrink-0">{award.outcome}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            removeRecipient(award.recipient_id);
+                            if (editingPerson.awards) {
+                              setEditingPerson({
+                                ...editingPerson,
+                                awards: editingPerson.awards.filter(a => a.recipient_id !== award.recipient_id)
+                              });
+                            }
+                          }}
+                          className="p-1 hover:bg-red-100 rounded text-gray-400 hover:text-red-500 flex-shrink-0"
+                          title="Zuordnung entfernen"
+                        >
+                          <Unlink className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Preis-Zuordnungen werden über den Preise-Tab verwaltet.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-3 mt-6">
