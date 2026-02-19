@@ -154,6 +154,16 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
 
   const getHeaders = () => ({ 'Content-Type': 'application/json' });
 
+  const extractError = (err: unknown): string => {
+    if (typeof err === 'string') return err;
+    if (err && typeof err === 'object') {
+      if ('message' in err && typeof (err as any).message === 'string') return (err as any).message;
+      if ('code' in err && typeof (err as any).code === 'string') return (err as any).code;
+      return JSON.stringify(err);
+    }
+    return String(err);
+  };
+
   // ==================================================================
   // LOAD DATA
   // ==================================================================
@@ -204,7 +214,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
       if (data.ok || data.success) {
         setAwards(Array.isArray(data.data) ? data.data : []);
       } else {
-        setError(data.error || 'Failed to load awards');
+        setError(extractError(data.error) || 'Failed to load awards');
       }
     } catch (err) {
       setError(String(err));
@@ -224,7 +234,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         // ✅ CRASH-SAFE: Ensure editions is always an array
         setEditions(Array.isArray(data.data) ? data.data : []);
       } else {
-        setError(data.error || 'Failed to load editions');
+        setError(extractError(data.error) || 'Failed to load editions');
       }
     } catch (err) {
       setError(String(err));
@@ -247,7 +257,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         // ✅ CRASH-SAFE: Ensure outcomes is always an array
         setOutcomes(Array.isArray(data.data) ? data.data : []);
       } else {
-        setError(data.error || 'Failed to load outcomes');
+        setError(extractError(data.error) || 'Failed to load outcomes');
       }
     } catch (err) {
       setError(String(err));
@@ -270,7 +280,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         // ✅ CRASH-SAFE: Ensure recipients is always an array
         setRecipients(Array.isArray(data.data) ? data.data : []);
       } else {
-        setError(data.error || 'Failed to load recipients');
+        setError(extractError(data.error) || 'Failed to load recipients');
       }
     } catch (err) {
       setError(String(err));
@@ -306,7 +316,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         setEditingAward(null);
         loadAwards();
       } else {
-        setError(data.error || 'Failed to save award');
+        setError(extractError(data.error) || 'Failed to save award');
       }
     } catch (err) {
       setError(String(err));
@@ -339,7 +349,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         setEditingEdition(null);
         loadEditions(selectedAward!.id);
       } else {
-        setError(data.error || 'Failed to save edition');
+        setError(extractError(data.error) || 'Failed to save edition');
       }
     } catch (err) {
       setError(String(err));
@@ -372,7 +382,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         setEditingOutcome(null);
         loadOutcomes(selectedEdition!.id);
       } else {
-        setError(data.error || 'Failed to save outcome');
+        setError(extractError(data.error) || 'Failed to save outcome');
       }
     } catch (err) {
       setError(String(err));
@@ -415,7 +425,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         setEditingRecipient(null);
         loadRecipients(selectedOutcome!.id);
       } else {
-        setError(data.error || 'Failed to save recipient');
+        setError(extractError(data.error) || 'Failed to save recipient');
       }
     } catch (err) {
       setError(String(err));
@@ -440,7 +450,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         setSuccess('Award deleted');
         loadAwards();
       } else {
-        setError(data.error || 'Failed to delete award');
+        setError(extractError(data.error) || 'Failed to delete award');
       }
     } catch (err) {
       setError(String(err));
@@ -464,7 +474,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         setSuccess('Edition deleted');
         loadEditions(selectedAward!.id);
       } else {
-        setError(data.error || 'Failed to delete edition');
+        setError(extractError(data.error) || 'Failed to delete edition');
       }
     } catch (err) {
       setError(String(err));
@@ -488,7 +498,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         setSuccess('Outcome deleted');
         loadOutcomes(selectedEdition!.id);
       } else {
-        setError(data.error || 'Failed to delete outcome');
+        setError(extractError(data.error) || 'Failed to delete outcome');
       }
     } catch (err) {
       setError(String(err));
@@ -512,7 +522,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
         setSuccess('Recipient deleted');
         loadRecipients(selectedOutcome!.id);
       } else {
-        setError(data.error || 'Failed to delete recipient');
+        setError(extractError(data.error) || 'Failed to delete recipient');
       }
     } catch (err) {
       setError(String(err));
