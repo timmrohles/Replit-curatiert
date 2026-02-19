@@ -1494,6 +1494,8 @@ function FeedToolbar() {
   const {
     sections,
     toggleVisibility,
+    togglePublic,
+    setAllPublic,
     scrollToSection,
     sortOrder,
     setSortOrder,
@@ -1506,8 +1508,10 @@ function FeedToolbar() {
 
   const [jumpOpen, setJumpOpen] = useState(false);
   const [visibilityOpen, setVisibilityOpen] = useState(false);
+  const [publicOpen, setPublicOpen] = useState(false);
   const jumpRef = useRef<HTMLDivElement>(null);
   const visibilityRef = useRef<HTMLDivElement>(null);
+  const publicRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -1516,6 +1520,9 @@ function FeedToolbar() {
       }
       if (visibilityRef.current && !visibilityRef.current.contains(e.target as Node)) {
         setVisibilityOpen(false);
+      }
+      if (publicRef.current && !publicRef.current.contains(e.target as Node)) {
+        setPublicOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -1600,6 +1607,71 @@ function FeedToolbar() {
                   <Eye className="w-4 h-4 flex-shrink-0" style={{ color: '#247ba0' }} />
                 ) : (
                   <EyeOff className="w-4 h-4 flex-shrink-0" style={{ color: '#9CA3AF' }} />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="relative" ref={publicRef}>
+        <button
+          onClick={() => { setPublicOpen(!publicOpen); setJumpOpen(false); setVisibilityOpen(false); }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm border transition-colors"
+          style={{ color: '#3A3A3A', borderColor: '#E5E7EB' }}
+          data-testid="button-public-profile-sections"
+        >
+          <Globe className="w-4 h-4" />
+          Profil
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+        {publicOpen && (
+          <div
+            className="absolute left-0 top-full mt-1 w-72 rounded-lg shadow-xl border z-50 py-1"
+            style={{ backgroundColor: 'var(--color-beige, #faf6f1)', borderColor: '#E5E7EB' }}
+          >
+            <div className="px-3 py-2 flex items-center justify-between gap-2 border-b" style={{ borderColor: '#E5E7EB' }}>
+              <Text as="span" variant="small" className="font-semibold" style={{ color: '#3A3A3A' }}>
+                Im öffentlichen Profil zeigen
+              </Text>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setAllPublic(true)}
+                  className="px-2 py-0.5 rounded text-xs font-medium transition-colors"
+                  style={{ color: '#247ba0' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(36,123,160,0.1)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  data-testid="button-public-all"
+                >
+                  Alle
+                </button>
+                <button
+                  onClick={() => setAllPublic(false)}
+                  className="px-2 py-0.5 rounded text-xs font-medium transition-colors"
+                  style={{ color: '#9CA3AF' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  data-testid="button-public-none"
+                >
+                  Keine
+                </button>
+              </div>
+            </div>
+            {sections.map((s) => (
+              <button
+                key={s.id}
+                onClick={() => togglePublic(s.id)}
+                className="w-full px-3 py-2 text-left text-sm flex items-center justify-between gap-2 transition-colors"
+                style={{ color: s.isPublic ? '#3A3A3A' : '#9CA3AF' }}
+                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.05)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                data-testid={`public-toggle-${s.id}`}
+              >
+                <span className="truncate">{s.label}</span>
+                {s.isPublic ? (
+                  <Globe className="w-4 h-4 flex-shrink-0" style={{ color: '#247ba0' }} />
+                ) : (
+                  <Lock className="w-4 h-4 flex-shrink-0" style={{ color: '#9CA3AF' }} />
                 )}
               </button>
             ))}

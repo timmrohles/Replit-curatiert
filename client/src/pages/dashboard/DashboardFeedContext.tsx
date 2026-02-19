@@ -42,6 +42,7 @@ interface DashboardFeedContextType {
   reorderSections: (activeId: string, overId: string) => void;
   toggleVisibility: (sectionId: FeedSectionType) => void;
   togglePublic: (sectionId: FeedSectionType) => void;
+  setAllPublic: (isPublic: boolean) => void;
   resetToDefaults: () => void;
   isEditMode: boolean;
   setEditMode: (mode: boolean) => void;
@@ -277,6 +278,15 @@ export function DashboardFeedProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const setAllPublic = useCallback((isPublic: boolean) => {
+    setStored(prev => ({
+      ...prev,
+      publicState: Object.fromEntries(
+        prev.order.map(id => [id, isPublic])
+      ) as Record<FeedSectionType, boolean>,
+    }));
+  }, []);
+
   const resetToDefaults = useCallback(() => {
     setStored(getDefaultState());
   }, []);
@@ -302,6 +312,7 @@ export function DashboardFeedProvider({ children }: { children: ReactNode }) {
       reorderSections,
       toggleVisibility,
       togglePublic,
+      setAllPublic,
       resetToDefaults,
       isEditMode,
       setEditMode,
@@ -311,7 +322,7 @@ export function DashboardFeedProvider({ children }: { children: ReactNode }) {
       setSortOrder,
       scrollToSection,
     }),
-    [sections, reorderSections, toggleVisibility, togglePublic, resetToDefaults, isEditMode, stored.feedAsHomepage, stored.sortOrder, setFeedAsHomepage, setSortOrder, scrollToSection]
+    [sections, reorderSections, toggleVisibility, togglePublic, setAllPublic, resetToDefaults, isEditMode, stored.feedAsHomepage, stored.sortOrder, setFeedAsHomepage, setSortOrder, scrollToSection]
   );
 
   return (
@@ -326,6 +337,7 @@ const defaultContext: DashboardFeedContextType = {
   reorderSections: () => {},
   toggleVisibility: () => {},
   togglePublic: () => {},
+  setAllPublic: () => {},
   resetToDefaults: () => {},
   isEditMode: false,
   setEditMode: () => {},
