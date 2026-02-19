@@ -595,7 +595,7 @@ h3.section-title {
 }
 
 .book-card-author {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.875rem;
   line-height: 1.3;
   color: hsl(var(--muted-foreground));
