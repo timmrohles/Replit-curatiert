@@ -198,7 +198,12 @@ export async function setupAuth(app: Express) {
     ensureStrategy(req);
     const returnTo = req.query.returnTo as string;
     if (returnTo && returnTo.startsWith("/")) {
-      (req.session as any).returnTo = returnTo;
+      res.cookie("auth_return_to", returnTo, {
+        httpOnly: true,
+        maxAge: 5 * 60 * 1000,
+        sameSite: "lax",
+        path: "/",
+      });
     }
     const authOptions: any = {
       scope: providerConfig.scopes,
@@ -212,9 +217,16 @@ export async function setupAuth(app: Express) {
   app.get("/api/callback", (req, res, next) => {
     ensureStrategy(req);
     passport.authenticate(`oidcauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
-    })(req, res, next);
+    })(req, res, (err?: any) => {
+      if (err) return next(err);
+      const cookieHeader = req.headers.cookie || "";
+      const match = cookieHeader.match(/(?:^|;\s*)auth_return_to=([^;]*)/);
+      const returnTo = match ? decodeURIComponent(match[1]) : null;
+      res.clearCookie("auth_return_to", { path: "/" });
+      const redirectUrl = (returnTo && returnTo.startsWith("/")) ? returnTo : "/";
+      res.redirect(redirectUrl);
+    });
   });
 
   app.get("/api/logout", (req, res) => {
