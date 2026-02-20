@@ -1,8 +1,23 @@
-# Block all search engine crawlers
-User-agent: *
-Disallow: /
+User-agent: Googlebot
+Allow: /
 
-# Block specific AI/ML crawlers explicitly
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /sys-mgmt-xK9/
+Disallow: /api/
+Disallow: /dashboard/
+
+Sitemap: https://coratiert.de/sitemap.xml
+
 User-agent: GPTBot
 Disallow: /
 
@@ -21,28 +36,13 @@ Disallow: /
 User-agent: Google-Extended
 Disallow: /
 
-User-agent: GoogleOther
-Disallow: /
-
 User-agent: PerplexityBot
-Disallow: /
-
-User-agent: Omgilibot
-Disallow: /
-
-User-agent: FacebookBot
-Disallow: /
-
-User-agent: Applebot
 Disallow: /
 
 User-agent: Bytespider
 Disallow: /
 
 User-agent: Diffbot
-Disallow: /
-
-User-agent: ImagesiftBot
 Disallow: /
 
 User-agent: Amazonbot
@@ -63,7 +63,6 @@ Disallow: /
 User-agent: PetalBot
 Disallow: /
 
-# Block scrapers and data miners
 User-agent: SemrushBot
 Disallow: /
 

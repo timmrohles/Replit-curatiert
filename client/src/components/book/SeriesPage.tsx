@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSafeNavigate } from '../../utils/routing';
+import { sanitizeHTML } from '../../utils/sanitize';
 import { ChevronDown, ChevronUp, Heart, Info, ExternalLink, Clock, BookOpen, Star, ArrowRight } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { Breadcrumb } from '../layout/Breadcrumb';
@@ -534,7 +535,7 @@ export function SeriesPage() {
                   fontSize: 'var(--fluid-body)',
                   lineHeight: '1.6' 
                 }}
-                dangerouslySetInnerHTML={{ __html: series.descriptionHTML }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHTML(series.descriptionHTML) }}
               />
             ) : series.description && (
               <Text variant="large" className="max-w-3xl !text-foreground">

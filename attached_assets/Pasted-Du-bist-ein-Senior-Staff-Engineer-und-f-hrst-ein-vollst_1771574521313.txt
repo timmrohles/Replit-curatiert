@@ -1,0 +1,149 @@
+Du bist ein Senior Staff Engineer und führst ein vollständiges Technical Audit dieser Website und des gesamten Repositories durch.
+Ziel ist eine produktionsreife, sichere, performante und wartbare Anwendung nach aktuellen Best Practices.
+
+Analysiere den kompletten Code, die Konfiguration, Dependencies und Architektur und setze notwendige Optimierungen direkt um.
+
+Aufgaben
+1. Performance Audit & Optimierung
+
+Analysiere Frontend und Backend:
+
+Core Web Vitals (LCP, INP, CLS)
+
+Bundle-Größe, Code Splitting, unnötiger Code
+
+Rendering-Pipeline (SSR/CSR/Streaming falls relevant)
+
+Bild- und Font-Optimierung
+
+Netzwerk- und Caching-Strategie
+
+API-Latenzen, DB-Queries, N+1-Probleme, fehlende Indexes
+
+Implementiere konkrete Performance-Verbesserungen.
+
+2. SEO & Accessibility
+
+Prüfe technisches SEO:
+
+Title, Meta Tags, Canonical URLs
+
+sitemap.xml und robots.txt
+
+strukturierte Daten (Schema.org)
+
+OpenGraph/Twitter Cards
+
+Heading-Struktur und interne Verlinkung
+
+semantisches HTML und Accessibility (WCAG Basics)
+
+Behebe alle relevanten Probleme.
+
+3. Security Audit (kritisch)
+
+Führe einen Security-Review nach Best Practices durch:
+
+Auth & OAuth
+
+OAuth/OpenID Connect korrekt implementiert (PKCE, state, nonce)
+
+sichere Redirect-URI-Validierung
+
+minimale Scopes
+
+sichere Token-Speicherung (keine Tokens im LocalStorage)
+
+Web Security
+
+XSS, CSRF, CORS, Clickjacking
+
+Content Security Policy
+
+sichere Cookies (HttpOnly, Secure, SameSite)
+
+Input Validation & Output Encoding
+
+IDOR / fehlende Authorization Checks
+
+Rate Limiting / Abuse Prevention
+
+Secrets & Dependencies
+
+keine Hardcoded Secrets
+
+sichere ENV-Handhabung
+
+Dependency-Vulnerabilities
+
+typische Fehler von KI-generiertem Code identifizieren
+
+Behebe kritische Schwachstellen sofort.
+
+4. Architektur & Wartbarkeit
+
+Bewerte und verbessere:
+
+Projektstruktur und Schichten (UI, Domain, Application, Infrastructure)
+
+Trennung von Concerns
+
+Fehlerbehandlung und Logging
+
+Konfigurationsmanagement
+
+Naming und Konsistenz
+
+Reduktion technischer Schulden
+
+Refaktoriere, wenn nötig.
+
+5. Codequalität & Developer Experience
+
+Type Safety (falls möglich)
+
+Linting / Formatting
+
+sinnvolle Kommentare statt redundanter Kommentare
+
+Entfernung toten Codes
+
+klare Schnittstellen
+
+Typische KI-Builder-Fehler besonders prüfen
+
+Achte explizit auf:
+
+überkomplexen oder redundanten Code
+
+fehlende Edge-Case-Behandlung
+
+Sicherheitslücken durch generischen Boilerplate-Code
+
+ineffiziente Datenbankzugriffe
+
+fehlende Fehlerbehandlung
+
+fehlende Autorisierungsprüfungen
+
+Erwartete Ausgabe
+
+Liefere:
+
+Audit-Report mit:
+
+Findings
+
+Severity (Critical / High / Medium / Low)
+
+Begründung
+
+empfohlene Maßnahmen
+
+Liste aller umgesetzten Änderungen
+
+Messbare Verbesserungen (wo möglich)
+
+Empfehlungen für zukünftige Wartung
+
+Arbeite systematisch und priorisiere kritische Probleme.

@@ -67,7 +67,16 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+const ALLOWED_SLUG_TABLES = new Set([
+  'curators', 'menu_items', 'author_profiles', 'awards', 'tags',
+  'storefronts', 'persons', 'affiliates', 'bookstore_profiles', 'pages',
+]);
+
 async function generateUniqueSlug(table: string, baseText: string, excludeId?: number | string): Promise<string> {
+  if (!ALLOWED_SLUG_TABLES.has(table)) {
+    throw new Error(`generateUniqueSlug: table "${table}" is not in the allowed list`);
+  }
+
   const baseSlug = slugify(baseText);
   let slug = baseSlug;
   let counter = 2;
@@ -89,6 +98,10 @@ async function generateUniqueSlug(table: string, baseText: string, excludeId?: n
 
     slug = `${baseSlug}-${counter}`;
     counter++;
+
+    if (counter > 100) {
+      throw new Error(`generateUniqueSlug: exceeded max attempts for table "${table}", base "${baseText}"`);
+    }
   }
 }
 
@@ -197,11 +210,7 @@ function mapCuratorRow(row: any) {
   };
 }
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
-
+async function ensureSchemaReady() {
   try {
     await queryDB(`
       CREATE TABLE IF NOT EXISTS admin_credentials (
@@ -1113,6 +1122,26 @@ export async function registerRoutes(
     log.warn('Could not create awards tables:', err);
   }
 
+  log.info('Schema verification complete');
+}
+
+let schemaInitPromise: Promise<void> | null = null;
+function getSchemaInit() {
+  if (!schemaInitPromise) {
+    schemaInitPromise = ensureSchemaReady().catch(err => {
+      log.error('Schema initialization failed:', err);
+    });
+  }
+  return schemaInitPromise;
+}
+
+export async function registerRoutes(
+  httpServer: Server,
+  app: Express
+): Promise<Server> {
+
+  getSchemaInit();
+
   // ==================================================================
   // AVATAR UPLOAD
   // ==================================================================
@@ -1194,6 +1223,10 @@ export async function registerRoutes(
 
   app.post('/api/upload/avatar', async (req: Request, res: Response) => {
     try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ ok: false, error: 'Nicht authentifiziert' });
+      }
+
       avatarUpload.single('avatar')(req, res, async (err: any) => {
         if (err) {
           log.error('Multer error:', err);
@@ -2420,6 +2453,9 @@ export async function registerRoutes(
 
   app.post('/api/navigation/columns', async (req: Request, res: Response) => {
     try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
       const { root_menu_item_id, title, column_order } = req.body;
       const result = await queryDB(
         `INSERT INTO mega_menu_columns (root_menu_item_id, title, column_order, created_at, updated_at)
@@ -2434,6 +2470,9 @@ export async function registerRoutes(
 
   app.put('/api/navigation/columns/:id', async (req: Request, res: Response) => {
     try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
       const id = req.params.id;
       const { title, column_order } = req.body;
       const result = await queryDB(
@@ -2453,6 +2492,9 @@ export async function registerRoutes(
 
   app.delete('/api/navigation/columns/:id', async (req: Request, res: Response) => {
     try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
       const id = req.params.id;
       const result = await queryDB('DELETE FROM mega_menu_columns WHERE id = $1 RETURNING id', [id]);
 
@@ -8505,6 +8547,177 @@ export async function registerRoutes(
     } catch (error) {
       log.error('Admin content sources error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/robots.txt', (_req: Request, res: Response) => {
+    const robotsTxt = `User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow: /sys-mgmt-xK9/
+Disallow: /api/
+Disallow: /dashboard/
+
+Sitemap: https://coratiert.de/sitemap.xml
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: Meta-ExternalFetcher
+Disallow: /
+
+User-agent: YouBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+User-agent: DataForSeoBot
+Disallow: /`;
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.send(robotsTxt);
+  });
+
+  app.get('/sitemap.xml', async (_req: Request, res: Response) => {
+    try {
+      const baseUrl = 'https://coratiert.de';
+      const locale = 'de-de';
+
+      const staticPages = [
+        { path: '', priority: '1.0', changefreq: 'daily' },
+        { path: '/buecher', priority: '0.9', changefreq: 'daily' },
+        { path: '/ueber-uns', priority: '0.6', changefreq: 'monthly' },
+        { path: '/mission', priority: '0.6', changefreq: 'monthly' },
+        { path: '/faq', priority: '0.5', changefreq: 'monthly' },
+        { path: '/datenschutz', priority: '0.3', changefreq: 'yearly' },
+        { path: '/impressum', priority: '0.3', changefreq: 'yearly' },
+        { path: '/kurationen', priority: '0.8', changefreq: 'daily' },
+        { path: '/storefronts', priority: '0.7', changefreq: 'weekly' },
+        { path: '/authors', priority: '0.7', changefreq: 'weekly' },
+        { path: '/publishers', priority: '0.7', changefreq: 'weekly' },
+        { path: '/events', priority: '0.7', changefreq: 'weekly' },
+      ];
+
+      let urls = staticPages.map(p => `
+    <url>
+      <loc>${baseUrl}/${locale}${p.path}</loc>
+      <changefreq>${p.changefreq}</changefreq>
+      <priority>${p.priority}</priority>
+    </url>`).join('');
+
+      try {
+        const pages = await queryDB(`SELECT slug, updated_at FROM pages WHERE status = 'published' AND deleted_at IS NULL LIMIT 500`);
+        for (const page of pages.rows) {
+          const lastmod = page.updated_at ? new Date(page.updated_at).toISOString().split('T')[0] : '';
+          urls += `
+    <url>
+      <loc>${baseUrl}/${locale}/${page.slug}</loc>
+      ${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}
+      <changefreq>weekly</changefreq>
+      <priority>0.6</priority>
+    </url>`;
+        }
+      } catch {}
+
+      try {
+        const curators = await queryDB(`SELECT slug FROM curators WHERE deleted_at IS NULL AND visible = true LIMIT 200`);
+        for (const c of curators.rows) {
+          if (c.slug) {
+            urls += `
+    <url>
+      <loc>${baseUrl}/${locale}/curator/${c.slug}</loc>
+      <changefreq>weekly</changefreq>
+      <priority>0.6</priority>
+    </url>`;
+          }
+        }
+      } catch {}
+
+      try {
+        const bookstores = await queryDB(`SELECT slug FROM bookstore_profiles WHERE slug IS NOT NULL LIMIT 500`);
+        for (const b of bookstores.rows) {
+          if (b.slug) {
+            urls += `
+    <url>
+      <loc>${baseUrl}/${locale}/bookstore/${b.slug}</loc>
+      <changefreq>weekly</changefreq>
+      <priority>0.5</priority>
+    </url>`;
+          }
+        }
+      } catch {}
+
+      const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>`;
+
+      res.setHeader('Content-Type', 'application/xml');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      return res.send(sitemap);
+    } catch (error) {
+      log.error('Sitemap generation error:', error);
+      return res.status(500).send('Error generating sitemap');
     }
   });
 

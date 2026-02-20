@@ -1,3 +1,5 @@
+import { sanitizeHTML } from '../../utils/sanitize';
+
 interface ContentBlock {
   id: string;
   type: 'heading' | 'text' | 'html' | 'books-grid' | 'books-carousel' | 'hero' | 'spacer';
@@ -22,7 +24,7 @@ export function DynamicPageContentRenderer({ content }: DynamicPageContentRender
     // If parsing fails, treat as plain HTML
     return (
       <div className="max-w-4xl mx-auto prose prose-invert">
-        <div dangerouslySetInnerHTML={{ __html: content }} />
+        <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(content) }} />
       </div>
     );
   }
@@ -77,7 +79,7 @@ function ContentBlockRenderer({ block }: { block: ContentBlock }) {
       return (
         <div
           className="prose prose-lg max-w-none prose-invert"
-          dangerouslySetInnerHTML={{ __html: block.content?.html || '' }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHTML(block.content?.html || '') }}
         />
       );
 
