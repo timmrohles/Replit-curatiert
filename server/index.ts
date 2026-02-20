@@ -22,7 +22,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com", "https://*.unsplash.com", "https://*.thalia.media", "https://*.buchhandlung.de"],
+      imgSrc: ["'self'", "data:", "blob:", "https://images.unsplash.com", "https://*.unsplash.com", "https://*.thalia.media", "https://*.buchhandlung.de", "https://bilder.buecher.de"],
       fontSrc: ["'self'", "data:"],
       connectSrc: ["'self'", "https://api.unsplash.com", "https://*.replit.com", "https://*.replit.dev", "wss://*"],
       frameSrc: ["'none'"],
