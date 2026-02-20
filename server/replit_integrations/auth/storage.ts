@@ -18,21 +18,41 @@ class AuthStorage implements IAuthStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          email: userData.email,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          profileImageUrl: userData.profileImageUrl,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
+    try {
+      const [user] = await db
+        .insert(users)
+        .values(userData)
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            email: userData.email,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            profileImageUrl: userData.profileImageUrl,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      return user;
+    } catch (err: any) {
+      if (err?.code === '23505' && err?.constraint?.includes('email') && userData.email) {
+        const [existing] = await db.select().from(users).where(sql`${users.email} = ${userData.email}`).limit(1);
+        if (existing) {
+          const [updated] = await db
+            .update(users)
+            .set({
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              profileImageUrl: userData.profileImageUrl,
+              updatedAt: new Date(),
+            })
+            .where(sql`${users.id} = ${existing.id}`)
+            .returning();
+          return updated;
+        }
+      }
+      throw err;
+    }
   }
 
   async listUsers(opts: { page: number; limit: number; search?: string; role?: string; status?: string; sort?: string; order?: string }): Promise<{ users: User[]; total: number; page: number; totalPages: number; stats?: { total: number; active: number; inactive: number; admins: number; superAdmins: number } }> {

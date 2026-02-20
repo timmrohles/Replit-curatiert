@@ -473,7 +473,19 @@ async function ensureSchemaReady() {
     await queryDB(`ALTER TABLE awards ADD COLUMN IF NOT EXISTS tag_id INTEGER`);
     await queryDB(`ALTER TABLE awards ADD COLUMN IF NOT EXISTS award_type VARCHAR(50)`);
     await queryDB(`ALTER TABLE awards ADD COLUMN IF NOT EXISTS genre VARCHAR(100)`);
-    log.info('Awards tag_id column verified');
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS award_tag_links (
+        id SERIAL PRIMARY KEY,
+        award_id INTEGER NOT NULL REFERENCES awards(id) ON DELETE CASCADE,
+        tag_id INTEGER NOT NULL,
+        link_type VARCHAR(50) NOT NULL DEFAULT 'award_type',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(award_id, tag_id)
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_award_tag_links_award ON award_tag_links(award_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_award_tag_links_tag ON award_tag_links(tag_id)`);
+    log.info('Awards tag_id column and award_tag_links table verified');
   } catch (err) {
     log.warn('Could not add tag_id to awards:', err);
   }
@@ -3043,12 +3055,30 @@ export async function registerRoutes(
   // ==================================================================
   // AWARDS
   // ==================================================================
+  app.get('/api/awards/tag-options', async (_req: Request, res: Response) => {
+    try {
+      const typeTagsResult = await queryDB(
+        `SELECT id, name, slug FROM tags WHERE tag_type = 'award_type' AND (deleted_at IS NULL) ORDER BY name ASC`, []
+      );
+      const genreTagsResult = await queryDB(
+        `SELECT id, name, slug FROM tags WHERE tag_type = 'award_genre' AND (deleted_at IS NULL) ORDER BY name ASC`, []
+      );
+      return res.json({
+        ok: true,
+        award_types: typeTagsResult.rows,
+        award_genres: genreTagsResult.rows,
+      });
+    } catch (error) {
+      return res.json({ ok: true, award_types: [], award_genres: [] });
+    }
+  });
+
   app.get('/api/awards', async (req: Request, res: Response) => {
     try {
       const search = (req.query.search as string) || '';
       const sortBy = (req.query.sort as string) || 'name';
-      const awardType = (req.query.award_type as string) || '';
-      const genre = (req.query.genre as string) || '';
+      const awardTypeTagId = (req.query.award_type_tag_id as string) || '';
+      const genreTagId = (req.query.genre_tag_id as string) || '';
       const country = (req.query.country as string) || '';
 
       const conditions: string[] = [];
@@ -3058,13 +3088,13 @@ export async function registerRoutes(
         params.push(`%${search}%`);
         conditions.push(`(a.name ILIKE $${params.length} OR a.slug ILIKE $${params.length} OR a.issuer_name ILIKE $${params.length})`);
       }
-      if (awardType) {
-        params.push(awardType);
-        conditions.push(`a.award_type = $${params.length}`);
+      if (awardTypeTagId) {
+        params.push(parseInt(awardTypeTagId));
+        conditions.push(`EXISTS (SELECT 1 FROM award_tag_links atl WHERE atl.award_id = a.id AND atl.tag_id = $${params.length} AND atl.link_type = 'award_type')`);
       }
-      if (genre) {
-        params.push(genre);
-        conditions.push(`a.genre = $${params.length}`);
+      if (genreTagId) {
+        params.push(parseInt(genreTagId));
+        conditions.push(`EXISTS (SELECT 1 FROM award_tag_links atl WHERE atl.award_id = a.id AND atl.tag_id = $${params.length} AND atl.link_type = 'award_genre')`);
       }
       if (country) {
         params.push(country);
@@ -3077,7 +3107,6 @@ export async function registerRoutes(
       if (sortBy === 'updated') orderClause = 'ORDER BY a.updated_at DESC NULLS LAST';
       else if (sortBy === 'created') orderClause = 'ORDER BY a.created_at DESC NULLS LAST';
       else if (sortBy === 'country') orderClause = 'ORDER BY a.country ASC NULLS LAST, a.name ASC';
-      else if (sortBy === 'type') orderClause = 'ORDER BY a.award_type ASC NULLS LAST, a.name ASC';
 
       const result = await queryDB(`
         SELECT a.*,
@@ -3087,31 +3116,81 @@ export async function registerRoutes(
         ${orderClause}
       `, params);
 
-      const facetsResult = await queryDB(`
-        SELECT
-          COALESCE(award_type, '') as award_type,
-          COALESCE(genre, '') as genre,
-          COALESCE(country, '') as country
-        FROM awards
-      `, []);
+      const tagLinksResult = await queryDB(
+        `SELECT atl.award_id, atl.tag_id, atl.link_type, t.name as tag_name, t.slug as tag_slug
+         FROM award_tag_links atl
+         JOIN tags t ON t.id = atl.tag_id
+         ORDER BY t.name ASC`, []
+      );
 
-      const awardTypes = [...new Set(facetsResult.rows.map((r: any) => r.award_type).filter(Boolean))].sort();
-      const genres = [...new Set(facetsResult.rows.map((r: any) => r.genre).filter(Boolean))].sort();
-      const countries = [...new Set(facetsResult.rows.map((r: any) => r.country).filter(Boolean))].sort();
+      const tagLinksMap: Record<number, { award_types: any[], award_genres: any[] }> = {};
+      for (const link of tagLinksResult.rows) {
+        if (!tagLinksMap[link.award_id]) {
+          tagLinksMap[link.award_id] = { award_types: [], award_genres: [] };
+        }
+        const entry = { id: link.tag_id, name: link.tag_name, slug: link.tag_slug };
+        if (link.link_type === 'award_type') {
+          tagLinksMap[link.award_id].award_types.push(entry);
+        } else if (link.link_type === 'award_genre') {
+          tagLinksMap[link.award_id].award_genres.push(entry);
+        }
+      }
+
+      const countriesResult = await queryDB(
+        `SELECT DISTINCT country FROM awards WHERE country IS NOT NULL AND country != '' ORDER BY country ASC`, []
+      );
+      const countries = countriesResult.rows.map((r: any) => r.country);
 
       const mapped = result.rows.map((row: any) => ({
         ...row,
         visible: row.visibility !== 'hidden',
+        linked_award_types: tagLinksMap[row.id]?.award_types || [],
+        linked_award_genres: tagLinksMap[row.id]?.award_genres || [],
       }));
       return res.json({
         ok: true,
         data: mapped,
         total: mapped.length,
-        facets: { award_types: awardTypes, genres, countries }
+        facets: { countries }
       });
     } catch (error) {
       log.error('Awards list error:', error);
-      return res.json({ ok: true, data: [], total: 0, facets: { award_types: [], genres: [], countries: [] } });
+      return res.json({ ok: true, data: [], total: 0, facets: { countries: [] } });
+    }
+  });
+
+  app.post('/api/awards/ensure-tag', async (req: Request, res: Response) => {
+    try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
+      const { name, link_type } = req.body;
+      if (!name || !name.trim()) {
+        return res.status(400).json({ success: false, error: 'Name is required' });
+      }
+      const tagType = link_type === 'award_genre' ? 'award_genre' : 'award_type';
+      const tagColor = tagType === 'award_type' ? '#4A90D9' : '#2ECC71';
+
+      const existing = await queryDB(
+        `SELECT id, name, slug FROM tags WHERE tag_type = $1 AND LOWER(name) = LOWER($2) AND deleted_at IS NULL LIMIT 1`,
+        [tagType, name.trim()]
+      );
+      if (existing.rows.length > 0) {
+        return res.json({ success: true, tag: existing.rows[0], created: false });
+      }
+
+      const tagSlug = await generateUniqueSlug('tags', name.trim());
+      const result = await queryDB(
+        `INSERT INTO tags (name, slug, color, tag_type, visible, scope, source, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, true, 'book', 'award-auto', NOW(), NOW())
+         RETURNING id, name, slug`,
+        [name.trim(), tagSlug, tagColor, tagType]
+      );
+      log.info(`Auto-created ${tagType} tag: "${name.trim()}" (id=${result.rows[0].id})`);
+      return res.json({ success: true, tag: result.rows[0], created: true });
+    } catch (error) {
+      log.error('Ensure award tag error:', error);
+      return res.status(500).json({ success: false, error: String(error) });
     }
   });
 
@@ -3121,7 +3200,9 @@ export async function registerRoutes(
       if (!isAuthed) return;
 
       const body = req.body;
-      const { id, name, issuer_name, website_url, description, logo_url, country, award_type, genre } = body;
+      const { id, name, issuer_name, website_url, description, logo_url, country } = body;
+      const awardTypeTagIds: number[] = Array.isArray(body.award_type_tag_ids) ? body.award_type_tag_ids : [];
+      const awardGenreTagIds: number[] = Array.isArray(body.award_genre_tag_ids) ? body.award_genre_tag_ids : [];
 
       if (!name || !name.trim()) {
         return res.status(400).json({ success: false, error: 'Name is required' });
@@ -3133,10 +3214,10 @@ export async function registerRoutes(
         const result = await queryDB(
           `UPDATE awards
            SET name = $1, slug = $2, issuer_name = $3, website_url = $4,
-               description = $5, logo_url = $6, country = $7, award_type = $8, genre = $9, updated_at = NOW()
-           WHERE id = $10
+               description = $5, logo_url = $6, country = $7, updated_at = NOW()
+           WHERE id = $8
            RETURNING *`,
-          [name.trim(), slug, issuer_name || null, website_url || null, description || null, logo_url || null, country || null, award_type || null, genre || null, id]
+          [name.trim(), slug, issuer_name || null, website_url || null, description || null, logo_url || null, country || null, id]
         );
 
         if (result.rows.length === 0) {
@@ -3155,6 +3236,20 @@ export async function registerRoutes(
           }
         }
 
+        await queryDB(`DELETE FROM award_tag_links WHERE award_id = $1`, [id]);
+        for (const tagId of awardTypeTagIds) {
+          await queryDB(
+            `INSERT INTO award_tag_links (award_id, tag_id, link_type) VALUES ($1, $2, 'award_type') ON CONFLICT (award_id, tag_id) DO NOTHING`,
+            [id, tagId]
+          );
+        }
+        for (const tagId of awardGenreTagIds) {
+          await queryDB(
+            `INSERT INTO award_tag_links (award_id, tag_id, link_type) VALUES ($1, $2, 'award_genre') ON CONFLICT (award_id, tag_id) DO NOTHING`,
+            [id, tagId]
+          );
+        }
+
         return res.json({ success: true, data: award });
       } else {
         const tagSlug = await generateUniqueSlug('tags', name);
@@ -3167,13 +3262,28 @@ export async function registerRoutes(
         const newTag = tagResult.rows[0];
 
         const result = await queryDB(
-          `INSERT INTO awards (name, slug, issuer_name, website_url, description, logo_url, country, award_type, genre, tag_id, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+          `INSERT INTO awards (name, slug, issuer_name, website_url, description, logo_url, country, tag_id, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
            RETURNING *`,
-          [name.trim(), slug, issuer_name || null, website_url || null, description || null, logo_url || null, country || null, award_type || null, genre || null, newTag.id]
+          [name.trim(), slug, issuer_name || null, website_url || null, description || null, logo_url || null, country || null, newTag.id]
         );
+        const newAward = result.rows[0];
         log.info(`Award "${name}" created with auto-linked tag id=${newTag.id}`);
-        return res.json({ success: true, data: result.rows[0] });
+
+        for (const tagId of awardTypeTagIds) {
+          await queryDB(
+            `INSERT INTO award_tag_links (award_id, tag_id, link_type) VALUES ($1, $2, 'award_type') ON CONFLICT (award_id, tag_id) DO NOTHING`,
+            [newAward.id, tagId]
+          );
+        }
+        for (const tagId of awardGenreTagIds) {
+          await queryDB(
+            `INSERT INTO award_tag_links (award_id, tag_id, link_type) VALUES ($1, $2, 'award_genre') ON CONFLICT (award_id, tag_id) DO NOTHING`,
+            [newAward.id, tagId]
+          );
+        }
+
+        return res.json({ success: true, data: newAward });
       }
     } catch (error) {
       log.error('Award save error:', error);

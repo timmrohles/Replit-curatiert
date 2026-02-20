@@ -47,6 +47,12 @@ import {
 // TYPES
 // ==================================================================
 
+interface TagOption {
+  id: number;
+  name: string;
+  slug: string;
+}
+
 interface Award {
   id: number;
   name: string;
@@ -58,14 +64,14 @@ interface Award {
   country?: string;
   award_type?: string;
   genre?: string;
+  linked_award_types?: TagOption[];
+  linked_award_genres?: TagOption[];
   editions_count?: number;
   created_at?: string;
   updated_at?: string;
 }
 
 interface AwardFacets {
-  award_types: string[];
-  genres: string[];
   countries: string[];
 }
 
@@ -148,10 +154,21 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
 
   // Awards Filter/Sort
   const [sortBy, setSortBy] = useState<string>('name');
-  const [filterType, setFilterType] = useState<string>('');
-  const [filterGenre, setFilterGenre] = useState<string>('');
+  const [filterTypeTagId, setFilterTypeTagId] = useState<string>('');
+  const [filterGenreTagId, setFilterGenreTagId] = useState<string>('');
   const [filterCountry, setFilterCountry] = useState<string>('');
-  const [facets, setFacets] = useState<AwardFacets>({ award_types: [], genres: [], countries: [] });
+  const [facets, setFacets] = useState<AwardFacets>({ countries: [] });
+
+  // Tag options for multi-select
+  const [availableTypes, setAvailableTypes] = useState<TagOption[]>([]);
+  const [availableGenres, setAvailableGenres] = useState<TagOption[]>([]);
+
+  // Editing tag selections
+  const [editingTypeTagIds, setEditingTypeTagIds] = useState<number[]>([]);
+  const [editingGenreTagIds, setEditingGenreTagIds] = useState<number[]>([]);
+  const [newTypeName, setNewTypeName] = useState('');
+  const [newGenreName, setNewGenreName] = useState('');
+  const [creatingTag, setCreatingTag] = useState(false);
 
   // Edit Modals
   const [editingAward, setEditingAward] = useState<Partial<Award> | null>(null);
@@ -204,7 +221,11 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
 
   useEffect(() => {
     if (view === 'awards') loadAwards();
-  }, [view, searchQuery, sortBy, filterType, filterGenre, filterCountry]);
+  }, [view, searchQuery, sortBy, filterTypeTagId, filterGenreTagId, filterCountry]);
+
+  useEffect(() => {
+    loadTagOptions();
+  }, []);
 
   useEffect(() => {
     if (pendingAwardId && awards.length > 0) {
@@ -238,6 +259,42 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
     if (view === 'recipients' && selectedOutcome) loadRecipients(selectedOutcome.id);
   }, [view, selectedOutcome]);
 
+  async function loadTagOptions() {
+    try {
+      const response = await fetch(`${API_BASE}/awards/tag-options`, { credentials: 'include', headers: getHeaders() });
+      const data = await response.json();
+      if (data.ok) {
+        setAvailableTypes(data.award_types || []);
+        setAvailableGenres(data.award_genres || []);
+      }
+    } catch (err) {
+      // silent fail
+    }
+  }
+
+  async function createTag(name: string, linkType: 'award_type' | 'award_genre'): Promise<TagOption | null> {
+    setCreatingTag(true);
+    try {
+      const response = await fetch(`${API_BASE}/awards/ensure-tag`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: getHeaders(),
+        body: JSON.stringify({ name, link_type: linkType }),
+      });
+      const data = await response.json();
+      if (data.success && data.tag) {
+        await loadTagOptions();
+        return data.tag;
+      }
+      return null;
+    } catch (err) {
+      setError(String(err));
+      return null;
+    } finally {
+      setCreatingTag(false);
+    }
+  }
+
   async function loadAwards() {
     setLoading(true);
     setError(null);
@@ -245,8 +302,8 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
       const params = new URLSearchParams();
       if (searchQuery) params.append('search', searchQuery);
       if (sortBy) params.append('sort', sortBy);
-      if (filterType) params.append('award_type', filterType);
-      if (filterGenre) params.append('genre', filterGenre);
+      if (filterTypeTagId) params.append('award_type_tag_id', filterTypeTagId);
+      if (filterGenreTagId) params.append('genre_tag_id', filterGenreTagId);
       if (filterCountry) params.append('country', filterCountry);
       const response = await fetch(`${API_BASE}/awards?${params}`, { credentials: 'include', headers: getHeaders() });
       const data = await response.json();
@@ -344,16 +401,23 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
     setLoading(true);
     setError(null);
     try {
+      const payload = {
+        ...editingAward,
+        award_type_tag_ids: editingTypeTagIds,
+        award_genre_tag_ids: editingGenreTagIds,
+      };
       const response = await fetch(`${API_BASE}/awards`, {
           method: 'POST',
           credentials: 'include',
           headers: getHeaders(),
-        body: JSON.stringify(editingAward)
+        body: JSON.stringify(payload)
       });
       const data = await response.json();
       if (data.success) {
-        setSuccess('Award saved successfully');
+        setSuccess('Auszeichnung gespeichert');
         setEditingAward(null);
+        setEditingTypeTagIds([]);
+        setEditingGenreTagIds([]);
         loadAwards();
       } else {
         setError(extractError(data.error) || 'Failed to save award');
@@ -800,28 +864,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
 
   function renderAwards() {
     const safeAwards = Array.isArray(awards) ? awards : [];
-    const activeFilterCount = [filterType, filterGenre, filterCountry].filter(Boolean).length;
-
-    const AWARD_TYPE_LABELS: Record<string, string> = {
-      buchpreis: 'Buchpreis',
-      autorenpreis: 'Autorenpreis',
-      nachwuchspreis: 'Nachwuchspreis',
-      uebersetzerpreis: 'Übersetzerpreis',
-      verlagspreis: 'Verlagspreis',
-      lesepreis: 'Lesepreis',
-      sonderpreis: 'Sonderpreis',
-    };
-
-    const GENRE_LABELS: Record<string, string> = {
-      belletristik: 'Belletristik',
-      sachbuch: 'Sachbuch',
-      lyrik: 'Lyrik',
-      kinderbuch: 'Kinder- & Jugendbuch',
-      krimi: 'Krimi & Thriller',
-      fantasy: 'Fantasy & SciFi',
-      comic: 'Comic & Graphic Novel',
-      allgemein: 'Genreübergreifend',
-    };
+    const activeFilterCount = [filterTypeTagId, filterGenreTagId, filterCountry].filter(Boolean).length;
 
     return (
       <div>
@@ -840,7 +883,11 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
               Personen
             </button>
             <button
-              onClick={() => setEditingAward({ name: '', slug: '' })}
+              onClick={() => {
+                setEditingAward({ name: '', slug: '' });
+                setEditingTypeTagIds([]);
+                setEditingGenreTagIds([]);
+              }}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
               data-testid="button-new-award"
             >
@@ -850,7 +897,6 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
           </div>
         </div>
 
-        {/* Search + Sort Row */}
         <div className="flex items-center gap-3 mb-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -875,48 +921,37 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
               <option value="updated">Zuletzt aktualisiert</option>
               <option value="created">Zuletzt erstellt</option>
               <option value="country">Land</option>
-              <option value="type">Typ</option>
             </select>
           </div>
         </div>
 
-        {/* Filter Chips Row */}
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <Filter className="w-4 h-4 text-gray-500" />
 
-          {/* Award Type Filter */}
           <select
-            value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
-            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${filterType ? 'bg-blue-100 border-blue-300 text-blue-800' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+            value={filterTypeTagId}
+            onChange={(e) => setFilterTypeTagId(e.target.value)}
+            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${filterTypeTagId ? 'bg-blue-100 border-blue-300 text-blue-800' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
             data-testid="filter-award-type"
           >
-            <option value="">Alle Typen</option>
-            {Object.entries(AWARD_TYPE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-            {facets.award_types.filter(t => !AWARD_TYPE_LABELS[t]).map(t => (
-              <option key={t} value={t}>{t}</option>
+            <option value="">Alle Preistypen</option>
+            {availableTypes.map(t => (
+              <option key={t.id} value={String(t.id)}>{t.name}</option>
             ))}
           </select>
 
-          {/* Genre Filter */}
           <select
-            value={filterGenre}
-            onChange={(e) => setFilterGenre(e.target.value)}
-            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${filterGenre ? 'bg-green-100 border-green-300 text-green-800' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+            value={filterGenreTagId}
+            onChange={(e) => setFilterGenreTagId(e.target.value)}
+            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${filterGenreTagId ? 'bg-green-100 border-green-300 text-green-800' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
             data-testid="filter-genre"
           >
             <option value="">Alle Genres</option>
-            {Object.entries(GENRE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-            {facets.genres.filter(g => !GENRE_LABELS[g]).map(g => (
-              <option key={g} value={g}>{g}</option>
+            {availableGenres.map(g => (
+              <option key={g.id} value={String(g.id)}>{g.name}</option>
             ))}
           </select>
 
-          {/* Country Filter */}
           <select
             value={filterCountry}
             onChange={(e) => setFilterCountry(e.target.value)}
@@ -929,10 +964,9 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
             ))}
           </select>
 
-          {/* Reset Filters */}
           {activeFilterCount > 0 && (
             <button
-              onClick={() => { setFilterType(''); setFilterGenre(''); setFilterCountry(''); }}
+              onClick={() => { setFilterTypeTagId(''); setFilterGenreTagId(''); setFilterCountry(''); }}
               className="px-3 py-1.5 rounded-full text-sm border border-red-200 bg-red-50 text-red-700 hover:bg-red-100 flex items-center gap-1"
               data-testid="button-reset-filters"
             >
@@ -960,16 +994,16 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
                       <img src={award.logo_url} alt="" className="h-8 w-8 object-contain rounded" />
                     )}
                     <h3 className="text-lg font-semibold">{award.name}</h3>
-                    {award.award_type && (
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200">
-                        {AWARD_TYPE_LABELS[award.award_type] || award.award_type}
+                    {(award.linked_award_types || []).map(t => (
+                      <span key={t.id} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200">
+                        {t.name}
                       </span>
-                    )}
-                    {award.genre && (
-                      <span className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full border border-green-200">
-                        {GENRE_LABELS[award.genre] || award.genre}
+                    ))}
+                    {(award.linked_award_genres || []).map(g => (
+                      <span key={g.id} className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded-full border border-green-200">
+                        {g.name}
                       </span>
-                    )}
+                    ))}
                   </div>
                   <div className="flex items-center gap-3 mt-1 text-sm text-gray-600 flex-wrap">
                     {award.issuer_name && (
@@ -1018,7 +1052,11 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
                     Editionen
                   </button>
                   <button
-                    onClick={() => setEditingAward(award)}
+                    onClick={() => {
+                      setEditingAward(award);
+                      setEditingTypeTagIds((award.linked_award_types || []).map(t => t.id));
+                      setEditingGenreTagIds((award.linked_award_genres || []).map(g => g.id));
+                    }}
                     className="p-2 hover:bg-gray-100 rounded"
                     title="Bearbeiten"
                   >
@@ -1407,44 +1445,155 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
               </select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Preistyp</label>
+            <div>
+              <label className="block text-sm font-medium mb-1">Preistypen (Mehrfachauswahl)</label>
+              <div className="flex flex-wrap gap-1.5 mb-2 min-h-[28px]">
+                {editingTypeTagIds.map(tagId => {
+                  const tag = availableTypes.find(t => t.id === tagId);
+                  return tag ? (
+                    <span key={tag.id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-100 text-blue-800 text-sm rounded-full border border-blue-200">
+                      {tag.name}
+                      <button
+                        type="button"
+                        onClick={() => setEditingTypeTagIds(prev => prev.filter(id => id !== tagId))}
+                        className="hover:text-blue-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ) : null;
+                })}
+              </div>
+              <div className="flex gap-2">
                 <select
-                  value={editingAward.award_type || ''}
-                  onChange={(e) => setEditingAward({ ...editingAward, award_type: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg bg-white"
+                  value=""
+                  onChange={(e) => {
+                    const id = parseInt(e.target.value);
+                    if (id && !editingTypeTagIds.includes(id)) {
+                      setEditingTypeTagIds(prev => [...prev, id]);
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 border rounded-lg bg-white text-sm"
                   data-testid="select-award-type"
                 >
-                  <option value="">-- Typ wählen --</option>
-                  <option value="buchpreis">Buchpreis</option>
-                  <option value="autorenpreis">Autorenpreis</option>
-                  <option value="nachwuchspreis">Nachwuchspreis</option>
-                  <option value="uebersetzerpreis">Übersetzerpreis</option>
-                  <option value="verlagspreis">Verlagspreis</option>
-                  <option value="lesepreis">Lesepreis</option>
-                  <option value="sonderpreis">Sonderpreis</option>
+                  <option value="">Preistyp hinzufügen...</option>
+                  {availableTypes.filter(t => !editingTypeTagIds.includes(t.id)).map(t => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
                 </select>
+                <div className="flex gap-1">
+                  <input
+                    type="text"
+                    value={newTypeName}
+                    onChange={(e) => setNewTypeName(e.target.value)}
+                    placeholder="Neuer Typ..."
+                    className="w-32 px-2 py-2 border rounded-lg text-sm"
+                    data-testid="input-new-type"
+                    onKeyDown={async (e) => {
+                      if (e.key === 'Enter' && newTypeName.trim()) {
+                        e.preventDefault();
+                        const tag = await createTag(newTypeName.trim(), 'award_type');
+                        if (tag && !editingTypeTagIds.includes(tag.id)) {
+                          setEditingTypeTagIds(prev => [...prev, tag.id]);
+                        }
+                        setNewTypeName('');
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={!newTypeName.trim() || creatingTag}
+                    onClick={async () => {
+                      if (newTypeName.trim()) {
+                        const tag = await createTag(newTypeName.trim(), 'award_type');
+                        if (tag && !editingTypeTagIds.includes(tag.id)) {
+                          setEditingTypeTagIds(prev => [...prev, tag.id]);
+                        }
+                        setNewTypeName('');
+                      }
+                    }}
+                    className="px-2 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 text-sm"
+                    data-testid="button-add-type"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Genre</label>
+            <div>
+              <label className="block text-sm font-medium mb-1">Genres (Mehrfachauswahl)</label>
+              <div className="flex flex-wrap gap-1.5 mb-2 min-h-[28px]">
+                {editingGenreTagIds.map(tagId => {
+                  const tag = availableGenres.find(t => t.id === tagId);
+                  return tag ? (
+                    <span key={tag.id} className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-100 text-green-800 text-sm rounded-full border border-green-200">
+                      {tag.name}
+                      <button
+                        type="button"
+                        onClick={() => setEditingGenreTagIds(prev => prev.filter(id => id !== tagId))}
+                        className="hover:text-green-600"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  ) : null;
+                })}
+              </div>
+              <div className="flex gap-2">
                 <select
-                  value={editingAward.genre || ''}
-                  onChange={(e) => setEditingAward({ ...editingAward, genre: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg bg-white"
+                  value=""
+                  onChange={(e) => {
+                    const id = parseInt(e.target.value);
+                    if (id && !editingGenreTagIds.includes(id)) {
+                      setEditingGenreTagIds(prev => [...prev, id]);
+                    }
+                  }}
+                  className="flex-1 px-3 py-2 border rounded-lg bg-white text-sm"
                   data-testid="select-award-genre"
                 >
-                  <option value="">-- Genre wählen --</option>
-                  <option value="belletristik">Belletristik</option>
-                  <option value="sachbuch">Sachbuch</option>
-                  <option value="lyrik">Lyrik</option>
-                  <option value="kinderbuch">Kinder- & Jugendbuch</option>
-                  <option value="krimi">Krimi & Thriller</option>
-                  <option value="fantasy">Fantasy & SciFi</option>
-                  <option value="comic">Comic & Graphic Novel</option>
-                  <option value="allgemein">Genreübergreifend</option>
+                  <option value="">Genre hinzufügen...</option>
+                  {availableGenres.filter(g => !editingGenreTagIds.includes(g.id)).map(g => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
+                  ))}
                 </select>
+                <div className="flex gap-1">
+                  <input
+                    type="text"
+                    value={newGenreName}
+                    onChange={(e) => setNewGenreName(e.target.value)}
+                    placeholder="Neues Genre..."
+                    className="w-32 px-2 py-2 border rounded-lg text-sm"
+                    data-testid="input-new-genre"
+                    onKeyDown={async (e) => {
+                      if (e.key === 'Enter' && newGenreName.trim()) {
+                        e.preventDefault();
+                        const tag = await createTag(newGenreName.trim(), 'award_genre');
+                        if (tag && !editingGenreTagIds.includes(tag.id)) {
+                          setEditingGenreTagIds(prev => [...prev, tag.id]);
+                        }
+                        setNewGenreName('');
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={!newGenreName.trim() || creatingTag}
+                    onClick={async () => {
+                      if (newGenreName.trim()) {
+                        const tag = await createTag(newGenreName.trim(), 'award_genre');
+                        if (tag && !editingGenreTagIds.includes(tag.id)) {
+                          setEditingGenreTagIds(prev => [...prev, tag.id]);
+                        }
+                        setNewGenreName('');
+                      }
+                    }}
+                    className="px-2 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm"
+                    data-testid="button-add-genre"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
