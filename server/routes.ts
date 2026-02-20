@@ -471,6 +471,8 @@ async function ensureSchemaReady() {
 
   try {
     await queryDB(`ALTER TABLE awards ADD COLUMN IF NOT EXISTS tag_id INTEGER`);
+    await queryDB(`ALTER TABLE awards ADD COLUMN IF NOT EXISTS award_type VARCHAR(50)`);
+    await queryDB(`ALTER TABLE awards ADD COLUMN IF NOT EXISTS genre VARCHAR(100)`);
     log.info('Awards tag_id column verified');
   } catch (err) {
     log.warn('Could not add tag_id to awards:', err);
@@ -1038,6 +1040,8 @@ async function ensureSchemaReady() {
         description TEXT,
         logo_url TEXT,
         country TEXT,
+        award_type VARCHAR(50),
+        genre VARCHAR(100),
         tag_id INTEGER,
         status TEXT DEFAULT 'active',
         visibility TEXT DEFAULT 'visible',
@@ -3039,16 +3043,75 @@ export async function registerRoutes(
   // ==================================================================
   // AWARDS
   // ==================================================================
-  app.get('/api/awards', async (_req: Request, res: Response) => {
+  app.get('/api/awards', async (req: Request, res: Response) => {
     try {
-      const result = await queryDB('SELECT * FROM awards ORDER BY name ASC', []);
+      const search = (req.query.search as string) || '';
+      const sortBy = (req.query.sort as string) || 'name';
+      const awardType = (req.query.award_type as string) || '';
+      const genre = (req.query.genre as string) || '';
+      const country = (req.query.country as string) || '';
+
+      const conditions: string[] = [];
+      const params: any[] = [];
+
+      if (search) {
+        params.push(`%${search}%`);
+        conditions.push(`(a.name ILIKE $${params.length} OR a.slug ILIKE $${params.length} OR a.issuer_name ILIKE $${params.length})`);
+      }
+      if (awardType) {
+        params.push(awardType);
+        conditions.push(`a.award_type = $${params.length}`);
+      }
+      if (genre) {
+        params.push(genre);
+        conditions.push(`a.genre = $${params.length}`);
+      }
+      if (country) {
+        params.push(country);
+        conditions.push(`a.country = $${params.length}`);
+      }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      let orderClause = 'ORDER BY a.name ASC';
+      if (sortBy === 'updated') orderClause = 'ORDER BY a.updated_at DESC NULLS LAST';
+      else if (sortBy === 'created') orderClause = 'ORDER BY a.created_at DESC NULLS LAST';
+      else if (sortBy === 'country') orderClause = 'ORDER BY a.country ASC NULLS LAST, a.name ASC';
+      else if (sortBy === 'type') orderClause = 'ORDER BY a.award_type ASC NULLS LAST, a.name ASC';
+
+      const result = await queryDB(`
+        SELECT a.*,
+          (SELECT count(*) FROM award_editions ae WHERE ae.award_id = a.id) as editions_count
+        FROM awards a
+        ${whereClause}
+        ${orderClause}
+      `, params);
+
+      const facetsResult = await queryDB(`
+        SELECT
+          COALESCE(award_type, '') as award_type,
+          COALESCE(genre, '') as genre,
+          COALESCE(country, '') as country
+        FROM awards
+      `, []);
+
+      const awardTypes = [...new Set(facetsResult.rows.map((r: any) => r.award_type).filter(Boolean))].sort();
+      const genres = [...new Set(facetsResult.rows.map((r: any) => r.genre).filter(Boolean))].sort();
+      const countries = [...new Set(facetsResult.rows.map((r: any) => r.country).filter(Boolean))].sort();
+
       const mapped = result.rows.map((row: any) => ({
         ...row,
         visible: row.visibility !== 'hidden',
       }));
-      return res.json({ ok: true, data: mapped });
+      return res.json({
+        ok: true,
+        data: mapped,
+        total: mapped.length,
+        facets: { award_types: awardTypes, genres, countries }
+      });
     } catch (error) {
-      return res.json({ ok: true, data: [] });
+      log.error('Awards list error:', error);
+      return res.json({ ok: true, data: [], total: 0, facets: { award_types: [], genres: [], countries: [] } });
     }
   });
 
@@ -3058,7 +3121,7 @@ export async function registerRoutes(
       if (!isAuthed) return;
 
       const body = req.body;
-      const { id, name, issuer_name, website_url, description, logo_url, country } = body;
+      const { id, name, issuer_name, website_url, description, logo_url, country, award_type, genre } = body;
 
       if (!name || !name.trim()) {
         return res.status(400).json({ success: false, error: 'Name is required' });
@@ -3070,10 +3133,10 @@ export async function registerRoutes(
         const result = await queryDB(
           `UPDATE awards
            SET name = $1, slug = $2, issuer_name = $3, website_url = $4,
-               description = $5, logo_url = $6, country = $7, updated_at = NOW()
-           WHERE id = $8
+               description = $5, logo_url = $6, country = $7, award_type = $8, genre = $9, updated_at = NOW()
+           WHERE id = $10
            RETURNING *`,
-          [name.trim(), slug, issuer_name || null, website_url || null, description || null, logo_url || null, country || null, id]
+          [name.trim(), slug, issuer_name || null, website_url || null, description || null, logo_url || null, country || null, award_type || null, genre || null, id]
         );
 
         if (result.rows.length === 0) {
@@ -3104,10 +3167,10 @@ export async function registerRoutes(
         const newTag = tagResult.rows[0];
 
         const result = await queryDB(
-          `INSERT INTO awards (name, slug, issuer_name, website_url, description, logo_url, country, tag_id, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
+          `INSERT INTO awards (name, slug, issuer_name, website_url, description, logo_url, country, award_type, genre, tag_id, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
            RETURNING *`,
-          [name.trim(), slug, issuer_name || null, website_url || null, description || null, logo_url || null, country || null, newTag.id]
+          [name.trim(), slug, issuer_name || null, website_url || null, description || null, logo_url || null, country || null, award_type || null, genre || null, newTag.id]
         );
         log.info(`Award "${name}" created with auto-linked tag id=${newTag.id}`);
         return res.json({ success: true, data: result.rows[0] });
