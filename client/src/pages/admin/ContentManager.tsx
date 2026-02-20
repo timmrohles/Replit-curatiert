@@ -11,7 +11,6 @@ const AdminSettings = lazy(() => import('../../components/admin/AdminSettings').
 const CategoryCardsManager = lazy(() => import('../../components/admin/CategoryCardsManager').then(m => ({ default: m.CategoryCardsManager })));
 const AdminAwardsNeon = lazy(() => import('../../components/admin/AdminAwardsNeon').then(m => ({ default: m.AdminAwardsNeon })));
 const AdminTagsNeon = lazy(() => import('../../components/admin/AdminTagsNeon').then(m => ({ default: m.AdminTagsNeon })));
-const AdminPersons = lazy(() => import('../../components/admin/AdminPersons').then(m => ({ default: m.AdminPersons })));
 const AdminBooksNeon = lazy(() => import('../../components/admin/AdminBooksNeon').then(m => ({ default: m.AdminBooksNeon })));
 const CuratorsManager = lazy(() => import('../../components/admin/CuratorsManager').then(m => ({ default: m.CuratorsManager })));
 const AdminStorefronts = lazy(() => import('../../components/admin/AdminStorefronts').then(m => ({ default: m.AdminStorefronts })));
@@ -181,8 +180,8 @@ export function ContentManager() {
   };
   
   // ✅ URL-based tab navigation
-  type TabType = 'books' | 'curators' | 'storefronts' | 'navigation' | 'pages' | 'category-cards' | 'awards' | 'tags' | 'persons' | 'user-modules' | 'author-requests' | 'settings' | 'diagnostics' | 'affiliates' | 'sections' | 'site-banner' | 'meldungen' | 'events' | 'content-sources';
-  const validTabs: TabType[] = ['books', 'curators', 'storefronts', 'navigation', 'pages', 'category-cards', 'awards', 'tags', 'persons', 'user-modules', 'author-requests', 'settings', 'diagnostics', 'affiliates', 'sections', 'site-banner', 'meldungen', 'events', 'content-sources'];
+  type TabType = 'books' | 'curators' | 'storefronts' | 'navigation' | 'pages' | 'category-cards' | 'awards' | 'tags' | 'user-modules' | 'author-requests' | 'settings' | 'diagnostics' | 'affiliates' | 'sections' | 'site-banner' | 'meldungen' | 'events' | 'content-sources';
+  const validTabs: TabType[] = ['books', 'curators', 'storefronts', 'navigation', 'pages', 'category-cards', 'awards', 'tags', 'user-modules', 'author-requests', 'settings', 'diagnostics', 'affiliates', 'sections', 'site-banner', 'meldungen', 'events', 'content-sources'];
   
   const tabParam = searchParams.get('tab') as TabType;
   const activeTab: TabType = tabParam && validTabs.includes(tabParam) ? tabParam : 'books';
@@ -794,17 +793,6 @@ export function ContentManager() {
             🏷️ Themen
           </button>
           <button
-            onClick={() => setActiveTab('persons')}
-            className="px-4 py-2 rounded-lg transition-all text-sm"
-            style={{
-              backgroundColor: activeTab === 'persons' ? '#FFFFFF' : 'rgba(255,255,255,0.3)',
-              color: '#3A3A3A',
-              fontFamily: 'Fjalla One'
-            }}
-          >
-            👤 Persons
-          </button>
-          <button
             onClick={() => setActiveTab('settings')}
             className="px-4 py-2 rounded-lg transition-all text-sm"
             style={{
@@ -957,17 +945,6 @@ export function ContentManager() {
             </Suspense>
           )}
 
-          {/* Persons Tab */}
-          {activeTab === 'persons' && (
-            <Suspense fallback={<div className="p-8 text-center" style={{ color: '#666666' }}>Lädt Persons...</div>}>
-              <TabErrorBoundary tabName="Persons">
-                <AdminPersons onNavigateToAward={(awardId) => {
-                  setNavigateToAwardId(awardId);
-                  setActiveTab('awards');
-                }} />
-              </TabErrorBoundary>
-            </Suspense>
-          )}
 
           {/* Settings Tab */}
           {activeTab === 'settings' && (

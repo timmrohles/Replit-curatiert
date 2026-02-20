@@ -116,7 +116,7 @@ interface AdminAwardsNeonProps {
 }
 
 export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
-  const [view, setView] = useState<'awards' | 'editions' | 'outcomes' | 'recipients'>('awards');
+  const [view, setView] = useState<'awards' | 'editions' | 'outcomes' | 'recipients' | 'persons'>('awards');
   const [selectedAward, setSelectedAward] = useState<Award | null>(null);
   const [pendingAwardId, setPendingAwardId] = useState<number | null>(initialAwardId || null);
   const [selectedEdition, setSelectedEdition] = useState<Edition | null>(null);
@@ -146,6 +146,15 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
   const [personSearchQuery, setPersonSearchQuery] = useState('');
   const [personSearchResults, setPersonSearchResults] = useState<Person[]>([]);
   const [recipientType, setRecipientType] = useState<'book' | 'person'>('book');
+
+  // Persons Management
+  const [allPersons, setAllPersons] = useState<Person[]>([]);
+  const [personsTotal, setPersonsTotal] = useState(0);
+  const [personsOffset, setPersonsOffset] = useState(0);
+  const [personsSearch, setPersonsSearch] = useState('');
+  const [editingPerson, setEditingPerson] = useState<{ name: string; bio?: string; id?: string } | null>(null);
+  const [creatingPersonInline, setCreatingPersonInline] = useState(false);
+  const [newPersonName, setNewPersonName] = useState('');
 
   // ==================================================================
   // API HELPERS
@@ -591,6 +600,115 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
   }
 
   // ==================================================================
+  // PERSONS MANAGEMENT
+  // ==================================================================
+
+  async function loadPersons() {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (personsSearch) params.append('search', personsSearch);
+      params.append('limit', '50');
+      params.append('offset', String(personsOffset));
+      const response = await fetch(`${API_BASE}/persons?${params}`, { credentials: 'include', headers: getHeaders() });
+      const data = await response.json();
+      if (data.success || data.ok) {
+        setAllPersons(Array.isArray(data.data) ? data.data : []);
+        setPersonsTotal(data.total || data.data?.length || 0);
+      } else {
+        setError(extractError(data.error) || 'Fehler beim Laden der Personen');
+      }
+    } catch (err) {
+      setError(String(err));
+      setAllPersons([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (view === 'persons') {
+      setPersonsOffset(0);
+      loadPersons();
+    }
+  }, [view]);
+
+  useEffect(() => {
+    if (view === 'persons') loadPersons();
+  }, [personsOffset, personsSearch]);
+
+  async function savePerson() {
+    if (!editingPerson?.name?.trim()) {
+      setError('Name ist erforderlich');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`${API_BASE}/persons`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: getHeaders(),
+        body: JSON.stringify(editingPerson)
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSuccess(editingPerson.id ? 'Person aktualisiert' : 'Person erstellt');
+        setEditingPerson(null);
+        loadPersons();
+      } else {
+        setError(extractError(data.error) || 'Fehler beim Speichern');
+      }
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deletePerson(id: string) {
+    if (!confirm('Person wirklich löschen? Zugehörige Preiszuordnungen werden ebenfalls entfernt.')) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE}/persons/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: getHeaders()
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSuccess('Person gelöscht');
+        loadPersons();
+      } else {
+        setError(extractError(data.error) || 'Fehler beim Löschen');
+      }
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function createPersonInline(name: string): Promise<Person | null> {
+    try {
+      const response = await fetch(`${API_BASE}/persons`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: getHeaders(),
+        body: JSON.stringify({ name })
+      });
+      const data = await response.json();
+      if (data.success && data.data) {
+        return data.data;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  // ==================================================================
   // BREADCRUMB NAVIGATION
   // ==================================================================
 
@@ -666,14 +784,25 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
     return (
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">Awards Management</h2>
-          <button
-            onClick={() => setEditingAward({ name: '', slug: '' })}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            New Award
-          </button>
+          <h2 className="text-2xl font-bold">Auszeichnungen</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setView('persons')}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
+              data-testid="button-manage-persons"
+            >
+              <User className="w-4 h-4" />
+              Personen verwalten
+            </button>
+            <button
+              onClick={() => setEditingAward({ name: '', slug: '' })}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              data-testid="button-new-award"
+            >
+              <Plus className="w-4 h-4" />
+              Neue Auszeichnung
+            </button>
+          </div>
         </div>
 
         <div className="mb-4">
@@ -1421,7 +1550,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
                   className="w-full px-3 py-2 border rounded-lg"
                   placeholder="Type person name..."
                 />
-                {personSearchResults.length > 0 && (
+                {personSearchQuery.length >= 2 && (
                   <div className="mt-2 border rounded-lg max-h-60 overflow-y-auto">
                     {personSearchResults.map((person) => (
                       <button
@@ -1430,6 +1559,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
                           setEditingRecipient({ ...editingRecipient, person_id: person.id });
                           setPersonSearchQuery(person.name);
                           setPersonSearchResults([]);
+                          setCreatingPersonInline(false);
                         }}
                         className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b last:border-b-0"
                       >
@@ -1439,6 +1569,62 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
                         )}
                       </button>
                     ))}
+                    {personSearchResults.length === 0 && (
+                      <div className="px-4 py-3 text-sm text-gray-500">Keine Person gefunden</div>
+                    )}
+                    {!creatingPersonInline && (
+                      <button
+                        onClick={() => {
+                          setCreatingPersonInline(true);
+                          setNewPersonName(personSearchQuery);
+                        }}
+                        className="w-full px-4 py-3 text-left hover:bg-purple-50 border-t flex items-center gap-2 text-purple-700"
+                        data-testid="button-create-person-inline"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Person „{personSearchQuery}" neu anlegen</span>
+                      </button>
+                    )}
+                    {creatingPersonInline && (
+                      <div className="px-4 py-3 border-t bg-purple-50">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={newPersonName}
+                            onChange={(e) => setNewPersonName(e.target.value)}
+                            className="flex-1 px-3 py-1.5 border rounded text-sm"
+                            placeholder="Name der neuen Person"
+                            data-testid="input-new-person-inline"
+                          />
+                          <button
+                            onClick={async () => {
+                              if (!newPersonName.trim()) return;
+                              const person = await createPersonInline(newPersonName.trim());
+                              if (person) {
+                                setEditingRecipient({ ...editingRecipient, person_id: person.id });
+                                setPersonSearchQuery(person.name);
+                                setPersonSearchResults([]);
+                                setCreatingPersonInline(false);
+                                setNewPersonName('');
+                                setSuccess(`Person „${person.name}" erstellt`);
+                              } else {
+                                setError('Person konnte nicht erstellt werden');
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+                            data-testid="button-confirm-create-person"
+                          >
+                            Erstellen
+                          </button>
+                          <button
+                            onClick={() => { setCreatingPersonInline(false); setNewPersonName(''); }}
+                            className="p-1.5 hover:bg-gray-200 rounded"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
                 {editingRecipient.person_id && (
@@ -1487,6 +1673,165 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
   }
 
   // ==================================================================
+  // PERSONS VIEW
+  // ==================================================================
+
+  function renderPersons() {
+    const filteredPersons = Array.isArray(allPersons) ? allPersons : [];
+    return (
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setView('awards')}
+              className="p-2 hover:bg-gray-100 rounded-lg"
+              data-testid="button-back-awards"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h2 className="text-2xl font-bold">Personen verwalten</h2>
+            <span className="text-sm text-gray-500">({personsTotal} gesamt)</span>
+          </div>
+          <button
+            onClick={() => setEditingPerson({ name: '' })}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            data-testid="button-new-person"
+          >
+            <Plus className="w-4 h-4" />
+            Neue Person
+          </button>
+        </div>
+
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Person suchen..."
+              value={personsSearch}
+              onChange={(e) => { setPersonsSearch(e.target.value); setPersonsOffset(0); }}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              data-testid="input-search-persons"
+            />
+          </div>
+        </div>
+
+        {editingPerson && (
+          <div className="mb-4 p-4 border rounded-lg bg-gray-50">
+            <h3 className="font-semibold mb-3">{editingPerson.id ? 'Person bearbeiten' : 'Neue Person'}</h3>
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Name"
+                value={editingPerson.name}
+                onChange={(e) => setEditingPerson({ ...editingPerson, name: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                data-testid="input-person-name"
+              />
+              <textarea
+                placeholder="Biografie (optional)"
+                value={editingPerson.bio || ''}
+                onChange={(e) => setEditingPerson({ ...editingPerson, bio: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                rows={3}
+                data-testid="input-person-bio"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={savePerson}
+                  disabled={loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                  data-testid="button-save-person"
+                >
+                  <Save className="w-4 h-4" />
+                  Speichern
+                </button>
+                <button
+                  onClick={() => setEditingPerson(null)}
+                  className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+                  data-testid="button-cancel-person"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="border rounded-lg overflow-hidden">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="px-4 py-3 text-sm font-semibold">Name</th>
+                <th className="px-4 py-3 text-sm font-semibold">Biografie</th>
+                <th className="px-4 py-3 text-sm font-semibold text-right">Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPersons.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="px-4 py-8 text-center text-gray-500">
+                    {loading ? 'Laden...' : 'Keine Personen gefunden'}
+                  </td>
+                </tr>
+              ) : (
+                filteredPersons.map((person) => (
+                  <tr key={person.id} className="border-b hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium">{person.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600 max-w-md truncate">
+                      {person.bio || '–'}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setEditingPerson({ id: String(person.id), name: person.name, bio: person.bio })}
+                          className="p-1.5 hover:bg-gray-100 rounded"
+                          title="Bearbeiten"
+                        >
+                          <Edit2 className="w-4 h-4 text-gray-600" />
+                        </button>
+                        <button
+                          onClick={() => deletePerson(String(person.id))}
+                          className="p-1.5 hover:bg-red-50 rounded"
+                          title="Löschen"
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {personsTotal > 50 && (
+          <div className="flex items-center justify-between mt-4">
+            <button
+              onClick={() => setPersonsOffset(Math.max(0, personsOffset - 50))}
+              disabled={personsOffset === 0}
+              className="px-3 py-1.5 border rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              Zurück
+            </button>
+            <span className="text-sm text-gray-600">
+              {personsOffset + 1}–{Math.min(personsOffset + 50, personsTotal)} von {personsTotal}
+            </span>
+            <button
+              onClick={() => setPersonsOffset(personsOffset + 50)}
+              disabled={personsOffset + 50 >= personsTotal}
+              className="px-3 py-1.5 border rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            >
+              Weiter
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ==================================================================
   // MAIN RENDER
   // ==================================================================
 
@@ -1530,6 +1875,7 @@ export function AdminAwardsNeon({ initialAwardId }: AdminAwardsNeonProps = {}) {
       {view === 'editions' && renderEditions()}
       {view === 'outcomes' && renderOutcomes()}
       {view === 'recipients' && renderRecipients()}
+      {view === 'persons' && renderPersons()}
 
       {/* Modals */}
       {renderAwardModal()}
