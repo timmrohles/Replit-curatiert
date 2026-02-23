@@ -1,0 +1,107 @@
+Übernimm die Rolle eines Brand Designers + UX/UI Designers für unsere digitale Buchplattform. Ziel: Die Plattform visuell deutlich hochwertiger machen, Konsistenz herstellen und eine klare Markenidentität (Look & Feel + Mikrocopy) etablieren – ohne das Produkt zu überladen.
+
+Kontext (Kurz)
+
+Plattform wirkt wie ein Buchshop, ist aber „meta“: Auszeichnungen, Medien-Besprechungen, kuratierte Stores von Menschen, Follow/Community.
+
+Kernbotschaft: menschliche Perspektiven + bessere Auswahl + Teilen.
+
+Claim: „Teile, was du liest.“
+
+Deine Aufgaben (Deliverables)
+1) UI/Brand Audit
+
+Analysiere die aktuelle UI (Layout, Typo, Farben, Spacing, Buttons, Cards, Icons, Bilder, Tonalität). Liste:
+
+Top 10 Issues (Inkonsistenzen, visuelle Schwächen, UX-Friktionen)
+
+Quick Wins (in 1–2 Tagen umsetzbar)
+
+Medium Wins (in 1–2 Wochen)
+
+Long-Term Brand Improvements
+
+2) Design System Vorschlag (konkret)
+
+Erstelle ein kleines Design System:
+
+Typografie-Skala (H1–H6, Body, Small, Label)
+
+Spacing Scale (z. B. 4/8/12/16/24/32…)
+
+Border Radius, Shadows, Elevation
+
+Farbpalette (Primary/Secondary/Neutral/Success/Warning/Error) + Kontrastregeln
+
+Komponenten-Tokens (Button, Input, Card, Badge, Tabs)
+
+Icon-Stil (Stroke, Größe, Nutzung)
+
+Bildstil (Covers, Creator-Avatare, Hintergründe)
+
+Wichtig: Modern, ruhig, editorial, nicht verspielt, nicht „Tech SaaS“, nicht „Tante-Helga-Buchladen“.
+
+3) Komponenten & Patterns
+
+Schlage konsistente Komponenten vor (inkl. Nutzung):
+
+Book Card (Cover, Titel, Autor, Badges: Award/Media/Curated)
+
+Creator Card (Avatar, Name, Follow CTA, Themen)
+
+List/Collection Card (Shortlist/Backlist/Curations)
+
+CTA-Buttons (Primary/Secondary/Tertiary)
+
+Filter/Sort Patterns (für Themen/Tags/Preise)
+
+Navigation + Header Pattern (inkl. Search)
+
+Empty States + Loading States + Error States
+
+Badge System (Awards, Media Mentioned, Curator Pick)
+
+4) Informationsarchitektur & UX Flows (kurz)
+
+Optimiere 3 kritische Flows:
+
+Buch entdecken → kaufen (Affiliate)
+
+Kurator folgen → Kuration finden → Buch klicken
+
+Medienfolge → besprochene Bücher → Buchseite
+
+Je Flow: 3–5 konkrete UX-Verbesserungen (z. B. Hierarchie, CTAs, Scroll, Störer, Reassurance).
+
+5) Mikrocopy / Tonalität
+
+Definiere eine kurze Copy-Guideline:
+
+Ton: ruhig, präzise, menschlich, nicht werblich
+
+10 Beispiel-Strings für UI: Follow, Save, Share, Buy, Empty state, Error, Success
+
+5 Varianten für Hero-Headline/Subline basierend auf „Teile, was du liest.“
+
+6) Priorisierte Umsetzungs-Roadmap
+
+Gib eine priorisierte Liste mit konkreten ToDos:
+
+P0 (heute)
+
+P1 (diese Woche)
+
+P2 (nächste 2–4 Wochen)
+
+Output Format
+
+Nutze klare Überschriften
+
+Keine allgemeinen Floskeln, sondern konkrete Vorschläge
+
+Wenn möglich, gib Tailwind-/CSS-Token-Beispiele (z. B. --radius-md, text-lg, shadow-sm)
+
+Wenn du Annahmen triffst, kennzeichne sie kurz.
+
+Optional:
+Wenn du Code-Bezug siehst (React/Next.js), schlage direkt ein konsistentes Komponenten-Set vor (z. B. shadcn/ui + Tailwind) und wie wir es einführen, ohne alles neu zu bauen.
