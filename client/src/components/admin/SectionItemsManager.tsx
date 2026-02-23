@@ -1,6 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Plus, Save, Edit2, Trash2, ArrowUp, ArrowDown, Box, AlertCircle, Link as LinkIcon, BookOpen } from 'lucide-react';
-import { API_BASE_URL } from '../../config/apiClient';  // ✅ FIXED: Use canonical import
+import { Plus, Save, Edit2, Trash2, ArrowUp, ArrowDown, Box, AlertCircle, Link as LinkIcon, BookOpen, Search, X, Image as ImageIcon } from 'lucide-react';
+import { API_BASE_URL } from '../../config/apiClient';
+
+interface UnsplashImage {
+  id: string;
+  url: string;
+  thumb: string;
+  alt: string;
+  author: string;
+  authorUrl: string;
+}
+
+interface NavItem {
+  id: number;
+  label: string;
+  href: string;
+  children?: NavItem[];
+}
+
 // ISBN13 VALIDATION
 // ============================================================================
 
@@ -88,6 +105,18 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
   const [isbn13Input, setIsbn13Input] = useState('');
   const [isbnError, setIsbnError] = useState<string | null>(null);
 
+  // Unsplash Image Search (for category_grid)
+  const [unsplashQuery, setUnsplashQuery] = useState('');
+  const [unsplashResults, setUnsplashResults] = useState<UnsplashImage[]>([]);
+  const [searchingUnsplash, setSearchingUnsplash] = useState(false);
+  const [showUnsplashSearch, setShowUnsplashSearch] = useState(false);
+
+  // Navigation items (for category linking)
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
+  const [navLoading, setNavLoading] = useState(false);
+
+  const isCategoryGrid = sectionType === 'category_grid' || sectionType === 'recipient_category_grid' || sectionType === 'topic_tags_grid';
+
   // ============================================================================
   // DATA LOADING
   // ============================================================================
@@ -161,11 +190,57 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
     }
   };
 
+  const searchUnsplash = async (query: string) => {
+    if (!query.trim()) return;
+    setSearchingUnsplash(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/unsplash/search?query=${encodeURIComponent(query)}`,
+        { credentials: 'include', headers: { 'Content-Type': 'application/json' } }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setUnsplashResults(data.data);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setSearchingUnsplash(false);
+    }
+  };
+
+  const loadNavigation = async () => {
+    setNavLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/navigation`, { credentials: 'include' });
+      if (response.ok) {
+        const data = await response.json();
+        const items = data.items || [];
+        const flat: NavItem[] = [];
+        const flatten = (list: any[], depth = 0) => {
+          for (const item of list) {
+            flat.push({ id: item.id, label: (depth > 0 ? '  └ ' : '') + item.label, href: item.href });
+            if (item.children?.length) flatten(item.children, depth + 1);
+          }
+        };
+        flatten(items);
+        setNavItems(flat);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setNavLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (sectionId) {
       loadItems();
       loadPages();
       loadTags();
+      if (isCategoryGrid) {
+        loadNavigation();
+      }
     }
   }, [sectionId]);
 
@@ -362,21 +437,44 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
               Buch via ISBN13
             </button>
           )}
-          <button
-            onClick={() => setEditingItem({
-              section_id: sectionId,
-              item_type: 'generic',
-              sort_order: items.length,
-              status: 'published',
-              data: {},
-              target_type: null,
-            })}
-            className="px-3 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
-            style={{ backgroundColor: '#70c1b3', color: '#FFFFFF' }}
-          >
-            <Plus className="w-4 h-4" />
-            Neues Item
-          </button>
+          {isCategoryGrid ? (
+            <button
+              onClick={() => {
+                setEditingItem({
+                  section_id: sectionId,
+                  item_type: 'category_card',
+                  sort_order: items.length,
+                  status: 'published',
+                  data: { title: '', image_url: '' },
+                  target_type: null,
+                });
+                setShowUnsplashSearch(false);
+                setUnsplashResults([]);
+                setUnsplashQuery('');
+              }}
+              className="px-3 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
+              style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
+            >
+              <ImageIcon className="w-4 h-4" />
+              Neue Kategorie-Karte
+            </button>
+          ) : (
+            <button
+              onClick={() => setEditingItem({
+                section_id: sectionId,
+                item_type: 'generic',
+                sort_order: items.length,
+                status: 'published',
+                data: {},
+                target_type: null,
+              })}
+              className="px-3 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
+              style={{ backgroundColor: '#70c1b3', color: '#FFFFFF' }}
+            >
+              <Plus className="w-4 h-4" />
+              Neues Item
+            </button>
+          )}
         </div>
       </div>
 
@@ -515,13 +613,209 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
 
       {/* EDITING FORM */}
       {editingItem && (
-        <div className="mb-6 p-4 border-2 rounded-lg" style={{ borderColor: '#70c1b3' }}>
+        <div className="mb-6 p-4 border-2 rounded-lg" style={{ borderColor: isCategoryGrid ? '#247ba0' : '#70c1b3' }}>
           <h5 className="text-md mb-4 font-medium" style={{ color: '#3A3A3A' }}>
-            {editingItem.id ? 'Item bearbeiten' : 'Neues Item erstellen'}
+            {editingItem.id 
+              ? (isCategoryGrid ? 'Kategorie-Karte bearbeiten' : 'Item bearbeiten')
+              : (isCategoryGrid ? 'Neue Kategorie-Karte' : 'Neues Item erstellen')
+            }
           </h5>
 
           <div className="space-y-3">
-            {/* Item Type */}
+            {isCategoryGrid && (
+              <>
+                {/* Category Card Title */}
+                <div>
+                  <label className="block text-xs mb-1 font-medium" style={{ color: '#666666' }}>
+                    Kategoriename *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="z.B. Belletristik, Sachbuch, Fantasy..."
+                    value={editingItem.data?.title || ''}
+                    onChange={(e) => setEditingItem({ 
+                      ...editingItem, 
+                      data: { ...editingItem.data, title: e.target.value }
+                    })}
+                    className="w-full px-3 py-2 border rounded text-sm"
+                    style={{ borderColor: '#E5E7EB' }}
+                  />
+                </div>
+
+                {/* Category Card Image */}
+                <div>
+                  <label className="block text-xs mb-1 font-medium" style={{ color: '#666666' }}>
+                    Bild
+                  </label>
+                  
+                  {/* Current Image Preview */}
+                  {editingItem.data?.image_url && (
+                    <div className="relative mb-2 inline-block">
+                      <img 
+                        src={editingItem.data.image_url} 
+                        alt="Vorschau" 
+                        className="h-24 w-36 object-cover rounded border"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setEditingItem({ 
+                          ...editingItem, 
+                          data: { ...editingItem.data, image_url: '' }
+                        })}
+                        className="absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: '#f25f5c', color: '#fff' }}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Manual URL Input */}
+                  <input
+                    type="url"
+                    placeholder="Bild-URL eingeben oder Unsplash-Suche nutzen"
+                    value={editingItem.data?.image_url || ''}
+                    onChange={(e) => setEditingItem({ 
+                      ...editingItem, 
+                      data: { ...editingItem.data, image_url: e.target.value }
+                    })}
+                    className="w-full px-3 py-2 border rounded text-sm"
+                    style={{ borderColor: '#E5E7EB' }}
+                  />
+
+                  {/* Unsplash Search Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => setShowUnsplashSearch(!showUnsplashSearch)}
+                    className="mt-2 px-3 py-1.5 rounded flex items-center gap-2 text-xs transition-colors"
+                    style={{ 
+                      backgroundColor: showUnsplashSearch ? '#247ba020' : '#f0f0f0', 
+                      color: showUnsplashSearch ? '#247ba0' : '#666' 
+                    }}
+                  >
+                    <Search className="w-3 h-3" />
+                    {showUnsplashSearch ? 'Unsplash-Suche ausblenden' : 'Unsplash-Suche'}
+                  </button>
+
+                  {/* Unsplash Search Panel */}
+                  {showUnsplashSearch && (
+                    <div className="mt-2 p-3 border rounded-lg" style={{ borderColor: '#E5E7EB', backgroundColor: '#fafafa' }}>
+                      <div className="flex gap-2 mb-3">
+                        <input
+                          type="text"
+                          placeholder="Suchbegriff eingeben... (z.B. books, reading, library)"
+                          value={unsplashQuery}
+                          onChange={(e) => setUnsplashQuery(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') searchUnsplash(unsplashQuery); }}
+                          className="flex-1 px-3 py-2 border rounded text-sm"
+                          style={{ borderColor: '#E5E7EB' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => searchUnsplash(unsplashQuery)}
+                          disabled={searchingUnsplash || !unsplashQuery.trim()}
+                          className="px-3 py-2 rounded text-sm disabled:opacity-50"
+                          style={{ backgroundColor: '#247ba0', color: '#fff' }}
+                        >
+                          {searchingUnsplash ? '...' : 'Suchen'}
+                        </button>
+                      </div>
+
+                      {/* Results Grid */}
+                      {unsplashResults.length > 0 && (
+                        <div className="grid grid-cols-4 gap-2">
+                          {unsplashResults.map((img) => (
+                            <button
+                              key={img.id}
+                              type="button"
+                              onClick={() => {
+                                setEditingItem({ 
+                                  ...editingItem, 
+                                  data: { ...editingItem.data, image_url: img.url }
+                                });
+                                setUnsplashResults([]);
+                                setShowUnsplashSearch(false);
+                                setUnsplashQuery('');
+                              }}
+                              className="relative aspect-video rounded overflow-hidden border-2 border-transparent hover:border-blue-500 transition-colors"
+                            >
+                              <img 
+                                src={img.thumb} 
+                                alt={img.alt} 
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1 py-0.5 truncate">
+                                {img.author}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {searchingUnsplash && (
+                        <p className="text-xs text-center py-4" style={{ color: '#999' }}>Suche läuft...</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Link to Category/Page via Navigation */}
+                <div>
+                  <label className="block text-xs mb-1 font-medium" style={{ color: '#666666' }}>
+                    Verlinkung (aus Navigation)
+                  </label>
+                  <select
+                    value={editingItem.data?.link_href || ''}
+                    onChange={(e) => {
+                      const selectedNav = navItems.find(n => n.href === e.target.value);
+                      setEditingItem({ 
+                        ...editingItem, 
+                        data: { 
+                          ...editingItem.data, 
+                          link_href: e.target.value,
+                          title: editingItem.data?.title || (selectedNav?.label?.replace(/^\s+└\s/, '') || '')
+                        },
+                        target_type: 'url' as any,
+                      });
+                    }}
+                    className="w-full px-3 py-2 border rounded text-sm"
+                    style={{ borderColor: '#E5E7EB' }}
+                    disabled={navLoading}
+                  >
+                    <option value="">-- Seite aus Navigation wählen --</option>
+                    {navItems.map((nav) => (
+                      <option key={nav.id} value={nav.href}>
+                        {nav.label} → {nav.href}
+                      </option>
+                    ))}
+                  </select>
+                  {navLoading && <p className="text-xs mt-1" style={{ color: '#999' }}>Navigation laden...</p>}
+
+                  {/* Manual URL override */}
+                  <div className="mt-2">
+                    <label className="block text-xs mb-1" style={{ color: '#999999' }}>
+                      Oder manuell URL eingeben
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="/belletristik oder https://..."
+                      value={editingItem.data?.link_href || ''}
+                      onChange={(e) => setEditingItem({ 
+                        ...editingItem, 
+                        data: { ...editingItem.data, link_href: e.target.value },
+                        target_type: 'url' as any,
+                      })}
+                      className="w-full px-3 py-2 border rounded text-sm"
+                      style={{ borderColor: '#E5E7EB' }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Item Type - hidden for category_grid, shown for other section types */}
+            {!isCategoryGrid && (
             <div>
               <label className="block text-xs mb-1 font-medium" style={{ color: '#666666' }}>
                 Item Type *
@@ -535,6 +829,7 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
                 style={{ borderColor: '#E5E7EB' }}
               />
             </div>
+            )}
 
             {/* Status */}
             <div>
@@ -759,11 +1054,33 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
               style={{ borderColor: '#E5E7EB', backgroundColor: '#FAFAFA' }}
             >
               <div className="flex items-start justify-between">
-                <div className="flex-1">
+                <div className="flex items-start gap-3 flex-1">
+                  {/* Thumbnail for category cards */}
+                  {isCategoryGrid && item.data?.image_url && (
+                    <img 
+                      src={item.data.image_url} 
+                      alt={item.data?.title || ''} 
+                      className="w-16 h-12 object-cover rounded border flex-shrink-0"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  )}
+                  {isCategoryGrid && !item.data?.image_url && (
+                    <div className="w-16 h-12 rounded border flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#f0f0f0' }}>
+                      <ImageIcon className="w-5 h-5" style={{ color: '#ccc' }} />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
+                    {isCategoryGrid && item.data?.title && (
+                      <span className="text-sm font-medium truncate" style={{ color: '#3A3A3A' }}>
+                        {item.data.title}
+                      </span>
+                    )}
+                    {!isCategoryGrid && (
                     <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: '#70c1b320', color: '#70c1b3' }}>
                       {item.item_type}
                     </span>
+                    )}
                     <span className="px-2 py-0.5 rounded text-xs" style={{
                       backgroundColor: item.status === 'published' ? '#247ba020' : '#f0f0f0',
                       color: item.status === 'published' ? '#247ba0' : '#999'
@@ -777,13 +1094,22 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
                       </span>
                     )}
                   </div>
+                  {isCategoryGrid && item.data?.link_href && (
+                    <p className="text-xs mb-1 flex items-center gap-1" style={{ color: '#247ba0' }}>
+                      <LinkIcon className="w-3 h-3" />
+                      {item.data.link_href}
+                    </p>
+                  )}
                   <p className="text-xs mb-1" style={{ color: '#666666' }}>
                     <strong>ID:</strong> {item.id} | <strong>Order:</strong> {item.sort_order}
                   </p>
+                  {!isCategoryGrid && (
                   <p className="text-xs flex items-center gap-1" style={{ color: '#999999' }}>
                     <LinkIcon className="w-3 h-3" />
                     {getTargetDisplay(item)}
                   </p>
+                  )}
+                </div>
                 </div>
                 <div className="flex gap-1 ml-3">
                   <button
