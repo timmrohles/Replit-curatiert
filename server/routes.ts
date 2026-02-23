@@ -3894,7 +3894,7 @@ export async function registerRoutes(
 
   app.get('/api/curators/with-storefronts', async (_req: Request, res: Response) => {
     try {
-      const result = await queryDB(
+      const sfResult = await queryDB(
         `SELECT c.id, c.name, c.bio, c.avatar_url, c.slug, c.focus,
                 s.id as storefront_id, s.name as storefront_name, s.slug as storefront_slug,
                 s.tagline, s.hero_image_url
@@ -3904,18 +3904,59 @@ export async function registerRoutes(
          ORDER BY c.display_order ASC, c.name ASC`,
         []
       );
-      const curators = result.rows.map((row: any) => ({
+
+      if (sfResult.rows.length > 0) {
+        const curators = sfResult.rows.map((row: any) => ({
+          id: row.id,
+          name: row.name,
+          bio: row.bio,
+          avatarUrl: row.avatar_url,
+          slug: row.slug,
+          focus: row.focus,
+          storefrontId: row.storefront_id,
+          storefrontName: row.storefront_name,
+          storefrontSlug: row.storefront_slug,
+          tagline: row.tagline,
+          heroImageUrl: row.hero_image_url,
+        }));
+        return res.json({ ok: true, data: curators });
+      }
+
+      let curResult = await queryDB(
+        `SELECT c.id, c.name, c.bio, c.avatar_url, c.slug, c.focus, c.display_order,
+                COUNT(cb.id) as curation_book_count
+         FROM curators c
+         INNER JOIN user_curations uc ON uc.user_id = c.user_id::text AND uc.is_published = true
+         INNER JOIN curation_books cb ON cb.curation_id = uc.id
+         WHERE c.deleted_at IS NULL AND c.visible = true
+         GROUP BY c.id, c.name, c.bio, c.avatar_url, c.slug, c.focus, c.display_order
+         ORDER BY c.display_order ASC, c.name ASC`,
+        []
+      );
+
+      if (curResult.rows.length === 0) {
+        curResult = await queryDB(
+          `SELECT id, name, bio, avatar_url, slug, focus, display_order
+           FROM curators
+           WHERE deleted_at IS NULL AND visible = true
+           ORDER BY display_order ASC, name ASC`,
+          []
+        );
+      }
+
+      const curators = curResult.rows.map((row: any) => ({
         id: row.id,
         name: row.name,
         bio: row.bio,
         avatarUrl: row.avatar_url,
         slug: row.slug,
         focus: row.focus,
-        storefrontId: row.storefront_id,
-        storefrontName: row.storefront_name,
-        storefrontSlug: row.storefront_slug,
-        tagline: row.tagline,
-        heroImageUrl: row.hero_image_url,
+        storefrontId: 0,
+        storefrontName: '',
+        storefrontSlug: '',
+        tagline: row.focus || '',
+        heroImageUrl: row.avatar_url || '',
+        curationCount: Number(row.curation_book_count || 0),
       }));
       return res.json({ ok: true, data: curators });
     } catch (error) {

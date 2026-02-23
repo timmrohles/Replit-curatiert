@@ -33,30 +33,8 @@ export function HeroSection({ section }: HeroSectionProps) {
     fetch('/api/curators/with-storefronts')
       .then(r => r.json())
       .then(data => {
-        if (data.ok && Array.isArray(data.data) && data.data.length > 0) {
+        if (data.ok && Array.isArray(data.data)) {
           setCurators(data.data);
-        } else {
-          fetch('/api/curators')
-            .then(r => r.json())
-            .then(fallback => {
-              if (fallback.ok && Array.isArray(fallback.data)) {
-                const visible = fallback.data.filter((c: any) => c.visible !== false);
-                setCurators(visible.map((c: any) => ({
-                  id: c.id,
-                  name: c.name,
-                  bio: c.bio || '',
-                  avatarUrl: c.avatarUrl || c.avatar_url || '',
-                  slug: c.slug || '',
-                  focus: c.focus || '',
-                  storefrontId: 0,
-                  storefrontName: '',
-                  storefrontSlug: '',
-                  tagline: c.focus || '',
-                  heroImageUrl: c.avatarUrl || c.avatar_url || '',
-                })));
-              }
-            })
-            .catch(() => {});
         }
       })
       .catch(() => {});
