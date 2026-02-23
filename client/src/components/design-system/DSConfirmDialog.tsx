@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
 import { DSModal } from './DSModal';
 import { DSButton } from './DSButton';
@@ -20,10 +21,13 @@ export function DSConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmLabel = 'Bestätigen',
-  cancelLabel = 'Abbrechen',
+  confirmLabel,
+  cancelLabel,
   variant = 'default',
 }: DSConfirmDialogProps) {
+  const { t } = useTranslation();
+  const resolvedConfirmLabel = confirmLabel ?? t('common.confirm');
+  const resolvedCancelLabel = cancelLabel ?? t('common.cancel');
   const handleConfirm = () => {
     onConfirm();
     onClose();
@@ -38,13 +42,13 @@ export function DSConfirmDialog({
       footer={
         <>
           <DSButton variant="secondary" onClick={onClose}>
-            {cancelLabel}
+            {resolvedCancelLabel}
           </DSButton>
           <DSButton
             variant={variant === 'destructive' ? 'destructive' : 'primary'}
             onClick={handleConfirm}
           >
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </DSButton>
         </>
       }

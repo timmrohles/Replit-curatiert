@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from '../../utils/routing';
 import { BookCarousel } from './BookCarousel';
 import { CreatorCarousel } from '../creator/CreatorCarousel';
@@ -8,17 +9,11 @@ import { EventCard } from '../events/EventCard';
 import { TopicTag } from './TopicTag';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { scrollCarousel, SCROLL_AMOUNTS } from '../../utils/carousel-helpers';
-import { Section, Container, Heading, Text } from '../ui'; // ✅ FIXED: UISection → Section
+import { Section, Container, Heading, Text } from '../ui';
 import { Book, Event, Storefront, DiverseList, Topic, CarouselRefs } from '../../types/homepage';
 import { ScrollSection } from './ScrollSection';
 import { SectionHeader } from './SectionHeader';
 import { GenreCategoriesSection } from '../tags/GenreCategoriesSection';
-// ❌ REMOVED: HowItWorksSection - Component does not exist
-
-/**
- * HomepageSections - Alle weiteren Sektionen der Homepage
- * (nach Hero, Categories und Curator Section)
- */
 
 interface HomepageSectionsProps {
   newBooks: Book[];
@@ -36,6 +31,22 @@ interface HomepageSectionsProps {
   refs: CarouselRefs;
 }
 
+const EVENT_TYPE_KEYS: Record<string, string> = {
+  'Alle': 'homepage.eventTypes.all',
+  'Lesung': 'homepage.eventTypes.reading',
+  'Workshop': 'homepage.eventTypes.workshop',
+  'Diskussion': 'homepage.eventTypes.discussion',
+  'Panel': 'homepage.eventTypes.panel',
+  'Livestream': 'homepage.eventTypes.livestream',
+  'Podcast Live-Episode': 'homepage.eventTypes.podcastLive',
+};
+
+const LOCATION_TYPE_KEYS: Record<string, string> = {
+  'Alle': 'homepage.locationTypes.all',
+  'Online': 'homepage.locationTypes.online',
+  'Live': 'homepage.locationTypes.live',
+};
+
 export function HomepageSections({
   newBooks,
   queerBooks,
@@ -51,23 +62,23 @@ export function HomepageSections({
   setSelectedEventLocation,
   refs
 }: HomepageSectionsProps) {
+  const { t } = useTranslation();
   const navigate = useSafeNavigate();
 
   return (
     <>
-      {/* Neue Bücher Section */}
       <section>
         <div className="max-w-7xl mx-auto">
           <CreatorCarousel
             creatorAvatar="https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=400"
-            creatorName="coratiert Redaktion"
-            creatorFocus="Neue Bücher"
+            creatorName={t('homepage.editorialTeam')}
+            creatorFocus={t('homepage.newBooks')}
             occasion=""
-            curationReason="Frisch erschienen und handverlesen"
+            curationReason={t('homepage.newBooksReason')}
             showSocials={false}
             showHeader={true}
             books={newBooks}
-            category="Neue Bücher"
+            category={t('homepage.newBooks')}
             showCta={false}
             backgroundColor="white"
             sectionBackgroundColor="transparent"
@@ -80,19 +91,18 @@ export function HomepageSections({
         </div>
       </section>
 
-      {/* Queere Bücher Section */}
       <section>
         <div className="max-w-7xl mx-auto">
           <CreatorCarousel
             creatorAvatar="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
-            creatorName="coratiert Redaktion"
-            creatorFocus="LGBTQIA+ Literatur"
+            creatorName={t('homepage.editorialTeam')}
+            creatorFocus={t('homepage.queerFocus')}
             occasion=""
-            curationReason="LGBTQIA+ Geschichten, die bewegen"
+            curationReason={t('homepage.queerReason')}
             showSocials={false}
             showHeader={true}
             books={queerBooks}
-            category="Queere Perspektiven"
+            category={t('homepage.queerCategory')}
             showCta={false}
             backgroundColor="white"
             sectionBackgroundColor="transparent"
@@ -105,19 +115,18 @@ export function HomepageSections({
         </div>
       </section>
 
-      {/* Debut Bücher Section */}
       <section>
         <div className="max-w-7xl mx-auto">
           <CreatorCarousel
             creatorAvatar="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"
-            creatorName="coratiert Redaktion"
-            creatorFocus="Debüt-Literatur"
+            creatorName={t('homepage.editorialTeam')}
+            creatorFocus={t('homepage.debutFocus')}
             occasion=""
-            curationReason="Erste Werke vielversprechender Autor*innen"
+            curationReason={t('homepage.debutReason')}
             showSocials={false}
             showHeader={true}
             books={debutBooks}
-            category="Spannende Debüts"
+            category={t('homepage.debutCategory')}
             showCta={false}
             backgroundColor="white"
             sectionBackgroundColor="transparent"
@@ -130,19 +139,18 @@ export function HomepageSections({
         </div>
       </section>
 
-      {/* Übersetzungen Section */}
       <section>
         <div className="max-w-7xl mx-auto">
           <CreatorCarousel
             creatorAvatar="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400"
-            creatorName="coratiert Redaktion"
-            creatorFocus="Internationale Literatur"
+            creatorName={t('homepage.editorialTeam')}
+            creatorFocus={t('homepage.translationsFocus')}
             occasion=""
-            curationReason="Weltliteratur in deutscher Übersetzung"
+            curationReason={t('homepage.translationsReason')}
             showSocials={false}
             showHeader={true}
             books={translations}
-            category="Aus aller Welt"
+            category={t('homepage.translationsCategory')}
             showCta={false}
             backgroundColor="white"
             sectionBackgroundColor="transparent"
@@ -155,12 +163,11 @@ export function HomepageSections({
         </div>
       </section>
 
-      {/* Creator Storefronts Section */}
       {storefronts.length > 0 && (
         <ScrollSection
           id="storefronts"
-          title="Creator Bookstores"
-          subtitle="Entdecke kuratierte Buchläden von Expert*innen"
+          title={t('homepage.storefrontsTitle')}
+          subtitle={t('homepage.storefrontsSubtitle')}
           carouselRef={refs.storefrontsCarouselRef}
           scrollAmount={SCROLL_AMOUNTS.STOREFRONT}
         >
@@ -176,18 +183,15 @@ export function HomepageSections({
         </ScrollSection>
       )}
 
-      {/* Events Section */}
       {filteredEvents.length > 0 && (
         <section className="py-12 md:py-16 bg-background">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <SectionHeader
-              title="Literarische Events"
-              subtitle="Lesungen, Diskussionen und Workshops"
+              title={t('homepage.eventsTitle')}
+              subtitle={t('homepage.eventsSubtitle')}
             />
             
-            {/* Event Filters */}
             <div className="flex flex-wrap gap-4 mb-8">
-              {/* Event Type Filter Chips */}
               <div className="flex flex-wrap gap-2">
                 {['Alle', 'Lesung', 'Workshop', 'Diskussion', 'Panel', 'Livestream', 'Podcast Live-Episode'].map((type) => (
                   <button
@@ -196,14 +200,13 @@ export function HomepageSections({
                     onClick={() => setSelectedEventType(type)}
                     className="filter-chip-coral text-sm font-medium"
                     aria-pressed={selectedEventType === type}
-                    aria-label={`Filter nach ${type}`}
+                    aria-label={t('homepage.filterBy', { type: t(EVENT_TYPE_KEYS[type] || type) })}
                   >
-                    {type === 'Alle' ? 'Alle Typen' : type}
+                    {type === 'Alle' ? t('homepage.allTypes') : t(EVENT_TYPE_KEYS[type] || type)}
                   </button>
                 ))}
               </div>
 
-              {/* Location Type Filter Chips */}
               <div className="flex flex-wrap gap-2">
                 {['Alle', 'Online', 'Live'].map((location) => (
                   <button
@@ -212,15 +215,14 @@ export function HomepageSections({
                     onClick={() => setSelectedEventLocation(location)}
                     className="filter-chip-coral text-sm font-medium"
                     aria-pressed={selectedEventLocation === location}
-                    aria-label={`Filter nach ${location}`}
+                    aria-label={t('homepage.filterBy', { type: t(LOCATION_TYPE_KEYS[location] || location) })}
                   >
-                    {location === 'Alle' ? 'Alle Orte' : location === 'Live' ? 'Vor Ort' : location}
+                    {location === 'Alle' ? t('homepage.allLocations') : location === 'Live' ? t('homepage.onSite') : t(LOCATION_TYPE_KEYS[location] || location)}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Events Carousel */}
             <div className="relative">
               <div
                 ref={refs.eventsCarouselRef}
@@ -234,18 +236,17 @@ export function HomepageSections({
                 ))}
               </div>
 
-              {/* Scroll Arrows */}
               <button
                 onClick={() => scrollCarousel(refs.eventsCarouselRef, 'left', SCROLL_AMOUNTS.EVENT)}
                 className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-10 h-10 rounded-full bg-background dark:bg-foreground shadow-lg flex items-center justify-center hover:bg-foreground hover:dark:bg-background transition-colors z-10"
-                aria-label="Vorherige Events"
+                aria-label={t('homepage.previousEvents')}
               >
                 <ChevronLeft className="w-6 h-6 text-foreground dark:text-background" />
               </button>
               <button
                 onClick={() => scrollCarousel(refs.eventsCarouselRef, 'right', SCROLL_AMOUNTS.EVENT)}
                 className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-10 h-10 rounded-full bg-background dark:bg-foreground shadow-lg flex items-center justify-center hover:bg-foreground hover:dark:bg-background transition-colors z-10"
-                aria-label="Nächste Events"
+                aria-label={t('homepage.nextEvents')}
               >
                 <ChevronRight className="w-6 h-6 text-foreground dark:text-background" />
               </button>
@@ -254,10 +255,8 @@ export function HomepageSections({
         </section>
       )}
 
-      {/* Medien & Buch Section */}
       <GenreCategoriesSection />
 
-      {/* Supporters Section */}
       <SupportersSection />
     </>
   );

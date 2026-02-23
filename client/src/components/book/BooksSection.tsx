@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
@@ -69,6 +70,7 @@ const ownBooks = [
 ];
 
 export function BooksSection() {
+  const { t } = useTranslation();
   return (
     <>
       {/* Own Books Section - First */}
@@ -90,7 +92,7 @@ export function BooksSection() {
         showSocials={true}
         books={books}
         showCta={true}
-        ctaText="Alle Bücher ansehen"
+        ctaText={t('bookComponents.viewAllBooks')}
         backgroundColor="beige"
       />
     </>

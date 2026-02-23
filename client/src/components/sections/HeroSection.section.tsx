@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { useSafeNavigate } from '../../utils/routing';
@@ -20,6 +21,7 @@ interface CuratorWithStorefront {
 }
 
 export function HeroSection({ section }: HeroSectionProps) {
+  const { t } = useTranslation();
   const navigate = useSafeNavigate();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const [curators, setCurators] = useState<CuratorWithStorefront[]>([]);
@@ -27,9 +29,9 @@ export function HeroSection({ section }: HeroSectionProps) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const config = section?.config || {};
-  const headline = config.title || 'DIE PERSÖNLICHSTE BUCHHANDLUNG IM NETZ.';
-  const subtitle = config.subtitle || 'Kuratiert von Menschen mit Leidenschaft und Expertise.';
-  const description = config.description || 'coratiert, die Community-Buchhandlung, in der Kurator*innen und Expert*innen ihre Lieblingswerke vorstellen. Entdecke Bücher abseits vom Mainstream, unterstütze mit jedem Kauf Publizist*innen und trage somit zu einer vielfältigen Kultur- und Medienlandschaft bei.';
+  const headline = config.title || t('hero.headline');
+  const subtitle = config.subtitle || t('hero.subtitle');
+  const description = config.description || t('hero.description');
 
   useEffect(() => {
     fetch('/api/curators/with-storefronts')
@@ -157,7 +159,7 @@ export function HeroSection({ section }: HeroSectionProps) {
                                     });
                                   }
                                 }}
-                                aria-label={isFavorite(String(curator.id)) ? "Von Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+                                aria-label={isFavorite(String(curator.id)) ? t('hero.removeFromFavorites') : t('hero.addToFavorites')}
                                 data-testid={`hero-favorite-curator-${curator.id}`}
                               >
                                 <Heart
@@ -185,7 +187,7 @@ export function HeroSection({ section }: HeroSectionProps) {
                   <div className="flex items-center gap-4 mt-4">
                     <button
                       onClick={() => goTo('prev')}
-                      aria-label="Vorherige:r Kurator:in"
+                      aria-label={t('hero.previousCurator')}
                       className="w-10 h-10 rounded-full flex items-center justify-center transition-colors bg-charcoal text-white"
                       data-testid="hero-prev-curator"
                     >
@@ -198,7 +200,7 @@ export function HeroSection({ section }: HeroSectionProps) {
                           key={i}
                           onClick={() => { setActiveIndex(i); startAutoplay(); }}
                           className={`w-2 h-2 rounded-full transition-all ${i === activeIndex ? 'bg-cerulean' : 'bg-muted-foreground/40'}`}
-                          aria-label={`Kurator:in ${i + 1}`}
+                          aria-label={t('hero.curatorDot', { index: i + 1 })}
                           data-testid={`hero-dot-${i}`}
                         />
                       ))}
@@ -206,7 +208,7 @@ export function HeroSection({ section }: HeroSectionProps) {
 
                     <button
                       onClick={() => goTo('next')}
-                      aria-label="Nächste:r Kurator:in"
+                      aria-label={t('hero.nextCurator')}
                       className="w-10 h-10 rounded-full flex items-center justify-center transition-colors bg-charcoal text-white"
                       data-testid="hero-next-curator"
                     >
@@ -220,7 +222,7 @@ export function HeroSection({ section }: HeroSectionProps) {
                 className="w-full max-w-[300px] aspect-[3/4] rounded-2xl flex items-center justify-center bg-muted/30 border-2 border-dashed border-border"
               >
                 <p className="text-center px-6 font-sans text-muted-foreground">
-                  Kurator:innen mit veröffentlichten Bookstores erscheinen hier automatisch.
+                  {t('hero.emptyState')}
                 </p>
               </div>
             )}

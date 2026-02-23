@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from "../../utils/routing";
 import { Container } from "../ui/container";
 import { Section } from "../ui/section";
@@ -365,6 +366,7 @@ interface AllListsPageProps {
 }
 
 export function AllListsPage({ onGoBack }: AllListsPageProps) {
+  const { t } = useTranslation();
   const {
     searchQuery,
     sortBy,
@@ -407,10 +409,10 @@ export function AllListsPage({ onGoBack }: AllListsPageProps) {
       
       {/* Schema.org JSON-LD für SEO */}
       <Helmet>
-        <title>Alle Kurationen - Kuratierte Buchempfehlungen von Expert*innen | coratiert.de</title>
+        <title>{t('curations.pageTitle')}</title>
         <meta 
           name="description" 
-          content="Entdecke kuratierte Buchsammlungen von Expert*innen zu allen Themen. Von Klassikern bis zu aktuellen Geheimtipps – handverlesen und mit Herz ausgewählt."
+          content={t('curations.pageDescription')}
         />
         <meta name="robots" content="index, follow" />
         <link rel="canonical" href="https://coratiert.de/lists" />
@@ -534,7 +536,7 @@ export function AllListsPage({ onGoBack }: AllListsPageProps) {
           {/* Search Bar & Sort */}
           <div className="max-w-2xl mx-auto mb-8">
             <Text variant="base" className="mb-3 text-foreground">
-              Durchsuche Kurationen nach Titel, Beschreibung oder Kurator*in
+              {t('curations.searchHint')}
             </Text>
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">

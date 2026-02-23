@@ -1,4 +1,5 @@
 import { useState, useEffect, memo, useReducer, useRef, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from '../../utils/routing';
 import { BookCard } from '../book/BookCard';
 import { EventCard } from '../events/EventCard';
@@ -186,6 +187,7 @@ function storefrontReducer(state: StorefrontState, action: StorefrontAction): St
 }
 
 export const PublicStorefront = memo(function PublicStorefront({ storefrontId }: { storefrontId: string }) {
+  const { t } = useTranslation();
   const navigate = useSafeNavigate();
   const [state, dispatch] = useReducer(storefrontReducer, initialState);
   const eventsCarouselRef = useRef<HTMLDivElement>(null);
@@ -255,7 +257,7 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
         clearTimeout(timeoutId);
 
         if (!response.ok) {
-          throw new Error('Bookstore nicht gefunden');
+          throw new Error(t('storefront.notFound'));
         }
 
         const data = await response.json();
@@ -303,7 +305,7 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
           };
           dispatch({ type: 'SET_STOREFRONT', payload: storefront });
         } else {
-          throw new Error('Bookstore nicht gefunden');
+          throw new Error(t('storefront.notFound'));
         }
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') {
@@ -313,7 +315,7 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
           return;
         }
         if (isMounted) {
-          dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : 'Fehler beim Laden des Bookstore' });
+          dispatch({ type: 'SET_ERROR', payload: err instanceof Error ? err.message : t('storefront.loadError') });
         }
       } finally {
         if (isMounted) {
@@ -400,7 +402,7 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
             BOOKSTORE NICHT GEFUNDEN
           </h1>
           <p className="mb-6 text-foreground" style={{ opacity: 0.7 }}>
-            {state.error || 'Dieser Bookstore existiert nicht oder wurde gelöscht.'}
+            {state.error || t('storefront.doesNotExist')}
           </p>
           <a 
             href="/"
@@ -739,10 +741,10 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
               <section className="py-16 px-8" style={{ backgroundColor: heroBackgroundColor }}>
                 <div className="max-w-7xl mx-auto text-center">
                   <p className="mb-2" style={{ color: textColorOnHero, opacity: 0.7 }}>
-                    Noch keine Bücher verfügbar
+                    {t('storefront.noBooksYet')}
                   </p>
                   <p className="text-sm" style={{ color: textColorOnHero, opacity: 0.5 }}>
-                    Diese Storefront wird bald mit Büchern gefüllt
+                    {t('storefront.noBooksDescription')}
                   </p>
                 </div>
               </section>
@@ -810,7 +812,7 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
                             onClick={() => dispatch({ type: 'SET_EVENT_TYPE', payload: type })}
                             active={state.selectedEventType === type}
                           >
-                            {type}
+                            {type === 'Alle' ? t('storefront.allCategory') : type}
                           </DSTag>
                         ))}
                       </div>
@@ -826,7 +828,7 @@ export const PublicStorefront = memo(function PublicStorefront({ storefrontId }:
                             onClick={() => dispatch({ type: 'SET_EVENT_LOCATION', payload: location })}
                             active={state.selectedEventLocation === location}
                           >
-                            {location}
+                            {location === 'Alle' ? t('storefront.allCategory') : location}
                           </DSTag>
                         ))}
                       </div>

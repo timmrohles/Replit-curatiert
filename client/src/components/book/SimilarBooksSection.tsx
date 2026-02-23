@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Book as APIBook, ONIXTag, getAllBooks, getAllONIXTags } from '../../utils/api';
 import { BookCard } from './BookCard';
 import { CarouselContainer } from '../carousel/CarouselContainer';
@@ -25,6 +26,7 @@ interface SimilarBooksSectionProps {
  * - Sortiert nach Relevanz
  */
 export function SimilarBooksSection({ currentBook, maxSuggestions = 8 }: SimilarBooksSectionProps) {
+  const { t } = useTranslation();
   const [allBooks, setAllBooks] = useState<APIBook[]>([]);
   const [allTags, setAllTags] = useState<ONIXTag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,7 +136,7 @@ export function SimilarBooksSection({ currentBook, maxSuggestions = 8 }: Similar
       <section className="py-12 px-4 md:px-8">
         <div className="max-w-7xl mx-auto">
           <Text variant="base" className="text-foreground">
-            Lädt ähnliche Bücher...
+            {t('bookComponents.loadingSimilar')}
           </Text>
         </div>
       </section>
@@ -154,7 +156,7 @@ export function SimilarBooksSection({ currentBook, maxSuggestions = 8 }: Similar
             as="h2" 
             className="mb-2 text-foreground"
           >
-            Ähnliche Bücher
+            {t('bookComponents.similarBooks')}
           </Heading>
           <Text 
             variant="base" 
@@ -230,7 +232,7 @@ export function SimilarBooksSection({ currentBook, maxSuggestions = 8 }: Similar
                 }
               }}
             >
-              Mehr ähnliche Bücher entdecken →
+              {t('bookComponents.moreSimilarBooks')}
             </Button>
           </div>
         )}

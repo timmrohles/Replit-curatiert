@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { ThumbsUp, ThumbsDown } from "lucide-react";
 import { useTheme } from "../../utils/ThemeContext";
 import { useTextOverflow } from "../../hooks/useTextOverflow";
@@ -16,6 +17,7 @@ interface ReviewCardProps {
 }
 
 export function ReviewCard({ review }: ReviewCardProps) {
+  const { t } = useTranslation();
   const { resolvedTheme } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   const { textRef: commentRef, isOverflowing: isCommentOverflowing } = useTextOverflow<HTMLParagraphElement>();
@@ -48,9 +50,9 @@ export function ReviewCard({ review }: ReviewCardProps) {
           onClick={() => setIsExpanded(!isExpanded)}
           className="expand-btn text-body-small"
           aria-expanded={isExpanded}
-          aria-label={isExpanded ? 'Rezension verkürzen' : 'Vollständige Rezension anzeigen'}
+          aria-label={isExpanded ? t('review.collapseReview') : t('review.expandReview')}
         >
-          {isExpanded ? 'Weniger anzeigen' : 'Mehr lesen'}
+          {isExpanded ? t('review.showLess') : t('review.readMore')}
         </button>
       )}
       
@@ -60,7 +62,7 @@ export function ReviewCard({ review }: ReviewCardProps) {
           style={{ color: resolvedTheme === 'dark' ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.6)' }}
         >
           <ThumbsUp className="w-4 h-4" />
-          <span>Hilfreich ({review.helpful})</span>
+          <span>{t('review.helpful', { count: review.helpful })}</span>
         </button>
         <button 
           className="flex items-center gap-1 text-body-small" 

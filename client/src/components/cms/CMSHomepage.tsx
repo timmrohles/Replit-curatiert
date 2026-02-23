@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from '../../utils/routing';
 import { Header } from '../layout/Header';
 import { Footer } from '../layout/Footer';
@@ -41,6 +42,7 @@ interface Page {
 }
 
 export function CMSHomepage() {
+  const { t } = useTranslation();
   const navigate = useSafeNavigate();
   const [page, setPage] = useState<Page | null>(null);
   const [sections, setSections] = useState<PageSection[]>([]);
@@ -67,7 +69,7 @@ export function CMSHomepage() {
           if (pageResponse.status === 404) {
             // Fallback to old DataDrivenHomepage if no CMS homepage is configured
             console.warn('⚠️ No CMS homepage found for path `/`. Using fallback.');
-            setError('Keine Startseite konfiguriert. Bitte erstellen Sie eine Page mit Pfad "/" im Content Manager.');
+            setError(t('cms.homepageNotConfigured'));
             return;
           }
           throw new Error('Failed to fetch homepage');
@@ -76,7 +78,7 @@ export function CMSHomepage() {
         const pageData = await pageResponse.json();
 
         if (!pageData.ok || !pageData.page) {
-          setError('Keine Startseite konfiguriert.');
+          setError(t('cms.homepageNotConfigured'));
           return;
         }
 
@@ -101,7 +103,7 @@ export function CMSHomepage() {
         console.log('  - Sections:', pageData.sections?.length || 0);
       } catch (err) {
         console.error('❌ Error fetching CMS homepage:', err);
-        setError('Fehler beim Laden der Startseite');
+        setError(t('cms.homepageNotLoaded'));
       } finally {
         setLoading(false);
       }
@@ -129,10 +131,10 @@ export function CMSHomepage() {
         <InfoBar />
         <Header isHomePage={true} />
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
-          <h1 className="text-4xl mb-4">Startseite nicht gefunden</h1>
-          <p className="text-xl mb-8">{error || 'Die Startseite konnte nicht geladen werden.'}</p>
+          <h1 className="text-4xl mb-4">{t('cms.homepageNotFound')}</h1>
+          <p className="text-xl mb-8">{error || t('cms.homepageNotLoaded')}</p>
           <p className="text-sm text-muted-foreground mb-8">
-            Bitte erstellen Sie im Content Manager eine Page mit Pfad "/" und Status "Published".
+            {t('cms.adminHint')}
           </p>
         </div>
         <Footer />
@@ -146,8 +148,8 @@ export function CMSHomepage() {
         <InfoBar />
         <Header isHomePage={true} />
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
-          <h1 className="text-4xl mb-4">Startseite deaktiviert</h1>
-          <p className="text-xl mb-8">Die Startseite ist derzeit nicht verfügbar.</p>
+          <h1 className="text-4xl mb-4">{t('cms.homepageDisabledTitle')}</h1>
+          <p className="text-xl mb-8">{t('cms.homepageDisabled')}</p>
         </div>
         <Footer />
       </>
@@ -250,7 +252,7 @@ export function CMSHomepage() {
               </div>
             ) : (
               <div className="text-center text-muted-foreground">
-                <p>Inhalt wird bald hinzugefügt.</p>
+                <p>{t('cms.contentComingSoon')}</p>
               </div>
             );
           })()}

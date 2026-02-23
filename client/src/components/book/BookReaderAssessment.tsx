@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TrendingUp } from 'lucide-react';
 import { getBookAggregateRatings, type BookWorldForRating, type AggregateRatings } from '../../utils/api';
 import { aggregateToTextBullets } from '../../utils/rating-labels';
@@ -21,6 +22,7 @@ export function BookReaderAssessment({
   bookWorld,
   minRatings = 5 
 }: BookReaderAssessmentProps) {
+  const { t } = useTranslation();
   const [aggregateRatings, setAggregateRatings] = useState<AggregateRatings | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -54,11 +56,11 @@ export function BookReaderAssessment({
       <div className="bg-white/30 backdrop-blur-md rounded-lg shadow-lg p-6 md:p-8 border border-white/40">
         <div className="flex items-center gap-2 mb-2">
           <h3 className="text-lg md:text-xl font-headline text-foreground">
-            Leser-Einschätzung
+            {t('bookComponents.readerAssessment')}
           </h3>
         </div>
         <p className="text-sm text-foreground-muted">
-          Lädt...
+          {t('common.loading')}
         </p>
       </div>
     );
@@ -74,7 +76,7 @@ export function BookReaderAssessment({
       <div className="bg-white/30 backdrop-blur-md rounded-lg shadow-lg p-6 md:p-8 border border-white/40">
         <div className="flex items-center gap-2 mb-2">
           <h3 className="text-lg md:text-xl font-headline text-foreground">
-            Leser-Einschätzung
+            {t('bookComponents.readerAssessment')}
           </h3>
         </div>
         <p className="text-sm mb-4 text-foreground-muted">
@@ -82,7 +84,7 @@ export function BookReaderAssessment({
         </p>
         <div className="bg-white/50 rounded-lg p-4">
           <p className="text-sm text-foreground">
-            Sei der Erste, der dieses Buch bewertet! Deine Einschätzung hilft anderen Lesern bei ihrer Auswahl.
+            {t('bookComponents.beFirstToRate')}
           </p>
         </div>
       </div>
@@ -103,7 +105,7 @@ export function BookReaderAssessment({
       <div className="bg-white/30 backdrop-blur-md rounded-lg shadow-lg p-6 md:p-8 border border-white/40">
         <div className="flex items-center gap-2 mb-2">
           <h3 className="text-lg md:text-xl font-headline text-foreground">
-            Leser-Einschätzung
+            {t('bookComponents.readerAssessment')}
           </h3>
         </div>
         <p className="text-sm text-foreground-muted">
@@ -120,7 +122,7 @@ export function BookReaderAssessment({
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
             <h3 className="text-lg md:text-xl font-headline text-foreground">
-              Leser-Einschätzung
+              {t('bookComponents.readerAssessment')}
             </h3>
           </div>
           <p className="text-xs text-foreground-muted">
@@ -145,7 +147,7 @@ export function BookReaderAssessment({
       {/* Optionaler Hinweis */}
       <div className="mt-4 pt-4 border-t border-gray-200">
         <p className="text-xs italic text-foreground-muted">
-          Diese Einschätzung basiert auf den Bewertungen der Leser-Community und kann von deiner persönlichen Wahrnehmung abweichen.
+          {t('bookComponents.assessmentBasis')}
         </p>
       </div>
     </div>

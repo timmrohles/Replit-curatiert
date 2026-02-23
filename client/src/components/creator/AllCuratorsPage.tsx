@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from "../../utils/routing";
 import { Container } from "../ui/container";
 import { Section } from "../ui/section";
@@ -38,6 +39,7 @@ interface AllCuratorsPageProps {
 }
 
 export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbLabel }: AllCuratorsPageProps = { onGoBack: undefined }) {
+  const { t } = useTranslation();
   const safeNavigate = useSafeNavigate();
   const { addFavorite, removeFavorite, isFavorite } = useFavorites();
 
@@ -78,10 +80,10 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
       <Header />
 
       <Helmet>
-        <title>Alle Kurator*innen - Fachexpert*innen für Buchempfehlungen | coratiert.de</title>
+        <title>{t('curators.pageTitle')}</title>
         <meta
           name="description"
-          content="Entdecke unsere Expert*innen und folge ihren Empfehlungen. Jede*r Kurator*in bringt eine einzigartige Perspektive und fachliche Expertise mit."
+          content={t('curators.pageDescription')}
         />
         <script type="application/ld+json">
           {JSON.stringify({
@@ -147,7 +149,7 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
             </Heading>
 
             <Text variant="large" className="max-w-3xl !text-foreground">
-              {pageSubtitle || "Entdecke unsere Expert*innen und folge ihren Empfehlungen. Jede*r Kurator*in bringt eine einzigartige Perspektive und Expertise mit."}
+              {pageSubtitle || t('curators.pageDescription')}
             </Text>
           </div>
         </Container>
@@ -157,7 +159,7 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
         <Container>
           <div className="max-w-2xl mx-auto mb-8">
             <Text variant="base" className="mb-3 text-foreground">
-              Durchsuche unsere Kurator*innen nach Namen, Expertise oder Themengebieten
+              {t('curators.searchHint')}
             </Text>
             <div className="relative">
               <Search className="absolute left-3 md:left-3.5 lg:left-4 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5" style={{ color: 'var(--search-icon)' }} />
@@ -193,7 +195,7 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="w-10 h-10 animate-spin mb-4" style={{ color: 'var(--color-foreground-muted)' }} />
               <Text variant="body" className="text-foreground opacity-70">
-                Kurator*innen werden geladen...
+                {t('curators.loading')}
               </Text>
             </div>
           ) : (
@@ -251,7 +253,7 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
                               });
                             }
                           }}
-                          aria-label={isFavorite(curator.id) ? "Von Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+                          aria-label={isFavorite(curator.id) ? t('curators.removeFromFavorites') : t('curators.addToFavorites')}
                           data-testid={`button-favorite-curator-${curator.id}`}
                         >
                           <Heart

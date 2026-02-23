@@ -1,4 +1,5 @@
 import React, { useState, useEffect, memo, useRef, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BookCarouselItem, BookCarouselItemData } from "../book/BookCarouselItem";
 import { EditorialBookCard, EditorialBookCardData } from "../book/EditorialBookCard";
 import { CarouselContainer } from "../carousel/CarouselContainer";
@@ -162,7 +163,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
   categories,
   tags,
   showCta = true,
-  ctaText = "Alle Bücher ansehen",
+  ctaText,
   onCtaClick,
   backgroundColor = 'white',
   sectionBackgroundColor = 'transparent',
@@ -190,6 +191,8 @@ export const CreatorCarousel = memo(function CreatorCarousel({
   curationId,
   curationOwnerCreatorId,
 }: CreatorCarouselProps) {
+  const { t } = useTranslation();
+  const resolvedCtaText = ctaText || t('bookComponents.viewAllBooks');
   const sortChipsRef = useRef<HTMLDivElement>(null);
   const [sortBy, setSortBy] = useState("popularity");
   const [hoveredSort, setHoveredSort] = useState<string | null>(null);
@@ -260,23 +263,23 @@ export const CreatorCarousel = memo(function CreatorCarousel({
     const baseOptions = [
       { 
         id: 'popularity', 
-        label: 'Beliebtheit',
-        tooltip: 'Sortiert nach Saves, Interaktionen und Plattform-Engagement'
+        label: t('creator.sortPopularity'),
+        tooltip: t('creator.sortPopularityTooltip')
       },
       { 
         id: 'awarded', 
-        label: 'Auszeichnungen',
-        tooltip: 'Sortiert nach Anzahl und Bedeutung von Preisen (Awards, Shortlists, Longlists)'
+        label: t('creator.sortAwards'),
+        tooltip: t('creator.sortAwardsTooltip')
       },
       { 
         id: 'hidden-gems', 
-        label: 'Hidden Gems',
-        tooltip: 'Sortiert Bücher mit hohem Qualitäts-Score bei niedriger Sichtbarkeit'
+        label: t('creator.sortHiddenGems'),
+        tooltip: t('creator.sortHiddenGemsTooltip')
       },
       { 
         id: 'trending', 
-        label: 'Aktuell',
-        tooltip: 'Sortiert Neuerscheinungen nach Veröffentlichungszeitpunkt'
+        label: t('creator.sortRecent'),
+        tooltip: t('creator.sortRecentTooltip')
       },
     ];
 
@@ -292,7 +295,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
     }
     
     return baseOptions;
-  }, [onixFilterOptions]);
+  }, [onixFilterOptions, t]);
 
   // Calculate contrast text color based on background
   const calculatedTextColor = useMemo(() => {

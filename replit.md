@@ -33,7 +33,7 @@ The platform is built with a modern web stack, featuring a React frontend and an
 -   **Navigation Management**: Admin UI for managing navigation items with location-based filtering.
 -   **Author Verification Workflow**: User-initiated author access requests with admin approval and integration with ONIX database matching.
 -   **Mobile Navigation**: Unified dark-themed bottom navigation bar.
--   **Internationalization (i18n)**: Directory-based locale prefixes (`/de-de/`, `/en-gb/`) with `de-de` as default.
+-   **Internationalization (i18n)**: Directory-based locale prefixes (`/de-de/`, `/en-gb/`) with `de-de` as default. Translation files in `client/src/i18n/locales/de.json` and `en.json` with 20+ namespaces (common, header, footer, hero, homepage, cookies, matching, bookDetail, review, cms, bookComponents, subscription, curators, curations, creator, storefront, latestReviews, etc.). All public-facing components use `useTranslation()` / `t()` from `react-i18next`. Admin components remain German-only.
 -   **Dashboard & Feed System**: Personalized user dashboard with customizable feed sections.
 -   **User Bookstore & Curations System**: Users create thematic book collections (Kurationen) and public bookstore profiles.
 -   **Events System**: Users create and manage events, displayed in dashboards and public profiles.

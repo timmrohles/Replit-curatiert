@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Save, Check } from 'lucide-react';
 import { 
   BOOK_WORLD_SCALES, 
@@ -26,6 +27,7 @@ export function BookRatingWidget({
   sessionId,
   onRatingChange 
 }: BookRatingWidgetProps) {
+  const { t } = useTranslation();
   const [scales, setScales] = useState<Record<string, number>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -70,7 +72,7 @@ export function BookRatingWidget({
 
   const handleSave = async () => {
     if (!userId && !sessionId) {
-      alert('Bitte melde dich an, um eine Bewertung abzugeben.');
+      alert(t('bookDetail.loginToRate'));
       return;
     }
 
@@ -139,15 +141,15 @@ export function BookRatingWidget({
         >
           {isSaving ? (
             <>
-              Speichern...
+              {t('common.saving')}
             </>
           ) : isSaved ? (
             <>
-              Gespeichert!
+              {t('common.saved')}
             </>
           ) : (
             <>
-              Bewertung speichern
+              {t('bookDetail.saveRating')}
             </>
           )}
         </button>

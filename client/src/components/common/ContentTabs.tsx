@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 interface ContentTabsProps {
   activeTab: 'bücher' | 'rezensionen' | 'veranstaltungen' | 'bonusinhalte' | 'autor:innen';
   onTabChange: (tab: 'bücher' | 'rezensionen' | 'veranstaltungen' | 'bonusinhalte' | 'autor:innen') => void;
@@ -6,6 +8,7 @@ interface ContentTabsProps {
 }
 
 export function ContentTabs({ activeTab, onTabChange, accentColor = '#A0CEC8', showAuthorsTab = false }: ContentTabsProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white border-b border-gray-200">
       <div className="max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8">
@@ -18,7 +21,7 @@ export function ContentTabs({ activeTab, onTabChange, accentColor = '#A0CEC8', s
                 : 'text-gray-400 hover:text-foreground border-b-[3px] border-transparent'
             }`}
           >
-            Bücher
+            {t('storefront.tabBooks')}
           </button>
           <button
             onClick={() => onTabChange('rezensionen')}
@@ -28,7 +31,7 @@ export function ContentTabs({ activeTab, onTabChange, accentColor = '#A0CEC8', s
                 : 'text-gray-400 hover:text-foreground border-b-[3px] border-transparent'
             }`}
           >
-            Rezensionen
+            {t('storefront.tabReviews')}
           </button>
           <button
             onClick={() => onTabChange('veranstaltungen')}
@@ -38,7 +41,7 @@ export function ContentTabs({ activeTab, onTabChange, accentColor = '#A0CEC8', s
                 : 'text-gray-400 hover:text-foreground border-b-[3px] border-transparent'
             }`}
           >
-            Veranstaltungen
+            {t('storefront.tabEvents')}
           </button>
           <button
             onClick={() => onTabChange('bonusinhalte')}
@@ -48,7 +51,7 @@ export function ContentTabs({ activeTab, onTabChange, accentColor = '#A0CEC8', s
                 : 'text-gray-400 hover:text-foreground border-b-[3px] border-transparent'
             }`}
           >
-            Bonusinhalte
+            {t('storefront.tabBonusContent')}
           </button>
           {showAuthorsTab && (
             <button
@@ -59,7 +62,7 @@ export function ContentTabs({ activeTab, onTabChange, accentColor = '#A0CEC8', s
                   : 'text-gray-400 hover:text-foreground border-b-[3px] border-transparent'
               }`}
             >
-              Autor:innen
+              {t('storefront.tabAuthors')}
             </button>
           )}
         </div>

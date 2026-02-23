@@ -3,6 +3,7 @@ import { Share2, ShoppingCart, ArrowRight, Heart, ChevronDown } from 'lucide-rea
 import { LikeButton } from '../favorites/LikeButton';
 import { Button } from '../ui/button';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFavorites } from '../favorites/FavoritesContext';
 
 interface Review {
@@ -24,6 +25,7 @@ interface Review {
 }
 
 export function LatestReviewsSection() {
+  const { t } = useTranslation();
   const [expandedReviews, setExpandedReviews] = useState<{[key: string]: boolean}>({});
   const { isFavorite, toggleFavorite } = useFavorites();
 
@@ -216,7 +218,7 @@ export function LatestReviewsSection() {
                       className="flex-1 py-2 px-4 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-semibold flex items-center justify-center gap-2"
                     >
                       <ShoppingCart className="w-4 h-4" />
-                      In den Warenkorb
+                      {t('latestReviews.addToCart')}
                     </button>
                     <button 
                       className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"

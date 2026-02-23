@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { Heart, ArrowRight, CheckCircle2, ChevronRight, Check, Sparkles, ShoppingCart, Zap, Target, Microscope, Clock, X, ThumbsUp, ThumbsDown, Shuffle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -430,6 +431,7 @@ interface BookMatch {
 }
 
 export function CuratorMatchmaking() {
+  const { t } = useTranslation();
   const navigate = useSafeNavigate();
   const { toggleFavorite, isFavorite } = useFavorites();
   const { addToCart, isInCart } = useCart();
@@ -873,7 +875,7 @@ export function CuratorMatchmaking() {
             <div className="inline-flex items-center gap-2 bg-[#A0CEC8]/20 px-4 py-2 rounded-full mb-6">
               <Sparkles className="w-5 h-5 text-[#5a9690]" />
               <span className="text-sm text-[var(--charcoal)]" style={{ fontFamily: 'Fjalla One' }}>
-                BUCH MATCHING
+                {t('matching.badge')}
               </span>
             </div>
 
@@ -881,11 +883,11 @@ export function CuratorMatchmaking() {
               className="text-4xl md:text-5xl mb-6 text-[var(--charcoal)]"
               style={{ fontFamily: 'Fjalla One' }}
             >
-              FINDE DEIN NÄCHSTES BUCH
+              {t('matching.title')}
             </h2>
 
             <p className="text-lg text-gray-600 mb-12">
-              Wähle, wie viel Zeit du hast – wir finden das perfekte Buch für dich.
+              {t('matching.intro')}
             </p>
 
             <button
@@ -893,7 +895,7 @@ export function CuratorMatchmaking() {
               className="inline-flex items-center justify-center gap-2 bg-[#5a9690] text-white px-8 py-4 rounded-lg hover:bg-[#4a8580] transition-colors text-lg mb-4"
               style={{ fontFamily: 'Fjalla One' }}
             >
-              <span>MATCHING STARTEN</span>
+              <span>{t('matching.startMatching')}</span>
               <ArrowRight className="w-5 h-5" />
             </button>
 
@@ -929,10 +931,10 @@ export function CuratorMatchmaking() {
               className="text-3xl md:text-4xl mb-4 text-center text-[var(--charcoal)]"
               style={{ fontFamily: 'Fjalla One' }}
             >
-              WIE VIEL ZEIT HAST DU?
+              {t('matching.timeQuestion')}
             </h3>
             <p className="text-center text-gray-600 mb-12">
-              Je mehr Fragen du beantwortest, desto genauer wird dein Match.
+              {t('matching.timeDescription')}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -953,18 +955,18 @@ export function CuratorMatchmaking() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">~10 Sekunden</span>
+                    <span className="text-sm text-gray-600">{t('matching.quickTime')}</span>
                   </div>
                 </div>
                 <h4 className="text-2xl mb-2 text-[var(--charcoal)]" style={{ fontFamily: 'Fjalla One' }}>
-                  SCHNELL-MATCHING
+                  {t('matching.quickTitle')}
                 </h4>
                 <p className="text-sm text-gray-600 mb-4">
-                  Nenne uns ein Lieblingsbuch und wir schlagen dir ähnliche Bücher vor.
+                  {t('matching.quickDescription')}
                 </p>
                 <div className="flex items-center gap-2 text-xs text-[#5a9690]">
                   <Check className="w-4 h-4" />
-                  <span>1 Frage</span>
+                  <span>{t('matching.quickQuestions')}</span>
                 </div>
               </motion.button>
 
@@ -985,18 +987,18 @@ export function CuratorMatchmaking() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">~60 Sekunden</span>
+                    <span className="text-sm text-gray-600">{t('matching.mediumTime')}</span>
                   </div>
                 </div>
                 <h4 className="text-2xl mb-2 text-[var(--charcoal)]" style={{ fontFamily: 'Fjalla One' }}>
-                  BASIS-MATCHING
+                  {t('matching.mediumTitle')}
                 </h4>
                 <p className="text-sm text-gray-600 mb-4">
-                  Für wen, Alter, Beruf, Hobbies, Gefühl & Perspektive – die wichtigsten Faktoren.
+                  {t('matching.mediumDescription')}
                 </p>
                 <div className="flex items-center gap-2 text-xs text-[#5a9690]">
                   <Check className="w-4 h-4" />
-                  <span>6 Fragen</span>
+                  <span>{t('matching.mediumQuestions')}</span>
                 </div>
               </motion.button>
 
@@ -1017,18 +1019,18 @@ export function CuratorMatchmaking() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">~120 Sekunden</span>
+                    <span className="text-sm text-gray-600">{t('matching.completeTime')}</span>
                   </div>
                 </div>
                 <h4 className="text-2xl mb-2 text-[var(--charcoal)]" style={{ fontFamily: 'Fjalla One' }}>
-                  PRÄZISIONS-MATCHING
+                  {t('matching.completeTitle')}
                 </h4>
                 <p className="text-sm text-gray-600 mb-4">
-                  Alle Fragen für das genaueste Match – inkl. Genre-Auswahl & Buchpräferenzen.
+                  {t('matching.completeDescription')}
                 </p>
                 <div className="flex items-center gap-2 text-xs text-[#5a9690]">
                   <Check className="w-4 h-4" />
-                  <span>8 Fragen</span>
+                  <span>{t('matching.completeQuestions')}</span>
                 </div>
               </motion.button>
 
@@ -1049,18 +1051,18 @@ export function CuratorMatchmaking() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-gray-500" />
-                    <span className="text-sm text-gray-600">~90 Sekunden</span>
+                    <span className="text-sm text-gray-600">{t('matching.swipeTime')}</span>
                   </div>
                 </div>
                 <h4 className="text-2xl mb-2 text-[var(--charcoal)]" style={{ fontFamily: 'Fjalla One' }}>
-                  SWIPE-MATCHING
+                  {t('matching.swipeTitle')}
                 </h4>
                 <p className="text-sm text-gray-600 mb-4">
-                  Swipe dich durch Cover, Zitate, Kuratoren & Fragen – spielerisch & intuitiv.
+                  {t('matching.swipeDescription')}
                 </p>
                 <div className="flex items-center gap-2 text-xs text-[#5a9690]">
                   <Heart className="w-4 h-4" />
-                  <span>Swipe-basiert</span>
+                  <span>{t('matching.swipeQuestions')}</span>
                 </div>
               </motion.button>
             </div>
@@ -1071,7 +1073,7 @@ export function CuratorMatchmaking() {
                 className="px-6 py-3 bg-white border-2 border-gray-300 text-[var(--charcoal)] rounded-lg hover:bg-gray-50 transition-colors"
                 style={{ fontFamily: 'Fjalla One' }}
               >
-                ZURÜCK
+                {t('common.back')}
               </button>
               <button
                 onClick={handleStartMatching}
@@ -1083,7 +1085,7 @@ export function CuratorMatchmaking() {
                 }`}
                 style={{ fontFamily: 'Fjalla One' }}
               >
-                <span>WEITER</span>
+                <span>{t('matching.startSelected')}</span>
                 <ChevronRight className="w-5 h-5" />
               </button>
             </div>
@@ -1157,7 +1159,7 @@ export function CuratorMatchmaking() {
                       className="text-3xl mb-2 text-[var(--charcoal)]"
                       style={{ fontFamily: 'Fjalla One' }}
                     >
-                      WER SOLLT DAS BUCH ERHALTEN?
+                      {t('matching.recipientTitle')}
                     </h3>
                     <p className="text-gray-600 mb-6">
                       Für dich selbst oder als Geschenk?
@@ -1199,7 +1201,7 @@ export function CuratorMatchmaking() {
                       className="text-3xl mb-2 text-[var(--charcoal)]"
                       style={{ fontFamily: 'Fjalla One' }}
                     >
-                      WELCHE ALTERSKATEGORIE PASST AM BESTEN?
+                      {t('matching.ageTitle')}
                     </h3>
                     <p className="text-gray-600 mb-6">
                       Wähle eine Altersgruppe.
@@ -1241,7 +1243,7 @@ export function CuratorMatchmaking() {
                       className="text-3xl mb-2 text-[var(--charcoal)]"
                       style={{ fontFamily: 'Fjalla One' }}
                     >
-                      WELCHE PROFESSION PASST AM BESTEN?
+                      {t('matching.professionTitle')}
                     </h3>
                     <p className="text-gray-600 mb-6">
                       Wähle eine Berufsgruppe.
@@ -1283,10 +1285,10 @@ export function CuratorMatchmaking() {
                       className="text-3xl mb-2 text-[var(--charcoal)]"
                       style={{ fontFamily: 'Fjalla One' }}
                     >
-                      WELCHE HOBBYS HAST DU?
+                      {t('matching.hobbiesTitle')}
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      Du kannst mehrere auswählen.
+                      {t('matching.hobbiesSubtitle')}
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1327,10 +1329,10 @@ export function CuratorMatchmaking() {
                       className="text-3xl mb-2 text-[var(--charcoal)]"
                       style={{ fontFamily: 'Fjalla One' }}
                     >
-                      WIE MÖCHTEST DU DICH BEIM LESEN FÜHLEN?
+                      {t('matching.moodTitle')}
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      Wähle eine Stimmung, die zu dir passt.
+                      {t('matching.moodSubtitle')}
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1369,10 +1371,10 @@ export function CuratorMatchmaking() {
                       className="text-3xl mb-2 text-[var(--charcoal)]"
                       style={{ fontFamily: 'Fjalla One' }}
                     >
-                      WELCHE THEMEN UND PERSPEKTIVEN SIND DIR WICHTIG?
+                      {t('matching.themesTitle')}
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      Du kannst mehrere auswählen.
+                      {t('matching.themesSubtitle')}
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1413,10 +1415,10 @@ export function CuratorMatchmaking() {
                       className="text-3xl mb-2 text-[var(--charcoal)]"
                       style={{ fontFamily: 'Fjalla One' }}
                     >
-                      WELCHE GENRES INTERESSIEREN DICH GERADE AM MEISTEN?
+                      {t('matching.genresTitle')}
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      Wähle bis zu 3. ({preferences.genres.length}/3)
+                      {t('matching.genresSubtitle')} ({preferences.genres.length}/3)
                     </p>
 
                     <div className="flex flex-wrap gap-3">
@@ -1457,7 +1459,7 @@ export function CuratorMatchmaking() {
                       className="text-3xl mb-2 text-[var(--charcoal)]"
                       style={{ fontFamily: 'Fjalla One' }}
                     >
-                      WELCHE ARTEN VON BÜCHERN INTERESSIEREN DICH?
+                      {t('matching.bookPreferencesTitle')}
                     </h3>
                     <p className="text-gray-600 mb-6">
                       Neue Bücher, Klassiker oder Independent-Literatur? Du kannst mehrere wählen.
@@ -1506,7 +1508,7 @@ export function CuratorMatchmaking() {
                     className="px-6 py-3 bg-white border-2 border-gray-300 text-[var(--charcoal)] rounded-lg hover:bg-gray-50 transition-colors"
                     style={{ fontFamily: 'Fjalla One' }}
                   >
-                    ZURÜCK
+                    {t('common.back')}
                   </button>
 
                   <button
@@ -1558,7 +1560,7 @@ export function CuratorMatchmaking() {
                 className="text-3xl mb-2 text-[var(--charcoal)]"
                 style={{ fontFamily: 'Fjalla One' }}
               >
-                WÄHLE EIN GENRE FÜR DEIN SWIPE-MATCHING
+                {t('matching.swipeGenreTitle')}
               </h3>
               <p className="text-gray-600 mb-6">
                 Wir zeigen dir Buchcover, Zitate und Kuratoren aus diesem Genre.
@@ -1596,7 +1598,7 @@ export function CuratorMatchmaking() {
                   className="px-6 py-3 bg-white border-2 border-gray-300 text-[var(--charcoal)] rounded-lg hover:bg-gray-50 transition-colors"
                   style={{ fontFamily: 'Fjalla One' }}
                 >
-                  ZURÜCK
+                  {t('common.back')}
                 </button>
                 <button
                   onClick={handleSwipeGenreStart}
@@ -1608,7 +1610,7 @@ export function CuratorMatchmaking() {
                   }`}
                   style={{ fontFamily: 'Fjalla One' }}
                 >
-                  <span>SWIPE STARTEN</span>
+                  <span>{t('matching.startSelected')}</span>
                   <Heart className="w-5 h-5" />
                 </button>
               </div>
@@ -1768,7 +1770,7 @@ export function CuratorMatchmaking() {
                 className="text-2xl mb-8 text-[var(--charcoal)]"
                 style={{ fontFamily: 'Fjalla One' }}
               >
-                WIR DURCHSUCHEN 70.000 BÜCHER FÜR DICH ...
+                {t('matching.loadingTitle')}
               </h3>
 
               <div className="space-y-3 text-left">
@@ -1782,7 +1784,7 @@ export function CuratorMatchmaking() {
                       loadingProgress >= 33 ? "text-[#5a9690]" : "text-gray-300"
                     }`}
                   />
-                  <span className="text-sm text-gray-600">Stimmung analysiert</span>
+                  <span className="text-sm text-gray-600">{t('matching.loadingSteps.analyzing')}</span>
                 </motion.div>
 
                 <motion.div
@@ -1795,7 +1797,7 @@ export function CuratorMatchmaking() {
                       loadingProgress >= 66 ? "text-[#5a9690]" : "text-gray-300"
                     }`}
                   />
-                  <span className="text-sm text-gray-600">Genres abgeglichen</span>
+                  <span className="text-sm text-gray-600">{t('matching.loadingSteps.matching')}</span>
                 </motion.div>
 
                 <motion.div
@@ -1808,7 +1810,7 @@ export function CuratorMatchmaking() {
                       loadingProgress >= 100 ? "text-[#5a9690]" : "text-gray-300"
                     }`}
                   />
-                  <span className="text-sm text-gray-600">Kuratierte Empfehlungen ausgewählt</span>
+                  <span className="text-sm text-gray-600">{t('matching.loadingSteps.curating')}</span>
                 </motion.div>
               </div>
             </div>

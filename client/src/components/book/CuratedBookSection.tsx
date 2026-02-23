@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { CreatorCarousel } from '../creator/CreatorCarousel';
 
 /**
@@ -127,7 +128,7 @@ export function CuratedBookSection({
   tags,
   showHeader = true,
   showCta = false,
-  ctaText = "Alle Bücher ansehen",
+  ctaText,
   onCtaClick,
   showVideo = false,
   videoThumbnail,
@@ -155,6 +156,8 @@ export function CuratedBookSection({
   curationId,
   curationOwnerCreatorId,
 }: CuratedBookSectionProps) {
+  const { t } = useTranslation();
+  const effectiveCtaText = ctaText ?? t('bookComponents.viewAllBooks');
   // Default Curator wenn nicht angegeben
   const defaultCurator: CuratorInfo = {
     avatar: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=400',
@@ -187,7 +190,7 @@ export function CuratedBookSection({
           categories={categories}
           tags={tags}
           showCta={showCta}
-          ctaText={ctaText}
+          ctaText={effectiveCtaText}
           onCtaClick={onCtaClick}
           backgroundColor={backgroundColor}
           sectionBackgroundColor={sectionBackgroundColor}

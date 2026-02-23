@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 import { Heart, Share2, ShoppingCart, Check, Play, Tv, Youtube, Mic, Newspaper, Award, Trophy, Medal, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ExternalLink, Info, Tags } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
@@ -84,6 +85,7 @@ const PRESS_QUOTES = [
 ];
 
 export function BookDetailPage() {
+  const { t } = useTranslation();
   const navigate = useSafeNavigate();
   const { isFavorite, addFavorite, removeFavorite } = useFavorites();
   const { addToCart, isInCart } = useCart();
@@ -1080,7 +1082,7 @@ export function BookDetailPage() {
                     color: 'var(--button-product-text)'
                   }}
                   onClick={handleToggleFavorite}
-                  aria-label={isFavorite(book.id) ? "Aus Merkliste entfernen" : "Zu Merkliste hinzufügen"}
+                  aria-label={isFavorite(book.id) ? t('bookComponents.removeFromWishlist') : t('bookComponents.addToWishlist')}
                   aria-pressed={isFavorite(book.id)}
                 >
                   <Heart className={`w-4 h-4 lg:w-5 lg:h-5 mr-2 ${isFavorite(book.id) ? 'fill-current' : ''}`} aria-hidden="true" />
@@ -1226,7 +1228,7 @@ export function BookDetailPage() {
                     {googleRating.ratingsCount} Bewertungen via Google Books
                   </Text>
                 ) : (
-                  <Text variant="small" className="opacity-70">Noch keine Bewertungen verfügbar</Text>
+                  <Text variant="small" className="opacity-70">{t('bookComponents.noRatingsYet')}</Text>
                 )}
               </div>
               
@@ -1299,7 +1301,7 @@ export function BookDetailPage() {
                   })}
                 </div>
                 <Text variant="xs" className="opacity-70 !normal-case">
-                  Ggf. zzgl. Versandkosten. Preise für eBooks und Hörbücher können abweichen.
+                  {t('bookComponents.shippingNote')}
                 </Text>
               </section>
               )}
@@ -1363,7 +1365,7 @@ export function BookDetailPage() {
                       </div>
                       
                       <Text variant="xs" className="opacity-70 mb-3 !normal-case">
-                        Ggf. zzgl. Versandkosten. Preise für eBooks und Hörbücher können abweichen.
+                        {t('bookComponents.shippingNote')}
                       </Text>
                     </>
                   );
@@ -1371,7 +1373,7 @@ export function BookDetailPage() {
                 
                 {/* Affiliate Disclaimer - DSGVO compliant */}
                 <Text variant="small" className="opacity-80 mt-3 leading-relaxed">
-                  <strong>Hinweis zu Affiliate-Links:</strong> Bei Käufen über unsere Links erhalten wir eine Provision. Für dich entstehen keine Mehrkosten. Die Provision hilft uns, diese Plattform zu betreiben und weiterhin kuratierte Buchempfehlungen anzubieten.
+                  {t('bookComponents.affiliateNote')}
                 </Text>
               </section>
             </div>
@@ -1529,7 +1531,7 @@ export function BookDetailPage() {
           </Section>
         </section>
       
-      {/* Über das Buch und den Autor */}
+      {/* aboutBookAndAuthor */}
       <section className="bg-transparent">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           
@@ -1554,7 +1556,7 @@ export function BookDetailPage() {
                 onClick={() => setBookDescExpanded(!bookDescExpanded)}
                 className="expand-btn hover-text-blue"
                 aria-expanded={bookDescExpanded}
-                aria-label={bookDescExpanded ? 'Beschreibung verkürzen' : 'Vollständige Beschreibung anzeigen'}
+                aria-label={bookDescExpanded ? t('bookComponents.collapseDescription') : t('bookComponents.expandDescription')}
               >
                 {bookDescExpanded ? 'Weniger anzeigen' : 'Mehr lesen'}
                 <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${bookDescExpanded ? 'rotate-180' : ''}`} aria-hidden="true" />
@@ -1580,7 +1582,7 @@ export function BookDetailPage() {
                 variant="h3"
                 className="mb-4 text-foreground"
               >
-                Weitere Bücher aus der Reihe „{book.collection}"
+                {t('bookComponents.moreFromSeries')}
               </Heading>
               
               {/* Sort Chips */}
@@ -1600,7 +1602,7 @@ export function BookDetailPage() {
                         onClick={() => setSeriesSortBy(option.id)}
                         className="sort-chip"
                         aria-pressed={isActive}
-                        aria-label={`Nach ${option.label} sortieren`}
+                        aria-label={t('bookComponents.sortBy', { label: option.label })}
                       >
                         <Text 
                           as="span" 
@@ -1717,7 +1719,7 @@ export function BookDetailPage() {
                         onClick={() => setAuthorBooksSortBy(option.id)}
                         className="sort-chip"
                         aria-pressed={isActive}
-                        aria-label={`Nach ${option.label} sortieren`}
+                        aria-label={t('bookComponents.sortBy', { label: option.label })}
                       >
                         <Text 
                           as="span" 
@@ -1975,7 +1977,7 @@ export function BookDetailPage() {
                         onClick={() => setSortBy(option.id)}
                         className="sort-chip"
                         aria-pressed={isActive}
-                        aria-label={`Nach ${option.label} sortieren`}
+                        aria-label={t('bookComponents.sortBy', { label: option.label })}
                       >
                         <Text 
                           as="span" 

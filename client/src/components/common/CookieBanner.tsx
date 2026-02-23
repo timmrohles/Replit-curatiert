@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Cookie, Settings } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -9,6 +10,7 @@ interface CookiePreferences {
 }
 
 export function CookieBanner() {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>({
@@ -92,13 +94,11 @@ export function CookieBanner() {
                     color: '#3A3A3A',
                   }}
                 >
-                  Wir verwenden Cookies
+                  {t('cookies.title')}
                 </h3>
                 
                 <p className="text-sm md:text-base mb-4" style={{ color: '#3A3A3A' }}>
-                  Wir verwenden Cookies und ähnliche Technologien, um die Funktionalität unserer Website zu gewährleisten 
-                  und Ihr Nutzererlebnis zu verbessern. Mit Ihrer Zustimmung analysieren wir die Nutzung unserer Website 
-                  und können personalisierte Inhalte anzeigen. Sie können Ihre Einwilligung jederzeit widerrufen.
+                  {t('cookies.description')}
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3">
@@ -110,7 +110,7 @@ export function CookieBanner() {
                       fontFamily: 'Fjalla One, sans-serif',
                     }}
                   >
-                    Alle akzeptieren
+                    {t('cookies.acceptAll')}
                   </Button>
                   
                   <Button
@@ -122,7 +122,7 @@ export function CookieBanner() {
                       fontFamily: 'Fjalla One, sans-serif',
                     }}
                   >
-                    Nur notwendige
+                    {t('cookies.acceptNecessary')}
                   </Button>
                   
                   <Button
@@ -136,26 +136,26 @@ export function CookieBanner() {
                     }}
                   >
                     <Settings className="w-4 h-4 mr-2" />
-                    Einstellungen
+                    {t('cookies.settings')}
                   </Button>
                 </div>
 
                 <div className="mt-4 text-xs" style={{ color: '#666' }}>
-                  Mehr Informationen finden Sie in unserer{' '}
+                  {t('cookies.moreInfoText')}{' '}
                   <a 
                     href="/datenschutz" 
                     className="underline hover:no-underline"
                     style={{ color: '#247ba0' }}
                   >
-                    Datenschutzerklärung
+                    {t('cookies.privacyPolicy')}
                   </a>
-                  {' '}und im{' '}
+                  {' '}{t('cookies.andIn')}{' '}
                   <a 
                     href="/impressum" 
                     className="underline hover:no-underline"
                     style={{ color: '#247ba0' }}
                   >
-                    Impressum
+                    {t('cookies.legalNotice')}
                   </a>
                   .
                 </div>
@@ -173,12 +173,12 @@ export function CookieBanner() {
                   color: '#3A3A3A',
                 }}
               >
-                Cookie-Einstellungen
+                {t('cookies.settingsTitle')}
               </h3>
               <button
                 onClick={() => setShowSettings(false)}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Schließen"
+                aria-label={t('common.close')}
               >
                 <X className="w-5 h-5" style={{ color: '#3A3A3A' }} />
               </button>
@@ -195,7 +195,7 @@ export function CookieBanner() {
                       color: '#3A3A3A',
                     }}
                   >
-                    Notwendige Cookies
+                    {t('cookies.necessaryTitle')}
                   </h4>
                   <div
                     className="px-3 py-1 rounded-full text-xs"
@@ -205,12 +205,11 @@ export function CookieBanner() {
                       fontFamily: 'Fjalla One, sans-serif',
                     }}
                   >
-                    Immer aktiv
+                    {t('common.alwaysActive')}
                   </div>
                 </div>
                 <p className="text-sm" style={{ color: '#666' }}>
-                  Diese Cookies sind für die Grundfunktionen der Website erforderlich und können nicht deaktiviert werden. 
-                  Sie speichern z.B. Ihre Cookie-Präferenzen und Warenkorbinhalte.
+                  {t('cookies.necessaryDescription')}
                 </p>
               </div>
 
@@ -224,7 +223,7 @@ export function CookieBanner() {
                       color: '#3A3A3A',
                     }}
                   >
-                    Analyse-Cookies
+                    {t('cookies.analyticsTitle')}
                   </h4>
                   <button
                     onClick={() => togglePreference('analytics')}
@@ -242,8 +241,7 @@ export function CookieBanner() {
                   </button>
                 </div>
                 <p className="text-sm" style={{ color: '#666' }}>
-                  Diese Cookies helfen uns zu verstehen, wie Besucher mit der Website interagieren, 
-                  indem Informationen anonym gesammelt und analysiert werden.
+                  {t('cookies.analyticsDescription')}
                 </p>
               </div>
 
@@ -257,7 +255,7 @@ export function CookieBanner() {
                       color: '#3A3A3A',
                     }}
                   >
-                    Marketing-Cookies
+                    {t('cookies.marketingTitle')}
                   </h4>
                   <button
                     onClick={() => togglePreference('marketing')}
@@ -275,8 +273,7 @@ export function CookieBanner() {
                   </button>
                 </div>
                 <p className="text-sm" style={{ color: '#666' }}>
-                  Diese Cookies werden verwendet, um Werbung relevanter für Sie und Ihre Interessen zu machen. 
-                  Sie werden auch verwendet, um die Häufigkeit von Werbeanzeigen zu begrenzen.
+                  {t('cookies.marketingDescription')}
                 </p>
               </div>
             </div>
@@ -290,7 +287,7 @@ export function CookieBanner() {
                   fontFamily: 'Fjalla One, sans-serif',
                 }}
               >
-                Auswahl speichern
+                {t('cookies.saveSelection')}
               </Button>
               
               <Button
@@ -302,7 +299,7 @@ export function CookieBanner() {
                   fontFamily: 'Fjalla One, sans-serif',
                 }}
               >
-                Alle akzeptieren
+                {t('cookies.acceptAll')}
               </Button>
             </div>
           </div>
