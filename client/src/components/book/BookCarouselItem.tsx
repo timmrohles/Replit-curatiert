@@ -99,6 +99,7 @@ interface BookCarouselItemProps {
   book: BookCarouselItemData;
   /** Optional: Size variant - controls width and height */
   size?: "sm" | "md" | "lg";
+  onBookClick?: (bookId: string, isbn?: string) => void;
 }
 
 /**
@@ -111,7 +112,7 @@ interface BookCarouselItemProps {
  * - Affiliate buttons (bücher.de, geniallokal)
  * - PERFORMANCE OPTIMIZED: Memoized component with useCallback handlers
  */
-const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps) => {
+const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarouselItemProps) => {
   const navigate = useSafeNavigate();
   const { resolvedTheme } = useTheme();
   const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
@@ -152,8 +153,9 @@ const BookCarouselItemComponent = ({ book, size = 'md' }: BookCarouselItemProps)
   }, []);
   
   const handleNavigate = useCallback(() => {
+    onBookClick?.(book.id, book.isbn);
     navigate(getBookUrl(book));
-  }, [navigate, book]);
+  }, [navigate, book, onBookClick]);
 
 
   // Size variants - matches BookCard sizing

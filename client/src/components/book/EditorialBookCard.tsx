@@ -74,6 +74,7 @@ export interface EditorialBookCardData {
 
 interface EditorialBookCardProps {
   book: EditorialBookCardData;
+  onBookClick?: (bookId: string, isbn?: string) => void;
 }
 
 /**
@@ -88,7 +89,7 @@ interface EditorialBookCardProps {
  */
 
 
-export function EditorialBookCard({ book }: EditorialBookCardProps) {
+export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps) {
   const navigate = useSafeNavigate();
   const { resolvedTheme } = useTheme();
   const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
@@ -136,7 +137,7 @@ export function EditorialBookCard({ book }: EditorialBookCardProps) {
   const displayDescription = book.shortDescription || book.klappentext || '';
 
   return (
-    <div className="group relative h-full" onClick={() => navigate(getBookUrl(book))}>
+    <div className="group relative h-full" onClick={() => { onBookClick?.(book.id, book.isbn); navigate(getBookUrl(book)); }}>
       <div className="pl-2 pb-2 pt-1 pr-1 md:pl-3 md:pb-3 md:pt-2 md:pr-2 relative flex flex-col h-full">
         {/* Buchcover Container */}
         <div className="relative">

@@ -27,7 +27,12 @@ import {
   DollarSign,
   Link as LinkIcon,
   BookOpen,
-  Search
+  Search,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  Filter,
+  RefreshCw
 } from 'lucide-react';
 import { getAdminToken } from '../../utils/adminToken';
 
@@ -51,6 +56,7 @@ interface Affiliate {
   is_active: boolean;
   show_in_carousel: boolean;
   notes?: string | null;
+  cookie_duration_days?: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -95,7 +101,7 @@ function getAdminHeaders(): HeadersInit {
 // ==================================================================
 
 export function AdminAffiliate() {
-  const [view, setView] = useState<'partners' | 'assignments' | 'creator-tracking' | 'creator-orders'>('partners');
+  const [view, setView] = useState<'partners' | 'assignments' | 'creator-tracking' | 'creator-orders' | 'commissions'>('partners');
   
   // Affiliate Partners
   const [affiliates, setAffiliates] = useState<Affiliate[]>([]);
@@ -122,6 +128,16 @@ export function AdminAffiliate() {
   const [editingOrder, setEditingOrder] = useState<any>(null);
   const [newOrder, setNewOrder] = useState({ creatorId: '', bookId: '', isbn13: '', merchant: '', merchantCommission: '', creatorShare: '', platformShare: '', status: 'pending', notes: '' });
   
+  // Commission State
+  const [commissionsData, setCommissionsData] = useState<any[]>([]);
+  const [commissionsSummary, setCommissionsSummary] = useState<any>(null);
+  const [commissionsPagination, setCommissionsPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 0 });
+  const [commissionsFilter, setCommissionsFilter] = useState({ status: '', attribution_type: '', creator_id: '', date_from: '', date_to: '' });
+  const [editingShareRate, setEditingShareRate] = useState<{ id: number; rate: string } | null>(null);
+  const [referralSessions, setReferralSessions] = useState<any[]>([]);
+  const [showReferralSessions, setShowReferralSessions] = useState(false);
+  const [referralSessionsPagination, setReferralSessionsPagination] = useState({ page: 1, limit: 20, total: 0 });
+
   // UI State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,6 +159,8 @@ export function AdminAffiliate() {
     } else if (view === 'creator-orders') {
       fetchOrdersData();
       fetchCreatorsList();
+    } else if (view === 'commissions') {
+      fetchCommissionsData();
     }
   }, [view]);
 
@@ -224,6 +242,112 @@ export function AdminAffiliate() {
     } catch (err) {
       console.error('Book search error:', err);
       setBookSearchResults([]);
+    }
+  }
+
+  async function fetchCommissionsData(page = 1) {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = new URLSearchParams();
+      params.set('page', String(page));
+      params.set('limit', '50');
+      if (commissionsFilter.status) params.set('status', commissionsFilter.status);
+      if (commissionsFilter.attribution_type) params.set('attribution_type', commissionsFilter.attribution_type);
+      if (commissionsFilter.creator_id) params.set('creator_id', commissionsFilter.creator_id);
+      if (commissionsFilter.date_from) params.set('date_from', commissionsFilter.date_from);
+      if (commissionsFilter.date_to) params.set('date_to', commissionsFilter.date_to);
+
+      const response = await fetch(`${API_BASE}/admin/commissions?${params.toString()}`, { credentials: 'include', headers: getAdminHeaders() });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || 'Failed to load commissions');
+      setCommissionsData(Array.isArray(result.data) ? result.data : []);
+      setCommissionsSummary(result.summary || null);
+      setCommissionsPagination(result.pagination || { page: 1, limit: 50, total: 0, totalPages: 0 });
+    } catch (err) {
+      setError(String(err));
+      setCommissionsData([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function fetchReferralSessions(page = 1) {
+    try {
+      const response = await fetch(`${API_BASE}/admin/referral-sessions?page=${page}&limit=20`, { credentials: 'include', headers: getAdminHeaders() });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || 'Failed to load referral sessions');
+      setReferralSessions(Array.isArray(result.data) ? result.data : []);
+      setReferralSessionsPagination(result.pagination || { page: 1, limit: 20, total: 0 });
+    } catch (err) {
+      console.error('Failed to load referral sessions:', err);
+      setReferralSessions([]);
+    }
+  }
+
+  async function confirmCommission(id: number) {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE}/admin/commissions/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ status: 'confirmed' }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || 'Update failed');
+      setSuccess('Provision bestaetigt');
+      fetchCommissionsData(commissionsPagination.page);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function cancelCommission(id: number) {
+    if (!confirm('Provision wirklich stornieren? Die Creator-Auszahlung wird auf 0 gesetzt.')) return;
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE}/admin/commissions/${id}/cancel`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: getAdminHeaders(),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || 'Stornierung fehlgeschlagen');
+      setSuccess('Provision storniert');
+      fetchCommissionsData(commissionsPagination.page);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function updateShareRate(id: number, newRate: number) {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE}/admin/commissions/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: getAdminHeaders(),
+        body: JSON.stringify({ share_rate: newRate }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const result = await response.json();
+      if (!result.ok) throw new Error(result.error || 'Update fehlgeschlagen');
+      setSuccess('Share Rate aktualisiert');
+      setEditingShareRate(null);
+      fetchCommissionsData(commissionsPagination.page);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -823,6 +947,25 @@ export function AdminAffiliate() {
                 Auf der Produktdetailseite erscheinen immer alle aktiven Partner.
               </p>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Cookie-Laufzeit (Tage)
+                <span className="text-xs text-gray-500 ml-1">(Attributionsfenster des Haendlers)</span>
+              </label>
+              <input
+                data-testid="input-cookie-duration"
+                type="number"
+                min={0}
+                value={editingAffiliate.cookie_duration_days ?? 30}
+                onChange={(e) => setEditingAffiliate({ ...editingAffiliate, cookie_duration_days: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border rounded-lg"
+                placeholder="30"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                z.B. Amazon 1 Tag (24h), Thalia 30 Tage. Bestimmt, wie lange ein Klick dem Haendler zugeordnet wird.
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-3 mt-6">
@@ -1079,6 +1222,348 @@ export function AdminAffiliate() {
               Abbrechen
             </button>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==================================================================
+  // RENDER: COMMISSIONS VIEW
+  // ==================================================================
+
+  function renderCommissionsView() {
+    return (
+      <div className="space-y-6">
+        {commissionsSummary && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-testid="commissions-summary">
+            {[
+              { label: 'Ausstehend', value: `${parseFloat(commissionsSummary.total_pending || 0).toFixed(2)} EUR`, color: 'bg-yellow-50 border-yellow-200 text-yellow-800' },
+              { label: 'Bestaetigt', value: `${parseFloat(commissionsSummary.total_confirmed || 0).toFixed(2)} EUR`, color: 'bg-green-50 border-green-200 text-green-800' },
+              { label: 'Storniert', value: `${parseFloat(commissionsSummary.total_cancelled || 0).toFixed(2)} EUR`, color: 'bg-red-50 border-red-200 text-red-800' },
+              { label: 'Aktive Referrals', value: String(commissionsSummary.active_referral_count || 0), color: 'bg-blue-50 border-blue-200 text-blue-800' },
+            ].map((item, idx) => (
+              <div key={idx} className={`p-4 rounded-lg border text-center ${item.color}`} data-testid={`summary-card-${idx}`}>
+                <div className="text-xl font-bold">{item.value}</div>
+                <div className="text-xs mt-1 opacity-80">{item.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg border border-gray-200 p-4" data-testid="commissions-filter-bar">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">Filter</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <select
+              data-testid="filter-status"
+              value={commissionsFilter.status}
+              onChange={(e) => setCommissionsFilter({ ...commissionsFilter, status: e.target.value })}
+              className="px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="">Alle Status</option>
+              <option value="pending">Ausstehend</option>
+              <option value="confirmed">Bestaetigt</option>
+              <option value="cancelled">Storniert</option>
+            </select>
+            <select
+              data-testid="filter-attribution-type"
+              value={commissionsFilter.attribution_type}
+              onChange={(e) => setCommissionsFilter({ ...commissionsFilter, attribution_type: e.target.value })}
+              className="px-3 py-2 border rounded-lg text-sm"
+            >
+              <option value="">Alle Typen</option>
+              <option value="REFERRAL">Referral</option>
+              <option value="CURATION">Curation</option>
+            </select>
+            <input
+              data-testid="filter-creator"
+              type="text"
+              value={commissionsFilter.creator_id}
+              onChange={(e) => setCommissionsFilter({ ...commissionsFilter, creator_id: e.target.value })}
+              className="px-3 py-2 border rounded-lg text-sm"
+              placeholder="Creator ID..."
+            />
+            <input
+              data-testid="filter-date-from"
+              type="date"
+              value={commissionsFilter.date_from}
+              onChange={(e) => setCommissionsFilter({ ...commissionsFilter, date_from: e.target.value })}
+              className="px-3 py-2 border rounded-lg text-sm"
+            />
+            <div className="flex items-center gap-2">
+              <input
+                data-testid="filter-date-to"
+                type="date"
+                value={commissionsFilter.date_to}
+                onChange={(e) => setCommissionsFilter({ ...commissionsFilter, date_to: e.target.value })}
+                className="px-3 py-2 border rounded-lg text-sm flex-1"
+              />
+              <button
+                data-testid="button-apply-filters"
+                onClick={() => fetchCommissionsData(1)}
+                className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex items-center gap-1"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {loading && <div className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>}
+
+        {!loading && (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="commissions-table">
+            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-2">
+              <h3 className="font-semibold text-gray-800">Provisionen ({commissionsPagination.total})</h3>
+            </div>
+            {commissionsData.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-600">
+                    <tr>
+                      <th className="text-left px-4 py-2">Datum</th>
+                      <th className="text-left px-4 py-2">Creator</th>
+                      <th className="text-left px-4 py-2">Buch</th>
+                      <th className="text-center px-4 py-2">Typ</th>
+                      <th className="text-right px-4 py-2">Brutto-Provision</th>
+                      <th className="text-center px-4 py-2">Share Rate</th>
+                      <th className="text-right px-4 py-2">Creator-Auszahlung</th>
+                      <th className="text-center px-4 py-2">Status</th>
+                      <th className="text-center px-4 py-2">Aktionen</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {commissionsData.map((c: any) => (
+                      <tr key={c.id} className="hover:bg-gray-50" data-testid={`commission-row-${c.id}`}>
+                        <td className="px-4 py-2 text-gray-500 text-xs whitespace-nowrap">
+                          {c.occurred_at ? new Date(c.occurred_at).toLocaleDateString('de-DE') : '-'}
+                        </td>
+                        <td className="px-4 py-2">
+                          <div className="text-gray-800 font-medium text-xs">{c.creator_display_name || c.attributed_creator_id}</div>
+                          {c.creator_slug && <div className="text-gray-400 text-xs">@{c.creator_slug}</div>}
+                        </td>
+                        <td className="px-4 py-2 text-gray-500 text-xs font-mono">
+                          {c.isbn || c.book_id || '-'}
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            c.attribution_type === 'REFERRAL'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-emerald-100 text-emerald-700'
+                          }`} data-testid={`badge-type-${c.id}`}>
+                            {c.attribution_type}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-right text-gray-600">
+                          {parseFloat(c.commission_amount_net || 0).toFixed(2)} EUR
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          {editingShareRate && editingShareRate.id === c.id ? (
+                            <div className="flex items-center gap-1 justify-center">
+                              <input
+                                data-testid={`input-share-rate-${c.id}`}
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="1"
+                                value={editingShareRate.rate}
+                                onChange={(e) => setEditingShareRate({ id: editingShareRate.id, rate: e.target.value })}
+                                className="w-16 px-1 py-0.5 border rounded text-xs text-center"
+                              />
+                              <button
+                                data-testid={`button-save-share-rate-${c.id}`}
+                                onClick={() => updateShareRate(c.id, parseFloat(editingShareRate.rate))}
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setEditingShareRate(null)}
+                                className="text-gray-400 hover:text-gray-600"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              data-testid={`button-edit-share-rate-${c.id}`}
+                              onClick={() => setEditingShareRate({ id: c.id, rate: String(parseFloat(c.share_rate || 0.5)) })}
+                              className="text-xs text-gray-600 hover:text-blue-600 cursor-pointer"
+                            >
+                              {(parseFloat(c.share_rate || 0.5) * 100).toFixed(0)}%
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-4 py-2 text-right font-medium text-gray-800">
+                          {parseFloat(c.creator_payout_amount || 0).toFixed(2)} EUR
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            c.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                            c.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            c.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                          }`} data-testid={`badge-status-${c.id}`}>
+                            {c.status === 'confirmed' ? 'Bestaetigt' :
+                             c.status === 'pending' ? 'Ausstehend' :
+                             c.status === 'cancelled' ? 'Storniert' : c.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {c.status === 'pending' && (
+                              <>
+                                <button
+                                  data-testid={`button-confirm-${c.id}`}
+                                  onClick={() => confirmCommission(c.id)}
+                                  className="px-2 py-1 text-xs bg-green-50 text-green-700 rounded hover:bg-green-100"
+                                  title="Bestaetigen"
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  data-testid={`button-cancel-${c.id}`}
+                                  onClick={() => cancelCommission(c.id)}
+                                  className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100"
+                                  title="Stornieren"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
+                            {c.status === 'confirmed' && (
+                              <button
+                                data-testid={`button-cancel-confirmed-${c.id}`}
+                                onClick={() => cancelCommission(c.id)}
+                                className="px-2 py-1 text-xs bg-red-50 text-red-700 rounded hover:bg-red-100"
+                                title="Stornieren"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="p-8 text-center text-gray-400">Keine Provisionen vorhanden</div>
+            )}
+            {commissionsPagination.total > commissionsPagination.limit && (
+              <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                <button
+                  data-testid="button-commissions-prev"
+                  onClick={() => fetchCommissionsData(commissionsPagination.page - 1)}
+                  disabled={commissionsPagination.page <= 1}
+                  className="px-3 py-1 text-sm border rounded disabled:opacity-30"
+                >
+                  Zurueck
+                </button>
+                <span className="text-sm text-gray-500">
+                  Seite {commissionsPagination.page} von {commissionsPagination.totalPages || Math.ceil(commissionsPagination.total / commissionsPagination.limit)}
+                </span>
+                <button
+                  data-testid="button-commissions-next"
+                  onClick={() => fetchCommissionsData(commissionsPagination.page + 1)}
+                  disabled={commissionsPagination.page * commissionsPagination.limit >= commissionsPagination.total}
+                  className="px-3 py-1 text-sm border rounded disabled:opacity-30"
+                >
+                  Weiter
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden" data-testid="referral-sessions-section">
+          <button
+            data-testid="button-toggle-referral-sessions"
+            onClick={() => {
+              const next = !showReferralSessions;
+              setShowReferralSessions(next);
+              if (next && referralSessions.length === 0) fetchReferralSessions();
+            }}
+            className="w-full px-4 py-3 bg-gray-50 flex items-center justify-between gap-2 hover:bg-gray-100 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-gray-500" />
+              <h3 className="font-semibold text-gray-800">Referral-Sessions</h3>
+            </div>
+            {showReferralSessions ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
+          </button>
+          {showReferralSessions && (
+            <div>
+              {referralSessions.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600">
+                      <tr>
+                        <th className="text-left px-4 py-2">Session ID</th>
+                        <th className="text-left px-4 py-2">Creator</th>
+                        <th className="text-left px-4 py-2">Erstellt</th>
+                        <th className="text-left px-4 py-2">Laeuft ab</th>
+                        <th className="text-center px-4 py-2">Status</th>
+                        <th className="text-left px-4 py-2">Landing URL</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {referralSessions.map((rs: any, idx: number) => (
+                        <tr key={idx} className="hover:bg-gray-50" data-testid={`referral-session-row-${idx}`}>
+                          <td className="px-4 py-2 text-gray-400 font-mono text-xs">{rs.session_id?.substring(0, 16)}...</td>
+                          <td className="px-4 py-2">
+                            <div className="text-gray-800 text-xs font-medium">{rs.creator_display_name || rs.ref_creator_id}</div>
+                            {rs.creator_slug && <div className="text-gray-400 text-xs">@{rs.creator_slug}</div>}
+                          </td>
+                          <td className="px-4 py-2 text-gray-500 text-xs whitespace-nowrap">
+                            {rs.first_seen_at ? new Date(rs.first_seen_at).toLocaleString('de-DE') : '-'}
+                          </td>
+                          <td className="px-4 py-2 text-gray-500 text-xs whitespace-nowrap">
+                            {rs.expires_at ? new Date(rs.expires_at).toLocaleString('de-DE') : '-'}
+                          </td>
+                          <td className="px-4 py-2 text-center">
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              rs.session_status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                            }`}>
+                              {rs.session_status === 'active' ? 'Aktiv' : 'Abgelaufen'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-2 text-gray-400 text-xs truncate max-w-[200px]">
+                            {rs.landing_url || '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-6 text-center text-gray-400 text-sm">Keine Referral-Sessions vorhanden</div>
+              )}
+              {referralSessionsPagination.total > referralSessionsPagination.limit && (
+                <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                  <button
+                    onClick={() => fetchReferralSessions(referralSessionsPagination.page - 1)}
+                    disabled={referralSessionsPagination.page <= 1}
+                    className="px-3 py-1 text-sm border rounded disabled:opacity-30"
+                  >
+                    Zurueck
+                  </button>
+                  <span className="text-sm text-gray-500">
+                    Seite {referralSessionsPagination.page}
+                  </span>
+                  <button
+                    onClick={() => fetchReferralSessions(referralSessionsPagination.page + 1)}
+                    disabled={referralSessionsPagination.page * referralSessionsPagination.limit >= referralSessionsPagination.total}
+                    className="px-3 py-1 text-sm border rounded disabled:opacity-30"
+                  >
+                    Weiter
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1589,6 +2074,18 @@ export function AdminAffiliate() {
           <Search className="w-4 h-4 inline mr-2" />
           Bestellungen
         </button>
+        <button
+          data-testid="tab-commissions"
+          onClick={() => setView('commissions')}
+          className={`px-4 py-2 rounded-lg ${
+            view === 'commissions'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+          }`}
+        >
+          <DollarSign className="w-4 h-4 inline mr-2" />
+          Provisionen
+        </button>
       </div>
 
       {/* Error/Success Messages */}
@@ -1629,6 +2126,7 @@ export function AdminAffiliate() {
       {view === 'assignments' && renderAssignmentsView()}
       {view === 'creator-tracking' && renderCreatorTrackingView()}
       {view === 'creator-orders' && renderCreatorOrdersView()}
+      {view === 'commissions' && renderCommissionsView()}
 
       {/* Modals */}
       {renderAffiliateModal()}

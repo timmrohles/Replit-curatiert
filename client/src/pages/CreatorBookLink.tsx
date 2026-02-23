@@ -6,22 +6,7 @@ import { Footer } from '../components/layout/Footer';
 import { Loader2, ExternalLink, ShoppingCart, User, BookOpen, ArrowLeft } from 'lucide-react';
 import { useSafeNavigate } from '../utils/routing';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-
-function generateSessionId(): string {
-  const stored = localStorage.getItem('affiliate_session_id');
-  const storedTs = localStorage.getItem('affiliate_session_ts');
-  const now = Date.now();
-  const TTL = 48 * 60 * 60 * 1000;
-
-  if (stored && storedTs && (now - parseInt(storedTs)) < TTL) {
-    return stored;
-  }
-
-  const newId = 'sess_' + Math.random().toString(36).substring(2) + '_' + now.toString(36);
-  localStorage.setItem('affiliate_session_id', newId);
-  localStorage.setItem('affiliate_session_ts', now.toString());
-  return newId;
-}
+import { generateSessionId, getReferralContext } from '../utils/tracking';
 
 interface CreatorLinkData {
   creator: {
@@ -69,6 +54,7 @@ export function CreatorBookLink() {
     if (data?.ok && data.data?.creator && !clickTracked) {
       const sessionId = generateSessionId();
       const creator = data.data.creator;
+      const { refCreatorId, refSessionId } = getReferralContext();
 
       localStorage.setItem('affiliate_creator_id', creator.userId);
       localStorage.setItem('affiliate_creator_slug', creator.slug);
@@ -84,6 +70,10 @@ export function CreatorBookLink() {
           sessionId,
           landingPage: window.location.pathname,
           referrer: document.referrer || null,
+          ...(refCreatorId && refSessionId ? {
+            referralCreatorId: refCreatorId,
+            referralSessionId: refSessionId,
+          } : {}),
         }),
       }).catch(() => {});
 
@@ -94,6 +84,7 @@ export function CreatorBookLink() {
   const handleMerchantClick = (merchant: CreatorLinkData['merchants'][0]) => {
     const sessionId = generateSessionId();
     const creator = data?.data?.creator;
+    const { refCreatorId, refSessionId } = getReferralContext();
 
     fetch('/api/affiliate/track-click', {
       method: 'POST',
@@ -107,6 +98,10 @@ export function CreatorBookLink() {
         merchant: merchant.slug,
         affiliateId: merchant.id,
         landingPage: window.location.pathname,
+        ...(refCreatorId && refSessionId ? {
+          referralCreatorId: refCreatorId,
+          referralSessionId: refSessionId,
+        } : {}),
       }),
     }).catch(() => {});
 

@@ -5,9 +5,11 @@ import { createServer } from "http";
 import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 
 const app = express();
 app.set('trust proxy', 1);
+app.use(cookieParser());
 const httpServer = createServer(app);
 
 declare module "http" {

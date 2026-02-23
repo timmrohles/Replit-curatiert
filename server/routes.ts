@@ -433,6 +433,79 @@ async function ensureSchemaReady() {
   }
 
   try {
+    await queryDB(`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS cookie_duration_days INTEGER DEFAULT 30`);
+    log.info('Affiliates cookie_duration_days column verified');
+  } catch (err) {
+    log.warn('Could not add cookie_duration_days to affiliates:', err);
+  }
+
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS referral_sessions (
+        session_id VARCHAR(255) PRIMARY KEY,
+        ref_creator_id VARCHAR(255) NOT NULL,
+        first_seen_at TIMESTAMPTZ DEFAULT NOW(),
+        expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days'),
+        landing_url TEXT
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_referral_sessions_creator ON referral_sessions(ref_creator_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_referral_sessions_expires ON referral_sessions(expires_at)`);
+    log.info('referral_sessions table verified');
+  } catch (err) {
+    log.warn('Could not create referral_sessions table:', err);
+  }
+
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS curation_clicks (
+        id SERIAL PRIMARY KEY,
+        session_id VARCHAR(255) NOT NULL,
+        curation_id INTEGER,
+        curation_owner_creator_id VARCHAR(255) NOT NULL,
+        book_id VARCHAR(255) NOT NULL,
+        isbn VARCHAR(20),
+        clicked_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_curation_clicks_session ON curation_clicks(session_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_curation_clicks_creator ON curation_clicks(curation_owner_creator_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_curation_clicks_session_book ON curation_clicks(session_id, book_id, clicked_at)`);
+    log.info('curation_clicks table verified');
+  } catch (err) {
+    log.warn('Could not create curation_clicks table:', err);
+  }
+
+  try {
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS creator_commissions (
+        id SERIAL PRIMARY KEY,
+        external_order_id VARCHAR(255) UNIQUE,
+        merchant VARCHAR(255),
+        session_id VARCHAR(255),
+        book_id VARCHAR(255),
+        isbn VARCHAR(20),
+        attribution_type VARCHAR(20) CHECK (attribution_type IN ('REFERRAL', 'CURATION')),
+        attributed_creator_id VARCHAR(255) NOT NULL,
+        commission_amount_net NUMERIC(10,4),
+        share_rate NUMERIC(5,4) DEFAULT 0.5000,
+        creator_payout_amount NUMERIC(10,4),
+        occurred_at TIMESTAMPTZ,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(merchant, session_id, book_id, occurred_at)
+      )
+    `);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_creator_commissions_creator ON creator_commissions(attributed_creator_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_creator_commissions_status ON creator_commissions(status)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_creator_commissions_type ON creator_commissions(attribution_type)`);
+    log.info('creator_commissions table verified');
+  } catch (err) {
+    log.warn('Could not create creator_commissions table:', err);
+  }
+
+  try {
     await queryDB(`
       CREATE TABLE IF NOT EXISTS site_banners (
         id SERIAL PRIMARY KEY,
@@ -1149,6 +1222,113 @@ function getSchemaInit() {
     });
   }
   return schemaInitPromise;
+}
+
+interface ConversionInput {
+  session_id: string;
+  book_id: string;
+  isbn?: string;
+  merchant: string;
+  commission_amount_net: number;
+  occurred_at: string;
+  external_order_id?: string;
+}
+
+interface ConversionResult {
+  attributed: boolean;
+  commission?: any;
+  existing?: boolean;
+}
+
+// REFERRAL hat exklusive Priorität; CURATION nur wenn kein Referral existiert
+async function attributeConversion(conversion: ConversionInput): Promise<ConversionResult> {
+  const { session_id, book_id, isbn, merchant, commission_amount_net, occurred_at, external_order_id } = conversion;
+
+  if (external_order_id) {
+    const existing = await queryDB(
+      `SELECT * FROM creator_commissions WHERE external_order_id = $1 LIMIT 1`,
+      [external_order_id]
+    );
+    if (existing.rows.length > 0) {
+      return { attributed: true, commission: existing.rows[0], existing: true };
+    }
+  }
+
+  const dedupCheck = await queryDB(
+    `SELECT * FROM creator_commissions WHERE merchant = $1 AND session_id = $2 AND book_id = $3 AND occurred_at = $4 LIMIT 1`,
+    [merchant, session_id, book_id, occurred_at]
+  );
+  if (dedupCheck.rows.length > 0) {
+    return { attributed: true, commission: dedupCheck.rows[0], existing: true };
+  }
+
+  let attribution_type: string | null = null;
+  let attributed_creator_id: string | null = null;
+
+  const referralResult = await queryDB(
+    `SELECT ref_creator_id FROM referral_sessions WHERE session_id = $1 AND expires_at > NOW() LIMIT 1`,
+    [session_id]
+  );
+  if (referralResult.rows.length > 0) {
+    attribution_type = 'REFERRAL';
+    attributed_creator_id = referralResult.rows[0].ref_creator_id;
+  }
+
+  if (!attribution_type) {
+    const curationResult = await queryDB(
+      `SELECT curation_owner_creator_id FROM curation_clicks
+       WHERE session_id = $1 AND book_id = $2 AND clicked_at > NOW() - INTERVAL '24 hours'
+       ORDER BY clicked_at DESC LIMIT 1`,
+      [session_id, book_id]
+    );
+    if (curationResult.rows.length > 0) {
+      attribution_type = 'CURATION';
+      attributed_creator_id = curationResult.rows[0].curation_owner_creator_id;
+    }
+  }
+
+  if (!attribution_type || !attributed_creator_id) {
+    return { attributed: false };
+  }
+
+  const share_rate = 0.5;
+  const creator_payout_amount = Number((commission_amount_net * share_rate).toFixed(4));
+
+  const insertResult = await queryDB(
+    `INSERT INTO creator_commissions
+       (external_order_id, merchant, session_id, book_id, isbn, attribution_type, attributed_creator_id,
+        commission_amount_net, share_rate, creator_payout_amount, occurred_at, status)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending')
+     ON CONFLICT DO NOTHING
+     RETURNING *`,
+    [
+      external_order_id || null,
+      merchant,
+      session_id,
+      book_id,
+      isbn || null,
+      attribution_type,
+      attributed_creator_id,
+      commission_amount_net,
+      share_rate,
+      creator_payout_amount,
+      occurred_at,
+    ]
+  );
+
+  if (insertResult.rows.length > 0) {
+    return { attributed: true, commission: insertResult.rows[0] };
+  }
+
+  const fallback = await queryDB(
+    `SELECT * FROM creator_commissions WHERE merchant = $1 AND session_id = $2 AND book_id = $3 AND occurred_at = $4 LIMIT 1`,
+    [merchant, session_id, book_id, occurred_at]
+  );
+  if (fallback.rows.length > 0) {
+    return { attributed: true, commission: fallback.rows[0], existing: true };
+  }
+
+  return { attributed: false };
 }
 
 export async function registerRoutes(
@@ -8116,6 +8296,147 @@ export async function registerRoutes(
   });
 
   // ==================================================================
+  // REFERRAL ENTRY TRACKING — /r/:creatorSlug
+  // ==================================================================
+
+  app.get('/r/:creatorSlug', async (req: Request, res: Response) => {
+    try {
+      const { creatorSlug } = req.params;
+      if (!creatorSlug || typeof creatorSlug !== 'string') {
+        return res.redirect('/');
+      }
+
+      const safeSlug = creatorSlug.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+
+      let creatorUserId: string | null = null;
+
+      const bpResult = await queryDB(
+        `SELECT user_id FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
+        [safeSlug]
+      );
+      if (bpResult.rows.length > 0) {
+        creatorUserId = bpResult.rows[0].user_id;
+      }
+
+      if (!creatorUserId) {
+        const curatorResult = await queryDB(
+          `SELECT user_id FROM curators WHERE slug = $1 AND user_id IS NOT NULL LIMIT 1`,
+          [safeSlug]
+        );
+        if (curatorResult.rows.length > 0) {
+          creatorUserId = curatorResult.rows[0].user_id;
+        }
+      }
+
+      if (!creatorUserId) {
+        log.info(`Referral: creator slug "${safeSlug}" not found, redirecting without tracking`);
+        return res.redirect('/');
+      }
+
+      const sessionId = crypto.randomUUID();
+
+      await queryDB(
+        `INSERT INTO referral_sessions (session_id, ref_creator_id, expires_at, landing_url)
+         VALUES ($1, $2, NOW() + INTERVAL '7 days', $3)`,
+        [sessionId, creatorUserId, req.originalUrl]
+      );
+
+      const maxAgeMs = 7 * 24 * 60 * 60 * 1000;
+      res.cookie('ref_creator_id', creatorUserId, {
+        httpOnly: true,
+        maxAge: maxAgeMs,
+        sameSite: 'lax',
+        path: '/',
+      });
+      res.cookie('ref_session_id', sessionId, {
+        httpOnly: true,
+        maxAge: maxAgeMs,
+        sameSite: 'lax',
+        path: '/',
+      });
+
+      log.info(`Referral: session ${sessionId} created for creator ${creatorUserId} (slug: ${safeSlug})`);
+      return res.redirect('/?ref_landing=true');
+    } catch (error) {
+      log.error('Referral entry error:', error);
+      return res.redirect('/');
+    }
+  });
+
+  // ==================================================================
+  // REFERRAL ?ref= QUERY PARAM MIDDLEWARE
+  // ==================================================================
+
+  app.use(async (req: Request, res: Response, next) => {
+    try {
+      const refSlug = req.query.ref as string | undefined;
+      if (!refSlug || typeof refSlug !== 'string') {
+        return next();
+      }
+
+      if ((req as any).cookies?.ref_creator_id) {
+        return next();
+      }
+
+      const safeSlug = refSlug.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      if (!safeSlug) {
+        return next();
+      }
+
+      let creatorUserId: string | null = null;
+
+      const bpResult = await queryDB(
+        `SELECT user_id FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
+        [safeSlug]
+      );
+      if (bpResult.rows.length > 0) {
+        creatorUserId = bpResult.rows[0].user_id;
+      }
+
+      if (!creatorUserId) {
+        const curatorResult = await queryDB(
+          `SELECT user_id FROM curators WHERE slug = $1 AND user_id IS NOT NULL LIMIT 1`,
+          [safeSlug]
+        );
+        if (curatorResult.rows.length > 0) {
+          creatorUserId = curatorResult.rows[0].user_id;
+        }
+      }
+
+      if (!creatorUserId) {
+        return next();
+      }
+
+      const sessionId = crypto.randomUUID();
+
+      await queryDB(
+        `INSERT INTO referral_sessions (session_id, ref_creator_id, expires_at, landing_url)
+         VALUES ($1, $2, NOW() + INTERVAL '7 days', $3)`,
+        [sessionId, creatorUserId, req.originalUrl]
+      );
+
+      const maxAgeMs = 7 * 24 * 60 * 60 * 1000;
+      res.cookie('ref_creator_id', creatorUserId, {
+        httpOnly: true,
+        maxAge: maxAgeMs,
+        sameSite: 'lax',
+        path: '/',
+      });
+      res.cookie('ref_session_id', sessionId, {
+        httpOnly: true,
+        maxAge: maxAgeMs,
+        sameSite: 'lax',
+        path: '/',
+      });
+
+      log.info(`Referral (query): session ${sessionId} created for creator ${creatorUserId} (slug: ${safeSlug})`);
+    } catch (error) {
+      log.warn('Referral query param middleware error:', error);
+    }
+    next();
+  });
+
+  // ==================================================================
   // AFFILIATE TRACKING - Creator Click & Order Tracking
   // ==================================================================
 
@@ -8139,6 +8460,46 @@ export async function registerRoutes(
       return res.json({ ok: true, data: result.rows[0] });
     } catch (error) {
       log.error('Track click error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/track/curation-click', async (req: Request, res: Response) => {
+    try {
+      const clientIp = getClientIp(req);
+      const rateKey = `curation-click:${clientIp}`;
+      const now = Date.now();
+      const windowMs = 60 * 1000;
+      const maxPerWindow = 60;
+      const entry = trackingRateCache.get(rateKey);
+
+      if (entry) {
+        if (now - entry.windowStart > windowMs) {
+          trackingRateCache.set(rateKey, { count: 1, windowStart: now });
+        } else if (entry.count >= maxPerWindow) {
+          return res.status(429).json({ ok: false, error: 'Rate limit exceeded' });
+        } else {
+          entry.count++;
+        }
+      } else {
+        trackingRateCache.set(rateKey, { count: 1, windowStart: now });
+      }
+
+      const { session_id, curation_id, curation_owner_creator_id, book_id, isbn } = req.body;
+      if (!session_id || !curation_owner_creator_id || !book_id) {
+        return res.status(400).json({ ok: false, error: 'session_id, curation_owner_creator_id, and book_id are required' });
+      }
+
+      const result = await queryDB(
+        `INSERT INTO curation_clicks (session_id, curation_id, curation_owner_creator_id, book_id, isbn)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING id`,
+        [session_id, curation_id || null, curation_owner_creator_id, book_id, isbn || null]
+      );
+
+      return res.status(201).json({ ok: true, clickId: result.rows[0].id });
+    } catch (error) {
+      log.error('Track curation click error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });
@@ -8248,6 +8609,69 @@ export async function registerRoutes(
       });
     } catch (error) {
       log.error('Creator stats error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/creator/commissions', async (req: Request, res: Response) => {
+    try {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return res.status(400).json({ ok: false, error: 'userId required' });
+      }
+
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+      const offset = (page - 1) * limit;
+
+      const [commissionsRes, totalsRes, countRes] = await Promise.all([
+        queryDB(
+          `SELECT id, external_order_id, merchant, session_id, book_id, isbn,
+                  attribution_type, commission_amount_net, share_rate,
+                  creator_payout_amount, occurred_at, status, created_at
+           FROM creator_commissions
+           WHERE attributed_creator_id = $1
+           ORDER BY created_at DESC
+           LIMIT $2 OFFSET $3`,
+          [userId, limit, offset]
+        ),
+        queryDB(
+          `SELECT
+             COALESCE(SUM(creator_payout_amount) FILTER (WHERE status = 'confirmed' AND attribution_type = 'REFERRAL'), 0) as referral_confirmed,
+             COALESCE(SUM(creator_payout_amount) FILTER (WHERE status = 'confirmed' AND attribution_type = 'CURATION'), 0) as curation_confirmed,
+             COALESCE(SUM(creator_payout_amount) FILTER (WHERE status = 'pending'), 0) as total_pending,
+             COUNT(*) FILTER (WHERE status = 'confirmed') as confirmed_count,
+             COUNT(*) FILTER (WHERE status = 'pending') as pending_count,
+             COUNT(*) FILTER (WHERE status = 'cancelled') as cancelled_count,
+             COUNT(*) FILTER (WHERE attribution_type = 'REFERRAL') as referral_count,
+             COUNT(*) FILTER (WHERE attribution_type = 'CURATION') as curation_count
+           FROM creator_commissions
+           WHERE attributed_creator_id = $1`,
+          [userId]
+        ),
+        queryDB(
+          `SELECT COUNT(*) as total FROM creator_commissions WHERE attributed_creator_id = $1`,
+          [userId]
+        )
+      ]);
+
+      const total = parseInt(countRes.rows[0]?.total || '0');
+
+      return res.json({
+        ok: true,
+        data: {
+          commissions: commissionsRes.rows,
+          totals: totalsRes.rows[0],
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit)
+          }
+        }
+      });
+    } catch (error) {
+      log.error('Creator commissions error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });
@@ -8436,6 +8860,148 @@ export async function registerRoutes(
       return res.json({ ok: true, data: result.rows });
     } catch (error) {
       log.error('Admin affiliate creators error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/admin/commissions', async (req: Request, res: Response) => {
+    try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
+      const { status, attribution_type, creator_id, date_from, date_to, page = '1', limit = '50' } = req.query as Record<string, string>;
+
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
+      const offset = (pageNum - 1) * limitNum;
+
+      const conditions: string[] = [];
+      const params: any[] = [];
+      let paramIdx = 1;
+
+      if (status) {
+        conditions.push(`cc.status = $${paramIdx++}`);
+        params.push(status);
+      }
+      if (attribution_type) {
+        conditions.push(`cc.attribution_type = $${paramIdx++}`);
+        params.push(attribution_type);
+      }
+      if (creator_id) {
+        conditions.push(`cc.attributed_creator_id = $${paramIdx++}`);
+        params.push(creator_id);
+      }
+      if (date_from) {
+        conditions.push(`cc.occurred_at >= $${paramIdx++}`);
+        params.push(date_from);
+      }
+      if (date_to) {
+        conditions.push(`cc.occurred_at <= $${paramIdx++}`);
+        params.push(date_to);
+      }
+
+      const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+      const countResult = await queryDB(
+        `SELECT COUNT(*) as total FROM creator_commissions cc ${whereClause}`,
+        params
+      );
+      const total = parseInt(countResult.rows[0]?.total || '0');
+
+      const dataParams = [...params, limitNum, offset];
+      const dataResult = await queryDB(
+        `SELECT cc.*, bp.display_name as creator_display_name, bp.slug as creator_slug, bp.avatar_url as creator_avatar
+         FROM creator_commissions cc
+         LEFT JOIN bookstore_profiles bp ON bp.user_id = cc.attributed_creator_id
+         ${whereClause}
+         ORDER BY cc.created_at DESC
+         LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+        dataParams
+      );
+
+      const statsResult = await queryDB(
+        `SELECT
+           COALESCE(SUM(CASE WHEN status = 'pending' THEN creator_payout_amount ELSE 0 END), 0) as total_pending,
+           COALESCE(SUM(CASE WHEN status = 'confirmed' THEN creator_payout_amount ELSE 0 END), 0) as total_confirmed,
+           COALESCE(SUM(CASE WHEN status = 'cancelled' THEN creator_payout_amount ELSE 0 END), 0) as total_cancelled,
+           (SELECT COUNT(*) FROM referral_sessions WHERE expires_at > NOW()) as active_referral_count
+         FROM creator_commissions`
+      );
+
+      const stats = statsResult.rows[0] || {};
+
+      return res.json({
+        ok: true,
+        data: dataResult.rows,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum),
+        },
+        summary: {
+          total_pending: parseFloat(stats.total_pending) || 0,
+          total_confirmed: parseFloat(stats.total_confirmed) || 0,
+          total_cancelled: parseFloat(stats.total_cancelled) || 0,
+          active_referral_count: parseInt(stats.active_referral_count) || 0,
+        },
+      });
+    } catch (error) {
+      log.error('Admin commissions list error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/admin/referral-sessions', async (req: Request, res: Response) => {
+    try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
+      const { page = '1', limit = '50', status: filterStatus } = req.query as Record<string, string>;
+      const pageNum = Math.max(1, parseInt(page) || 1);
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
+      const offset = (pageNum - 1) * limitNum;
+
+      let statusCondition = '';
+      const params: any[] = [];
+      let paramIdx = 1;
+
+      if (filterStatus === 'active') {
+        statusCondition = `WHERE rs.expires_at > NOW()`;
+      } else if (filterStatus === 'expired') {
+        statusCondition = `WHERE rs.expires_at <= NOW()`;
+      }
+
+      const countResult = await queryDB(
+        `SELECT COUNT(*) as total FROM referral_sessions rs ${statusCondition}`,
+        params
+      );
+      const total = parseInt(countResult.rows[0]?.total || '0');
+
+      const dataResult = await queryDB(
+        `SELECT rs.*,
+                bp.display_name as creator_display_name, bp.slug as creator_slug, bp.avatar_url as creator_avatar,
+                CASE WHEN rs.expires_at > NOW() THEN 'active' ELSE 'expired' END as session_status
+         FROM referral_sessions rs
+         LEFT JOIN bookstore_profiles bp ON bp.user_id = rs.ref_creator_id
+         ${statusCondition}
+         ORDER BY rs.first_seen_at DESC
+         LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+        [...params, limitNum, offset]
+      );
+
+      return res.json({
+        ok: true,
+        data: dataResult.rows,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total,
+          totalPages: Math.ceil(total / limitNum),
+        },
+      });
+    } catch (error) {
+      log.error('Admin referral sessions list error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });
@@ -8891,6 +9457,100 @@ ${urls}
     } catch (error) {
       log.error('Sitemap generation error:', error);
       return res.status(500).send('Error generating sitemap');
+    }
+  });
+
+  app.post('/api/track/conversion', async (req: Request, res: Response) => {
+    try {
+      const isAdmin = await requireAdminGuard(req, res);
+      if (!isAdmin) return;
+
+      const { session_id, book_id, isbn, merchant, commission_amount_net, occurred_at, external_order_id } = req.body;
+      if (!session_id || !book_id || !merchant || commission_amount_net == null || !occurred_at) {
+        return res.status(400).json({ ok: false, error: 'Missing required fields: session_id, book_id, merchant, commission_amount_net, occurred_at' });
+      }
+
+      const result = await attributeConversion({
+        session_id,
+        book_id,
+        isbn: isbn || undefined,
+        merchant,
+        commission_amount_net: Number(commission_amount_net),
+        occurred_at,
+        external_order_id: external_order_id || undefined,
+      });
+
+      return res.status(result.attributed ? 201 : 200).json({ ok: true, data: result });
+    } catch (error) {
+      log.error('Track conversion error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/commissions/:id/cancel', async (req: Request, res: Response) => {
+    try {
+      const isAdmin = await requireAdminGuard(req, res);
+      if (!isAdmin) return;
+
+      const id = parseIdParam(req.params.id);
+      if (!id) {
+        return res.status(400).json({ ok: false, error: 'Invalid commission id' });
+      }
+
+      const result = await queryDB(
+        `UPDATE creator_commissions
+         SET status = 'cancelled', creator_payout_amount = 0, updated_at = NOW()
+         WHERE id = $1
+         RETURNING *`,
+        [id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Commission not found' });
+      }
+
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Cancel commission error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.patch('/api/admin/commissions/:id', async (req: Request, res: Response) => {
+    try {
+      const isAdmin = await requireAdminGuard(req, res);
+      if (!isAdmin) return;
+
+      const id = parseIdParam(req.params.id);
+      if (!id) {
+        return res.status(400).json({ ok: false, error: 'Invalid commission id' });
+      }
+
+      const existing = await queryDB(`SELECT * FROM creator_commissions WHERE id = $1 LIMIT 1`, [id]);
+      if (existing.rows.length === 0) {
+        return res.status(404).json({ ok: false, error: 'Commission not found' });
+      }
+
+      const commission = existing.rows[0];
+      const { status, share_rate } = req.body;
+
+      const newStatus = status || commission.status;
+      const newShareRate = share_rate != null ? Number(share_rate) : Number(commission.share_rate);
+      const commissionNet = Number(commission.commission_amount_net);
+      const newPayoutAmount = Number((commissionNet * newShareRate).toFixed(4));
+
+      const result = await queryDB(
+        `UPDATE creator_commissions
+         SET status = $1, share_rate = $2, creator_payout_amount = $3, updated_at = NOW()
+         WHERE id = $4
+         RETURNING *`,
+        [newStatus, newShareRate, newPayoutAmount, id]
+      );
+
+      return res.json({ ok: true, data: result.rows[0] });
+    } catch (error) {
+      log.error('Update commission error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
     }
   });
 

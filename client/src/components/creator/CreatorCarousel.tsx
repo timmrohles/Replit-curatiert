@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo, useRef, useMemo } from 'react';
+import React, { useState, useEffect, memo, useRef, useMemo, useCallback } from 'react';
 import { BookCarouselItem, BookCarouselItemData } from "../book/BookCarouselItem";
 import { EditorialBookCard, EditorialBookCardData } from "../book/EditorialBookCard";
 import { CarouselContainer } from "../carousel/CarouselContainer";
@@ -6,6 +6,7 @@ import { CreatorHeader } from "./CreatorHeader";
 import { Text } from "../ui/typography";
 import { BRAND_COLORS, TURQUOISE_VARIANTS } from '../../utils/tag-colors';
 import { getAllONIXTags, ONIXTag } from '../../utils/api';
+import { trackCurationClick } from '../../utils/tracking';
 
 // Helper function to calculate luminance and determine text color
 function getContrastTextColor(backgroundColor: string): string {
@@ -136,8 +137,11 @@ interface CreatorCarouselProps {
   videoCardBg?: string;
   
   // Performance
-  isLCP?: boolean; // ⚡ PERFORMANCE: Mark as LCP section for priority loading
-  useEditorialLayout?: boolean; // Use minimalist editorial card layout
+  isLCP?: boolean;
+  useEditorialLayout?: boolean;
+  
+  curationId?: number;
+  curationOwnerCreatorId?: string;
 }
 
 export const CreatorCarousel = memo(function CreatorCarousel({
@@ -180,8 +184,10 @@ export const CreatorCarousel = memo(function CreatorCarousel({
   arrowBg = 'var(--creator-dark-bg)',
   arrowHoverBg = 'var(--creator-accent)',
   videoCardBg = '#F5F5F5',
-  isLCP = false, // ⚡ PERFORMANCE: Mark as LCP section for priority loading
-  useEditorialLayout = false, // Use minimalist editorial card layout
+  isLCP = false,
+  useEditorialLayout = false,
+  curationId,
+  curationOwnerCreatorId,
 }: CreatorCarouselProps) {
   const sortChipsRef = useRef<HTMLDivElement>(null);
   const [sortBy, setSortBy] = useState("popularity");
@@ -359,6 +365,17 @@ export const CreatorCarousel = memo(function CreatorCarousel({
     }
   }, [books, sortBy, onixTags]);
 
+  const handleBookClick = useCallback((bookId: string, isbn?: string) => {
+    if (curationId && curationOwnerCreatorId) {
+      trackCurationClick({
+        curation_id: curationId,
+        curation_owner_creator_id: curationOwnerCreatorId,
+        book_id: bookId,
+        isbn,
+      });
+    }
+  }, [curationId, curationOwnerCreatorId]);
+
   return (
     <section 
       className="py-1 md:py-2 w-full px-4" 
@@ -524,7 +541,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
                   
                   return (
                     <div key={book.id} className="flex-[0_0_50%] md:flex-[0_0_25%] min-w-0 pl-4">
-                      <EditorialBookCard book={editorialData} />
+                      <EditorialBookCard book={editorialData} onBookClick={handleBookClick} />
                     </div>
                   );
                 } else {
@@ -541,7 +558,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
                   
                   return (
                     <div key={book.id} className="flex-[0_0_50%] md:flex-[0_0_25%] min-w-0 pl-4">
-                      <BookCarouselItem book={standardData} size="md" />
+                      <BookCarouselItem book={standardData} size="md" onBookClick={handleBookClick} />
                     </div>
                   );
                 }

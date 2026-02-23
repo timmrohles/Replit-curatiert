@@ -111,7 +111,10 @@ interface CuratedBookSectionProps {
   isLCP?: boolean;
   
   // 📖 Optional: Layout
-  useEditorialLayout?: boolean; // Use minimalist editorial card layout with klappentext
+  useEditorialLayout?: boolean;
+  
+  curationId?: number;
+  curationOwnerCreatorId?: string;
 }
 
 export function CuratedBookSection({
@@ -149,6 +152,8 @@ export function CuratedBookSection({
   videoCardBg = '#F5F5F5',
   isLCP = false,
   useEditorialLayout = false,
+  curationId,
+  curationOwnerCreatorId,
 }: CuratedBookSectionProps) {
   // Default Curator wenn nicht angegeben
   const defaultCurator: CuratorInfo = {
@@ -207,6 +212,8 @@ export function CuratedBookSection({
           videoCardBg={videoCardBg}
           isLCP={isLCP}
           useEditorialLayout={useEditorialLayout}
+          curationId={curationId}
+          curationOwnerCreatorId={curationOwnerCreatorId}
         />
       </div>
     </section>
