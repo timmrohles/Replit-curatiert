@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useSafeNavigate } from '../../utils/routing';
 import { linkForTarget } from '../../utils/link-resolver';
 import { CategoryGridProps } from './CategoryGrid.schema';
@@ -41,11 +42,10 @@ export function CategoryGrid({ section }: CategoryGridProps) {
 
   return (
     <section className="py-8 md:py-12 px-4 md:px-6 lg:px-8" data-testid="category-grid-section">
-      <div className="max-w-[1440px] mx-auto">
+      <div className="max-w-7xl mx-auto">
         {title && (
           <h2
-            className="text-2xl md:text-3xl lg:text-4xl mb-6 md:mb-8 text-center"
-            style={{ fontFamily: 'Fjalla One', color: 'var(--foreground, #2a2a2a)' }}
+            className="font-headline text-fluid-h2 uppercase mb-6 md:mb-8 text-center text-foreground"
             data-testid="category-grid-title"
           >
             {title}
@@ -54,25 +54,27 @@ export function CategoryGrid({ section }: CategoryGridProps) {
 
         <div className="relative group">
           {canScrollLeft && (
+            <div
+              className="absolute left-0 top-0 bottom-0 w-16 lg:w-24 pointer-events-none z-[5]"
+              style={{
+                background: 'linear-gradient(to right, var(--background), transparent)',
+              }}
+            />
+          )}
+          {canScrollLeft && (
             <button
               onClick={() => scroll('left')}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-              style={{
-                backgroundColor: '#1a1a1a',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-              }}
+              className="hidden md:flex absolute left-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full items-center justify-center bg-charcoal text-white shadow-lg transition-all hover:scale-110"
               aria-label="Nach links scrollen"
               data-testid="category-scroll-left"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M15 18l-6-6 6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" stroke="#ffffff" />
-              </svg>
+              <ChevronLeft className="w-5 h-5" />
             </button>
           )}
 
           <div
             ref={scrollRef}
-            className="category-scroll flex gap-4 overflow-x-auto pb-2 scroll-smooth"
+            className="category-scroll flex gap-0 overflow-x-auto scroll-smooth"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -93,10 +95,10 @@ export function CategoryGrid({ section }: CategoryGridProps) {
                   <button
                     key={item.id}
                     onClick={() => navigate(link)}
-                    className="relative flex-shrink-0 rounded-xl overflow-hidden transition-transform hover:scale-[1.03] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                    className="relative flex-shrink-0 overflow-hidden transition-all duration-300 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-cerulean focus-visible:ring-inset"
                     style={{
-                      width: 'clamp(140px, 20vw, 200px)',
-                      aspectRatio: '3/4',
+                      width: 'clamp(200px, 25vw, 320px)',
+                      aspectRatio: '16/9',
                     }}
                     data-testid={`category-card-${item.id}`}
                   >
@@ -108,26 +110,19 @@ export function CategoryGrid({ section }: CategoryGridProps) {
                       />
                     ) : (
                       <div
-                        className="absolute inset-0"
-                        style={{
-                          background: `linear-gradient(135deg, var(--color-coral, #e07a5f) 0%, var(--cerulean, #247ba0) 100%)`,
-                          opacity: 0.2,
-                        }}
+                        className="absolute inset-0 bg-gradient-to-br from-coral to-cerulean opacity-20"
                       />
                     )}
 
                     <div
                       className="absolute inset-0"
                       style={{
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.65), rgba(0,0,0,0.1) 60%, transparent)',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.05))',
                       }}
                     />
 
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <h3
-                        className="text-white text-sm md:text-base leading-snug"
-                        style={{ fontFamily: 'Fjalla One' }}
-                      >
+                    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
+                      <h3 className="text-white font-headline text-base md:text-lg lg:text-xl leading-tight uppercase tracking-wide">
                         {itemTitle}
                       </h3>
                     </div>
@@ -135,14 +130,8 @@ export function CategoryGrid({ section }: CategoryGridProps) {
                 );
               })
             ) : (
-              <div
-                className="flex-shrink-0 w-full py-12 text-center rounded-xl"
-                style={{
-                  border: '2px dashed var(--color-brand-gray, #ccc)',
-                  color: 'var(--color-brand-gray, #888)',
-                }}
-              >
-                <p style={{ fontFamily: 'Inter' }}>
+              <div className="flex-shrink-0 w-full py-12 text-center rounded-xl border-2 border-dashed border-border">
+                <p className="font-sans text-muted-foreground">
                   Kategorien mit Bildern hinzufügen, um diesen Bereich zu füllen.
                 </p>
               </div>
@@ -151,27 +140,20 @@ export function CategoryGrid({ section }: CategoryGridProps) {
 
           {canScrollRight && (
             <div
-              className="absolute right-0 top-0 bottom-0 w-16 md:w-24 pointer-events-none z-[5]"
+              className="absolute right-0 top-0 bottom-0 w-16 lg:w-24 pointer-events-none z-[5]"
               style={{
-                background: 'linear-gradient(to left, var(--color-brand-beige, #f7f4ef), transparent)',
+                background: 'linear-gradient(to left, var(--background), transparent)',
               }}
             />
           )}
-
           {canScrollRight && (
             <button
               onClick={() => scroll('right')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full flex items-center justify-center transition-all hover:scale-110"
-              style={{
-                backgroundColor: '#1a1a1a',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-              }}
+              className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 z-10 w-11 h-11 rounded-full items-center justify-center bg-charcoal text-white shadow-lg transition-all hover:scale-110"
               aria-label="Nach rechts scrollen"
               data-testid="category-scroll-right"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M9 18l6-6-6-6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" stroke="#ffffff" />
-              </svg>
+              <ChevronRight className="w-5 h-5" />
             </button>
           )}
         </div>
