@@ -628,7 +628,7 @@ h3.section-title {
     border-radius: 9999px;
     transition: all 0.2s ease;
     flex-shrink: 0;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-xs);
     background-color: var(--color-surface);
     color: hsl(var(--muted-foreground));
     border: 1px solid hsl(var(--border));
@@ -639,7 +639,7 @@ h3.section-title {
     background-color: var(--color-blue-cerulean);
     color: #ffffff;
     border-color: transparent;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+    box-shadow: var(--shadow-md);
   }
 
 
@@ -870,7 +870,7 @@ h3.section-title {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-lg);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -917,13 +917,13 @@ h3.section-title {
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-lg);
   transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .author-card:hover {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-xl);
 }
 
 .author-card:focus-visible {
@@ -945,13 +945,13 @@ h3.section-title {
   background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-lg);
   transition: all 0.3s ease;
   cursor: pointer;
 }
 
 .publisher-card:hover {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-xl);
 }
 
 .publisher-card:focus-visible {
@@ -984,7 +984,7 @@ h3.section-title {
   border-radius: 9999px;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-xs);
   background-color: var(--color-surface);
   color: var(--color-foreground);
   border: 1px solid hsl(var(--border));
@@ -997,7 +997,7 @@ h3.section-title {
 .filter-chip-coral[aria-pressed="true"] {
   background-color: var(--color-coral-vibrant);
   color: #ffffff;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
 }
 
 .filter-chip-saffron {
@@ -1005,7 +1005,7 @@ h3.section-title {
   border-radius: 9999px;
   transition: all 0.2s ease;
   flex-shrink: 0;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-xs);
   background-color: var(--color-surface);
   color: var(--color-foreground);
   border: 1px solid hsl(var(--border));
@@ -1018,7 +1018,7 @@ h3.section-title {
 .filter-chip-saffron[aria-pressed="true"] {
   background-color: var(--color-saffron);
   color: #ffffff;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
 }
 
 .btn-link {
@@ -1161,7 +1161,7 @@ h3.section-title {
   left: 0;
   right: 0;
   height: 3rem;
-  background: linear-gradient(to bottom, transparent, #1a1a1a);
+  background: linear-gradient(to bottom, transparent, var(--color-background));
   pointer-events: none;
 }
 

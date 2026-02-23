@@ -301,10 +301,16 @@ export function DynamicPage() {
 
             return sortedSections.length > 0 ? (
               sortedSections.map((section) => {
-                const sectionBooks = (section.items || [])
+                let sectionBooks = (section.items || [])
                   .filter((item: any) => item.book_id)
                   .map((item: any) => booksById[item.book_id])
                   .filter(Boolean);
+
+                if (sectionBooks.length === 0 && (section as any)._queryBookIds) {
+                  sectionBooks = ((section as any)._queryBookIds as number[])
+                    .map((id: number) => booksById[id])
+                    .filter(Boolean);
+                }
 
                 return (
                   <div key={section.id} className="mb-section-gap">

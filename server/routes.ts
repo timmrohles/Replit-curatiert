@@ -5490,6 +5490,65 @@ export async function registerRoutes(
         }
       });
 
+      for (const section of sections) {
+        const cfg = section.section_config || section.config || {};
+        const sType = section.section_type;
+        if ((sType === 'book_carousel' || sType === 'horizontal_row') && cfg.books?.query) {
+          const query = cfg.books.query;
+          const include = query.include || {};
+          const limit = Math.min(query.limit || 20, 50);
+          const operator = query.operator || 'any';
+
+          const conditions: string[] = [];
+          const params: any[] = [];
+          let paramIdx = 1;
+
+          const tagIds: number[] = (include.tagIds || []).map(Number).filter(Boolean);
+          const categoryIds: number[] = (include.categoryIds || []).map(Number).filter(Boolean);
+          const awardDefIds: number[] = (include.awardDefinitionIds || []).map(Number).filter(Boolean);
+
+          if (tagIds.length > 0) {
+            const tagPlaceholders = tagIds.map(() => `$${paramIdx++}`).join(',');
+            conditions.push(`b.id IN (SELECT bt.book_id FROM book_tags bt WHERE bt.tag_id IN (${tagPlaceholders}))`);
+            params.push(...tagIds);
+          }
+
+          if (categoryIds.length > 0) {
+            const catPlaceholders = categoryIds.map(() => `$${paramIdx++}`).join(',');
+            conditions.push(`b.id IN (SELECT bc.book_id FROM book_categories bc WHERE bc.category_id IN (${catPlaceholders}))`);
+            params.push(...categoryIds);
+          }
+
+          if (awardDefIds.length > 0) {
+            const awardPlaceholders = awardDefIds.map(() => `$${paramIdx++}`).join(',');
+            conditions.push(`b.id IN (SELECT ar.book_id FROM award_recipients ar JOIN award_outcomes ao ON ar.award_outcome_id = ao.id WHERE ao.award_definition_id IN (${awardPlaceholders}))`);
+            params.push(...awardDefIds);
+          }
+
+          if (conditions.length > 0) {
+            const joiner = operator === 'all' ? ' AND ' : ' OR ';
+            const whereClause = conditions.join(joiner);
+            const sortClause = query.sort === 'newest' ? 'ORDER BY b.created_at DESC'
+              : query.sort === 'awarded' ? 'ORDER BY b.award_count DESC NULLS LAST'
+              : 'ORDER BY b.created_at DESC';
+
+            try {
+              const queryBooks = await queryDB(
+                `SELECT b.* FROM books b WHERE b.deleted_at IS NULL AND (${whereClause}) ${sortClause} LIMIT $${paramIdx}`,
+                [...params, limit]
+              );
+              const fetchedBooks = queryBooks.rows || [];
+              fetchedBooks.forEach((b: any) => bookIds.add(b.id));
+
+              if (!section._queryBooks) section._queryBooks = [];
+              section._queryBooks = fetchedBooks.map((b: any) => b.id);
+            } catch (qErr) {
+              log.warn(`Query-based book fetch failed for section ${section.id}:`, qErr);
+            }
+          }
+        }
+      }
+
       let books: any[] = [];
       if (bookIds.size > 0) {
         const bookIdsArray = Array.from(bookIds);
@@ -5640,7 +5699,7 @@ export async function registerRoutes(
           };
         });
 
-        return {
+        const result: any = {
           id: s.id,
           zone: s.zone,
           type: s.section_type,
@@ -5649,6 +5708,12 @@ export async function registerRoutes(
           items: transformedItems,
           order: s.sort_order,
         };
+
+        if (s._queryBooks && s._queryBooks.length > 0) {
+          result._queryBookIds = s._queryBooks;
+        }
+
+        return result;
       });
 
       const response = {
