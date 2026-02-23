@@ -11,14 +11,6 @@ interface DSButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   fullWidth?: boolean;
 }
 
-/**
- * DSButton - Design System Button
- * Wrapper around ui/button.tsx with Design System branding
- * 
- * ✅ Uses ui/button.tsx as primitive (Single Source of Truth)
- * ✅ Adds coratiert.de specific styling (Fjalla One, custom colors)
- * ✅ Maps Design System variants to ui/button variants
- */
 export const DSButton = forwardRef<HTMLButtonElement, DSButtonProps>(
   (
     {
@@ -33,7 +25,6 @@ export const DSButton = forwardRef<HTMLButtonElement, DSButtonProps>(
     },
     ref
   ) => {
-    // Map Design System variants to ui/button variants
     const uiVariantMap = {
       primary: 'default',
       secondary: 'outline',
@@ -41,7 +32,6 @@ export const DSButton = forwardRef<HTMLButtonElement, DSButtonProps>(
       destructive: 'destructive',
     } as const;
 
-    // Map Design System sizes to ui/button sizes
     const uiSizeMap = {
       small: 'sm',
       medium: 'default',
@@ -54,17 +44,8 @@ export const DSButton = forwardRef<HTMLButtonElement, DSButtonProps>(
       large: 'w-5 h-5 md:w-6 md:h-6',
     };
 
-    // Design System specific styles
     const dsStyles = cn(
-      // Fjalla One font for all buttons
       'font-headline tracking-wide uppercase',
-      // Custom primary button colors
-      variant === 'primary' && 'bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-bg)]/90',
-      // Custom secondary button colors
-      variant === 'secondary' && 'border-2 border-[var(--creator-dark-bg)] text-[var(--creator-text-dark)] hover:text-white hover:bg-[var(--creator-dark-bg)]',
-      // Custom tertiary button colors
-      variant === 'tertiary' && 'text-[var(--creator-text-dark)] hover:bg-[var(--ds-hover-overlay)]',
-      // Full width
       fullWidth && 'w-full'
     );
 

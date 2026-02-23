@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { DSButton } from '../design-system/DSButton';
 
 interface CreatorCardProps {
@@ -11,16 +11,21 @@ interface CreatorCardProps {
 
 export const CreatorCard = memo(function CreatorCard({ avatar, name, bio, focus, onClick }: CreatorCardProps) {
   return (
-    <div className="bg-white dark:bg-surface rounded-xl p-6 shadow-sm hover:shadow-md transition-all text-center min-w-72 h-full flex flex-col">
-      <img 
-        src={avatar} 
+    <div
+      className="bg-card dark:bg-card border border-border rounded-md p-[var(--space-6)] hover-elevate transition-all text-center min-w-72 h-full flex flex-col"
+      data-testid="card-creator"
+    >
+      <img
+        src={avatar}
         alt={name}
-        className="w-20 h-20 rounded-full object-cover mx-auto mb-4 border-2 border-[var(--color-brand-beige)]"
+        className="rounded-full object-cover mx-auto mb-[var(--space-4)] border-2 border-[var(--color-beige)]"
+        style={{ width: 'var(--avatar-lg)', height: 'var(--avatar-lg)' }}
+        data-testid="img-creator-avatar"
       />
-      <h3 className="text-foreground mb-1">{name}</h3>
-      <p className="text-sm text-[var(--color-brand-blue-light)] mb-2 font-medium">{focus}</p>
-      <p className="text-sm text-[var(--color-brand-gray)] dark:text-foreground-muted mb-4 line-clamp-2 flex-1">{bio}</p>
-      <DSButton variant="secondary" size="small" onClick={onClick}>
+      <h3 className="text-foreground mb-[var(--space-1)]" data-testid="text-creator-name">{name}</h3>
+      <p className="text-sm text-[var(--color-blue-cerulean)] mb-[var(--space-2)] font-medium" data-testid="text-creator-focus">{focus}</p>
+      <p className="text-sm text-muted-foreground mb-[var(--space-4)] line-clamp-2 flex-1" data-testid="text-creator-bio">{bio}</p>
+      <DSButton variant="secondary" size="small" onClick={onClick} data-testid="button-creator-action">
         Meine Buchreihen
       </DSButton>
     </div>

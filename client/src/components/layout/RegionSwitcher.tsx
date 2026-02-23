@@ -6,6 +6,7 @@ const FLAG_MAP: Record<string, string> = {
   DE: 'DE',
   AT: 'AT',
   CH: 'CH',
+  GB: 'GB',
 };
 
 function RegionFlag({ country }: { country: string }) {

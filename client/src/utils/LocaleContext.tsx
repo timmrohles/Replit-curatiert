@@ -1,5 +1,6 @@
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import i18n from '../i18n/i18n';
 
 export interface RegionConfig {
   locale: string;
@@ -38,6 +39,15 @@ const SUPPORTED_LOCALES: Record<string, RegionConfig> = {
     currency: 'CHF',
     currencySymbol: 'CHF',
     dateLocale: 'de-CH',
+  },
+  'en-gb': {
+    locale: 'en-gb',
+    language: 'en',
+    country: 'GB',
+    countryName: 'United Kingdom',
+    currency: 'GBP',
+    currencySymbol: '£',
+    dateLocale: 'en-GB',
   },
 };
 
@@ -80,6 +90,12 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const params = useParams<{ locale?: string }>();
   const locale = isValidLocale(params.locale) ? params.locale.toLowerCase() : DEFAULT_LOCALE;
   const region = getRegionConfig(locale);
+
+  useEffect(() => {
+    if (i18n.language !== region.language) {
+      i18n.changeLanguage(region.language);
+    }
+  }, [region.language]);
 
   const value = useMemo(() => ({
     locale,

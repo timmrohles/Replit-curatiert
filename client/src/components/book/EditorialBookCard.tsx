@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
 import { Tags, ArrowRight, Quote, ChevronDown, Award } from 'lucide-react';
-import { useTheme } from '../../utils/ThemeContext';
+
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
 import { getBookUrl } from '../../utils/bookUrlHelper';
@@ -91,7 +91,6 @@ interface EditorialBookCardProps {
 
 export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps) {
   const navigate = useSafeNavigate();
-  const { resolvedTheme } = useTheme();
   const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
   const [showAwardsOverlay, setShowAwardsOverlay] = useState(false);
   const [showInfoOverlay, setShowInfoOverlay] = useState(false);
@@ -143,11 +142,7 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
         <div className="relative">
           {/* Cover */}
           <div 
-            className="aspect-[2/3] bg-muted rounded-[1px] relative overflow-hidden cursor-pointer" 
-            style={{ 
-              border: '1px solid var(--color-border)',
-              boxShadow: 'var(--shadow-book-cover)'
-            }}
+            className="book-card-cover aspect-[2/3] bg-muted relative overflow-hidden cursor-pointer"
           >
             {/* Interactive Icons - oben rechts INNERHALB des Covers */}
             <div className="absolute top-3 right-3 flex flex-col gap-2" style={{ zIndex: 150 }}>
@@ -159,11 +154,7 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
                     setShowInfoOverlay(!showInfoOverlay);
                     setShowAwardsOverlay(false);
                   }}
-                  className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
-                  style={{ 
-                    backgroundColor: '#247ba0',
-                    color: '#FFFFFF'
-                  }}
+                  className="book-card-icon-button w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
                   title="Pressestimmen anzeigen"
                   data-testid="button-pressestimmen"
                 >
@@ -179,11 +170,7 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
                     setShowAwardsOverlay(!showAwardsOverlay);
                     setShowInfoOverlay(false);
                   }}
-                  className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
-                  style={{ 
-                    backgroundColor: '#247ba0',
-                    color: '#FFFFFF'
-                  }}
+                  className="book-card-icon-button w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
                   title="Auszeichnungen anzeigen"
                   data-testid="button-awards"
                 >
@@ -275,8 +262,8 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
             
             {/* Awards Overlay */}
             {showAwardsOverlay && awardTags.length > 0 && (
-              <div className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-white">
-                <h5 className="text-[#2a2a2a] font-headline text-base normal-case">
+              <div className="book-card-overlay absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto">
+                <h5 className="font-headline text-base normal-case">
                   Auszeichnungen
                 </h5>
                 
@@ -284,7 +271,12 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
                   {awardTags.map((tag) => (
                     <div
                       key={tag.id}
-                      className="bg-[#247ba0]/10 text-[#247ba0] border border-[#247ba0]/20 rounded-full px-3 py-1.5 inline-flex items-center gap-1.5 text-xs"
+                      className="rounded-full px-3 py-1.5 inline-flex items-center gap-1.5 text-xs"
+                      style={{
+                        backgroundColor: 'var(--badge-curator-bg)',
+                        color: 'var(--badge-curator-text)',
+                        border: '1px solid var(--badge-curator-border)'
+                      }}
                     >
                       <span>{tag.displayName}</span>
                       <LikeButton 
@@ -295,7 +287,7 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
                         entityColor={tag.color}
                         variant="minimal"
                         size="sm"
-                        iconColor="#247ba0"
+                        iconColor="var(--badge-curator-text)"
                       />
                     </div>
                   ))}
@@ -305,15 +297,15 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
             
             {/* Reviews/Kommentare Overlay */}
             {showInfoOverlay && book.reviews && (
-              <div className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-white">
-                <h5 className="text-[#2a2a2a] font-headline text-base normal-case">
+              <div className="book-card-overlay absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto">
+                <h5 className="font-headline text-base normal-case">
                   Kommentare
                 </h5>
                 
                 <Text 
                   as="div" 
                   variant="small" 
-                  className="text-[#2a2a2a] !normal-case !tracking-normal leading-relaxed whitespace-pre-line"
+                  className="!normal-case !tracking-normal leading-relaxed whitespace-pre-line"
                 >
                   {book.reviews}
                 </Text>
@@ -366,10 +358,7 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
         </div>
 
         {/* Trennlinie über Action-Icons */}
-        <div 
-          className="w-full h-[1px] mt-3 mb-1"
-          style={{ backgroundColor: 'var(--color-charcoal, #2a2a2a)', opacity: 0.15 }}
-        />
+        <div className="book-card-divider w-full border-t mt-3 mb-1" />
 
         {/* Action Bar */}
         <div className="flex items-center gap-1.5 pt-0.5">
@@ -379,7 +368,7 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
             entityTitle={book.title}
             entitySubtitle={book.author}
             size="md" 
-            iconColor="#3A3A3A"
+            iconColor="var(--color-foreground)"
           />
 
           <ReadingListButton
@@ -388,7 +377,7 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
             bookAuthor={book.author}
             bookCover={book.coverImage}
             size="md"
-            iconColor="#3A3A3A"
+            iconColor="var(--color-foreground)"
           />
           
           {/* Affiliate Buttons - dynamisch aus DB */}

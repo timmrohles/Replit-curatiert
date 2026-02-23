@@ -1,7 +1,7 @@
 import React, { memo, useState, useEffect, useMemo, useCallback } from 'react';
 import { useSafeNavigate, buildBookUrl } from '../../utils/routing';
 import { Info, Tags, Quote, Award, ArrowRight, ShoppingCart, Building2 } from 'lucide-react';
-import { useTheme } from '../../utils/ThemeContext';
+
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
 import { getBookUrl } from '../../utils/bookUrlHelper';
@@ -107,7 +107,6 @@ export const BookCard = memo(function BookCard({
   const nominationCount = (book as any)?.nomination_count;
   
   const safeNav = useSafeNavigate();
-  const { resolvedTheme } = useTheme();
   const [showAwardsOverlay, setShowAwardsOverlay] = useState(false);
   const [showReviewsOverlay, setShowReviewsOverlay] = useState(false);
   const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
@@ -138,7 +137,7 @@ export const BookCard = memo(function BookCard({
   
   const bookId = book?.id || `book-${title.toLowerCase().replace(/\s+/g, '-')}`;
   
-  const bgColor = cardBackgroundColor === 'white' ? 'bg-white' : cardBackgroundColor === 'beige' ? 'bg-[#F7F4EF]' : 'bg-transparent';
+  const bgColor = cardBackgroundColor === 'white' ? 'bg-white dark:bg-card' : cardBackgroundColor === 'beige' ? 'bg-beige dark:bg-card' : 'bg-transparent';
 
   // Get prominent ONIX tags for this book
   const prominentTags = useMemo(() => {
@@ -218,7 +217,7 @@ export const BookCard = memo(function BookCard({
         )}
 
         {/* Cover mit BookCarouselItem-Styling */}
-        <div className="aspect-[2/3] bg-muted rounded-[1px] relative overflow-visible">
+        <div className="aspect-[2/3] bg-muted relative overflow-visible" style={{ borderRadius: 'var(--radius-sm)' }}>
           {/* Interactive Icons - OUTSIDE flip container, always visible */}
           <div className="absolute top-3 right-3 flex flex-col gap-2 z-50">
             {(klappentext || (book as any)?.reviews) && (
@@ -228,11 +227,7 @@ export const BookCard = memo(function BookCard({
                   setShowReviewsOverlay(!showReviewsOverlay);
                   setShowAwardsOverlay(false);
                 }}
-                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
-                style={{ 
-                  backgroundColor: '#247ba0',
-                  color: '#FFFFFF'
-                }}
+                className="book-card-icon-button w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
                 title="Pressestimmen anzeigen"
               >
                 <Quote className="w-5 h-5 md:w-6 md:h-6" />
@@ -246,11 +241,7 @@ export const BookCard = memo(function BookCard({
                   setShowAwardsOverlay(!showAwardsOverlay);
                   setShowReviewsOverlay(false);
                 }}
-                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
-                style={{ 
-                  backgroundColor: '#247ba0',
-                  color: '#FFFFFF'
-                }}
+                className="book-card-icon-button w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
                 title="Auszeichnungen anzeigen"
               >
                 <Award className="w-5 h-5 md:w-6 md:h-6" />
@@ -261,7 +252,7 @@ export const BookCard = memo(function BookCard({
               <div
                 className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg"
                 style={{ 
-                  backgroundColor: 'var(--color-teal, #70c1b3)',
+                  backgroundColor: 'var(--color-teal-tropical)',
                   color: '#FFFFFF'
                 }}
                 title="Indie-Verlag"
@@ -274,11 +265,7 @@ export const BookCard = memo(function BookCard({
 
           {/* Cover Container - NO FLIP */}
           <div 
-            className="aspect-[2/3] bg-muted rounded-[1px] relative overflow-hidden" 
-            style={{ 
-              border: '1px solid var(--color-border)',
-              boxShadow: 'var(--shadow-book-cover)'
-            }}
+            className="book-card-cover aspect-[2/3] bg-muted relative overflow-hidden"
           >
             {/* Book Cover */}
             <OptimizedImage
@@ -308,12 +295,12 @@ export const BookCard = memo(function BookCard({
             {((awardCount && awardCount > 0) || isHiddenGem) && (
               <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
                 {awardCount !== undefined && awardCount > 0 && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold, #ffe066)', color: '#2a2a2a' }}>
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold-royal)', color: 'var(--color-charcoal)' }}>
                     AUSGEZEICHNET
                   </div>
                 )}
                 {isHiddenGem && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant, #f25f5c)', color: '#fff' }}>
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant)', color: '#fff' }}>
                     HIDDEN GEM
                   </div>
                 )}
@@ -383,12 +370,12 @@ export const BookCard = memo(function BookCard({
             {/* Awards Overlay */}
             {showAwardsOverlay && awardTags.length > 0 && (
               <div 
-                className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-white"
+                className="book-card-overlay absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto"
               >
                 <Heading 
                   as="h5" 
                   variant="h6" 
-                  className="text-[#2a2a2a] !normal-case"
+                  className="!normal-case"
                 >
                   Auszeichnungen
                 </Heading>
@@ -397,7 +384,12 @@ export const BookCard = memo(function BookCard({
                   {awardTags.map((tag) => (
                     <div
                       key={tag.id}
-                      className="bg-[#247ba0]/10 text-[#247ba0] border border-[#247ba0]/20 rounded-full px-3 py-1.5 inline-flex items-center gap-1.5"
+                      className="rounded-full px-3 py-1.5 inline-flex items-center gap-1.5"
+                      style={{
+                        backgroundColor: 'var(--badge-curator-bg)',
+                        color: 'var(--badge-curator-text)',
+                        border: '1px solid var(--badge-curator-border)'
+                      }}
                     >
                       <Text 
                         as="span" 
@@ -414,7 +406,7 @@ export const BookCard = memo(function BookCard({
                         entityColor={tag.color}
                         variant="minimal"
                         size="sm"
-                        iconColor="#247ba0"
+                        iconColor="var(--badge-curator-text)"
                       />
                     </div>
                   ))}
@@ -425,12 +417,12 @@ export const BookCard = memo(function BookCard({
             {/* Reviews Overlay */}
             {showReviewsOverlay && (klappentext || book?.reviews) && (
               <div 
-                className="absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto bg-white"
+                className="book-card-overlay absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto"
               >
                 <Heading 
                   as="h5" 
                   variant="h6" 
-                  className="text-[#2a2a2a] !normal-case"
+                  className="!normal-case"
                 >
                   Pressestimmen
                 </Heading>
@@ -438,7 +430,7 @@ export const BookCard = memo(function BookCard({
                 <Text 
                   as="p" 
                   variant="small" 
-                  className="text-[#2a2a2a] !normal-case !tracking-normal leading-relaxed"
+                  className="!normal-case !tracking-normal leading-relaxed"
                 >
                   {klappentext}
                 </Text>
@@ -549,7 +541,7 @@ export const BookCard = memo(function BookCard({
           </div>
           
           {/* Divider */}
-          <div className="border-t border-foreground/20 my-2" />
+          <div className="book-card-divider border-t my-2" />
           
           {/* Action Buttons */}
           <div className={`flex items-center ${viewMode === 'compact' ? 'gap-1' : 'gap-1.5'}`}>
@@ -559,7 +551,7 @@ export const BookCard = memo(function BookCard({
               entityTitle={title}
               entitySubtitle={author}
               size={viewMode === 'compact' ? 'sm' : 'md'}
-              iconColor="#3A3A3A"
+              iconColor="var(--color-foreground)"
             />
             
             <ReadingListButton
@@ -568,7 +560,7 @@ export const BookCard = memo(function BookCard({
               bookAuthor={author}
               bookCover={cover}
               size={viewMode === 'compact' ? 'sm' : 'md'}
-              iconColor="#3A3A3A"
+              iconColor="var(--color-foreground)"
             />
             
             {/* Affiliate Buttons - dynamisch aus DB */}

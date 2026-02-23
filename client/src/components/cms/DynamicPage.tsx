@@ -307,7 +307,7 @@ export function DynamicPage() {
                   .filter(Boolean);
 
                 return (
-                  <div key={section.id} className="mb-16">
+                  <div key={section.id} className="mb-section-gap">
                     <UniversalSectionRenderer section={section} books={sectionBooks} />
                   </div>
                 );

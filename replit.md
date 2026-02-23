@@ -1,7 +1,7 @@
 # coratiert.de - Curated Book Recommendation Platform
 
 ## Overview
-coratiert.de is a curated book recommendation platform offering personalized and enriched book discovery. It combines a robust backend for content management with a dynamic frontend for showcasing books, curators, and editorial content. The platform aims for high performance and user-friendliness, focusing on content curation, intelligent recommendations, and data privacy. Key capabilities include comprehensive book data management, dynamic page generation, administrative tools for content and user management, and advanced content performance tracking.
+coratiert.de is a curated book recommendation platform designed for personalized and enriched book discovery. It combines a robust backend for content management with a dynamic frontend for showcasing books, curators, and editorial content. The platform aims for high performance, user-friendliness, intelligent recommendations, and data privacy, with a focus on content curation. Key capabilities include comprehensive book data management, dynamic page generation, administrative tools, and advanced content performance tracking. The project envisions significant market potential by offering a unique, curated experience in the book recommendation space.
 
 ## User Preferences
 - Prioritize global CSS over inline styles for performance
@@ -14,52 +14,47 @@ The platform is built with a modern web stack, featuring a React frontend and an
 
 **Frontend (client/)**:
 -   **Framework**: React + Vite (TypeScript)
--   **Routing**: React Router v6
--   **Data Fetching**: TanStack Query
--   **Styling**: Tailwind CSS with a custom theme and self-hosted fonts (Fjalla One, Inter) for DSGVO compliance. Fluid responsive typography is implemented.
--   **Core Components**: `UniversalSectionRenderer` and `sectionRegistry` for dynamic content rendering (supporting 8 section types: hero, category_grid, book_carousel, recipient_category_grid, storefronts, events, genre_categories, supporters). `CMSHomepage` and `DynamicPage` handle CMS-driven content.
+-   **Styling**: Tailwind CSS with a custom theme and self-hosted fonts. Fluid responsive typography is implemented. Design system uses CSS custom properties for all tokens (spacing `--space-*`, radius `--radius-*`, typography `--text-*`, avatars `--avatar-*`, shadows, badge semantics `--badge-*`, button sizes `--button-size-*`). DS components in `client/src/components/design-system/` wrap shadcn `ui/` primitives. Microcopy constants in `client/src/constants/copy.ts` map to i18n keys.
+-   **Dynamic Content**: `UniversalSectionRenderer` and `sectionRegistry` enable dynamic rendering of various content sections (e.g., hero, category grids, carousels). `CMSHomepage` and `DynamicPage` handle CMS-driven content.
 
 **Backend (server/)**:
--   **Framework**: Express.js, serving on port 5000.
+-   **Framework**: Express.js
 -   **Database Integration**: `pg` Pool for PostgreSQL.
--   **API**: Over 80 routes prefixed with `/api/` for public data access, admin functionalities (CRUD for various content types), and content tracking.
--   **Authentication**: Provider-agnostic OIDC auth system via `openid-client` + `passport` + `express-session` (session stored in `sessions` table via `connect-pg-simple`). Supports multiple OIDC providers (Replit Auth default, Auth0, or any custom OIDC provider) configured via environment variables. Provider selection: set `OIDC_ISSUER_URL`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET` for Auth0/custom; when unset, defaults to Replit Auth. User claim normalization handles field differences between providers (e.g., Auth0 uses `given_name`/`family_name`/`picture`, Replit uses `first_name`/`last_name`/`profile_image_url`). Admin Content Manager now uses OIDC session-based auth (same as user auth) — admin panel checks `/api/auth/user` with role verification (admin/super_admin). Legacy `X-Admin-Token` header auth is still supported as fallback in `requireAdminGuard()` but all frontend admin components now use `credentials: 'include'` session cookies. Users table (`users`) has `role` column (`user`/`admin`/`super_admin`) and `is_active` flag. Auth files: `server/replit_integrations/auth/` (replitAuth.ts, storage.ts, routes.ts). Frontend: `useAuth` hook at `client/src/hooks/use-auth.ts`. Login via `/api/login`, callback via `/api/callback`, logout via `/api/logout`, user info via `/api/auth/user`. Admin user CRUD: GET/PATCH/DELETE `/api/admin/users`. Role-based middleware via `requireRole()`. Auth0 logout uses `/v2/logout` endpoint (no OIDC end_session support). Optional `OIDC_CALLBACK_URL` env var overrides auto-detected callback URL.
--   **User Management**: Admin UI tab "Benutzer" (`AdminUsersManager.tsx`) in ContentManager for listing, searching, filtering, role changes, status toggles, and user deletion. "Kuratoren" tab renamed to "User" in ContentManager.
--   **Super-Admin Impersonation**: DSGVO-compliant impersonation system allowing super_admins to view any user's dashboard. Session-based: `req.session.impersonateUserId` stores the target user ID. API: POST `/api/admin/impersonate/:userId` (start), POST `/api/admin/stop-impersonate` (stop). `/api/auth/user` returns `_impersonating: true` and `_realAdmin` object when active. Sensitive data (IBAN, BIC, tax numbers, phone, account holder) is server-side masked via `maskSensitiveData()` in `routes.ts`. Frontend: `ImpersonationBanner` component shows yellow banner with stop button. `AdminUsersManager` has Eye icon button for super_admins to start impersonation. Audit logging in server console for start/stop actions.
+-   **API**: Extensive API for public data, admin functionalities (CRUD), and content tracking.
+-   **Authentication**: Provider-agnostic OIDC system using `openid-client` and `passport`, with session management via `connect-pg-simple`. Supports multiple OIDC providers (Replit Auth, Auth0, custom) and normalizes user claims. Role-based access control (`user`, `admin`, `super_admin`) is implemented, including an impersonation system for super-admins.
 
 **Core Features & Design Patterns**:
--   **Dynamic Content Management**: Pages and sections are dynamically rendered based on database configurations, driven by `UniversalSectionRenderer`.
--   **Book Enrichment**: System for detecting indie/self-published books and displaying award badges.
--   **Section Scheduling & Tracking**: Content sections can be scheduled, have view/click limits, and include bot/crawler filtering for accurate tracking.
--   **Visibility Management**: Granular control over the display of tags and awards.
--   **Curator Management**: Integrated curator selection with avatar uploads and verified badges.
--   **Robust Type Safety**: Extensive use of TypeScript with Zod schemas for API validation.
--   **Admin Panel**: `/sys-mgmt-xK9/content-manager` for comprehensive content management, with login at `/sys-mgmt-xK9/login`.
--   **Navigation Management**: Admin UI (`AdminNavigationV2.tsx`) allows managing navigation items with location-based filtering (Header/Footer/Mobile/Sidebar), powered by `menu_items` table and `/api/navigation/footer` endpoint.
--   **Author Verification Workflow**: Users request author access; admins approve, creating author profiles and enabling author modules. Integrates with ONIX database matching.
--   **Mobile Navigation**: Unified dark-themed bottom navigation bar (`.nav-mobile`) with sections like Favoriten, Bewertungen, Bookstore, Neuigkeiten, Hell/Dunkel toggle, and Mehr (dashboard).
--   **Internationalization (i18n)**: Directory-based locale prefixes (e.g., `/de-de/`) with `de-de` as default. Handled by `LocaleProvider`, `LocaleLayout`, `i18next`, and locale-aware utilities. `regions` table stores per-region configurations.
--   **Dashboard & Feed System**: Personalized user dashboard with a feed-first design (`DashboardFeed.tsx`). Users can customize (reorder, toggle visibility/public status) 9 feed section types (e.g., reading_list, favorites, followed_authors). Persistence is handled via localStorage.
--   **User Bookstore & Curations System**: Users create thematic book collections (Kurationen) and set up public bookstore profiles with details and social links. Public profiles are accessible at `/bookstore/:slug`. Includes content reporting functionality. Hero background images via Unsplash search or manual URL; displayed full-width with dark gradient overlay on public profiles.
--   **Events System**: Users create and manage events (lesung, buchclub, etc.) via the dashboard (`UserEvents.tsx`). Events are displayed in the dashboard feed and public bookstore profiles. Admins can manage all events via a dedicated tab.
--   **Category Cards System**: Admin-managed category cards with images, titles, links, colors, and display ordering. Stored in `category_cards` table. Public API at `/api/category-cards?location=homepage`, admin CRUD at `/api/admin/category-cards`. Displayed on homepage via `CategoryCardsGrid` component using `DSGenreCard` in a carousel. Admin UI in ContentManager "category-cards" tab (`CategoryCardsManager.tsx`) with Unsplash search integration.
--   **Affiliate Creator Program**: Users register for the affiliate program via the dedicated "Geld verdienen" dashboard tab (`Earnings.tsx`). Includes CreatorAnalytics stats at the top, followed by collapsible registration subsections for identity data, tax info (Kleinunternehmer/Umsatzsteuerpflichtig), payout details (IBAN/BIC), legal consents, and tracking consent. Data stored in `affiliate_creator_profiles` table. API endpoints at `/api/affiliate-creator-profile` (GET/POST). The Bookstore profile settings (previously a separate tab) are now integrated into the Profile tab via `UserBookstore` component.
--   **Content/Podcast Book Extraction System**: Users add podcast RSS feeds (and future YouTube/website sources) via dashboard "Content-Quellen" tab (`ContentSources.tsx`). System parses RSS feeds and uses AI (OpenRouter/Mistral via Replit AI Integrations) to extract book mentions from episode descriptions/shownotes with sentiment analysis, host quotes, recommendation strength (1-5), and extraction confidence. Data stored in 3 tables: `content_sources` (RSS feeds) → `content_episodes` (parsed episodes) → `extracted_books` (AI-extracted books with sentiment, quotes, `matched_book_id` linking to `books` table). **Book Matching System**: After extraction, each book is automatically matched against the `books` table (188k+ entries) using normalized title+author comparison (handles "Nachname, Vorname" vs "Vorname Nachname" formats). No new books are created — only existing entries are linked via `matched_book_id`. Matched books inherit publisher, cover, ISBN, and indie status from the `books` table (Single Source of Truth). Admin batch re-matching available via POST `/api/admin/batch-match-books`. Unmatched books visible in Admin ContentManager Bücher tab → "Nicht-gematched" sub-tab (`AdminUnmatchedBooks.tsx`) for investigation. Public display via "Podcast-Bücher" tab on bookstore profiles (`PublicBookstore.tsx`), grouped by episode with sentiment badges, star ratings, blockquotes, and indie-verlag detection. Phase 2 speech-to-text transcription UI present but locked with "Bald verfügbar für Premium-Mitglieder" message. API: GET/POST/PATCH/DELETE `/api/content-sources`, POST `/api/content-sources/:id/sync`, GET `/api/public/content-books/:slug`, GET `/api/admin/content-sources`, POST `/api/admin/batch-match-books`, GET `/api/admin/unmatched-books`.
--   **Affiliate Tracking System**: Platform-internal creator links (`/@creatorSlug/buch/:isbn`) with click tracking and session-based attribution (48h TTL). Click flow: user visits creator link → click tracked with creator_id, book_id, session_id → user clicks "Kaufen bei Thalia" → redirect to platform affiliate link (merchant only sees platform ID). Tables: `affiliate_clicks` (click events), `affiliate_orders` (purchase tracking with status, commission, creator_share). API: POST `/api/affiliate/track-click`, POST `/api/affiliate/resolve-link`, GET `/api/affiliate/creator-stats`. Admin: GET `/api/admin/affiliate-tracking`, POST/PATCH `/api/admin/affiliate-orders`, GET `/api/admin/affiliate-creators`. Admin UI in ContentManager "affiliates" tab with Creator-Tracking and Bestellungen sub-views. User dashboard: `CreatorAnalytics.tsx` shows real-time KPIs (clicks, orders, earnings), recent clicks list, and creator link display.
--   **Revenue-Share Attribution System**: Dual-source attribution for curator commissions with strict priority rules. Two attribution types: REFERRAL (curator brings new user via `/r/:creatorSlug` personal link, 7-day window) and CURATION (user clicks book in curator's curation, 24h window). **Priority rule**: REFERRAL always wins — if user came via a referral link, only that curator gets compensated, even if the purchased book was from another curator's curation. No double compensation. Tables: `referral_sessions` (session-based referral tracking with 7-day expiry), `curation_clicks` (book clicks within curations), `creator_commissions` (attributed commissions with idempotency via external_order_id + composite unique). `attributeConversion()` function handles attribution logic. `affiliates` table extended with `cookie_duration_days` for per-merchant attribution windows. API: POST `/api/track/curation-click`, POST `/api/track/conversion`, GET/POST/PATCH `/api/admin/commissions`, GET `/api/admin/referral-sessions`, GET `/api/creator/commissions`. Admin UI: "Provisionen" sub-tab in AdminAffiliate with summary cards, filterable commission table, referral session viewer, and inline actions (confirm/cancel/edit share rate). Creator UI: Attribution breakdown KPIs in CreatorAnalytics (Referral-Einnahmen, Kurations-Einnahmen, Ausstehend), commission history table, personalized referral link with copy button. Erklärungstext "So funktioniert deine Vergütung" in Earnings.tsx with full business rules. Tracking utility: `client/src/utils/tracking.ts` with shared `generateSessionId()` and `trackCurationClick()`. Referral cookies (`ref_creator_id`, `ref_session_id`) set server-side with 7-day maxAge.
+-   **Dynamic Content Management**: Pages and sections are rendered dynamically based on database configurations.
+-   **Book Enrichment**: System for identifying indie/self-published books and displaying award badges.
+-   **Content Scheduling & Tracking**: Features for scheduling content sections, setting view/click limits, and bot filtering for accurate analytics.
+-   **Curator Management**: Integrated curator selection with profile management.
+-   **Type Safety**: Extensive use of TypeScript with Zod for API validation.
+-   **Admin Panel**: Comprehensive Content Manager for all administrative tasks.
+-   **Navigation Management**: Admin UI for managing navigation items with location-based filtering.
+-   **Author Verification Workflow**: User-initiated author access requests with admin approval and integration with ONIX database matching.
+-   **Mobile Navigation**: Unified dark-themed bottom navigation bar.
+-   **Internationalization (i18n)**: Directory-based locale prefixes (`/de-de/`, `/en-gb/`) with `de-de` as default.
+-   **Dashboard & Feed System**: Personalized user dashboard with customizable feed sections.
+-   **User Bookstore & Curations System**: Users create thematic book collections (Kurationen) and public bookstore profiles.
+-   **Events System**: Users create and manage events, displayed in dashboards and public profiles.
+-   **Category Cards System**: Admin-managed category cards for homepage display.
+-   **Affiliate Creator Program**: Users register for an affiliate program, including identity, tax, and payout details. Creator analytics are provided.
+-   **Content/Podcast Book Extraction System**: Users add RSS feeds, and an AI (OpenRouter/Mistral) extracts book mentions from episode descriptions with sentiment analysis. A book matching system links extracted books to existing database entries.
+-   **Affiliate Tracking System**: Platform-internal creator links with click tracking and session-based attribution (48h TTL).
+-   **Revenue-Share Attribution System**: Dual-source attribution for curator commissions (REFERRAL and CURATION) with strict priority rules (REFERRAL always wins).
 
-## Security
--   **Security Headers**: Helmet middleware configured with CSP (Content-Security-Policy), X-Frame-Options, HSTS, and other security headers in `server/index.ts`.
--   **Rate Limiting**: Login endpoint limited to 10 attempts per 15 minutes; API endpoints limited to 200 requests per minute via `express-rate-limit`.
--   **Upload Protection**: `/api/upload/avatar` requires authentication (`req.isAuthenticated()`).
--   **SQL Injection Prevention**: `generateUniqueSlug` uses `ALLOWED_SLUG_TABLES` whitelist to prevent table name injection.
--   **XSS Prevention**: All `dangerouslySetInnerHTML` usage sanitized via DOMPurify (`client/src/utils/sanitize.ts`) in CMS content rendering and SeriesPage.
--   **Admin Route Protection**: Navigation column CRUD routes and other admin endpoints protected with `requireAdminGuard`.
+**Security**:
+-   **Security Headers**: Helmet middleware for CSP, X-Frame-Options, HSTS, etc.
+-   **Rate Limiting**: Implemented on login and API endpoints.
+-   **Upload Protection**: Authenticated uploads for avatars.
+-   **SQL Injection Prevention**: Whitelisting for table names in slug generation.
+-   **XSS Prevention**: DOMPurify for sanitizing `dangerouslySetInnerHTML` content.
+-   **Admin Route Protection**: `requireAdminGuard` for administrative endpoints.
 
-## SEO
--   **robots.txt**: Served via Express route at `/robots.txt`. Allows major search engines (Google, Bing, DuckDuckBot, Applebot), blocks admin/API/dashboard paths, and blocks AI crawlers (GPTBot, CCBot, etc.).
--   **Sitemap**: Dynamic XML sitemap at `/sitemap.xml` including static pages, CMS pages, curator profiles, and bookstore profiles. Cached for 1 hour.
+**SEO**:
+-   **robots.txt**: Dynamically served, allowing major search engines and blocking admin paths and AI crawlers.
+-   **Sitemap**: Dynamic XML sitemap including static pages, CMS pages, and profiles.
 
 ## External Dependencies
--   **Database**: Neon PostgreSQL (via `NEON_DATABASE_URL`).
--   **File Storage**: Local filesystem for avatar uploads, served via `/uploads` static route.
+-   **Database**: Neon PostgreSQL
+-   **File Storage**: Local filesystem for avatar uploads

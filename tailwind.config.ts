@@ -5,13 +5,33 @@ export default {
   content: ["./client/index.html", "./client/src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {
+      spacing: {
+        "space-1": "var(--space-1)",
+        "space-2": "var(--space-2)",
+        "space-3": "var(--space-3)",
+        "space-4": "var(--space-4)",
+        "space-5": "var(--space-5)",
+        "space-6": "var(--space-6)",
+        "space-8": "var(--space-8)",
+        "space-10": "var(--space-10)",
+        "space-12": "var(--space-12)",
+        "space-16": "var(--space-16)",
+        "section-gap": "var(--section-gap)",
+      },
       borderRadius: {
-        lg: ".5625rem", /* 9px */
-        md: ".375rem", /* 6px */
-        sm: ".1875rem", /* 3px */
+        none: "var(--radius-none)",
+        sm: "var(--radius-sm)",
+        md: "var(--radius-md)",
+        lg: "var(--radius-lg)",
+        xl: "var(--radius-xl)",
+        "2xl": "var(--radius-2xl)",
+        full: "var(--radius-full)",
+      },
+      boxShadow: {
+        "book-cover": "var(--shadow-book-cover)",
+        "book-cover-dark": "var(--shadow-book-cover-dark)",
       },
       colors: {
-        // Flat / base colors (regular buttons)
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",
         border: "hsl(var(--border) / <alpha-value>)",
@@ -73,13 +93,43 @@ export default {
         "sidebar-accent": {
           DEFAULT: "hsl(var(--sidebar-accent) / <alpha-value>)",
           foreground: "hsl(var(--sidebar-accent-foreground) / <alpha-value>)",
-          border: "var(--sidebar-accent-border)"
+          border: "var(--sidebar-accent-border)",
         },
+        cerulean: "var(--color-blue-cerulean)",
+        coral: "var(--color-coral-vibrant)",
+        gold: "var(--color-gold-royal)",
+        teal: "var(--color-teal-tropical)",
+        saffron: "var(--color-saffron)",
+        beige: "var(--color-beige)",
+        charcoal: "var(--color-charcoal)",
         status: {
           online: "rgb(34 197 94)",
           away: "rgb(245 158 11)",
           busy: "rgb(239 68 68)",
           offline: "rgb(156 163 175)",
+        },
+        badge: {
+          "award-bg": "var(--badge-award-bg)",
+          "award-text": "var(--badge-award-text)",
+          "award-border": "var(--badge-award-border)",
+          "media-bg": "var(--badge-media-bg)",
+          "media-text": "var(--badge-media-text)",
+          "media-border": "var(--badge-media-border)",
+          "curator-bg": "var(--badge-curator-bg)",
+          "curator-text": "var(--badge-curator-text)",
+          "curator-border": "var(--badge-curator-border)",
+          "status-active-bg": "var(--badge-status-active-bg)",
+          "status-active-text": "var(--badge-status-active-text)",
+          "status-active-border": "var(--badge-status-active-border)",
+          "status-draft-bg": "var(--badge-status-draft-bg)",
+          "status-draft-text": "var(--badge-status-draft-text)",
+          "status-draft-border": "var(--badge-status-draft-border)",
+          "status-pending-bg": "var(--badge-status-pending-bg)",
+          "status-pending-text": "var(--badge-status-pending-text)",
+          "status-pending-border": "var(--badge-status-pending-border)",
+          "series-bg": "var(--badge-series-bg)",
+          "series-text": "var(--badge-series-text)",
+          "series-border": "var(--badge-series-border)",
         },
       },
       fontFamily: {
@@ -87,6 +137,18 @@ export default {
         headline: ["var(--font-headline)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
+      },
+      fontSize: {
+        "fluid-h1": ["var(--fluid-h1)", { lineHeight: "1.2" }],
+        "fluid-h2": ["var(--fluid-h2)", { lineHeight: "1.2" }],
+        "fluid-h3": ["var(--fluid-h3)", { lineHeight: "1.2" }],
+        "fluid-h4": ["var(--fluid-h4)", { lineHeight: "1.2" }],
+        "fluid-h5": ["var(--fluid-h5)", { lineHeight: "1.2" }],
+        "fluid-h6": ["var(--fluid-h6)", { lineHeight: "1.2" }],
+        "fluid-body": ["var(--fluid-body)", { lineHeight: "1.6" }],
+        "fluid-body-small": ["var(--fluid-body-small)", { lineHeight: "1.5" }],
+        "fluid-body-xs": ["var(--fluid-body-xs)", { lineHeight: "1.4" }],
+        "fluid-price": ["var(--fluid-price-label)", { lineHeight: "1.3" }],
       },
       keyframes: {
         "accordion-down": {

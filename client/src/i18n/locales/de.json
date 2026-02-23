@@ -194,7 +194,49 @@
     "currentRegion": "Aktuelle Region: {{region}}",
     "germany": "Deutschland",
     "austria": "Österreich",
-    "switzerland": "Schweiz"
+    "switzerland": "Schweiz",
+    "unitedKingdom": "Vereinigtes Königreich"
+  },
+  "microcopy": {
+    "follow": "Folgen",
+    "unfollow": "Entfolgen",
+    "bookmark": "Merken",
+    "bookmarked": "Gemerkt",
+    "share": "Teilen",
+    "buyAt": "Kaufen bei {{shop}}",
+    "tryAgain": "Erneut versuchen",
+    "linkCopied": "Link in die Zwischenablage kopiert",
+    "shareNotSupported": "Bitte kopiere den Link manuell aus der Adresszeile.",
+    "empty": {
+      "noBooksTitle": "Keine Bücher gefunden",
+      "noBooksDescription": "Momentan gibt es hier keine Bücher. Schau später wieder vorbei oder passe deine Filter an.",
+      "noResultsTitle": "Keine Ergebnisse",
+      "noResultsDescription": "Für deine Suche wurden keine passenden Ergebnisse gefunden. Versuche es mit anderen Suchbegriffen.",
+      "noFavoritesTitle": "Noch keine Favoriten",
+      "noFavoritesDescription": "Speichere Bücher, Kurator:innen und mehr, um sie hier wiederzufinden.",
+      "noCuratorsTitle": "Keine Kurator:innen gefunden",
+      "noCuratorsDescription": "Für diese Auswahl wurden keine Kurator:innen gefunden. Versuche es mit anderen Filtern.",
+      "noEventsTitle": "Keine Veranstaltungen",
+      "noEventsDescription": "Aktuell sind keine Veranstaltungen geplant. Schau bald wieder vorbei."
+    },
+    "error": {
+      "genericTitle": "Etwas ist schiefgelaufen",
+      "genericDescription": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuche es später erneut.",
+      "loadingTitle": "Fehler beim Laden",
+      "loadingDescription": "Die Daten konnten nicht geladen werden. Bitte versuche es erneut.",
+      "networkTitle": "Verbindungsproblem",
+      "networkDescription": "Die Verbindung zum Server konnte nicht hergestellt werden. Bitte prüfe deine Internetverbindung."
+    },
+    "success": {
+      "saved": "Erfolgreich gespeichert",
+      "deleted": "Erfolgreich gelöscht",
+      "copied": "In die Zwischenablage kopiert",
+      "updated": "Erfolgreich aktualisiert"
+    },
+    "confirm": {
+      "delete": "Möchtest du dieses Element wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "discard": "Möchtest du die Änderungen wirklich verwerfen? Nicht gespeicherte Daten gehen verloren."
+    }
   },
   "meta": {
     "siteTitle": "coratiert.de - Kuratierte Buchempfehlungen",

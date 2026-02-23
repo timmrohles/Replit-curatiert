@@ -30,20 +30,21 @@ export function DSCreatorCard({
 
   return (
     <div
-      className="bg-[var(--ds-bg-primary)] border border-[var(--ds-border-default)] rounded-[var(--ds-radius-lg)] p-6 hover:shadow-[var(--ds-shadow-md)] transition-all cursor-pointer group"
+      className="bg-card border border-border rounded-md p-[var(--space-6)] hover-elevate transition-all cursor-pointer group"
       onClick={onClick}
+      data-testid="card-ds-creator"
     >
-      <div className="flex items-start gap-4">
-        {/* Avatar */}
+      <div className="flex items-start gap-[var(--space-4)]">
         <img
           src={avatar}
           alt={name}
-          className="w-16 h-16 rounded-full object-cover flex-shrink-0 ring-2 ring-[#247ba0] ring-offset-2"
+          className="rounded-full object-cover flex-shrink-0 ring-2 ring-[var(--color-blue-cerulean)] ring-offset-2"
+          style={{ width: 'var(--avatar-md)', height: 'var(--avatar-md)' }}
+          data-testid="img-ds-creator-avatar"
         />
 
-        {/* Content */}
         <div className="flex-1 min-w-0">
-          <DSText variant="label" color="primary" className="mb-1">
+          <DSText variant="label" color="primary" className="mb-[var(--space-1)]">
             {name}
           </DSText>
           <DSText variant="caption" color="secondary" className="line-clamp-2">
@@ -51,15 +52,16 @@ export function DSCreatorCard({
           </DSText>
         </div>
 
-        {/* Like Button */}
         <button
           onClick={handleLike}
-          className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full transition-all ${
+          className={`flex-shrink-0 flex items-center justify-center rounded-full transition-all ${
             isLiked
-              ? 'bg-[var(--ds-error-light)] text-[var(--ds-error)]'
-              : 'bg-[var(--ds-bg-secondary)] text-[var(--ds-text-tertiary)] hover:bg-[var(--ds-error-light)] hover:text-[var(--ds-error)]'
+              ? 'bg-destructive/10 text-destructive'
+              : 'bg-muted text-muted-foreground hover-elevate'
           }`}
+          style={{ width: 'var(--avatar-sm)', height: 'var(--avatar-sm)' }}
           aria-label={isLiked ? 'Unlike' : 'Like'}
+          data-testid="button-ds-creator-like"
         >
           <Heart className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
         </button>

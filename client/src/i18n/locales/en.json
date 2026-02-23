@@ -194,7 +194,49 @@
     "currentRegion": "Current region: {{region}}",
     "germany": "Germany",
     "austria": "Austria",
-    "switzerland": "Switzerland"
+    "switzerland": "Switzerland",
+    "unitedKingdom": "United Kingdom"
+  },
+  "microcopy": {
+    "follow": "Follow",
+    "unfollow": "Unfollow",
+    "bookmark": "Bookmark",
+    "bookmarked": "Bookmarked",
+    "share": "Share",
+    "buyAt": "Buy at {{shop}}",
+    "tryAgain": "Try again",
+    "linkCopied": "Link copied to clipboard",
+    "shareNotSupported": "Please copy the link manually from the address bar.",
+    "empty": {
+      "noBooksTitle": "No books found",
+      "noBooksDescription": "There are no books here right now. Check back later or adjust your filters.",
+      "noResultsTitle": "No results",
+      "noResultsDescription": "No matching results were found for your search. Try different search terms.",
+      "noFavoritesTitle": "No favourites yet",
+      "noFavoritesDescription": "Save books, curators and more to find them here.",
+      "noCuratorsTitle": "No curators found",
+      "noCuratorsDescription": "No curators were found for this selection. Try different filters.",
+      "noEventsTitle": "No events",
+      "noEventsDescription": "There are no events planned at the moment. Check back soon."
+    },
+    "error": {
+      "genericTitle": "Something went wrong",
+      "genericDescription": "An unexpected error occurred. Please try again later.",
+      "loadingTitle": "Loading error",
+      "loadingDescription": "The data could not be loaded. Please try again.",
+      "networkTitle": "Connection problem",
+      "networkDescription": "Could not connect to the server. Please check your internet connection."
+    },
+    "success": {
+      "saved": "Successfully saved",
+      "deleted": "Successfully deleted",
+      "copied": "Copied to clipboard",
+      "updated": "Successfully updated"
+    },
+    "confirm": {
+      "delete": "Are you sure you want to delete this item? This action cannot be undone.",
+      "discard": "Are you sure you want to discard your changes? Unsaved data will be lost."
+    }
   },
   "meta": {
     "siteTitle": "coratiert.de - Curated Book Recommendations",

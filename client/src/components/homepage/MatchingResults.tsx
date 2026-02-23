@@ -119,7 +119,7 @@ export function MatchingResults({
       </div>
 
       {/* Kuratierte Reihe - Empfohlene Bücher */}
-      <div className="mb-16">
+      <div className="mb-section-gap">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3
@@ -244,7 +244,7 @@ export function MatchingResults({
       </div>
 
       {/* Self-Publisher Section */}
-      <div className="mb-16">
+      <div className="mb-section-gap">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3
@@ -351,7 +351,7 @@ export function MatchingResults({
 
       {/* Curator Recommendations */}
       {curatorMatches.length > 0 && (
-        <div className="mb-16">
+        <div className="mb-section-gap">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h3
@@ -441,7 +441,7 @@ export function MatchingResults({
       )}
 
       {/* Authors Section */}
-      <div className="mb-16">
+      <div className="mb-section-gap">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3
@@ -544,7 +544,7 @@ export function MatchingResults({
       </div>
 
       {/* Publishers Section */}
-      <div className="mb-16">
+      <div className="mb-section-gap">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3

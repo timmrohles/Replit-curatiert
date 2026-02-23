@@ -1,23 +1,14 @@
 import { Trophy, Medal, Award as AwardIcon } from "lucide-react";
 import { useState } from "react";
 import { Text } from "../ui/typography";
+import { DSBadge } from "../design-system/DSBadge";
 
-// ==================================================================
-// TYPES
-// ==================================================================
-
-/**
- * Legacy interface (kept for backward compatibility)
- */
 export interface Award {
   status: "winner" | "shortlist" | "longlist";
   name: string;
   year: string;
 }
 
-/**
- * New interface matching Neon DB structure
- */
 export interface BookAward {
   award_id: number;
   award_name: string;
@@ -31,40 +22,13 @@ export interface BookAward {
 }
 
 interface AwardBadgeProps {
-  awards?: Award[]; // Legacy prop (deprecated)
-  bookAwards?: BookAward[]; // New prop (Neon DB)
+  awards?: Award[];
+  bookAwards?: BookAward[];
 }
 
-// ==================================================================
-// AWARD BADGE COMPONENT
-// ==================================================================
-
-/**
- * Award Badge Component
- * 
- * Displays award badges on book covers (bottom-left)
- * Supports both legacy Award[] and new BookAward[] formats
- * 
- * Features:
- * - Gold badge for winners (Trophy icon)
- * - Silver badge for shortlist/longlist (Medal icon)
- * - Bronze badge for nominees/finalists (Award icon)
- * - Hover tooltip with award details
- * - Stacked display (max 3 badges)
- * 
- * Usage:
- * ```tsx
- * // New way (Neon DB)
- * <AwardBadge bookAwards={bookAwards} />
- * 
- * // Old way (legacy, still works)
- * <AwardBadge awards={[{ status: 'winner', name: 'Deutscher Buchpreis', year: '2025' }]} />
- * ```
- */
 export function AwardBadge({ awards, bookAwards }: AwardBadgeProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  // Convert bookAwards to legacy format if provided
   const displayAwards: Award[] = bookAwards 
     ? bookAwards.map(ba => ({
         status: ba.outcome_type === 'winner' 
@@ -79,13 +43,11 @@ export function AwardBadge({ awards, bookAwards }: AwardBadgeProps) {
 
   if (!displayAwards || displayAwards.length === 0) return null;
 
-  // Sort by priority (winner > shortlist > longlist)
   const sortedAwards = [...displayAwards].sort((a, b) => {
     const priorityMap = { 'winner': 1, 'shortlist': 2, 'longlist': 3 };
     return priorityMap[a.status] - priorityMap[b.status];
   });
 
-  // Show max 3 badges
   const visibleAwards = sortedAwards.slice(0, 3);
 
   return (
@@ -94,12 +56,11 @@ export function AwardBadge({ awards, bookAwards }: AwardBadgeProps) {
         const isWinner = award.status === "winner";
         const isShortlist = award.status === "shortlist";
         
-        // Badge styling
         const bgColor = isWinner 
-          ? "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)" // Gold
+          ? "linear-gradient(135deg, #FFD700 0%, #FFA500 100%)"
           : isShortlist
-            ? "linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)" // Silver
-            : "linear-gradient(135deg, #CD7F32 0%, #B8860B 100%)"; // Bronze
+            ? "linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%)"
+            : "linear-gradient(135deg, #CD7F32 0%, #B8860B 100%)";
         
         const iconColor = "#2a2a2a";
         
@@ -115,7 +76,6 @@ export function AwardBadge({ awards, bookAwards }: AwardBadgeProps) {
             ? "0 4px 12px rgba(192, 192, 192, 0.4)"
             : "0 4px 12px rgba(205, 127, 50, 0.4)";
 
-        // Icon selection
         const Icon = isWinner ? Trophy : isShortlist ? Medal : AwardIcon;
 
         return (
@@ -128,8 +88,8 @@ export function AwardBadge({ awards, bookAwards }: AwardBadgeProps) {
             }}
             onMouseEnter={() => setHoveredIndex(index)}
             onMouseLeave={() => setHoveredIndex(null)}
+            data-testid={`badge-award-${index}`}
           >
-            {/* Badge Circle */}
             <div 
               className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-transform hover:scale-110"
               style={{ 
@@ -140,7 +100,6 @@ export function AwardBadge({ awards, bookAwards }: AwardBadgeProps) {
               <Icon className="w-5 h-5" style={{ color: iconColor, strokeWidth: 2 }} />
             </div>
 
-            {/* Hover Tooltip */}
             {hoveredIndex === index && (
               <div 
                 className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-3 py-2 rounded-lg shadow-xl whitespace-nowrap z-50 animate-in fade-in slide-in-from-left-2 duration-200"
@@ -150,14 +109,13 @@ export function AwardBadge({ awards, bookAwards }: AwardBadgeProps) {
                   minWidth: "180px"
                 }}
               >
-                <Text variant="xs" className="font-bold text-white">
+                <DSBadge variant="award" size="small" data-testid={`badge-award-label-${index}`}>
                   {label}
-                </Text>
-                <Text variant="xs" className="text-white opacity-90">
+                </DSBadge>
+                <Text variant="xs" className="text-white opacity-90 mt-1">
                   {award.name}
                 </Text>
                 
-                {/* Arrow pointing left */}
                 <div 
                   className="absolute right-full top-1/2 -translate-y-1/2"
                   style={{
@@ -174,7 +132,6 @@ export function AwardBadge({ awards, bookAwards }: AwardBadgeProps) {
         );
       })}
       
-      {/* "More" indicator if more than 3 awards */}
       {sortedAwards.length > 3 && (
         <div 
           className="relative"
@@ -200,13 +157,6 @@ export function AwardBadge({ awards, bookAwards }: AwardBadgeProps) {
   );
 }
 
-// ==================================================================
-// UTILITY FUNCTIONS
-// ==================================================================
-
-/**
- * Convert BookAward to legacy Award format
- */
 export function convertBookAwardToLegacy(bookAward: BookAward): Award {
   return {
     status: bookAward.outcome_type === 'winner' 

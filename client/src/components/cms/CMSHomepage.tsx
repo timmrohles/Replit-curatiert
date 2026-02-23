@@ -228,7 +228,7 @@ export function CMSHomepage() {
                   .filter(Boolean);
 
                 return (
-                  <div key={section.id} className="mb-16">
+                  <div key={section.id} className="mb-section-gap">
                     <UniversalSectionRenderer
                       section={section}
                       books={sectionBooks}

@@ -2,7 +2,7 @@ import { HTMLAttributes, forwardRef } from 'react';
 import { Heading, Text } from '../ui/typography';
 import { cn } from '../ui/utils';
 
-type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4';
+type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 type TextVariant = 'body-large' | 'body' | 'caption' | 'label' | 'subtitle';
 
 interface DSHeadingProps extends HTMLAttributes<HTMLHeadingElement> {
@@ -31,6 +31,8 @@ export const DSHeading = forwardRef<HTMLHeadingElement, DSHeadingProps>(
       h2: 'h2',
       h3: 'h3',
       h4: 'h4',
+      h5: 'h5',
+      h6: 'h6',
     } as const;
 
     return (

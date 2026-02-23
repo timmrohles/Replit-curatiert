@@ -1,8 +1,7 @@
-import { memo } from 'react';
-import { motion } from 'motion/react';
 import { useSafeNavigate } from '../../utils/routing';
 import { getSeriesBadge, getBadgeStyle } from '../../utils/serieBadge';
 import { ONIXTag } from '../../utils/api';
+import { DSBadge } from '../design-system/DSBadge';
 
 interface SerieBadgeProps {
   onixTags?: ONIXTag[];
@@ -14,12 +13,6 @@ interface SerieBadgeProps {
   clickable?: boolean;
 }
 
-/**
- * Serie Badge Component
- * 
- * Displays series information prominently on book covers
- * Extracts series data from ONIX tags or accepts direct props
- */
 export function SerieBadgeComponent({ 
   onixTags, 
   context = 'cover', 
@@ -32,7 +25,6 @@ export function SerieBadgeComponent({
   const navigate = useSafeNavigate();
   const badge = getSeriesBadge(onixTags);
   
-  // Use direct props if provided, otherwise use ONIX data
   const finalSeriesName = seriesName || badge?.serieName;
   const finalSeriesNumber = collectionNumber || badge?.serieNumber;
   const finalSeriesSlug = seriesSlug || (finalSeriesName ? finalSeriesName.toLowerCase().replace(/\s+/g, '-') : '');
@@ -51,23 +43,27 @@ export function SerieBadgeComponent({
     }
   };
 
+  const sizeMap = {
+    cover: 'small' as const,
+    list: 'small' as const,
+    detail: 'medium' as const,
+  };
+
   return (
     <div
-      className={`inline-flex items-center rounded-full whitespace-nowrap overflow-hidden text-ellipsis ${clickable ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''} ${className}`}
-      style={{
-        backgroundColor: badge?.color || '#247ba0',
-        color: '#FFFFFF',
-        fontFamily: 'Fjalla One',
-        fontSize: style.fontSize,
-        padding: style.padding,
-        maxWidth: style.maxWidth,
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-        fontWeight: 'normal'
-      }}
+      className={`inline-flex ${clickable ? 'cursor-pointer' : ''} ${className}`}
+      style={{ maxWidth: style.maxWidth }}
       title={text}
       onClick={handleClick}
+      data-testid="badge-series"
     >
-      📚 {text}
+      <DSBadge
+        variant="series"
+        size={sizeMap[context]}
+        className="font-headline font-normal truncate"
+      >
+        {text}
+      </DSBadge>
     </div>
   );
 }
