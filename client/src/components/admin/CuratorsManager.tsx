@@ -258,14 +258,6 @@ export function CuratorsManager() {
             style={{ borderColor: '#E5E7EB' }}
           />
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="px-4 py-2 rounded-lg flex items-center gap-2"
-          style={{ backgroundColor: '#70c1b3', color: '#FFFFFF' }}
-        >
-          <Plus className="w-4 h-4" />
-          <span>Neuer Kurator</span>
-        </button>
       </div>
 
       {/* Curators Grid */}
