@@ -100,7 +100,7 @@ export function DashboardOverview() {
           <div className="flex-1 min-w-0">
             <h1
               className="text-xl md:text-2xl lg:text-3xl mb-1"
-              style={{ fontFamily: 'Fjalla One', color: 'var(--ds-text-primary, #3A3A3A)' }}
+              style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}
               data-testid="text-username"
             >
               {t('dashboardOverview.welcome', 'Willkommen, {{name}}!', { name: userName })}
@@ -141,7 +141,7 @@ export function DashboardOverview() {
                 <Icon className="w-4 h-4 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">{kpi.label}</span>
               </div>
-              <div className="text-2xl font-bold" style={{ color: 'var(--ds-text-primary, #3A3A3A)' }}>
+              <div className="text-2xl font-bold" style={{ color: '#1F2937' }}>
                 {kpi.value}
               </div>
               {kpi.subtitle && (
@@ -156,7 +156,7 @@ export function DashboardOverview() {
         <section>
           <h2
             className="text-lg mb-3"
-            style={{ fontFamily: 'Fjalla One', color: 'var(--ds-text-primary, #3A3A3A)' }}
+            style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}
           >
             {t('dashboardOverview.nextSteps', 'Nächste Schritte')}
           </h2>
@@ -177,7 +177,7 @@ export function DashboardOverview() {
                     <Icon className="w-5 h-5" style={{ color: '#247ba0' }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium mb-0.5" style={{ color: 'var(--ds-text-primary, #3A3A3A)' }}>
+                    <h3 className="text-sm font-medium mb-0.5" style={{ color: '#1F2937' }}>
                       {action.title}
                     </h3>
                     <p className="text-xs text-muted-foreground line-clamp-2">

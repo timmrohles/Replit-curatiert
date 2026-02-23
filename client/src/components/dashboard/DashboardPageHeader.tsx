@@ -12,17 +12,17 @@ export function DashboardPageHeader({ title, description, action }: DashboardPag
   const ActionIcon = action?.icon;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
       <div>
         <h1
           className="text-2xl md:text-3xl"
-          style={{ fontFamily: 'Fjalla One', color: 'var(--ds-text-primary, #3A3A3A)' }}
+          style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}
           data-testid="text-page-title"
         >
           {title}
         </h1>
         {description && (
-          <p className="text-sm text-muted-foreground mt-1" data-testid="text-page-description">
+          <p className="text-sm mt-1.5" style={{ color: '#4B5563' }} data-testid="text-page-description">
             {description}
           </p>
         )}

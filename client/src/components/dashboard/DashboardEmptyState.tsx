@@ -14,19 +14,19 @@ export function DashboardEmptyState({ icon: Icon = BookOpen, title, description,
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center" data-testid="empty-state">
       <div
-        className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
-        style={{ backgroundColor: '#247ba0', opacity: 0.1 }}
+        className="w-14 h-14 rounded-full flex items-center justify-center mb-5"
+        style={{ backgroundColor: 'rgba(36, 123, 160, 0.08)' }}
       >
-        <Icon className="w-8 h-8" style={{ color: '#247ba0' }} />
+        <Icon className="w-6 h-6" style={{ color: '#247ba0' }} />
       </div>
       <h3
-        className="text-xl mb-2"
-        style={{ fontFamily: 'Fjalla One', color: 'var(--ds-text-primary, #3A3A3A)' }}
+        className="text-lg mb-2"
+        style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}
         data-testid="text-empty-title"
       >
         {title}
       </h3>
-      <p className="text-sm text-muted-foreground max-w-md mb-6" data-testid="text-empty-description">
+      <p className="text-sm max-w-md mb-6" style={{ color: '#4B5563' }} data-testid="text-empty-description">
         {description}
       </p>
       {action && (

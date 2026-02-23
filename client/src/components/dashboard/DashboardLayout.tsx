@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/use-auth';
 import { Header } from '../layout/Header';
 import { Footer } from '../layout/Footer';
 import { DashboardSidebar } from './DashboardSidebar';
+import { DashboardBreadcrumbs } from './DashboardBreadcrumbs';
 import { Menu } from 'lucide-react';
 
 const API_BASE = '/api';
@@ -64,10 +65,10 @@ export function DashboardLayout() {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ backgroundColor: 'var(--header-bg, #F9FAFB)' }}>
-        <h2 className="text-xl" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+        <h2 className="text-xl" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
           {t('dashboardNav.loginRequired', 'Bitte melde dich an')}
         </h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm" style={{ color: '#4B5563' }}>
           {t('dashboardNav.loginDescription', 'Du musst angemeldet sein, um dein Dashboard zu nutzen.')}
         </p>
         <button
@@ -95,18 +96,21 @@ export function DashboardLayout() {
         />
 
         <main className="flex-1 min-w-0 pb-20 lg:pb-0">
-          <div className="lg:hidden flex items-center gap-2 px-4 py-3 border-b border-border">
+          <div className="lg:hidden flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: '#E5E7EB' }}>
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="p-2 rounded-lg hover:bg-muted"
+              className="p-2 -ml-1 rounded-lg hover:bg-black/5 transition-colors"
               data-testid="sidebar-toggle"
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-5 h-5" style={{ color: '#374151' }} />
             </button>
-            <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Dashboard</span>
+            <DashboardBreadcrumbs />
           </div>
 
-          <div className="max-w-[1200px] mx-auto px-4 md:px-6 py-4 md:py-6">
+          <div className="max-w-[1200px] mx-auto px-4 md:px-8 pt-6 pb-6 md:pt-10 md:pb-8">
+            <div className="hidden lg:block mb-6">
+              <DashboardBreadcrumbs />
+            </div>
             <Outlet context={{ hasModule, hasAnyAuthorModule, userId }} />
           </div>
         </main>
