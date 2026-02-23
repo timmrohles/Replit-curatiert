@@ -122,29 +122,28 @@ export function HeroSection({ section }: HeroSectionProps) {
                         }}
                         data-testid={`hero-curator-card-${curator.id}`}
                       >
-                        <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border-4 border-white">
-                          <ImageWithFallback
-                            src={curator.avatarUrl || curator.heroImageUrl || ''}
-                            alt={curator.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
+                        <div className="aspect-[3/4] rounded-2xl overflow-hidden shadow-xl border-4 border-white relative">
+                          {(curator.avatarUrl || curator.heroImageUrl) ? (
+                            <ImageWithFallback
+                              src={curator.avatarUrl || curator.heroImageUrl || ''}
+                              alt={curator.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-[#1a3a4a] to-[#0B1F33]" />
+                          )}
 
-                        {isActive && (
-                          <div
-                            className="absolute bottom-0 left-0 right-0 rounded-b-2xl p-4"
-                            style={{
-                              background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.4), transparent)',
-                            }}
-                          >
-                            <p className="text-white text-lg mb-0.5 font-headline">
+                          <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F33]/90 via-[#0B1F33]/40 to-[#0B1F33]/90 p-4 flex flex-col items-center justify-between">
+                            <h3 className="text-white text-base md:text-xl text-center" style={{ fontFamily: 'Fjalla One' }}>
                               {curator.name}
-                            </p>
-                            <p className="text-white/80 text-sm font-sans">
-                              {curator.focus || curator.tagline || ''}
-                            </p>
+                            </h3>
+                            {(curator.focus || curator.tagline) && (
+                              <div className="text-[#A0CEC8] text-[10px] md:text-xs tracking-wide uppercase text-center">
+                                {curator.focus || curator.tagline}
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </div>
                       </div>
                     );
                   })}
