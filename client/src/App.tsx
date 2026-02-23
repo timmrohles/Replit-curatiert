@@ -81,12 +81,13 @@ const DashboardReviews = React.lazy(() => import('./pages/dashboard/Reviews').th
 const DashboardNotifications = React.lazy(() => import('./pages/dashboard/Notifications').then(m => ({ default: m.DashboardNotifications })));
 const DashboardPrivacy = React.lazy(() => import('./pages/dashboard/Privacy').then(m => ({ default: m.DashboardPrivacy })));
 const DashboardFeed = React.lazy(() => import('./pages/dashboard/DashboardFeed').then(m => ({ default: m.DashboardFeed })));
-const DashboardEarnings = React.lazy(() => import('./pages/dashboard/Earnings').then(m => ({ default: m.DashboardEarnings })));
+const EarningsOverview = React.lazy(() => import('./pages/dashboard/earnings/EarningsOverview').then(m => ({ default: m.EarningsOverview })));
+const EarningsAffiliate = React.lazy(() => import('./pages/dashboard/earnings/EarningsAffiliate').then(m => ({ default: m.EarningsAffiliate })));
+const EarningsStatistics = React.lazy(() => import('./pages/dashboard/earnings/EarningsStatistics').then(m => ({ default: m.EarningsStatistics })));
 const UserCurations = React.lazy(() => import('./pages/dashboard/UserCurations').then(m => ({ default: m.UserCurations })));
 const UserEvents = React.lazy(() => import('./pages/dashboard/UserEvents').then(m => ({ default: m.UserEvents })));
 const ContentSourcesManager = React.lazy(() => import('./pages/dashboard/ContentSources').then(m => ({ default: m.ContentSourcesManager })));
 const DashboardCreatorStorefront = React.lazy(() => import('./pages/dashboard/creator/CreatorStorefront').then(m => ({ default: m.CreatorStorefront })));
-const CreatorAnalytics = React.lazy(() => import('./pages/dashboard/creator/CreatorAnalytics').then(m => ({ default: m.CreatorAnalytics })));
 const AuthorBooks = React.lazy(() => import('./pages/dashboard/author/AuthorBooks').then(m => ({ default: m.AuthorBooks })));
 const AuthorBookclub = React.lazy(() => import('./pages/dashboard/author/AuthorBookclub').then(m => ({ default: m.AuthorBookclub })));
 const AuthorBonuscontent = React.lazy(() => import('./pages/dashboard/author/AuthorBonuscontent').then(m => ({ default: m.AuthorBonuscontent })));
@@ -266,9 +267,9 @@ function App() {
                         <Route path="content-quellen" element={<ContentSourcesManager />} />
                         <Route path="feed" element={<DashboardFeed />} />
                         <Route path="veranstaltungen" element={<UserEvents />} />
-                        <Route path="einnahmen" element={<DashboardEarnings />} />
-                        <Route path="einnahmen/affiliate" element={<DashboardEarnings />} />
-                        <Route path="einnahmen/statistiken" element={<CreatorAnalytics />} />
+                        <Route path="einnahmen" element={<EarningsOverview />} />
+                        <Route path="einnahmen/affiliate" element={<EarningsAffiliate />} />
+                        <Route path="einnahmen/statistiken" element={<EarningsStatistics />} />
                         <Route path="profil" element={<DashboardProfile />} />
                         <Route path="benachrichtigungen" element={<DashboardNotifications />} />
                         <Route path="datenschutz" element={<DashboardPrivacy />} />
