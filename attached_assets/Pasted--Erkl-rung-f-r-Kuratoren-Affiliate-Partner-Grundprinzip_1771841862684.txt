@@ -1,0 +1,106 @@
+📘 Erklärung für Kuratoren (Affiliate-Partner)
+Grundprinzip
+
+Als Kurator erhältst du eine Beteiligung an der Affiliate-Provision, die wir von Buchhändlern erhalten – sofern ein Kauf eindeutig auf dich zurückzuführen ist.
+
+Die Vergütung basiert nicht auf dem Warenkorbwert, sondern auf der tatsächlich von uns erhaltenen Provision des jeweiligen Händlers.
+
+🥇 Wann du vergütet wirst
+
+Du wirst vergütet, wenn:
+
+1️⃣ Du neue Nutzer auf die Plattform bringst
+
+Wenn ein Nutzer über deinen persönlichen Link erstmals auf unsere Plattform gelangt und innerhalb des jeweiligen Attributionszeitraums ein Buch über einen unserer Händler kauft, erhältst du einen Anteil unserer Provision.
+
+Dabei gilt:
+
+Es spielt keine Rolle, welches Buch gekauft wird.
+
+Entscheidend ist, dass der Erstkontakt über deinen Link erfolgte.
+
+Deine Attribution hat Vorrang vor allen anderen.
+
+2️⃣ Ein Nutzer über deine Kuration kauft (nur wenn kein externer Referral vorliegt)
+
+Wenn ein Nutzer nicht über einen Kuratoren-Link auf die Plattform gekommen ist, sondern ein Buch direkt über deine Kuration entdeckt und gekauft hat, erhältst du ebenfalls eine Beteiligung.
+
+Das gilt nur dann, wenn kein anderer Kurator den Nutzer zuvor über einen persönlichen Link auf die Plattform gebracht hat.
+
+⚖️ Prioritätsregel (wichtig)
+
+Wenn ein Nutzer über den persönlichen Link eines Kurators auf die Plattform gelangt ist, erhält ausschließlich dieser Kurator die Vergütung – auch dann, wenn das gekaufte Buch aus einer Kuration eines anderen Kurators stammt.
+
+Eine doppelte Vergütung für denselben Kauf ist ausgeschlossen.
+
+❌ Wann keine Vergütung erfolgt
+
+Keine Vergütung erfolgt, wenn:
+
+der Kauf außerhalb des Attributionszeitraums erfolgt,
+
+der Händler keine Provision auszahlt,
+
+der Kauf storniert oder rückabgewickelt wird,
+
+kein nachvollziehbarer Bezug zu deinem Link oder deiner Kuration besteht,
+
+technische Tracking-Daten fehlen oder unvollständig sind.
+
+🍪 Zu den Cookie-Laufzeiten
+
+Die Attributionsdauer richtet sich nach den jeweiligen Affiliate-Bedingungen des Buchhändlers.
+
+Das bedeutet:
+
+Jeder Händler definiert eine eigene Cookie-Laufzeit (z. B. 24 Stunden, 7 Tage, 30 Tage).
+
+Diese Laufzeit bestimmt, wie lange ein Kauf einem vorherigen Klick zugeordnet werden kann.
+
+Wir übernehmen diese Laufzeiten technisch und organisatorisch.
+
+Eine Vergütung kann nur erfolgen, wenn der Händler den Kauf innerhalb seiner eigenen Attributionslogik anerkennt.
+
+Wichtig:
+
+Wir können keine längere Laufzeit garantieren als die, die der jeweilige Händler vorsieht.
+
+💰 Berechnungsgrundlage
+
+Deine Vergütung berechnet sich ausschließlich aus der tatsächlich an uns ausgezahlten Netto-Provision des Händlers.
+
+Beispiel:
+
+Händler zahlt 8 € Provision
+Vereinbarter Revenue Share: 50 %
+Dein Anteil: 4 €
+
+Stornos oder Rückgaben führen zu einer entsprechenden Anpassung.
+
+🧠 Strategisch wichtig (für eure Klarheit)
+
+Die Händler-Cookies werden nicht „verlängert“ oder „überlagert“.
+
+Ihr könnt intern eine längere Plattform-Zuordnung speichern (z. B. 7 Tage Referral),
+aber die tatsächliche Provisionsfähigkeit hängt immer von der Händler-Cookie-Logik ab.
+
+Das heißt:
+
+Plattform-Attribution ≠ Händler-Attribution
+Vergütung erfolgt nur, wenn beides zusammenfällt.
+
+🏁 Zusammenfassung für Kuratoren
+
+Du wirst vergütet, wenn:
+
+du neue Nutzer bringst, die innerhalb der Händler-Attributionsfrist kaufen
+
+oder (wenn kein Referral vorliegt) ein Buch aus deiner Kuration gekauft wird
+
+Nicht vergütet wird, wenn:
+
+der Händler keine Provision zahlt
+
+der Kauf außerhalb der Cookie-Laufzeit liegt
+
+der Kauf storniert wird
