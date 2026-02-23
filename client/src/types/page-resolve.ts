@@ -9,7 +9,8 @@ export type ItemTarget =
   | { type: "category"; category: { id: number; slug: string; name: string } }
   | { type: "tag"; tag: { id: number; slug: string; name: string; tagType?: string } }
   | { type: "page"; page: { id: number; slug: string } }
-  | { type: "template"; templateKey: string; params?: Record<string, any> };
+  | { type: "template"; templateKey: string; params?: Record<string, any> }
+  | { type: "url"; url: string };
 
 /**
  * Section Item - einzelnes Element innerhalb einer Section

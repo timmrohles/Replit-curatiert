@@ -269,8 +269,13 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
         target_params: editingItem.target_params || null,
       };
 
-      const response = await fetch(`${API_BASE_URL}/admin/items`, {
-        method: 'POST',
+      const url = editingItem.id
+        ? `${API_BASE_URL}/admin/items/${editingItem.id}`
+        : `${API_BASE_URL}/admin/sections/${sectionId}/items`;
+      const method = editingItem.id ? 'PATCH' : 'POST';
+
+      const response = await fetch(url, {
+        method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -339,42 +344,20 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       
       await Promise.all([
-        fetch(`${API_BASE_URL}/admin/items`, {
-          method: 'POST',
+        fetch(`${API_BASE_URL}/admin/items/${updatedItems[currentIndex].id}`, {
+          method: 'PATCH',
           credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            id: updatedItems[currentIndex].id,
-            section_id: sectionId,
-            item_type: updatedItems[currentIndex].item_type,
             sort_order: updatedItems[currentIndex].sort_order,
-            status: updatedItems[currentIndex].status,
-            data: updatedItems[currentIndex].data,
-            target_type: updatedItems[currentIndex].target_type,
-            target_page_id: updatedItems[currentIndex].target_page_id,
-            target_category_id: updatedItems[currentIndex].target_category_id,
-            target_tag_id: updatedItems[currentIndex].target_tag_id,
-            target_template_key: updatedItems[currentIndex].target_template_key,
-            target_params: updatedItems[currentIndex].target_params,
           }),
         }),
-        fetch(`${API_BASE_URL}/admin/items`, {
-          method: 'POST',
+        fetch(`${API_BASE_URL}/admin/items/${updatedItems[newIndex].id}`, {
+          method: 'PATCH',
           credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            id: updatedItems[newIndex].id,
-            section_id: sectionId,
-            item_type: updatedItems[newIndex].item_type,
             sort_order: updatedItems[newIndex].sort_order,
-            status: updatedItems[newIndex].status,
-            data: updatedItems[newIndex].data,
-            target_type: updatedItems[newIndex].target_type,
-            target_page_id: updatedItems[newIndex].target_page_id,
-            target_category_id: updatedItems[newIndex].target_category_id,
-            target_tag_id: updatedItems[newIndex].target_tag_id,
-            target_template_key: updatedItems[newIndex].target_template_key,
-            target_params: updatedItems[newIndex].target_params,
           }),
         }),
       ]);
@@ -568,7 +551,7 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
                     target_params: isBookCarousel ? { isbn13: isbn13Input } : null,
                   };
 
-                  const response = await fetch(`${API_BASE_URL}/admin/items`, {
+                  const response = await fetch(`${API_BASE_URL}/admin/sections/${sectionId}/items`, {
                     method: 'POST',
                     credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -763,7 +746,7 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
                 {/* Link to Category/Page via Navigation */}
                 <div>
                   <label className="block text-xs mb-1 font-medium" style={{ color: '#666666' }}>
-                    Verlinkung (aus Navigation)
+                    Ziel-Link
                   </label>
                   <select
                     value={editingItem.data?.link_href || ''}
@@ -783,7 +766,7 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
                     style={{ borderColor: '#E5E7EB' }}
                     disabled={navLoading}
                   >
-                    <option value="">-- Seite aus Navigation wählen --</option>
+                    <option value="">-- Aus Navigation wählen --</option>
                     {navItems.map((nav) => (
                       <option key={nav.id} value={nav.href}>
                         {nav.label} → {nav.href}
@@ -792,10 +775,9 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
                   </select>
                   {navLoading && <p className="text-xs mt-1" style={{ color: '#999' }}>Navigation laden...</p>}
 
-                  {/* Manual URL override */}
                   <div className="mt-2">
                     <label className="block text-xs mb-1" style={{ color: '#999999' }}>
-                      Oder manuell URL eingeben
+                      Oder eigene URL
                     </label>
                     <input
                       type="text"

@@ -5376,7 +5376,15 @@ export async function registerRoutes(
                   nullif(si.data->>'book_id', '')::int,
                   nullif(si.target_params->>'bookId', '')::int
                 ),
-                'sort_order', si.sort_order
+                'sort_order', si.sort_order,
+                'item_type', si.item_type,
+                'data', si.data,
+                'target_type', si.target_type,
+                'target_category_id', si.target_category_id,
+                'target_tag_id', si.target_tag_id,
+                'target_page_id', si.target_page_id,
+                'target_template_key', si.target_template_key,
+                'target_params', si.target_params
               )
               ORDER BY si.sort_order
             )
@@ -5530,13 +5538,40 @@ export async function registerRoutes(
           });
         }
 
+        const transformedItems = sortedItems.map((item: any) => {
+          const itemData = typeof item.data === 'string' ? JSON.parse(item.data) : (item.data || {});
+          let target: any = { type: 'page', page: { id: 0, slug: '/' } };
+
+          if (item.target_type === 'category' && item.target_category_id) {
+            target = { type: 'category', category: { id: item.target_category_id, slug: '', name: '' } };
+          } else if (item.target_type === 'tag' && item.target_tag_id) {
+            target = { type: 'tag', tag: { id: item.target_tag_id, slug: '', name: '' } };
+          } else if (item.target_type === 'page' && item.target_page_id) {
+            target = { type: 'page', page: { id: item.target_page_id, slug: '' } };
+          } else if (item.target_type === 'template' && item.target_template_key) {
+            const params = typeof item.target_params === 'string' ? JSON.parse(item.target_params) : (item.target_params || {});
+            target = { type: 'template', templateKey: item.target_template_key, params };
+          } else if (item.target_type === 'url' || itemData.link_href) {
+            target = { type: 'url', url: itemData.link_href || '' };
+          }
+
+          return {
+            id: item.id,
+            sortOrder: item.sort_order,
+            itemType: item.item_type || 'generic',
+            data: itemData,
+            target,
+            book_id: item.book_id,
+          };
+        });
+
         return {
           id: s.id,
           zone: s.zone,
           type: s.section_type,
           title: cfg.title || '',
           config: cfg,
-          items: sortedItems,
+          items: transformedItems,
           order: s.sort_order,
         };
       });

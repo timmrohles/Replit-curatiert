@@ -37,9 +37,11 @@ export function linkForTarget(target: ItemTarget): string {
         return `/t/${target.templateKey}?${queryString}`;
       }
       return `/t/${target.templateKey}`;
+
+    case "url":
+      return target.url || "/";
     
     default:
-      // Sollte nicht vorkommen durch TypeScript
       console.warn("Unknown target type:", target);
       return "/";
   }
@@ -55,9 +57,11 @@ export function displayNameForTarget(target: ItemTarget): string {
     case "tag":
       return target.tag.name;
     case "page":
-      return target.page.slug; // Pages haben keinen name im Type
+      return target.page.slug;
     case "template":
       return target.templateKey;
+    case "url":
+      return target.url;
     default:
       return "";
   }
