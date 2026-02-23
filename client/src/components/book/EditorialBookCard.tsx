@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, ChevronDown, Award, Gem } from 'lucide-react';
+import { Tags, ArrowRight, Quote, ChevronDown, Award, Gem, Bird } from 'lucide-react';
 
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -40,41 +40,41 @@ const OUTCOME_LABELS: Record<string, string> = {
 
 function EnrichmentBadge({ 
   type, 
-  label, 
   icon, 
-  bgColor, 
-  textColor,
-  tooltipContent 
+  tooltipContent,
+  onClick,
 }: { 
   type: string;
-  label: string;
   icon: React.ReactNode;
-  bgColor: string;
-  textColor: string;
   tooltipContent?: React.ReactNode;
+  onClick?: (e: React.MouseEvent) => void;
 }) {
   const [showTooltip, setShowTooltip] = useState(false);
-  const badgeRef = useRef<HTMLDivElement>(null);
 
   return (
     <div 
-      ref={badgeRef}
       className="relative inline-flex"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
-      onClick={(e) => { e.stopPropagation(); setShowTooltip(!showTooltip); }}
     >
-      <div 
-        className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full shadow-sm cursor-default select-none transition-transform hover:scale-105"
-        style={{ backgroundColor: bgColor, color: textColor }}
+      <button 
+        className="w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-110 text-[var(--color-blue-cerulean)]"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
         data-testid={`badge-${type}`}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onClick) {
+            onClick(e);
+          } else {
+            setShowTooltip(!showTooltip);
+          }
+        }}
       >
         {icon}
-        <span>{label}</span>
-      </div>
+      </button>
       {showTooltip && tooltipContent && (
         <div 
-          className="absolute top-full left-0 mt-1.5 z-[200] min-w-[200px] max-w-[280px] bg-card border border-border rounded-lg shadow-lg p-3 text-left"
+          className="absolute top-0 right-full mr-2 z-[200] min-w-[200px] max-w-[280px] bg-card border border-border rounded-lg shadow-lg p-3 text-left"
           onClick={(e) => e.stopPropagation()}
         >
           {tooltipContent}
@@ -222,115 +222,103 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
           <div 
             className="book-card-cover aspect-[2/3] bg-muted relative overflow-hidden cursor-pointer"
           >
-            {/* Interactive Icons - oben rechts INNERHALB des Covers */}
-            <div className="absolute top-3 right-3 flex flex-col gap-2" style={{ zIndex: 150 }}>
-              {/* Pressestimmen Button */}
-              {book.reviews && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowInfoOverlay(!showInfoOverlay);
-                    setShowAwardsOverlay(false);
-                  }}
-                  className="book-card-icon-button w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
-                  title="Pressestimmen anzeigen"
-                  data-testid="button-pressestimmen"
-                >
-                  <Quote className="w-5 h-5 md:w-6 md:h-6" />
-                </button>
-              )}
-              
-              {/* Auszeichnungen Icon */}
-              {awardTags.length > 0 && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowAwardsOverlay(!showAwardsOverlay);
-                    setShowInfoOverlay(false);
-                  }}
-                  className="book-card-icon-button w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-105 shadow-lg"
-                  title="Auszeichnungen anzeigen"
-                  data-testid="button-awards"
-                >
-                  <Award className="w-5 h-5 md:w-6 md:h-6" />
-                </button>
-              )}
-            </div>
-
             <ImageWithFallback
               src={book.coverImage}
               alt={`Buchcover: ${book.title} von ${book.author}`}
               className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
             />
             
-            {/* Enrichment Badges - top left corner */}
-            {((book.award_count && book.award_count > 0) || (book.nomination_count && book.nomination_count > 0) || book.is_hidden_gem || book.is_indie) && (
-              <div className="absolute top-2 left-2 flex flex-col gap-1.5" style={{ zIndex: 52 }}>
-                {book.award_count !== undefined && book.award_count > 0 && (
-                  <EnrichmentBadge
-                    type="award"
-                    label="AUSGEZEICHNET"
-                    icon={<LaurelWreathIcon className="w-3.5 h-3.5" />}
-                    bgColor="var(--badge-award-bg)"
-                    textColor="var(--badge-award-text)"
-                    tooltipContent={
-                      book.award_details && book.award_details.length > 0 ? (
-                        <div>
-                          <p className="text-xs font-semibold text-foreground mb-2">Auszeichnungen</p>
-                          <ul className="space-y-1.5">
-                            {book.award_details.map((d, i) => (
-                              <li key={i} className="flex items-start gap-2 text-xs">
-                                <LaurelWreathIcon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-[var(--badge-award-text)]" />
-                                <span className="text-muted-foreground">
-                                  <span className="font-medium text-foreground">{OUTCOME_LABELS[d.outcome] || d.outcome}</span>
-                                  {' '}{d.name}{d.year ? ` ${d.year}` : ''}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : undefined
-                    }
-                  />
-                )}
-                {book.is_hidden_gem && (
-                  <EnrichmentBadge
-                    type="hidden-gem"
-                    label="HIDDEN GEM"
-                    icon={<Gem className="w-3 h-3" />}
-                    bgColor="var(--badge-media-bg)"
-                    textColor="var(--badge-media-text)"
-                    tooltipContent={
-                      book.award_details && book.award_details.length > 0 ? (
-                        <div>
-                          <p className="text-xs font-semibold text-foreground mb-2">Nominierungen</p>
-                          <ul className="space-y-1.5">
-                            {book.award_details.map((d, i) => (
-                              <li key={i} className="flex items-start gap-2 text-xs">
-                                <Gem className="w-3 h-3 mt-0.5 flex-shrink-0 text-[var(--badge-media-text)]" />
-                                <span className="text-muted-foreground">
-                                  <span className="font-medium text-foreground">{OUTCOME_LABELS[d.outcome] || d.outcome}</span>
-                                  {' '}{d.name}{d.year ? ` ${d.year}` : ''}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : undefined
-                    }
-                  />
-                )}
-                {book.is_indie && (
-                  <EnrichmentBadge
-                    type="indie"
-                    label={book.indie_type === 'selfpublisher' ? 'SELFPUBLISHER' : 'INDIE'}
-                    icon={<span className="text-[10px]">◆</span>}
-                    bgColor="var(--badge-status-active-bg)"
-                    textColor="var(--badge-status-active-text)"
-                  />
-                )}
-              </div>
-            )}
+            {/* All icons - vertical column, right side */}
+            <div className="absolute top-2 right-2 flex flex-col gap-2" style={{ zIndex: 150 }}>
+              {book.award_count !== undefined && book.award_count > 0 && (
+                <EnrichmentBadge
+                  type="award"
+                  icon={<LaurelWreathIcon className="w-4 h-4" />}
+                  tooltipContent={
+                    book.award_details && book.award_details.length > 0 ? (
+                      <div>
+                        <p className="text-xs font-semibold text-foreground mb-2">Auszeichnungen</p>
+                        <ul className="space-y-1.5">
+                          {book.award_details.map((d, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs">
+                              <LaurelWreathIcon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-[var(--color-blue-cerulean)]" />
+                              <span className="text-muted-foreground">
+                                <span className="font-medium text-foreground">{OUTCOME_LABELS[d.outcome] || d.outcome}</span>
+                                {' '}{d.name}{d.year ? ` ${d.year}` : ''}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : undefined
+                  }
+                />
+              )}
+              {book.is_hidden_gem && (
+                <EnrichmentBadge
+                  type="hidden-gem"
+                  icon={<Gem className="w-4 h-4" />}
+                  tooltipContent={
+                    book.award_details && book.award_details.length > 0 ? (
+                      <div>
+                        <p className="text-xs font-semibold text-foreground mb-2">Nominierungen</p>
+                        <ul className="space-y-1.5">
+                          {book.award_details.map((d, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs">
+                              <Gem className="w-3 h-3 mt-0.5 flex-shrink-0 text-[var(--color-blue-cerulean)]" />
+                              <span className="text-muted-foreground">
+                                <span className="font-medium text-foreground">{OUTCOME_LABELS[d.outcome] || d.outcome}</span>
+                                {' '}{d.name}{d.year ? ` ${d.year}` : ''}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : undefined
+                  }
+                />
+              )}
+              {book.is_indie && (
+                <EnrichmentBadge
+                  type="indie"
+                  icon={<Bird className="w-4 h-4" />}
+                  tooltipContent={
+                    <div>
+                      <p className="text-xs font-semibold text-foreground">
+                        {book.indie_type === 'selfpublisher' ? 'Selfpublisher' : 'Indie-Verlag'}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {book.indie_type === 'selfpublisher' 
+                          ? 'Dieses Buch wurde unabhängig veröffentlicht.'
+                          : 'Erschienen bei einem unabhängigen Verlag.'}
+                      </p>
+                    </div>
+                  }
+                />
+              )}
+              {book.reviews && (
+                <EnrichmentBadge
+                  type="pressestimmen"
+                  icon={<Quote className="w-4 h-4" />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowInfoOverlay(!showInfoOverlay);
+                    setShowAwardsOverlay(false);
+                  }}
+                />
+              )}
+              {awardTags.length > 0 && (
+                <EnrichmentBadge
+                  type="onix-awards"
+                  icon={<Award className="w-4 h-4" />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowAwardsOverlay(!showAwardsOverlay);
+                    setShowInfoOverlay(false);
+                  }}
+                />
+              )}
+            </div>
 
             {/* Match Badge */}
             {book.matchPercentage !== undefined && book.matchPercentage > 0 && (
