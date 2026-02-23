@@ -115,7 +115,7 @@ export function CMSHomepage() {
         <InfoBar />
         <Header isHomePage={true} />
         <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
         </div>
         <Footer />
       </>
@@ -130,7 +130,7 @@ export function CMSHomepage() {
         <div className="min-h-screen flex flex-col items-center justify-center px-4">
           <h1 className="text-4xl mb-4">Startseite nicht gefunden</h1>
           <p className="text-xl mb-8">{error || 'Die Startseite konnte nicht geladen werden.'}</p>
-          <p className="text-sm mb-8" style={{ color: 'var(--color-text-secondary)' }}>
+          <p className="text-sm text-muted-foreground mb-8">
             Bitte erstellen Sie im Content Manager eine Page mit Pfad "/" und Status "Published".
           </p>
         </div>
@@ -200,7 +200,7 @@ export function CMSHomepage() {
             <div className="max-w-4xl mx-auto text-center mb-12">
               <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6">{page.title}</h1>
               {page.description && (
-                <p className="text-xl" style={{ color: 'var(--color-text-secondary)' }}>{page.description}</p>
+                <p className="text-xl text-muted-foreground">{page.description}</p>
               )}
             </div>
           </div>
@@ -241,7 +241,7 @@ export function CMSHomepage() {
                 <DynamicPageContentRenderer content={page.content} />
               </div>
             ) : (
-              <div className="text-center" style={{ color: 'var(--color-text-muted)' }}>
+              <div className="text-center text-muted-foreground">
                 <p>Inhalt wird bald hinzugefügt.</p>
               </div>
             );

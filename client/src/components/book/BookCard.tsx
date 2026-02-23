@@ -253,7 +253,7 @@ export const BookCard = memo(function BookCard({
                 className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg"
                 style={{ 
                   backgroundColor: 'var(--color-teal-tropical)',
-                  color: '#FFFFFF'
+                  color: 'var(--color-white)'
                 }}
                 title="Indie-Verlag"
                 data-testid="badge-indie-verlag"
@@ -281,8 +281,8 @@ export const BookCard = memo(function BookCard({
               <div 
                 className="absolute bottom-3 left-3 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-full shadow-lg backdrop-blur-sm font-headline"
                 style={{ 
-                  backgroundColor: matchPercentage >= 75 ? 'rgba(90, 150, 144, 0.95)' : matchPercentage >= 50 ? 'rgba(160, 206, 200, 0.95)' : 'rgba(247, 244, 239, 0.95)',
-                  color: matchPercentage >= 50 ? '#FFFFFF' : '#3A3A3A',
+                  backgroundColor: matchPercentage >= 75 ? 'var(--match-high-bg)' : matchPercentage >= 50 ? 'var(--match-medium-bg)' : 'var(--match-low-bg)',
+                  color: matchPercentage >= 50 ? 'var(--match-high-text)' : 'var(--match-low-text)',
                   zIndex: 51
                 }}
                 title={`${matchPercentage}% Match zu deinem Profil`}
@@ -300,7 +300,7 @@ export const BookCard = memo(function BookCard({
                   </div>
                 )}
                 {isHiddenGem && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant)', color: '#fff' }}>
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant)', color: 'var(--color-white)' }}>
                     HIDDEN GEM
                   </div>
                 )}

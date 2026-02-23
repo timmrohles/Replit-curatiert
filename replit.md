@@ -14,7 +14,7 @@ The platform is built with a modern web stack, featuring a React frontend and an
 
 **Frontend (client/)**:
 -   **Framework**: React + Vite (TypeScript)
--   **Styling**: Tailwind CSS with a custom theme and self-hosted fonts. Fluid responsive typography is implemented. Design system uses CSS custom properties for all tokens (spacing `--space-*`, radius `--radius-*`, typography `--text-*`, avatars `--avatar-*`, shadows, badge semantics `--badge-*`, button sizes `--button-size-*`). DS components in `client/src/components/design-system/` wrap shadcn `ui/` primitives. Microcopy constants in `client/src/constants/copy.ts` map to i18n keys.
+-   **Styling**: Tailwind CSS with a custom theme and self-hosted fonts. Fluid responsive typography is implemented. Design system uses CSS custom properties for all tokens (spacing `--space-*`, radius `--radius-*`, typography `--text-*`, avatars `--avatar-*`, shadows `--shadow-*`, match badges `--match-*`, badge semantics `--badge-*`, button sizes `--button-size-*`). All card components (author-card, publisher-card, filter chips, sort chips) use token-based colors with proper dark mode overrides. DS components in `client/src/components/design-system/` wrap shadcn `ui/` primitives. Microcopy constants in `client/src/constants/copy.ts` map to i18n keys with `COPY_TONE` style guide.
 -   **Dynamic Content**: `UniversalSectionRenderer` and `sectionRegistry` enable dynamic rendering of various content sections (e.g., hero, category grids, carousels). `CMSHomepage` and `DynamicPage` handle CMS-driven content.
 
 **Backend (server/)**:

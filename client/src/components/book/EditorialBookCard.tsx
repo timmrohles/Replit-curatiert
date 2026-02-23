@@ -190,8 +190,8 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
               <div 
                 className="absolute bottom-3 left-3 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm rounded-full shadow-lg backdrop-blur-sm font-headline"
                 style={{ 
-                  backgroundColor: book.matchPercentage >= 75 ? 'rgba(90, 150, 144, 0.95)' : book.matchPercentage >= 50 ? 'rgba(160, 206, 200, 0.95)' : 'rgba(247, 244, 239, 0.95)',
-                  color: book.matchPercentage >= 50 ? '#FFFFFF' : '#3A3A3A',
+                  backgroundColor: book.matchPercentage >= 75 ? 'var(--match-high-bg)' : book.matchPercentage >= 50 ? 'var(--match-medium-bg)' : 'var(--match-low-bg)',
+                  color: book.matchPercentage >= 50 ? 'var(--match-high-text)' : 'var(--match-low-text)',
                   zIndex: 51
                 }}
                 title={`${book.matchPercentage}% Match zu deinem Profil`}

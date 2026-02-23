@@ -35,6 +35,29 @@ export const COPY_KEYS = {
   tryAgain: 'microcopy.tryAgain',
   linkCopied: 'microcopy.linkCopied',
   shareNotSupported: 'microcopy.shareNotSupported',
+
+  loading: 'common.loading',
+  save: 'common.save',
+  cancel: 'common.cancel',
+  delete: 'common.delete',
+  edit: 'common.edit',
+  close: 'common.close',
+  back: 'common.back',
+  search: 'common.search',
+  showMore: 'common.showMore',
+  showLess: 'common.showLess',
+  noResults: 'common.noResults',
+  backToHome: 'common.backToHome',
 } as const;
 
 export type CopyKey = (typeof COPY_KEYS)[keyof typeof COPY_KEYS];
+
+export const COPY_TONE = {
+  style: 'ruhig, präzise, menschlich, nicht werblich',
+  rules: [
+    'Keine Ausrufezeichen in Fehlermeldungen',
+    'Immer Handlungsoptionen bieten',
+    'Duzen (du/dein), nicht Siezen',
+    'Fachbegriffe nur wo nötig',
+  ],
+} as const;

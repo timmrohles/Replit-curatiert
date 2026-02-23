@@ -159,6 +159,14 @@
 
   --shadow-book-cover: 4px 4px 8px rgba(0, 0, 0, 0.2);
   --shadow-book-cover-dark: 4px 4px 12px rgba(0, 0, 0, 0.4);
+
+  --match-high-bg: rgba(90, 150, 144, 0.95);
+  --match-medium-bg: rgba(160, 206, 200, 0.95);
+  --match-low-bg: rgba(247, 244, 239, 0.95);
+  --match-high-text: #FFFFFF;
+  --match-low-text: var(--color-charcoal);
+  --color-white: #FFFFFF;
+
   --content-text-body: 1.5rem;
   --header-icon: #2a2a2a;
   --header-icon-shadow: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.15));
@@ -270,6 +278,13 @@
   --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 100% / 0.00);
   --shadow-book-cover: 4px 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-book-cover-dark: 4px 4px 12px rgba(0, 0, 0, 0.6);
+
+  --match-high-bg: rgba(90, 150, 144, 0.95);
+  --match-medium-bg: rgba(130, 170, 165, 0.95);
+  --match-low-bg: rgba(60, 60, 60, 0.85);
+  --match-high-text: #FFFFFF;
+  --match-low-text: #F5F5F0;
+  --color-white: #FFFFFF;
 
   --badge-award-bg: #4a3800;
   --badge-award-text: #ffe066;
@@ -604,20 +619,18 @@ h3.section-title {
     transition: all 0.2s ease;
     flex-shrink: 0;
     box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    background-color: #ffffff;
-    color: #6B7280;
-    border: 1px solid rgba(0,0,0,0.1);
+    background-color: var(--color-surface);
+    color: hsl(var(--muted-foreground));
+    border: 1px solid hsl(var(--border));
     cursor: pointer;
   }
-  .sort-chip:hover { border-color: rgba(0,0,0,0.3); }
+  .sort-chip:hover { border-color: hsl(var(--foreground) / 0.3); }
   .sort-chip[aria-pressed="true"] {
     background-color: var(--color-blue-cerulean);
     color: #ffffff;
     border-color: transparent;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
   }
-  .dark .sort-chip { color: var(--color-blue-cerulean); }
-  .dark .sort-chip[aria-pressed="true"] { color: #ffffff; }
 
 
   /* Hide ugly search cancel button in Chrome until we can style it properly */
@@ -819,19 +832,19 @@ h3.section-title {
 }
 
 .author-card-name {
-  color: #2a2a2a !important;
+  color: var(--color-charcoal) !important;
 }
 
 .author-card-bio {
-  color: #3a3a3a !important;
+  color: var(--color-foreground) !important;
 }
 
 .dark .author-card-name {
-  color: #2a2a2a !important;
+  color: var(--color-foreground) !important;
 }
 
 .dark .author-card-bio {
-  color: #3a3a3a !important;
+  color: var(--color-foreground-muted) !important;
 }
 
 .tag-button {
@@ -891,8 +904,8 @@ h3.section-title {
 }
 
 .author-card {
-  background-color: #ffffff;
-  border-radius: 0.5rem;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
@@ -909,7 +922,7 @@ h3.section-title {
 }
 
 .dark .author-card {
-  background-color: #ffffff;
+  background-color: hsl(var(--card));
 }
 
 .author-stats {
@@ -919,8 +932,8 @@ h3.section-title {
 }
 
 .publisher-card {
-  background-color: #ffffff;
-  border-radius: 0.5rem;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
@@ -937,23 +950,23 @@ h3.section-title {
 }
 
 .dark .publisher-card {
-  background-color: #ffffff;
+  background-color: hsl(var(--card));
 }
 
 .publisher-card-name {
-  color: #2a2a2a !important;
+  color: var(--color-charcoal) !important;
 }
 
 .publisher-card-description {
-  color: #3a3a3a !important;
+  color: var(--color-foreground) !important;
 }
 
 .dark .publisher-card-name {
-  color: #2a2a2a !important;
+  color: var(--color-foreground) !important;
 }
 
 .dark .publisher-card-description {
-  color: #3a3a3a !important;
+  color: var(--color-foreground-muted) !important;
 }
 
 .filter-chip-coral {
@@ -962,34 +975,19 @@ h3.section-title {
   transition: all 0.2s ease;
   flex-shrink: 0;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  background-color: #ffffff;
-  color: #000000;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
+  color: var(--color-foreground);
+  border: 1px solid hsl(var(--border));
 }
 
 .filter-chip-coral:hover {
-  border-color: rgba(0, 0, 0, 0.3);
+  border-color: hsl(var(--foreground) / 0.3);
 }
 
 .filter-chip-coral[aria-pressed="true"] {
-  background-color: #f25f5c;
+  background-color: var(--color-coral-vibrant);
   color: #ffffff;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.dark .filter-chip-coral:not([aria-pressed="true"]) {
-  background-color: #ffffff;
-  color: #247ba0;
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-.dark .filter-chip-coral:not([aria-pressed="true"]):hover {
-  border-color: rgba(0, 0, 0, 0.3);
-}
-
-.dark .filter-chip-coral[aria-pressed="true"] {
-  background-color: #f25f5c;
-  color: #ffffff;
 }
 
 .filter-chip-saffron {
@@ -998,34 +996,19 @@ h3.section-title {
   transition: all 0.2s ease;
   flex-shrink: 0;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  background-color: #ffffff;
-  color: #000000;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
+  color: var(--color-foreground);
+  border: 1px solid hsl(var(--border));
 }
 
 .filter-chip-saffron:hover {
-  border-color: rgba(0, 0, 0, 0.3);
+  border-color: hsl(var(--foreground) / 0.3);
 }
 
 .filter-chip-saffron[aria-pressed="true"] {
-  background-color: #f4a261;
+  background-color: var(--color-saffron);
   color: #ffffff;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-.dark .filter-chip-saffron:not([aria-pressed="true"]) {
-  background-color: #ffffff;
-  color: #247ba0;
-  border-color: rgba(0, 0, 0, 0.1);
-}
-
-.dark .filter-chip-saffron:not([aria-pressed="true"]):hover {
-  border-color: rgba(0, 0, 0, 0.3);
-}
-
-.dark .filter-chip-saffron[aria-pressed="true"] {
-  background-color: #f4a261;
-  color: #ffffff;
 }
 
 .btn-link {
