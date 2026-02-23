@@ -221,11 +221,15 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
                     aria-label={`Kurator*in ${curator.name}, ${curator.focus || ''}`}
                     data-testid={`card-curator-${curator.id}`}
                   >
-                    <ImageWithFallback
-                      src={curator.avatar}
-                      alt={curator.name}
-                      className="w-full h-full object-cover"
-                    />
+                    {curator.avatar ? (
+                      <ImageWithFallback
+                        src={curator.avatar}
+                        alt={curator.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#1a3a4a] to-[#0B1F33]" />
+                    )}
 
                     <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F33]/80 via-transparent to-[#0B1F33]/85 p-3 md:p-6 flex flex-col justify-between">
                       <div className="flex items-center gap-2">
