@@ -161,6 +161,7 @@ export function DynamicPage() {
           visibility: s.visibility ?? 'visible',
           config: s.config ?? {},
           items: s.items ?? [],
+          _queryBookIds: s._queryBookIds ?? [],
         })));
         setBooks(pageData.books || []);
         
