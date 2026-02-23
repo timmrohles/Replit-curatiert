@@ -8,6 +8,7 @@ import sharp from "sharp";
 import path from "path";
 import fs from "fs";
 import { isImpersonating, maskSensitiveData } from "./replit_integrations/auth/routes";
+import { authStorage } from "./replit_integrations/auth/storage";
 
 const log = {
   info: (...args: unknown[]) => console.log('[INFO]', ...args),
@@ -148,9 +149,20 @@ async function tryAuditLog(action: string, entityType: string, entityId: string 
 
 async function requireAdminGuard(req: Request, res: Response): Promise<boolean> {
   if (req.isAuthenticated && req.isAuthenticated() && req.user) {
-    const user = req.user as any;
-    if (user.role === 'admin' || user.role === 'super_admin') {
+    const sessionUser = req.user as any;
+    if (sessionUser.role === 'admin' || sessionUser.role === 'super_admin') {
       return true;
+    }
+    const userId = sessionUser.claims?.sub;
+    if (userId) {
+      try {
+        const dbUser = await authStorage.getUser(userId);
+        if (dbUser && (dbUser.role === 'admin' || dbUser.role === 'super_admin')) {
+          return true;
+        }
+      } catch (err) {
+        log.warn('requireAdminGuard: DB user lookup failed:', err);
+      }
     }
   }
 
