@@ -95,10 +95,11 @@ export function CategoryGrid({ section }: CategoryGridProps) {
                   <button
                     key={item.id}
                     onClick={() => navigate(link)}
-                    className="relative flex-shrink-0 overflow-hidden transition-all duration-300 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-cerulean focus-visible:ring-inset"
+                    className="relative flex-shrink-0 overflow-hidden rounded-lg shadow-book-cover dark:shadow-book-cover-dark transition-all duration-300 hover:shadow-xl hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-cerulean"
                     style={{
-                      width: 'clamp(200px, 25vw, 320px)',
+                      width: 'clamp(180px, 22vw, 280px)',
                       aspectRatio: '16/9',
+                      margin: '8px 6px',
                     }}
                     data-testid={`category-card-${item.id}`}
                   >
@@ -106,7 +107,7 @@ export function CategoryGrid({ section }: CategoryGridProps) {
                       <ImageWithFallback
                         src={imageUrl}
                         alt={itemTitle}
-                        className="absolute inset-0 w-full h-full object-cover"
+                        className="absolute inset-0 w-full h-full object-cover scale-105"
                       />
                     ) : (
                       <div
@@ -117,12 +118,12 @@ export function CategoryGrid({ section }: CategoryGridProps) {
                     <div
                       className="absolute inset-0"
                       style={{
-                        background: 'linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.05))',
+                        background: 'linear-gradient(135deg, rgba(20, 60, 100, 0.45), rgba(10, 30, 60, 0.55))',
                       }}
                     />
 
-                    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
-                      <h3 className="text-white font-headline text-base md:text-lg lg:text-xl leading-tight uppercase tracking-wide">
+                    <div className="absolute inset-0 flex items-center justify-center p-4">
+                      <h3 className="text-white font-headline text-lg md:text-xl lg:text-2xl leading-tight uppercase tracking-wide text-center drop-shadow-lg">
                         {itemTitle}
                       </h3>
                     </div>
