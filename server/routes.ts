@@ -313,6 +313,7 @@ async function ensureSchemaReady() {
       )
     `);
     await queryDB(`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS show_in_carousel BOOLEAN DEFAULT false`);
+    await queryDB(`ALTER TABLE affiliates ADD COLUMN IF NOT EXISTS favicon_url TEXT`);
     await queryDB(`
       CREATE TABLE IF NOT EXISTS book_affiliates (
         id SERIAL PRIMARY KEY,

@@ -83,9 +83,14 @@ function getCreatorAuthHeaders(): HeadersInit {
  * Get admin auth headers
  */
 function getAdminAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem('admin_token');
-  return {
-    'Content-Type': 'application/json' };
+  const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['x-admin-token'] = token;
+  }
+  return headers;
 }
 
 /**

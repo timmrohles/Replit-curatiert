@@ -22,9 +22,14 @@ console.log('🚀 API MODULE LOADED - VERSION 2.1.0 - ZOD VALIDATION ACTIVE');
  * Used for all admin-protected endpoints
  */
 export function getAdminAuthHeaders(): HeadersInit {
-  return {
+  const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+  if (token) {
+    headers['x-admin-token'] = token;
+  }
+  return headers;
 }
 
 /**
