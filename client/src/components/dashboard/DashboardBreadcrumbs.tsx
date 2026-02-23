@@ -62,8 +62,6 @@ export function DashboardBreadcrumbs() {
   const afterDashboard = location.pathname.substring(dashIdx + '/dashboard'.length);
   const segments = afterDashboard.split('/').filter(Boolean);
 
-  if (segments.length === 0) return null;
-
   const crumbs: { label: string; path: string }[] = [];
 
   let buildPath = '/dashboard';
@@ -75,27 +73,35 @@ export function DashboardBreadcrumbs() {
     crumbs.push({ label, path: buildPath });
   }
 
+  const isRoot = segments.length === 0;
+
   return (
     <nav
-      className="flex items-center gap-1.5 text-xs"
+      className="flex items-center gap-2 text-sm"
       aria-label="Breadcrumb"
       data-testid="dashboard-breadcrumbs"
     >
-      <button
-        onClick={() => navigate('/dashboard')}
-        className="transition-colors hover:underline"
-        style={{ color: '#6B7280' }}
-        data-testid="breadcrumb-dashboard"
-      >
-        Dashboard
-      </button>
+      {isRoot ? (
+        <span style={{ color: '#1F2937', fontWeight: 600 }} data-testid="breadcrumb-dashboard">
+          Dashboard
+        </span>
+      ) : (
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="transition-colors hover:underline"
+          style={{ color: '#6B7280' }}
+          data-testid="breadcrumb-dashboard"
+        >
+          Dashboard
+        </button>
+      )}
       {crumbs.map((crumb, i) => {
         const isLast = i === crumbs.length - 1;
         return (
-          <span key={crumb.path} className="flex items-center gap-1.5">
-            <ChevronRight className="w-3 h-3" style={{ color: '#9CA3AF' }} />
+          <span key={crumb.path} className="flex items-center gap-2">
+            <ChevronRight className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
             {isLast ? (
-              <span style={{ color: '#1F2937', fontWeight: 500 }} data-testid={`breadcrumb-${i}`}>
+              <span style={{ color: '#1F2937', fontWeight: 600 }} data-testid={`breadcrumb-${i}`}>
                 {crumb.label}
               </span>
             ) : (

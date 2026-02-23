@@ -134,31 +134,31 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
   };
 
   const sidebarContent = (
-    <nav className="flex flex-col gap-0.5 py-5 px-3" data-testid="dashboard-sidebar">
+    <nav className="flex flex-col gap-0.5 pt-8 pb-6 px-3" data-testid="dashboard-sidebar">
       {filteredGroups.map(group => {
         const isOpen = openGroups[group.id] ?? false;
 
         return (
-          <div key={group.id} className="mb-1">
+          <div key={group.id} className="mb-1.5">
             <button
               onClick={() => toggleGroup(group.id)}
               className="w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors hover:bg-black/[0.04]"
               data-testid={`sidebar-group-${group.id}`}
             >
               <span
-                className="text-[11px] font-semibold tracking-widest"
-                style={{ color: '#6B7280', letterSpacing: '0.08em' }}
+                className="text-xs font-semibold tracking-wide"
+                style={{ color: '#4B5563', letterSpacing: '0.06em' }}
               >
                 {group.label}
               </span>
               {isOpen
-                ? <ChevronDown className="w-3 h-3" style={{ color: '#9CA3AF' }} />
-                : <ChevronRight className="w-3 h-3" style={{ color: '#9CA3AF' }} />
+                ? <ChevronDown className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
+                : <ChevronRight className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
               }
             </button>
 
             {isOpen && (
-              <div className="mt-0.5 space-y-px">
+              <div className="mt-0.5 space-y-0.5">
                 {group.items.map(item => {
                   const isActive = activePath === item.path || (item.path !== '/dashboard' && activePath.startsWith(item.path + '/'));
                   const isExactHome = item.path === '/dashboard' && activePath === '/dashboard';
@@ -169,7 +169,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
                       key={item.id}
                       onClick={() => handleNavigate(item.path)}
                       data-testid={`sidebar-item-${item.id}`}
-                      className={`w-full text-left px-3 py-[7px] text-[13px] rounded-md transition-colors ${
+                      className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
                         active
                           ? 'font-medium'
                           : 'hover:bg-black/[0.04]'
