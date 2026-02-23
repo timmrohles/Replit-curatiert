@@ -227,48 +227,41 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
                       className="w-full h-full object-cover"
                     />
 
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F33] via-[#0B1F33]/50 to-[#0B1F33]/85 p-3 md:p-6 flex flex-col justify-between">
-                      <div>
-                        {curator.focus && (
-                          <div className="text-[#A0CEC8] text-[10px] md:text-xs mb-1 tracking-wide uppercase">{curator.focus}</div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <h3 className="text-white text-base md:text-xl" style={{ fontFamily: 'Fjalla One' }}>{curator.name}</h3>
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F33]/80 via-transparent to-[#0B1F33]/85 p-3 md:p-6 flex flex-col justify-between">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-white text-base md:text-xl" style={{ fontFamily: 'Fjalla One' }}>{curator.name}</h3>
 
-                          <button
-                            className="p-1 hover:bg-white/10 rounded-full transition-colors group/like flex-shrink-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (isFavorite(curator.id)) {
-                                removeFavorite(curator.id);
-                              } else {
-                                addFavorite({
-                                  id: curator.id,
-                                  type: 'creator',
-                                  title: curator.name,
-                                  subtitle: curator.focus || '',
-                                  image: curator.avatar
-                                });
-                              }
-                            }}
-                            aria-label={isFavorite(curator.id) ? "Von Favoriten entfernen" : "Zu Favoriten hinzufügen"}
-                            data-testid={`button-favorite-curator-${curator.id}`}
-                          >
-                            <Heart
-                              className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-colors ${
-                                isFavorite(curator.id)
-                                  ? 'text-[#A0CEC8] fill-[#A0CEC8]'
-                                  : 'text-white group-hover/like:text-[#A0CEC8]'
-                              }`}
-                            />
-                          </button>
-                        </div>
+                        <button
+                          className="p-1 hover:bg-white/10 rounded-full transition-colors group/like flex-shrink-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isFavorite(curator.id)) {
+                              removeFavorite(curator.id);
+                            } else {
+                              addFavorite({
+                                id: curator.id,
+                                type: 'creator',
+                                title: curator.name,
+                                subtitle: curator.focus || '',
+                                image: curator.avatar
+                              });
+                            }
+                          }}
+                          aria-label={isFavorite(curator.id) ? "Von Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+                          data-testid={`button-favorite-curator-${curator.id}`}
+                        >
+                          <Heart
+                            className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-colors ${
+                              isFavorite(curator.id)
+                                ? 'text-[#A0CEC8] fill-[#A0CEC8]'
+                                : 'text-white group-hover/like:text-[#A0CEC8]'
+                            }`}
+                          />
+                        </button>
                       </div>
 
-                      {curator.bio && (
-                        <p className="text-gray-300 text-xs md:text-sm line-clamp-2 md:line-clamp-none">
-                          {curator.bio}
-                        </p>
+                      {curator.focus && (
+                        <div className="text-[#A0CEC8] text-[10px] md:text-xs tracking-wide uppercase">{curator.focus}</div>
                       )}
                     </div>
                   </div>
