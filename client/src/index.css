@@ -135,6 +135,11 @@
   --color-interactive-contrast: #ffffff;
   --color-border: #e5e5e5;
 
+  --ds-text-primary: var(--color-foreground);
+  --ds-text-secondary: var(--color-foreground-muted);
+  --ds-text-tertiary: #9ca3af;
+  --ds-text-inverse: #ffffff;
+
   --badge-award-bg: #fff8e1;
   --badge-award-text: #b8860b;
   --badge-award-border: #ffe066;
@@ -188,14 +193,14 @@
   --carousel-button-border: #ffffff;
   --carousel-button-icon: #ffffff;
 
-  --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 1px 2px -1px hsl(0 0% 0% / 0.00);
-  --shadow: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 1px 2px -1px hsl(0 0% 0% / 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 2px 4px -1px hsl(0 0% 0% / 0.00);
-  --shadow-lg: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 4px 6px -1px hsl(0 0% 0% / 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 8px 10px -1px hsl(0 0% 0% / 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
+  --shadow-2xs: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -268,14 +273,14 @@
   --chart-3: 165 75% 58%;
   --chart-4: 280 70% 68%;
   --chart-5: 340 80% 65%;
-  --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 100% / 0.00);
-  --shadow-xs: 0px 2px 0px 0px hsl(0 0% 100% / 0.00);
-  --shadow-sm: 0px 2px 0px 0px hsl(0 0% 100% / 0.00), 0px 1px 2px -1px hsl(0 0% 100% / 0.00);
-  --shadow: 0px 2px 0px 0px hsl(0 0% 100% / 0.00), 0px 1px 2px -1px hsl(0 0% 100% / 0.00);
-  --shadow-md: 0px 2px 0px 0px hsl(0 0% 100% / 0.00), 0px 2px 4px -1px hsl(0 0% 100% / 0.00);
-  --shadow-lg: 0px 2px 0px 0px hsl(0 0% 100% / 0.00), 0px 4px 6px -1px hsl(0 0% 100% / 0.00);
-  --shadow-xl: 0px 2px 0px 0px hsl(0 0% 100% / 0.00), 0px 8px 10px -1px hsl(0 0% 100% / 0.00);
-  --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 100% / 0.00);
+  --shadow-2xs: 0 1px 2px 0 rgba(0, 0, 0, 0.08);
+  --shadow-xs: 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+  --shadow-sm: 0 2px 4px 0 rgba(0, 0, 0, 0.15), 0 1px 2px -1px rgba(0, 0, 0, 0.08);
+  --shadow: 0 3px 6px 0 rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 6px 10px -1px rgba(0, 0, 0, 0.15), 0 3px 6px -2px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 20px -3px rgba(0, 0, 0, 0.18), 0 6px 8px -4px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 24px 30px -5px rgba(0, 0, 0, 0.18), 0 10px 14px -6px rgba(0, 0, 0, 0.08);
+  --shadow-2xl: 0 30px 60px -12px rgba(0, 0, 0, 0.25);
   --shadow-book-cover: 4px 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-book-cover-dark: 4px 4px 12px rgba(0, 0, 0, 0.6);
 
@@ -317,6 +322,11 @@
   --color-interactive-contrast: #2a2a2a;
   --color-border: #3a3a3a;
   --color-beige: #2a2a2a;
+
+  --ds-text-primary: var(--color-foreground);
+  --ds-text-secondary: var(--color-foreground-muted);
+  --ds-text-tertiary: #6b7280;
+  --ds-text-inverse: #2a2a2a;
 
   --header-bg: #2a2a2a;
   --header-icon: #F5F5F0;

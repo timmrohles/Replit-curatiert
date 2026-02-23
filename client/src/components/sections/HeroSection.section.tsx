@@ -66,37 +66,22 @@ export function HeroSection({ section }: HeroSectionProps) {
   return (
     <section
       className="relative overflow-hidden"
-      style={{ backgroundColor: 'var(--color-brand-beige, #f7f4ef)' }}
+      style={{ backgroundColor: 'var(--color-beige)' }}
       data-testid="hero-section"
     >
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-12 md:py-20">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-[var(--space-12)] md:py-[var(--space-16)]">
         <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
           <div className="space-y-5">
-            <h1
-              className="leading-tight"
-              style={{
-                fontFamily: 'Fjalla One',
-                letterSpacing: '0.02em',
-                fontSize: 'clamp(1.75rem, 4vw, 3rem)',
-              }}
-            >
-              <span style={{ color: 'var(--color-brand-blue-light, #247ba0)' }}>
+            <h1 className="font-headline leading-tight tracking-wide text-fluid-h1">
+              <span className="text-cerulean">
                 {headline}
               </span>{' '}
-              <span style={{ color: 'var(--charcoal, #2a2a2a)' }}>
+              <span className="text-foreground">
                 {subtitle}
               </span>
             </h1>
 
-            <p
-              className="max-w-xl"
-              style={{
-                fontFamily: 'Inter',
-                color: 'var(--color-brand-gray, #555)',
-                fontSize: 'clamp(0.875rem, 1.5vw, 1rem)',
-                lineHeight: '1.7',
-              }}
-            >
+            <p className="max-w-xl font-sans text-muted-foreground text-fluid-body leading-relaxed">
               {description}
             </p>
           </div>
@@ -150,16 +135,10 @@ export function HeroSection({ section }: HeroSectionProps) {
                               background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.4), transparent)',
                             }}
                           >
-                            <p
-                              className="text-white text-lg mb-0.5"
-                              style={{ fontFamily: 'Fjalla One' }}
-                            >
+                            <p className="text-white text-lg mb-0.5 font-headline">
                               {curator.name}
                             </p>
-                            <p
-                              className="text-white/80 text-sm"
-                              style={{ fontFamily: 'Inter' }}
-                            >
+                            <p className="text-white/80 text-sm font-sans">
                               {curator.focus || curator.tagline || ''}
                             </p>
                           </div>
@@ -174,11 +153,7 @@ export function HeroSection({ section }: HeroSectionProps) {
                     <button
                       onClick={() => goTo('prev')}
                       aria-label="Vorherige:r Kurator:in"
-                      className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-                      style={{
-                        backgroundColor: 'var(--charcoal, #2a2a2a)',
-                        color: '#fff',
-                      }}
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-colors bg-charcoal text-white"
                       data-testid="hero-prev-curator"
                     >
                       <ChevronLeft className="w-5 h-5" />
@@ -189,12 +164,7 @@ export function HeroSection({ section }: HeroSectionProps) {
                         <button
                           key={i}
                           onClick={() => { setActiveIndex(i); startAutoplay(); }}
-                          className="w-2 h-2 rounded-full transition-all"
-                          style={{
-                            backgroundColor: i === activeIndex
-                              ? 'var(--color-brand-blue-light, #247ba0)'
-                              : 'var(--color-brand-gray, #ccc)',
-                          }}
+                          className={`w-2 h-2 rounded-full transition-all ${i === activeIndex ? 'bg-cerulean' : 'bg-muted-foreground/40'}`}
                           aria-label={`Kurator:in ${i + 1}`}
                           data-testid={`hero-dot-${i}`}
                         />
@@ -204,11 +174,7 @@ export function HeroSection({ section }: HeroSectionProps) {
                     <button
                       onClick={() => goTo('next')}
                       aria-label="Nächste:r Kurator:in"
-                      className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
-                      style={{
-                        backgroundColor: 'var(--charcoal, #2a2a2a)',
-                        color: '#fff',
-                      }}
+                      className="w-10 h-10 rounded-full flex items-center justify-center transition-colors bg-charcoal text-white"
                       data-testid="hero-next-curator"
                     >
                       <ChevronRight className="w-5 h-5" />
@@ -218,16 +184,9 @@ export function HeroSection({ section }: HeroSectionProps) {
               </>
             ) : (
               <div
-                className="w-full max-w-[300px] aspect-[3/4] rounded-2xl flex items-center justify-center"
-                style={{
-                  backgroundColor: 'rgba(0,0,0,0.03)',
-                  border: '2px dashed var(--color-brand-gray, #ccc)',
-                }}
+                className="w-full max-w-[300px] aspect-[3/4] rounded-2xl flex items-center justify-center bg-muted/30 border-2 border-dashed border-border"
               >
-                <p
-                  className="text-center px-6"
-                  style={{ fontFamily: 'Inter', color: 'var(--color-brand-gray, #888)' }}
-                >
+                <p className="text-center px-6 font-sans text-muted-foreground">
                   Kurator:innen mit veröffentlichten Bookstores erscheinen hier automatisch.
                 </p>
               </div>

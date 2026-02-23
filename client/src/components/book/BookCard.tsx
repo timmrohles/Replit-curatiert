@@ -315,7 +315,7 @@ export const BookCard = memo(function BookCard({
                     key={tag.id}
                     className="px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm border border-transparent rounded-full transition-all duration-200 inline-flex items-center gap-1 shadow-lg" 
                     style={{ 
-                      backgroundColor: tag.color || ONIX_TAG_COLORS[tag.type] || '#70c1b3',
+                      backgroundColor: tag.color || ONIX_TAG_COLORS[tag.type] || 'var(--color-teal-tropical)',
                       color: 'var(--color-white)'
                     }}
                     title={`${tag.type}: ${tag.displayName}`}
@@ -330,7 +330,7 @@ export const BookCard = memo(function BookCard({
                       variant="minimal"
                       size="sm"
                       iconColor="var(--color-white)"
-                      backgroundColor={tag.color || ONIX_TAG_COLORS[tag.type] || '#70c1b3'}
+                      backgroundColor={tag.color || ONIX_TAG_COLORS[tag.type] || 'var(--color-teal-tropical)'}
                     />
                   </div>
                 ))}
@@ -345,7 +345,7 @@ export const BookCard = memo(function BookCard({
                     key={tag.id}
                     className="px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm border border-transparent rounded-full transition-all duration-200 inline-flex items-center gap-1 shadow-lg" 
                     style={{ 
-                      backgroundColor: tag.color || ONIX_TAG_COLORS[tag.type] || '#70c1b3',
+                      backgroundColor: tag.color || ONIX_TAG_COLORS[tag.type] || 'var(--color-teal-tropical)',
                       color: 'var(--color-white)'
                     }}
                     title={`${tag.type}: ${tag.displayName}`}
@@ -360,7 +360,7 @@ export const BookCard = memo(function BookCard({
                       variant="minimal"
                       size="sm"
                       iconColor="var(--color-white)"
-                      backgroundColor={tag.color || ONIX_TAG_COLORS[tag.type] || '#70c1b3'}
+                      backgroundColor={tag.color || ONIX_TAG_COLORS[tag.type] || 'var(--color-teal-tropical)'}
                     />
                   </div>
                 ))}

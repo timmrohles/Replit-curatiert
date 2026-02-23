@@ -1,10 +1,7 @@
-// ============================================================================
-// Horizontal Row Section - Frontend Render Component
-// Compact horizontal book row
-// ============================================================================
-
 import { HorizontalBookRow } from '../carousel/HorizontalBookRow';
 import { HorizontalRowSectionProps } from './HorizontalRowSection.schema';
+import { Section } from '../ui/section';
+import { Container } from '../ui/container';
 
 export function HorizontalRowSection({ section, books = [], className = '' }: HorizontalRowSectionProps) {
   const sectionAny = section as any;
@@ -12,21 +9,15 @@ export function HorizontalRowSection({ section, books = [], className = '' }: Ho
   const description = section.content?.description || sectionAny.config?.description || '';
 
   return (
-    <section className={`py-12 ${className}`}>
-      <div className="container mx-auto px-4">
+    <Section variant="compact" className={className}>
+      <Container>
         {title && (
-          <div className="mb-6">
-            <h2 
-              className="text-2xl md:text-3xl mb-2 font-headline uppercase"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
+          <div className="mb-[var(--space-6)]">
+            <h2 className="text-fluid-h2 font-headline uppercase text-foreground mb-[var(--space-2)]">
               {title}
             </h2>
             {description && (
-              <p 
-                className="text-base"
-                style={{ color: 'var(--color-text-secondary)' }}
-              >
+              <p className="text-fluid-body text-muted-foreground">
                 {description}
               </p>
             )}
@@ -36,16 +27,13 @@ export function HorizontalRowSection({ section, books = [], className = '' }: Ho
         {books.length > 0 ? (
           <HorizontalBookRow books={books as any} />
         ) : (
-          <div 
-            className="text-center py-8 border-2 border-dashed rounded-lg"
-            style={{ borderColor: 'var(--color-border)' }}
-          >
-            <p style={{ color: 'var(--color-text-muted)' }}>
+          <div className="text-center py-[var(--space-8)] border-2 border-dashed rounded-lg border-border">
+            <p className="text-muted-foreground">
               Keine Bücher in dieser Sektion
             </p>
           </div>
         )}
-      </div>
-    </section>
+      </Container>
+    </Section>
   );
 }
