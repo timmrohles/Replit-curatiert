@@ -5605,6 +5605,39 @@ export async function registerRoutes(
             const awards = awardMap[book.id] || { wins: 0, nominations: 0 };
             const isHiddenGem = awards.nominations > 0 && awards.wins === 0;
 
+            const MOCK_REVIEWS: Record<number, Array<{ source: string; quote: string }>> = {
+              75474: [
+                { source: 'Die Zeit', quote: 'In nur scheinbar sinnlosen und oft so wunderbar poetischen Sätzen entdeckt Geiger die Würde des Vaters.' }
+              ],
+              75729: [
+                { source: 'Frankfurter Allgemeine', quote: 'Ein kraftvoller, virtuoser Roman über eine deutsch-türkische Familie.' }
+              ],
+              80190: [
+                { source: 'Frankfurter Allgemeine', quote: 'Schonungslos und eindrücklich. Ein kluger Roman über subtile Gewalt.' }
+              ],
+              75384: [
+                { source: 'Alena Schröder', quote: 'So mitreißend, feinsinnig und schonungslos, dass es mich einfach nicht loslässt.' }
+              ],
+              75320: [
+                { source: 'Gert Scobel, 3sat', quote: 'Unbedingt lesen. Wirklich unbedingt lesen.' }
+              ],
+              75298: [
+                { source: 'Süddeutsche Zeitung', quote: 'Thomas Hettche erzählt die Kulturgeschichte der Augsburger Puppenkiste als großen Roman.' }
+              ],
+              120569: [
+                { source: 'Die Jury des Deutschen Buchpreises', quote: 'Anne Weber erzählt das unwahrscheinliche Leben in einem brillanten Heldinnenepos.' }
+              ],
+              158054: [
+                { source: 'NZZ', quote: 'Christine Wunnicke schreibt so verwegen und schön wie keine andere.' }
+              ],
+              176370: [
+                { source: 'Caroline Wahl', quote: 'Das Traurigste, Lustigste und Beste, was ich seit langem gelesen habe.' }
+              ],
+              60826: [
+                { source: 'New York Times', quote: 'Attica Locke hat einen Pageturner geschrieben, der zugleich ein soziales Porträt Amerikas ist.' }
+              ],
+            };
+
             return {
               ...book,
               is_indie: isIndieVerlag || isSelfPublisher || isAuthorPublisher,
@@ -5612,6 +5645,7 @@ export async function registerRoutes(
               is_hidden_gem: isHiddenGem,
               award_count: awards.wins,
               nomination_count: awards.nominations,
+              reviews: MOCK_REVIEWS[book.id] || [],
             };
           });
         } catch (enrichErr) {

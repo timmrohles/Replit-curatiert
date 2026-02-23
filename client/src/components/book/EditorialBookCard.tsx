@@ -69,7 +69,12 @@ export interface EditorialBookCardData {
   klappentext?: string;
   onixTagIds?: string[];
   matchPercentage?: number;
-  reviews?: string; // Kommentare/Pressestimmen als String
+  reviews?: string;
+  is_indie?: boolean;
+  indie_type?: string | null;
+  is_hidden_gem?: boolean;
+  award_count?: number;
+  nomination_count?: number;
 }
 
 interface EditorialBookCardProps {
@@ -185,6 +190,27 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
               className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
             />
             
+            {/* Enrichment Badges - top left corner */}
+            {((book.award_count && book.award_count > 0) || book.is_hidden_gem || book.is_indie) && (
+              <div className="absolute top-2 left-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
+                {book.award_count !== undefined && book.award_count > 0 && (
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold, #ffe066)', color: '#2a2a2a' }} data-testid="badge-award">
+                    AUSGEZEICHNET
+                  </div>
+                )}
+                {book.is_hidden_gem && (
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant, #f25f5c)', color: '#fff' }} data-testid="badge-hidden-gem">
+                    HIDDEN GEM
+                  </div>
+                )}
+                {book.is_indie && (
+                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-teal, #70c1b3)', color: '#fff' }} data-testid="badge-indie">
+                    {book.indie_type === 'selfpublisher' ? 'SELFPUBLISHER' : 'INDIE-VERLAG'}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Match Badge */}
             {book.matchPercentage !== undefined && book.matchPercentage > 0 && (
               <div 
