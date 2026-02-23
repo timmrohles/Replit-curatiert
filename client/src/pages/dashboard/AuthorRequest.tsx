@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, CheckCircle, Clock, XCircle, BookOpen, Send, AlertCircle, UserCheck } from 'lucide-react';
+import { useAuth } from '../../hooks/use-auth';
 
 const API_BASE = '/api';
 
@@ -21,10 +22,12 @@ interface AuthorRequestData {
 }
 
 interface AuthorRequestProps {
-  userId: string;
+  userId?: string;
 }
 
-export function AuthorRequest({ userId }: AuthorRequestProps) {
+export function AuthorRequest({ userId: userIdProp }: AuthorRequestProps) {
+  const { user: authUser } = useAuth();
+  const userId = userIdProp || authUser?.id || 'demo-user-123';
   const [step, setStep] = useState<'loading' | 'check-status' | 'search' | 'form' | 'submitted'>('loading');
   const [existingRequest, setExistingRequest] = useState<AuthorRequestData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');

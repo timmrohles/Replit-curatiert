@@ -73,6 +73,26 @@ const DashboardLanding = React.lazy(() => import('./pages/DashboardLanding'));
 
 const SectionIndex = React.lazy(() => import('./pages/sections/SectionIndex'));
 
+const DashboardLayout = React.lazy(() => import('./components/dashboard/DashboardLayout').then(m => ({ default: m.DashboardLayout })));
+const DashboardOverview = React.lazy(() => import('./pages/dashboard/DashboardOverview').then(m => ({ default: m.DashboardOverview })));
+const DashboardProfile = React.lazy(() => import('./pages/dashboard/Profile').then(m => ({ default: m.DashboardProfile })));
+const DashboardRatings = React.lazy(() => import('./pages/dashboard/Ratings').then(m => ({ default: m.DashboardRatings })));
+const DashboardReviews = React.lazy(() => import('./pages/dashboard/Reviews').then(m => ({ default: m.DashboardReviews })));
+const DashboardNotifications = React.lazy(() => import('./pages/dashboard/Notifications').then(m => ({ default: m.DashboardNotifications })));
+const DashboardPrivacy = React.lazy(() => import('./pages/dashboard/Privacy').then(m => ({ default: m.DashboardPrivacy })));
+const DashboardFeed = React.lazy(() => import('./pages/dashboard/DashboardFeed').then(m => ({ default: m.DashboardFeed })));
+const DashboardEarnings = React.lazy(() => import('./pages/dashboard/Earnings').then(m => ({ default: m.DashboardEarnings })));
+const UserCurations = React.lazy(() => import('./pages/dashboard/UserCurations').then(m => ({ default: m.UserCurations })));
+const UserEvents = React.lazy(() => import('./pages/dashboard/UserEvents').then(m => ({ default: m.UserEvents })));
+const ContentSourcesManager = React.lazy(() => import('./pages/dashboard/ContentSources').then(m => ({ default: m.ContentSourcesManager })));
+const DashboardCreatorStorefront = React.lazy(() => import('./pages/dashboard/creator/CreatorStorefront').then(m => ({ default: m.CreatorStorefront })));
+const CreatorAnalytics = React.lazy(() => import('./pages/dashboard/creator/CreatorAnalytics').then(m => ({ default: m.CreatorAnalytics })));
+const AuthorBooks = React.lazy(() => import('./pages/dashboard/author/AuthorBooks').then(m => ({ default: m.AuthorBooks })));
+const AuthorBookclub = React.lazy(() => import('./pages/dashboard/author/AuthorBookclub').then(m => ({ default: m.AuthorBookclub })));
+const AuthorBonuscontent = React.lazy(() => import('./pages/dashboard/author/AuthorBonuscontent').then(m => ({ default: m.AuthorBonuscontent })));
+const AuthorNewsletter = React.lazy(() => import('./pages/dashboard/author/AuthorNewsletter').then(m => ({ default: m.AuthorNewsletter })));
+const AuthorRequest = React.lazy(() => import('./pages/dashboard/AuthorRequest').then(m => ({ default: m.AuthorRequest })));
+
 const AdminContentManager = React.lazy(() => import('./pages/admin/ContentManager').then(m => ({ default: m.ContentManager })));
 const AdminLogin = React.lazy(() => import('./pages/admin/Login').then(m => ({ default: m.AdminLogin })));
 const QuickLogin = React.lazy(() => import('./pages/admin/QuickLogin').then(m => ({ default: m.QuickLogin })));
@@ -237,9 +257,56 @@ function App() {
                       <Route path="ueber-uns" element={<S><UeberUnsPage /></S>} />
                       <Route path="mission" element={<S><MissionPage /></S>} />
 
-                      <Route path="dashboard" element={<S><DashboardLanding /></S>} />
-                      <Route path="dashboard/home" element={<S><ModularUserDashboard /></S>} />
-                      <Route path="dashboard/sections" element={<S><SectionIndex /></S>} />
+                      <Route path="dashboard" element={<S><DashboardLayout /></S>}>
+                        <Route index element={<DashboardOverview />} />
+                        <Route path="buchhandlung" element={<DashboardCreatorStorefront />} />
+                        <Route path="kurationen" element={<UserCurations />} />
+                        <Route path="rezensionen" element={<DashboardReviews />} />
+                        <Route path="bewertungen" element={<DashboardRatings />} />
+                        <Route path="content-quellen" element={<ContentSourcesManager />} />
+                        <Route path="feed" element={<DashboardFeed />} />
+                        <Route path="veranstaltungen" element={<UserEvents />} />
+                        <Route path="einnahmen" element={<DashboardEarnings />} />
+                        <Route path="einnahmen/affiliate" element={<DashboardEarnings />} />
+                        <Route path="einnahmen/statistiken" element={<CreatorAnalytics />} />
+                        <Route path="profil" element={<DashboardProfile />} />
+                        <Route path="benachrichtigungen" element={<DashboardNotifications />} />
+                        <Route path="datenschutz" element={<DashboardPrivacy />} />
+                        <Route path="autor/buecher" element={<AuthorBooks />} />
+                        <Route path="autor/buchklub" element={<AuthorBookclub />} />
+                        <Route path="autor/bonusinhalte" element={<AuthorBonuscontent />} />
+                        <Route path="autor/newsletter" element={<AuthorNewsletter />} />
+                        <Route path="autor-werden" element={<AuthorRequest />} />
+                        <Route path="sections" element={<SectionIndex />} />
+                        {/* Redirects from old routes */}
+                        <Route path="home" element={<Navigate to="../dashboard" replace />} />
+                        <Route path="profile" element={<Navigate to="../dashboard/profil" replace />} />
+                        <Route path="ratings" element={<Navigate to="../dashboard/bewertungen" replace />} />
+                        <Route path="reviews" element={<Navigate to="../dashboard/rezensionen" replace />} />
+                        <Route path="curations" element={<Navigate to="../dashboard/kurationen" replace />} />
+                        <Route path="events" element={<Navigate to="../dashboard/veranstaltungen" replace />} />
+                        <Route path="content-sources" element={<Navigate to="../dashboard/content-quellen" replace />} />
+                        <Route path="earnings" element={<Navigate to="../dashboard/einnahmen" replace />} />
+                        <Route path="notifications" element={<Navigate to="../dashboard/benachrichtigungen" replace />} />
+                        <Route path="privacy" element={<Navigate to="../dashboard/datenschutz" replace />} />
+                        <Route path="creator-storefront" element={<Navigate to="../dashboard/buchhandlung" replace />} />
+                        <Route path="creator-curations" element={<Navigate to="../dashboard/kurationen" replace />} />
+                        <Route path="creator-reviews" element={<Navigate to="../dashboard/rezensionen" replace />} />
+                        <Route path="creator-events" element={<Navigate to="../dashboard/veranstaltungen" replace />} />
+                        <Route path="creator-analytics" element={<Navigate to="../dashboard/einnahmen/statistiken" replace />} />
+                        <Route path="creator-topics" element={<Navigate to="../dashboard/buchhandlung" replace />} />
+                        <Route path="creator-campaigns" element={<Navigate to="../dashboard/buchhandlung" replace />} />
+                        <Route path="author-storefront" element={<Navigate to="../dashboard/buchhandlung" replace />} />
+                        <Route path="author-books" element={<Navigate to="../dashboard/autor/buecher" replace />} />
+                        <Route path="author-events" element={<Navigate to="../dashboard/veranstaltungen" replace />} />
+                        <Route path="author-statistics" element={<Navigate to="../dashboard/einnahmen/statistiken" replace />} />
+                        <Route path="author-community" element={<Navigate to="../dashboard/feed" replace />} />
+                        <Route path="author-members" element={<Navigate to="../dashboard/feed" replace />} />
+                        <Route path="author-bookclub" element={<Navigate to="../dashboard/autor/buchklub" replace />} />
+                        <Route path="author-bonuscontent" element={<Navigate to="../dashboard/autor/bonusinhalte" replace />} />
+                        <Route path="author-newsletter" element={<Navigate to="../dashboard/autor/newsletter" replace />} />
+                        <Route path="author-request" element={<Navigate to="../dashboard/autor-werden" replace />} />
+                      </Route>
 
                       <Route path="tag/:param" element={<S><TagRouter /></S>} />
                       <Route path="tags/:param" element={<S><TagRouter /></S>} />
