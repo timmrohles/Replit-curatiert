@@ -27,6 +27,9 @@ function mapBookForCarousel(book: any) {
     is_hidden_gem: book.is_hidden_gem,
     award_count: book.award_count,
     nomination_count: book.nomination_count,
+    award_details: book.award_details || [],
+    awards: book.award_count || 0,
+    shortlists: book.nomination_count || 0,
   };
 }
 

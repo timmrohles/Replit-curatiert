@@ -78,6 +78,7 @@ interface Book {
   is_hidden_gem?: boolean;
   award_count?: number;
   nomination_count?: number;
+  award_details?: Array<{ name: string; year?: number; outcome: string }>;
 }
 
 interface CreatorCarouselProps {
@@ -526,6 +527,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
                   is_hidden_gem: book.is_hidden_gem,
                   award_count: book.award_count,
                   nomination_count: book.nomination_count,
+                  award_details: book.award_details,
                 };
                 
                 // Render Editorial or Standard layout

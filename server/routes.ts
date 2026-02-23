@@ -5565,25 +5565,36 @@ export async function registerRoutes(
           const spRes = await queryDB('SELECT pattern, match_type FROM selfpublisher_patterns');
           const spPatterns = spRes.rows || [];
 
-          let awardMap: Record<number, { wins: number; nominations: number }> = {};
+          let awardMap: Record<number, { wins: number; nominations: number; details: Array<{ name: string; year?: number; outcome: string }> }> = {};
           try {
             const awardRes = await queryDB(
               `SELECT ar.book_id,
-                ao.result_status
+                ao.result_status,
+                ao.outcome_type,
+                a.name AS award_name,
+                ae.year AS award_year
                FROM award_recipients ar
                JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
+               JOIN award_editions ae ON ao.award_edition_id = ae.id
+               JOIN awards a ON ae.award_id = a.id
                WHERE ar.book_id IN (${placeholders})`,
               bookIdsArray
             );
             for (const row of awardRes.rows || []) {
               if (!row.book_id) continue;
-              if (!awardMap[row.book_id]) awardMap[row.book_id] = { wins: 0, nominations: 0 };
+              if (!awardMap[row.book_id]) awardMap[row.book_id] = { wins: 0, nominations: 0, details: [] };
               const status = (row.result_status || '').toLowerCase();
+              const outcomeType = row.outcome_type || 'nominee';
               if (status === 'winner' || status === 'gewinner') {
                 awardMap[row.book_id].wins++;
               } else {
                 awardMap[row.book_id].nominations++;
               }
+              awardMap[row.book_id].details.push({
+                name: row.award_name || 'Literaturpreis',
+                year: row.award_year || undefined,
+                outcome: outcomeType,
+              });
             }
           } catch { /* award_recipients may not exist yet */ }
 
@@ -5645,6 +5656,7 @@ export async function registerRoutes(
               is_hidden_gem: isHiddenGem,
               award_count: awards.wins,
               nomination_count: awards.nominations,
+              award_details: awards.details || [],
               reviews: MOCK_REVIEWS[book.id] || [],
             };
           });

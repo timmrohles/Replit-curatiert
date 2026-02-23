@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, ChevronDown, Award } from 'lucide-react';
+import { Tags, ArrowRight, Quote, ChevronDown, Award, Gem } from 'lucide-react';
 
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -11,6 +11,78 @@ import { ONIX_TAG_COLORS, ONIX_TAG_ICONS } from '../../utils/tag-colors';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { LikeButton } from '../favorites/LikeButton';
 import { useTextOverflow } from '../../hooks/useTextOverflow';
+
+function LaurelWreathIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 21c1-3 1.5-6 1-9" />
+      <path d="M19 21c-1-3-1.5-6-1-9" />
+      <path d="M4.5 16c-1.5-1-2.5-3-2.5-5 1.5.5 3 1.5 4 3" />
+      <path d="M19.5 16c1.5-1 2.5-3 2.5-5-1.5.5-3 1.5-4 3" />
+      <path d="M4 11c-1.5-1.5-2-4-1.5-6.5 1.5 1 3 2.5 3.5 4.5" />
+      <path d="M20 11c1.5-1.5 2-4 1.5-6.5-1.5 1-3 2.5-3.5 4.5" />
+      <path d="M7 5C6 3 5.5 1 6 0c1.5 1 2.5 2.5 3 4.5" />
+      <path d="M17 5c1-2 1.5-4 1-5-1.5 1-2.5 2.5-3 4.5" />
+      <path d="M12 22V18" />
+      <circle cx="12" cy="16" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+const OUTCOME_LABELS: Record<string, string> = {
+  winner: 'Gewinner',
+  shortlist: 'Shortlist',
+  longlist: 'Longlist',
+  nominee: 'Nominiert',
+  finalist: 'Finalist',
+  special: 'Sonderpreis',
+};
+
+function EnrichmentBadge({ 
+  type, 
+  label, 
+  icon, 
+  bgColor, 
+  textColor,
+  tooltipContent 
+}: { 
+  type: string;
+  label: string;
+  icon: React.ReactNode;
+  bgColor: string;
+  textColor: string;
+  tooltipContent?: React.ReactNode;
+}) {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const badgeRef = useRef<HTMLDivElement>(null);
+
+  return (
+    <div 
+      ref={badgeRef}
+      className="relative inline-flex"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onClick={(e) => { e.stopPropagation(); setShowTooltip(!showTooltip); }}
+    >
+      <div 
+        className="flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full shadow-sm cursor-default select-none transition-transform hover:scale-105"
+        style={{ backgroundColor: bgColor, color: textColor }}
+        data-testid={`badge-${type}`}
+      >
+        {icon}
+        <span>{label}</span>
+      </div>
+      {showTooltip && tooltipContent && (
+        <div 
+          className="absolute top-full left-0 mt-1.5 z-[200] min-w-[200px] max-w-[280px] bg-card border border-border rounded-lg shadow-lg p-3 text-left"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {tooltipContent}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface ActiveAffiliate {
   id: number;
@@ -75,6 +147,7 @@ export interface EditorialBookCardData {
   is_hidden_gem?: boolean;
   award_count?: number;
   nomination_count?: number;
+  award_details?: Array<{ name: string; year?: number; outcome: string }>;
 }
 
 interface EditorialBookCardProps {
@@ -191,22 +264,70 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
             />
             
             {/* Enrichment Badges - top left corner */}
-            {((book.award_count && book.award_count > 0) || book.is_hidden_gem || book.is_indie) && (
-              <div className="absolute top-2 left-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
+            {((book.award_count && book.award_count > 0) || (book.nomination_count && book.nomination_count > 0) || book.is_hidden_gem || book.is_indie) && (
+              <div className="absolute top-2 left-2 flex flex-col gap-1.5" style={{ zIndex: 52 }}>
                 {book.award_count !== undefined && book.award_count > 0 && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold, #ffe066)', color: '#2a2a2a' }} data-testid="badge-award">
-                    AUSGEZEICHNET
-                  </div>
+                  <EnrichmentBadge
+                    type="award"
+                    label="AUSGEZEICHNET"
+                    icon={<LaurelWreathIcon className="w-3.5 h-3.5" />}
+                    bgColor="var(--badge-award-bg)"
+                    textColor="var(--badge-award-text)"
+                    tooltipContent={
+                      book.award_details && book.award_details.length > 0 ? (
+                        <div>
+                          <p className="text-xs font-semibold text-foreground mb-2">Auszeichnungen</p>
+                          <ul className="space-y-1.5">
+                            {book.award_details.map((d, i) => (
+                              <li key={i} className="flex items-start gap-2 text-xs">
+                                <LaurelWreathIcon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-[var(--badge-award-text)]" />
+                                <span className="text-muted-foreground">
+                                  <span className="font-medium text-foreground">{OUTCOME_LABELS[d.outcome] || d.outcome}</span>
+                                  {' '}{d.name}{d.year ? ` ${d.year}` : ''}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : undefined
+                    }
+                  />
                 )}
                 {book.is_hidden_gem && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant, #f25f5c)', color: '#fff' }} data-testid="badge-hidden-gem">
-                    HIDDEN GEM
-                  </div>
+                  <EnrichmentBadge
+                    type="hidden-gem"
+                    label="HIDDEN GEM"
+                    icon={<Gem className="w-3 h-3" />}
+                    bgColor="var(--badge-media-bg)"
+                    textColor="var(--badge-media-text)"
+                    tooltipContent={
+                      book.award_details && book.award_details.length > 0 ? (
+                        <div>
+                          <p className="text-xs font-semibold text-foreground mb-2">Nominierungen</p>
+                          <ul className="space-y-1.5">
+                            {book.award_details.map((d, i) => (
+                              <li key={i} className="flex items-start gap-2 text-xs">
+                                <Gem className="w-3 h-3 mt-0.5 flex-shrink-0 text-[var(--badge-media-text)]" />
+                                <span className="text-muted-foreground">
+                                  <span className="font-medium text-foreground">{OUTCOME_LABELS[d.outcome] || d.outcome}</span>
+                                  {' '}{d.name}{d.year ? ` ${d.year}` : ''}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : undefined
+                    }
+                  />
                 )}
                 {book.is_indie && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-teal, #70c1b3)', color: '#fff' }} data-testid="badge-indie">
-                    {book.indie_type === 'selfpublisher' ? 'SELFPUBLISHER' : 'INDIE-VERLAG'}
-                  </div>
+                  <EnrichmentBadge
+                    type="indie"
+                    label={book.indie_type === 'selfpublisher' ? 'SELFPUBLISHER' : 'INDIE'}
+                    icon={<span className="text-[10px]">◆</span>}
+                    bgColor="var(--badge-status-active-bg)"
+                    textColor="var(--badge-status-active-text)"
+                  />
                 )}
               </div>
             )}
