@@ -1688,6 +1688,81 @@ export async function registerRoutes(
   });
 
   // ==================================================================
+  // SECTION IMAGE UPLOAD (category cards, etc.) → WebP conversion
+  // ==================================================================
+  const sectionImagesDir = path.resolve(process.cwd(), 'client/src/public/uploads/sections');
+  if (!fs.existsSync(sectionImagesDir)) {
+    fs.mkdirSync(sectionImagesDir, { recursive: true });
+  }
+
+  const sectionImageStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, sectionImagesDir),
+    filename: (_req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname) || '.jpg';
+      cb(null, `section-${uniqueSuffix}${ext}`);
+    }
+  });
+
+  const sectionImageUpload = multer({
+    storage: sectionImageStorage,
+    limits: { fileSize: 8 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      if (allowed.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Nur JPG, PNG, WebP und GIF erlaubt'));
+      }
+    }
+  });
+
+  app.post('/api/admin/upload/section-image', async (req: Request, res: Response) => {
+    try {
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
+
+      sectionImageUpload.single('image')(req, res, async (err: any) => {
+        if (err) {
+          log.error('Section image upload error:', err);
+          return res.status(400).json({ ok: false, error: err.message || 'Upload fehlgeschlagen' });
+        }
+
+        if (!req.file) {
+          return res.status(400).json({ ok: false, error: 'Keine Datei hochgeladen' });
+        }
+
+        try {
+          const originalPath = req.file.path;
+          const webpFilename = req.file.filename.replace(/\.[^.]+$/, '.webp');
+          const webpPath = path.join(sectionImagesDir, webpFilename);
+
+          await sharp(originalPath)
+            .webp({ quality: 85 })
+            .resize({ width: 1280, height: 720, fit: 'cover', withoutEnlargement: true })
+            .toFile(webpPath);
+
+          if (originalPath !== webpPath) {
+            fs.unlinkSync(originalPath);
+          }
+
+          const imageUrl = `/uploads/sections/${webpFilename}`;
+          log.info('Section image uploaded & converted to WebP:', imageUrl);
+
+          return res.json({ ok: true, data: { url: imageUrl } });
+        } catch (convErr) {
+          log.error('Section image WebP conversion error:', convErr);
+          const imageUrl = `/uploads/sections/${req.file.filename}`;
+          return res.json({ ok: true, data: { url: imageUrl } });
+        }
+      });
+    } catch (error) {
+      log.error('Section image upload error:', error);
+      return res.status(500).json({ ok: false, error: 'Upload fehlgeschlagen' });
+    }
+  });
+
+  // ==================================================================
   // TAG IMAGE URL UPDATE (set image_url directly, e.g. from Unsplash)
   // ==================================================================
   app.patch('/api/admin/tags/:id/image', async (req: Request, res: Response) => {

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Plus, Save, Edit2, Trash2, ArrowUp, ArrowDown, Box, AlertCircle, Link as LinkIcon, BookOpen, Search, X, Image as ImageIcon } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Save, Edit2, Trash2, ArrowUp, ArrowDown, Box, AlertCircle, Link as LinkIcon, BookOpen, Search, X, Image as ImageIcon, Upload, Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '../../config/apiClient';
 
 interface UnsplashImage {
@@ -110,6 +110,36 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
   const [unsplashResults, setUnsplashResults] = useState<UnsplashImage[]>([]);
   const [searchingUnsplash, setSearchingUnsplash] = useState(false);
   const [showUnsplashSearch, setShowUnsplashSearch] = useState(false);
+
+  // Image Upload
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const resp = await fetch('/api/admin/upload/section-image', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await resp.json();
+      if (data.ok && data.data?.url && editingItem) {
+        setEditingItem({
+          ...editingItem,
+          data: { ...editingItem.data, image_url: data.data.url }
+        });
+      } else {
+        alert(data.error || 'Upload fehlgeschlagen');
+      }
+    } catch {
+      alert('Upload fehlgeschlagen');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   // Navigation items (for category linking)
   const [navItems, setNavItems] = useState<NavItem[]>([]);
@@ -654,18 +684,48 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
                     </div>
                   )}
 
-                  {/* Manual URL Input */}
-                  <input
-                    type="url"
-                    placeholder="Bild-URL eingeben oder Unsplash-Suche nutzen"
-                    value={editingItem.data?.image_url || ''}
-                    onChange={(e) => setEditingItem({ 
-                      ...editingItem, 
-                      data: { ...editingItem.data, image_url: e.target.value }
-                    })}
-                    className="w-full px-3 py-2 border rounded text-sm"
-                    style={{ borderColor: '#E5E7EB' }}
-                  />
+                  {/* Upload + URL row */}
+                  <div className="flex gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="flex-shrink-0 px-3 py-2 rounded text-sm flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                      style={{ backgroundColor: '#247ba0', color: '#fff' }}
+                      data-testid="upload-section-image"
+                    >
+                      {uploading ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Upload className="w-3.5 h-3.5" />
+                      )}
+                      {uploading ? 'Lädt...' : 'Hochladen'}
+                    </button>
+                    <input
+                      type="url"
+                      placeholder="Oder Bild-URL eingeben"
+                      value={editingItem.data?.image_url || ''}
+                      onChange={(e) => setEditingItem({ 
+                        ...editingItem, 
+                        data: { ...editingItem.data, image_url: e.target.value }
+                      })}
+                      className="flex-1 px-3 py-2 border rounded text-sm"
+                      style={{ borderColor: '#E5E7EB' }}
+                    />
+                  </div>
+                  <p className="text-[10px] mt-1" style={{ color: '#999' }}>
+                    JPG, PNG, GIF oder WebP — wird automatisch in WebP umgewandelt (max. 8 MB)
+                  </p>
 
                   {/* Unsplash Search Toggle */}
                   <button
