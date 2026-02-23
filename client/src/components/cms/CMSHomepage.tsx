@@ -222,16 +222,17 @@ export function CMSHomepage() {
 
             return sortedSections.length > 0 ? (
               sortedSections.map((section) => {
-                let sectionBooks = (section.items || [])
+                const pinnedBooks = (section.items || [])
                   .filter((item: any) => item.book_id)
                   .map((item: any) => booksById[item.book_id])
                   .filter(Boolean);
 
-                if (sectionBooks.length === 0 && (section as any)._queryBookIds) {
-                  sectionBooks = ((section as any)._queryBookIds as number[])
-                    .map((id: number) => booksById[id])
-                    .filter(Boolean);
-                }
+                const pinnedIds = new Set(pinnedBooks.map((b: any) => b.id));
+                const queryBooks = ((section as any)._queryBookIds || [])
+                  .map((id: number) => booksById[id])
+                  .filter((b: any) => b && !pinnedIds.has(b.id));
+
+                const sectionBooks = [...pinnedBooks, ...queryBooks];
 
                 return (
                   <div key={section.id} className="mb-section-gap">

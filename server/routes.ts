@@ -5515,13 +5515,13 @@ export async function registerRoutes(
 
           if (categoryIds.length > 0) {
             const catPlaceholders = categoryIds.map(() => `$${paramIdx++}`).join(',');
-            conditions.push(`b.id IN (SELECT bc.book_id FROM book_categories bc WHERE bc.category_id IN (${catPlaceholders}))`);
+            conditions.push(`b.id IN (SELECT bt.book_id FROM book_tags bt JOIN tags t ON bt.tag_id = t.id JOIN categories c ON t.name = c.name WHERE c.id IN (${catPlaceholders}))`);
             params.push(...categoryIds);
           }
 
           if (awardDefIds.length > 0) {
             const awardPlaceholders = awardDefIds.map(() => `$${paramIdx++}`).join(',');
-            conditions.push(`b.id IN (SELECT ar.book_id FROM award_recipients ar JOIN award_outcomes ao ON ar.award_outcome_id = ao.id WHERE ao.award_definition_id IN (${awardPlaceholders}))`);
+            conditions.push(`b.id IN (SELECT ar.book_id FROM award_recipients ar JOIN award_outcomes ao ON ar.award_outcome_id = ao.id JOIN award_editions ae ON ao.award_edition_id = ae.id WHERE ar.book_id IS NOT NULL AND ae.award_id IN (${awardPlaceholders}))`);
             params.push(...awardDefIds);
           }
 
