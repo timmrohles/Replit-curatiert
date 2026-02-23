@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { useSafeNavigate } from '../../utils/routing';
+import { useFavorites } from '../favorites/FavoritesContext';
 import { HeroSectionProps } from './HeroSection.schema';
 
 interface CuratorWithStorefront {
@@ -20,6 +21,7 @@ interface CuratorWithStorefront {
 
 export function HeroSection({ section }: HeroSectionProps) {
   const navigate = useSafeNavigate();
+  const { addFavorite, removeFavorite, isFavorite } = useFavorites();
   const [curators, setCurators] = useState<CuratorWithStorefront[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -134,9 +136,39 @@ export function HeroSection({ section }: HeroSectionProps) {
                           )}
 
                           <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F33]/90 via-[#0B1F33]/40 to-[#0B1F33]/90 p-4 flex flex-col items-center justify-between">
-                            <h3 className="text-white text-base md:text-xl text-center" style={{ fontFamily: 'Fjalla One' }}>
-                              {curator.name}
-                            </h3>
+                            <div className="flex items-center gap-2 justify-center w-full">
+                              <h3 className="text-white text-base md:text-xl text-center" style={{ fontFamily: 'Fjalla One' }}>
+                                {curator.name}
+                              </h3>
+                              <button
+                                className="p-1 hover:bg-white/10 rounded-full transition-colors group/like flex-shrink-0"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const cid = String(curator.id);
+                                  if (isFavorite(cid)) {
+                                    removeFavorite(cid);
+                                  } else {
+                                    addFavorite({
+                                      id: cid,
+                                      type: 'creator',
+                                      title: curator.name,
+                                      subtitle: curator.focus || '',
+                                      image: curator.avatarUrl || ''
+                                    });
+                                  }
+                                }}
+                                aria-label={isFavorite(String(curator.id)) ? "Von Favoriten entfernen" : "Zu Favoriten hinzufügen"}
+                                data-testid={`hero-favorite-curator-${curator.id}`}
+                              >
+                                <Heart
+                                  className={`w-3.5 h-3.5 md:w-4 md:h-4 transition-colors ${
+                                    isFavorite(String(curator.id))
+                                      ? 'text-[#A0CEC8] fill-[#A0CEC8]'
+                                      : 'text-white group-hover/like:text-[#A0CEC8]'
+                                  }`}
+                                />
+                              </button>
+                            </div>
                             {(curator.focus || curator.tagline) && (
                               <div className="text-[#A0CEC8] text-[10px] md:text-xs tracking-wide uppercase text-center">
                                 {curator.focus || curator.tagline}
