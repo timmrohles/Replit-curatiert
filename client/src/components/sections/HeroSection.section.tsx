@@ -33,8 +33,30 @@ export function HeroSection({ section }: HeroSectionProps) {
     fetch('/api/curators/with-storefronts')
       .then(r => r.json())
       .then(data => {
-        if (data.ok && Array.isArray(data.data)) {
+        if (data.ok && Array.isArray(data.data) && data.data.length > 0) {
           setCurators(data.data);
+        } else {
+          fetch('/api/curators')
+            .then(r => r.json())
+            .then(fallback => {
+              if (fallback.ok && Array.isArray(fallback.data)) {
+                const visible = fallback.data.filter((c: any) => c.visible !== false);
+                setCurators(visible.map((c: any) => ({
+                  id: c.id,
+                  name: c.name,
+                  bio: c.bio || '',
+                  avatarUrl: c.avatarUrl || c.avatar_url || '',
+                  slug: c.slug || '',
+                  focus: c.focus || '',
+                  storefrontId: 0,
+                  storefrontName: '',
+                  storefrontSlug: '',
+                  tagline: c.focus || '',
+                  heroImageUrl: c.avatarUrl || c.avatar_url || '',
+                })));
+              }
+            })
+            .catch(() => {});
         }
       })
       .catch(() => {});
@@ -113,6 +135,8 @@ export function HeroSection({ section }: HeroSectionProps) {
                         onClick={() => {
                           if (isActive && curator.storefrontSlug) {
                             navigate(`/storefront/${curator.storefrontSlug}`);
+                          } else if (isActive && curator.slug) {
+                            navigate(`/kuratoren/${curator.slug}`);
                           } else {
                             setActiveIndex(index);
                             startAutoplay();
