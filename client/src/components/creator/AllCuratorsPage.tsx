@@ -231,9 +231,9 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
                       <div className="w-full h-full bg-gradient-to-br from-[#1a3a4a] to-[#0B1F33]" />
                     )}
 
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F33]/90 via-[#0B1F33]/40 to-[#0B1F33]/90 p-3 md:p-6 flex flex-col justify-between">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-white text-base md:text-xl" style={{ fontFamily: 'Fjalla One' }}>{curator.name}</h3>
+                    <div className="absolute inset-0 bg-gradient-to-b from-[#0B1F33]/90 via-[#0B1F33]/40 to-[#0B1F33]/90 p-3 md:p-6 flex flex-col items-center justify-between">
+                      <div className="flex items-center gap-2 justify-center w-full">
+                        <h3 className="text-white text-base md:text-xl text-center" style={{ fontFamily: 'Fjalla One' }}>{curator.name}</h3>
 
                         <button
                           className="p-1 hover:bg-white/10 rounded-full transition-colors group/like flex-shrink-0"
@@ -265,7 +265,7 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
                       </div>
 
                       {curator.focus && (
-                        <div className="text-[#A0CEC8] text-[10px] md:text-xs tracking-wide uppercase">{curator.focus}</div>
+                        <div className="text-[#A0CEC8] text-[10px] md:text-xs tracking-wide uppercase text-center w-full">{curator.focus}</div>
                       )}
                     </div>
                   </div>
