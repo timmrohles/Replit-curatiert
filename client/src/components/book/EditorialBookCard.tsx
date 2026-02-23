@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, ChevronDown, Award, Gem, Bird } from 'lucide-react';
+import { Tags, ArrowRight, Quote, ChevronDown, Award, Gem, Bird, PenLine } from 'lucide-react';
 
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -58,7 +58,7 @@ function EnrichmentBadge({
       onMouseLeave={() => setShowTooltip(false)}
     >
       <button 
-        className="w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-110 text-[var(--color-blue-cerulean)]"
+        className="w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-110 text-white"
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
         data-testid={`badge-${type}`}
         onClick={(e) => {
@@ -241,7 +241,7 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
                         <ul className="space-y-1.5">
                           {book.award_details.map((d, i) => (
                             <li key={i} className="flex items-start gap-2 text-xs">
-                              <LaurelWreathIcon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-[var(--color-blue-cerulean)]" />
+                              <LaurelWreathIcon className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-foreground" />
                               <span className="text-muted-foreground">
                                 <span className="font-medium text-foreground">{OUTCOME_LABELS[d.outcome] || d.outcome}</span>
                                 {' '}{d.name}{d.year ? ` ${d.year}` : ''}
@@ -265,7 +265,7 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
                         <ul className="space-y-1.5">
                           {book.award_details.map((d, i) => (
                             <li key={i} className="flex items-start gap-2 text-xs">
-                              <Gem className="w-3 h-3 mt-0.5 flex-shrink-0 text-[var(--color-blue-cerulean)]" />
+                              <Gem className="w-3 h-3 mt-0.5 flex-shrink-0 text-foreground" />
                               <span className="text-muted-foreground">
                                 <span className="font-medium text-foreground">{OUTCOME_LABELS[d.outcome] || d.outcome}</span>
                                 {' '}{d.name}{d.year ? ` ${d.year}` : ''}
@@ -281,7 +281,9 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
               {book.is_indie && (
                 <EnrichmentBadge
                   type="indie"
-                  icon={<Bird className="w-4 h-4" />}
+                  icon={book.indie_type === 'selfpublisher' 
+                    ? <PenLine className="w-4 h-4" /> 
+                    : <Bird className="w-4 h-4" />}
                   tooltipContent={
                     <div>
                       <p className="text-xs font-semibold text-foreground">
