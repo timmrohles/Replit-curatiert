@@ -713,7 +713,7 @@
   "shop": {
     "sortRelevance": "Relevanz",
     "sortNewest": "Neu",
-    "sortAwarded": "Buchpreise",
+    "sortAwarded": "Anzahl Buchpreise",
     "sortPopular": "Beliebt",
     "sortHiddenGems": "Geheimtipps",
     "sortAZ": "A–Z",
@@ -724,7 +724,7 @@
     "filterModeAnd": "UND",
     "filterModeOr": "ODER",
     "filterButton": "Filter",
-    "awardsLabel": "Buchpreise",
+    "awardsLabel": "Anzahl Buchpreise",
     "mediaLabel": "Medienresonanz",
     "searching": "Suche...",
     "searchResults": "{{count}} Ergebnis{{plural}} für \"{{query}}\"",

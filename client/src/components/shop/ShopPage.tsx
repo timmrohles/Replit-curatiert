@@ -307,7 +307,8 @@ export function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get('q') || '');
   const [sortBy, setSortBy] = useState<SortOption[]>(['relevance']);
-  const [sortMode, setSortMode] = useState<'and' | 'or'>('and');
+  const sortMode = 'or';
+  const filterMode = 'or';
   const [books, setBooks] = useState<APIBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -315,7 +316,6 @@ export function ShopPage() {
   const [showPopular, setShowPopular] = useState(false);
   const PAGE_SIZE = 50;
 
-  const [filterMode, setFilterMode] = useState<'and' | 'or'>('and');
   const [isMobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -496,7 +496,7 @@ export function ShopPage() {
   const sortOptions: { id: SortOption; label: string }[] = [
     { id: 'relevance', label: t('shop.sortRelevance', 'Relevanz') },
     { id: 'newest', label: t('shop.sortNewest', 'Neu') },
-    { id: 'most-awarded', label: t('shop.sortAwarded', 'Buchpreise') },
+    { id: 'most-awarded', label: t('shop.sortAwarded', 'Anzahl Buchpreise') },
     ...(showPopular ? [{ id: 'popular' as SortOption, label: t('shop.sortPopular', 'Beliebt') }] : []),
     { id: 'hidden-gems', label: t('shop.sortHiddenGems', 'Geheimtipps') },
     { id: 'az', label: t('shop.sortAZ', 'A–Z') },
@@ -574,9 +574,6 @@ export function ShopPage() {
 
           <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-wrap" style={{ scrollbarWidth: 'none' }}>
             <Text variant="xs" className="whitespace-nowrap text-foreground/50 flex-shrink-0 !font-semibold">Sortieren:</Text>
-            {sortBy.length > 1 && (
-              <FilterModeToggle filterMode={sortMode} onFilterModeChange={setSortMode} />
-            )}
             {sortOptions.map((option) => {
               const isActive = sortBy.includes(option.id);
               return (
@@ -586,13 +583,9 @@ export function ShopPage() {
                   onClick={() => {
                     setSortBy(prev => {
                       if (isActive) {
-                        const next = prev.filter(s => s !== option.id);
-                        return next.length === 0 ? ['relevance'] : next;
+                        return ['relevance'];
                       }
-                      if (prev.length === 1 && prev[0] === 'relevance') {
-                        return [option.id];
-                      }
-                      return [...prev, option.id];
+                      return [option.id];
                     });
                   }}
                   className="sort-chip flex-shrink-0"
@@ -654,7 +647,6 @@ export function ShopPage() {
               <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide">
                 <div className="flex items-center justify-between mb-4">
                   <Heading as="h3" variant="h5">Filter</Heading>
-                  <FilterModeToggle filterMode={filterMode} onFilterModeChange={setFilterMode} />
                 </div>
 
                 {hasActiveFilters && (
@@ -684,7 +676,7 @@ export function ShopPage() {
                     onToggle={(v) => toggleFilter(selectedThemes, v, setSelectedThemes)}
                   />
                   <FilterSection
-                    title="Buchpreise"
+                    title="Anzahl Buchpreise"
                     items={awardOptions}
                     selectedItems={selectedAwards}
                     onToggle={(v) => toggleFilter(selectedAwards, v, setSelectedAwards)}
@@ -828,8 +820,6 @@ export function ShopPage() {
         hasActiveFilters={hasActiveFilters}
         clearAllFilters={clearAllFilters}
         resultCount={totalCount}
-        filterMode={filterMode}
-        onFilterModeChange={setFilterMode}
         categories={categoryOptions}
         selectedCategories={selectedCategories}
         onToggleCategory={(v) => toggleFilter(selectedCategories, v, setSelectedCategories)}

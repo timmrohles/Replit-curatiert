@@ -1786,7 +1786,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                     <SelectContent>
                       <SelectItem value="relevance">Relevanz</SelectItem>
                       <SelectItem value="newest">Neueste</SelectItem>
-                      <SelectItem value="most-awarded">Buchpreise</SelectItem>
+                      <SelectItem value="most-awarded">Anzahl Buchpreise</SelectItem>
                       <SelectItem value="popular">Beliebt</SelectItem>
                       <SelectItem value="hidden-gems">Hidden Gems</SelectItem>
                     </SelectContent>

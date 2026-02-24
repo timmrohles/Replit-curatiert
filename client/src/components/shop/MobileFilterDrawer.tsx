@@ -9,9 +9,6 @@ interface MobileFilterDrawerProps {
   hasActiveFilters: boolean;
   clearAllFilters: () => void;
   resultCount: number;
-  filterMode: 'and' | 'or';
-  onFilterModeChange: (mode: 'and' | 'or') => void;
-
   categories: string[];
   selectedCategories: string[];
   onToggleCategory: (cat: string) => void;
@@ -55,8 +52,6 @@ export function MobileFilterDrawer({
   hasActiveFilters,
   clearAllFilters,
   resultCount,
-  filterMode,
-  onFilterModeChange,
   categories,
   selectedCategories,
   onToggleCategory,
@@ -124,36 +119,6 @@ export function MobileFilterDrawer({
           </div>
         </div>
 
-        <div className="px-4 py-3 border-b flex items-center gap-3" style={{ borderColor: 'var(--color-border)' }}>
-          <span className="text-xs font-medium text-foreground/60">Verknüpfung:</span>
-          <div className="flex items-center gap-0 border" style={{ borderColor: 'var(--color-border)', borderRadius: '4px', overflow: 'hidden' }}>
-            <button
-              type="button"
-              onClick={() => onFilterModeChange('and')}
-              className="px-3 py-1.5 text-xs font-semibold transition-colors"
-              style={{
-                backgroundColor: filterMode === 'and' ? 'var(--color-blue)' : 'transparent',
-                color: filterMode === 'and' ? 'white' : 'var(--color-foreground)',
-              }}
-              data-testid="mobile-filter-mode-and"
-            >
-              UND
-            </button>
-            <button
-              type="button"
-              onClick={() => onFilterModeChange('or')}
-              className="px-3 py-1.5 text-xs font-semibold transition-colors"
-              style={{
-                backgroundColor: filterMode === 'or' ? 'var(--color-blue)' : 'transparent',
-                color: filterMode === 'or' ? 'white' : 'var(--color-foreground)',
-              }}
-              data-testid="mobile-filter-mode-or"
-            >
-              ODER
-            </button>
-          </div>
-        </div>
-
         <div className="px-4 pb-24">
           <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
             <FilterSection
@@ -172,7 +137,7 @@ export function MobileFilterDrawer({
             />
 
             <FilterSection
-              title="Buchpreise"
+              title="Anzahl Buchpreise"
               items={awards}
               selectedItems={selectedAwards}
               onToggle={onToggleAward}
