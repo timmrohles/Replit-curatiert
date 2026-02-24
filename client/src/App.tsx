@@ -66,10 +66,8 @@ const DatenschutzPage = React.lazy(() => import('./pages/Datenschutz'));
 const FAQPage = React.lazy(() => import('./pages/FAQ'));
 const UeberUnsPage = React.lazy(() => import('./pages/UeberUns'));
 const MissionPage = React.lazy(() => import('./pages/Mission'));
-const ModularUserDashboard = React.lazy(() => import('./pages/ModularUserDashboard'));
 const CreatorStorefront = React.lazy(() => import('./pages/CreatorStorefront'));
 
-const DashboardLanding = React.lazy(() => import('./pages/DashboardLanding'));
 
 const SectionIndex = React.lazy(() => import('./pages/sections/SectionIndex'));
 
@@ -82,6 +80,7 @@ const DashboardReviews = React.lazy(() => import('./pages/dashboard/Reviews').th
 const DashboardNotifications = React.lazy(() => import('./pages/dashboard/Notifications').then(m => ({ default: m.DashboardNotifications })));
 const DashboardPrivacy = React.lazy(() => import('./pages/dashboard/Privacy').then(m => ({ default: m.DashboardPrivacy })));
 const DashboardFeed = React.lazy(() => import('./pages/dashboard/DashboardFeed').then(m => ({ default: m.DashboardFeed })));
+const DashboardFollows = React.lazy(() => import('./pages/dashboard/Follows').then(m => ({ default: m.DashboardFollows })));
 const EarningsOverview = React.lazy(() => import('./pages/dashboard/earnings/EarningsOverview').then(m => ({ default: m.EarningsOverview })));
 const EarningsAffiliate = React.lazy(() => import('./pages/dashboard/earnings/EarningsAffiliate').then(m => ({ default: m.EarningsAffiliate })));
 const EarningsStatistics = React.lazy(() => import('./pages/dashboard/earnings/EarningsStatistics').then(m => ({ default: m.EarningsStatistics })));
@@ -267,6 +266,7 @@ function App() {
                         <Route path="bewertungen" element={<DashboardRatings />} />
                         <Route path="content-quellen" element={<ContentSourcesManager />} />
                         <Route path="feed" element={<DashboardFeed />} />
+                        <Route path="follower" element={<DashboardFollows />} />
                         <Route path="veranstaltungen" element={<UserEvents />} />
                         <Route path="einnahmen" element={<EarningsOverview />} />
                         <Route path="einnahmen/affiliate" element={<EarningsAffiliate />} />

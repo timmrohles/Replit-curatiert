@@ -66,6 +66,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
         { id: 'oeffentliches-profil', path: '/dashboard/oeffentliches-profil', label: t('dashboardNav.publicProfile', 'Öffentliches Profil') },
         { id: 'feed', path: '/dashboard/feed', label: t('dashboardNav.feed', 'Feed') },
         { id: 'veranstaltungen', path: '/dashboard/veranstaltungen', label: t('dashboardNav.events', 'Veranstaltungen') },
+        { id: 'follower', path: '/dashboard/follower', label: t('dashboardNav.follower', 'Follower') },
       ]
     },
     {
