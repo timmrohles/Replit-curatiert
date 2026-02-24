@@ -241,17 +241,17 @@ export function BookEnrichmentBadges({ book, size = 'md' }: BookEnrichmentBadges
       )}
       {hasNominations && !hasWins && (
         <EnrichmentBadge
-          type="hidden-gem"
+          type="nomination"
           size={size}
-          icon={<Gem className={iconSize} />}
+          icon={<LaurelWreathIcon className={iconSize} />}
           modalTitle={`Nominierung${nominations.length > 1 ? 'en' : ''}`}
-          modalIcon={<Gem className={`${modalIconSize} text-foreground`} />}
+          modalIcon={<LaurelWreathIcon className={`${modalIconSize} text-foreground`} />}
           modalContent={
             <ul className="space-y-2">
               {nominations.map((d, i) => (
                 <li key={i} className="flex items-start gap-2.5">
                   <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-muted">
-                    <Gem className="w-3.5 h-3.5 text-muted-foreground" />
+                    <LaurelWreathIcon className="w-3.5 h-3.5 text-muted-foreground" />
                   </div>
                   <div>
                     <p className="text-xs font-medium text-foreground">
