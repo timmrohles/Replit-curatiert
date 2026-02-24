@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Edit, Trash2, X, Search, GripVertical, BookOpen, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, Sparkles, Hand, Tag, Minus, Check, Info, BadgeCheck, Heart, ArrowRight, List } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Text, Heading } from '@/components/ui/typography';
 import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { EditorialBookCard } from '@/components/book/EditorialBookCard';
 import { useAuth } from '../../hooks/use-auth';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 const API_BASE = '/api';
 
@@ -293,6 +295,7 @@ interface UserCurationsProps {
 }
 
 export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
+  const { t } = useTranslation();
   const { user: authUser } = useAuth();
   const USER_ID = authUser?.id || 'demo-user-123';
   const [curations, setCurations] = useState<Curation[]>([]);
@@ -783,24 +786,17 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
 
   return (
     <div className="space-y-4 md:space-y-6">
+      <DashboardPageHeader
+        title={t('dashboardPages.curationsTitle', 'Kurationen')}
+        description={t('dashboardPages.curationsDesc', 'Erstelle thematische Buchsammlungen für deinen Bookstore.')}
+        action={profileComplete ? {
+          label: t('dashboardPages.newCuration', 'Neue Kuration'),
+          onClick: openCreateWizard,
+          icon: Plus,
+        } : undefined}
+      />
       <div className="text-center">
-        <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }} data-testid="text-curations-heading">
-          Meine Kurationen
-        </h1>
-        <p className="text-xs md:text-sm mb-4" style={{ color: '#6B7280' }}>
-          Erstelle thematische Buchsammlungen für deinen Bookstore
-        </p>
-        {profileComplete ? (
-          <button
-            onClick={openCreateWizard}
-            data-testid="button-new-curation"
-            className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg touch-manipulation"
-            style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-          >
-            <Plus className="w-5 h-5" />
-            Neue Kuration
-          </button>
-        ) : (
+        {!profileComplete && (
           <div className="p-4 rounded-lg text-center" style={{ backgroundColor: '#FEF3C7', border: '1px solid #FDE68A' }} data-testid="notice-profile-required">
             <Text as="p" variant="small" style={{ color: '#92400E' }}>
               Um Kurationen zu erstellen, musst du zuerst dein Kurator:innen-Profil im Tab{' '}

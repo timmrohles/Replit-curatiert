@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Save, Mail, Phone, AlertTriangle, Star, MessageSquare, Heart, BookOpen, Plus, Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Text } from '../../components/ui/typography';
 import { LikeButton } from '../../components/favorites/LikeButton';
 import { useAuth } from '../../hooks/use-auth';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 const TAG_COLORS = [
   'var(--vibrant-coral, #f25f5c)',
@@ -197,6 +199,7 @@ function GenrePickerDropdown({
 const CURATOR_STORAGE_KEY = 'coratiert-curator-id';
 
 export function DashboardProfile() {
+  const { t } = useTranslation();
   const { user: authUser } = useAuth();
   const userId = authUser?.id || 'demo-user-123';
   const [saving, setSaving] = useState(false);
@@ -294,14 +297,10 @@ export function DashboardProfile() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
-          Meine Daten
-        </h1>
-        <p className="text-sm text-center" style={{ color: '#4B5563' }}>
-          Verwalte deine persönlichen Informationen und Einstellungen
-        </p>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.profileTitle', 'Meine Daten')}
+        description={t('dashboardPages.profileDesc', 'Verwalte deine persönlichen Daten und Einstellungen.')}
+      />
 
       <div className="p-6">
         <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>

@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Calendar, MapPin, Video, Users, Clock, Plus, X, Edit2, Trash2, ExternalLink, Download, ChevronDown, ChevronUp, Globe, Lock, BookOpen, Send, XCircle, CalendarClock, MessageSquare, UserMinus, AlertTriangle, Search, Image as ImageIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Heading, Text } from '../../components/ui/typography';
 import { useAuth } from '../../hooks/use-auth';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 const API_BASE = '/api';
 
@@ -116,6 +118,7 @@ function getEventTypeLabel(type: string): string {
 }
 
 export function UserEvents() {
+  const { t } = useTranslation();
   const { user: authUser } = useAuth();
   const USER_ID = authUser?.id || 'demo-user-123';
   const [events, setEvents] = useState<UserEvent[]>([]);
@@ -346,25 +349,15 @@ export function UserEvents() {
 
   return (
     <div className="w-full max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <Heading as="h2" variant="h3" className="text-foreground !normal-case">
-            Veranstaltungen
-          </Heading>
-          <Text as="p" variant="small" className="mt-1" style={{ color: '#6B7280' }}>
-            Erstelle und verwalte deine Lesungen, Buchclub-Treffen und andere Events.
-          </Text>
-        </div>
-        <button
-          onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors"
-          style={{ backgroundColor: '#247ba0' }}
-          data-testid="button-create-event"
-        >
-          <Plus className="w-4 h-4" />
-          Neues Event
-        </button>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.eventsTitle', 'Veranstaltungen')}
+        description={t('dashboardPages.eventsDesc', 'Erstelle und verwalte Lesungen, Buchklubs und andere Events.')}
+        action={{
+          label: t('dashboardPages.newEvent', 'Neue Veranstaltung'),
+          onClick: () => { resetForm(); setShowForm(true); },
+          icon: Plus,
+        }}
+      />
 
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[10000]">

@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Bell, Settings, Check, Trash2, Heart, MessageSquare, BookOpen, Award, Mail } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 // Mock data
 const mockNotifications = [
@@ -42,6 +44,7 @@ const mockNotifications = [
 ];
 
 export function DashboardNotifications() {
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState(mockNotifications);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -72,15 +75,10 @@ export function DashboardNotifications() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-          Benachrichtigungen
-        </h1>
-        <p className="text-sm text-center" style={{ color: '#6B7280' }}>
-          {unreadCount} ungelesene Benachrichtigung{unreadCount !== 1 ? 'en' : ''}
-        </p>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.notificationsTitle', 'Benachrichtigungen')}
+        description={t('dashboardPages.notificationsDesc', 'Verwalte deine Benachrichtigungseinstellungen.')}
+      />
 
       {/* Actions */}
       <div className="p-6 flex items-center justify-between">

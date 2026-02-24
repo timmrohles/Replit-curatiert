@@ -1,5 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/use-auth';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 import { useDashboardFeed, type FeedSectionType, type ReadingStatus, type FeedSortOrder } from './DashboardFeedContext';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
@@ -1734,6 +1736,7 @@ function FeedToolbar() {
 }
 
 export function DashboardFeed() {
+  const { t } = useTranslation();
   const {
     sections,
     reorderSections,
@@ -1760,14 +1763,11 @@ export function DashboardFeed() {
 
   return (
     <div className="space-y-8" data-testid="dashboard-feed">
+      <DashboardPageHeader
+        title={t('dashboardPages.feedTitle', 'Feed')}
+        description={t('dashboardPages.feedDesc', 'Aktivitäten und Neuigkeiten aus deinem Netzwerk.')}
+      />
       <div className="text-center">
-        <h1
-          className="text-2xl md:text-3xl mb-2"
-          style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}
-          data-testid="text-feed-heading"
-        >
-          Mein Feed
-        </h1>
         <div className="mt-3">
           <FeedToolbar />
         </div>

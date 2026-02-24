@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Star, Plus, Edit, Trash2, Filter, X, Book, TrendingUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 type RatingStatus = 'draft' | 'published';
 
@@ -16,6 +18,7 @@ interface BookRating {
 }
 
 export function DashboardRatings() {
+  const { t } = useTranslation();
   const [ratings, setRatings] = useState<BookRating[]>([
     {
       id: '1',
@@ -94,23 +97,10 @@ export function DashboardRatings() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <h1 className="text-2xl md:text-3xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-          Meine Bewertungen
-        </h1>
-        <p className="text-xs md:text-sm mb-4" style={{ color: '#6B7280' }}>
-          Verwalte deine Buchbewertungen und Rezensionen
-        </p>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg touch-manipulation"
-          style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-        >
-          <Plus className="w-5 h-5" />
-          Buch bewerten
-        </button>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.ratingsTitle', 'Bewertungen')}
+        description={t('dashboardPages.ratingsDesc', 'Deine Sternebewertungen für gelesene Bücher.')}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">

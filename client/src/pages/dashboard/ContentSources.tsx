@@ -3,7 +3,9 @@ import {
   Rss, Plus, RefreshCw, Trash2, Eye, EyeOff, Check, ChevronDown, ChevronUp,
   Loader2, Lock, Star, Radio, Globe, Youtube, X
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/use-auth';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 const API_BASE = '/api';
 
@@ -127,6 +129,7 @@ function RenderStars({ count }: { count: number }) {
 }
 
 export function ContentSourcesManager() {
+  const { t } = useTranslation();
   const { user: authUser } = useAuth();
   const USER_ID = authUser?.id || 'demo-user-123';
   const [sources, setSources] = useState<ContentSource[]>([]);
@@ -365,21 +368,15 @@ export function ContentSourcesManager() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1
-          className="text-2xl md:text-3xl mb-2 text-center"
-          style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}
-          data-testid="heading-content-sources"
-        >
-          <div className="flex items-center justify-center gap-3">
-            <Rss className="w-7 h-7" style={{ color: '#247ba0' }} />
-            Content-Quellen
-          </div>
-        </h1>
-        <p className="text-sm text-center" style={{ color: '#6B7280' }}>
-          Verwalte Podcast-Feeds und extrahiere automatisch Buchempfehlungen aus Shownotes
-        </p>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.contentSourcesTitle', 'Content-Quellen')}
+        description={t('dashboardPages.contentSourcesDesc', 'Verwalte deine Podcast- und RSS-Feeds für automatische Buchempfehlungen.')}
+        action={{
+          label: t('dashboardPages.addContentSource', 'Quelle hinzufügen'),
+          onClick: () => setShowAddForm(!showAddForm),
+          icon: Plus,
+        }}
+      />
 
       <div className="flex justify-center">
         <button

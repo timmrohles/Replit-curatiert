@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Shield, Download, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 export function DashboardPrivacy() {
+  const { t } = useTranslation();
   const [settings, setSettings] = useState({
     profilePublic: true,
     showEmail: false,
@@ -19,15 +22,10 @@ export function DashboardPrivacy() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-          Datenschutz
-        </h1>
-        <p className="text-xs md:text-sm text-center" style={{ color: '#6B7280' }}>
-          Verwalte deine Privatsphäre-Einstellungen und Daten
-        </p>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.privacyTitle', 'Datenschutz')}
+        description={t('dashboardPages.privacyDesc', 'Deine Datenschutzeinstellungen und Datenexport.')}
+      />
 
       {/* DSGVO Info Banner */}
       <div 

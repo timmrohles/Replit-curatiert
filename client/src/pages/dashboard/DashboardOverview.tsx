@@ -1,13 +1,20 @@
-import { useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { useSafeNavigate } from '../../utils/routing';
 import { useAuth } from '../../hooks/use-auth';
 import {
   Star, MessageSquare, Heart, Store, BookOpen,
-  ArrowRight, User
+  ArrowRight, User, Calendar, Rss, Users
 } from 'lucide-react';
 import type { DashboardOutletContext } from '../../components/dashboard/DashboardLayout';
+
+interface DashboardKpis {
+  curations: number;
+  events: number;
+  contentSources: number;
+  hasStorefront: boolean;
+}
 
 interface NextAction {
   id: string;
@@ -23,20 +30,39 @@ export function DashboardOverview() {
   const navigate = useSafeNavigate();
   const { user: authUser } = useAuth();
   const context = useOutletContext<DashboardOutletContext>();
-  const userName = authUser?.displayName || authUser?.username || 'Nutzer:in';
+  const userName = authUser?.displayName || authUser?.firstName || 'Nutzer:in';
 
-  const [kpis, setKpis] = useState({
-    ratings: 0,
-    reviews: 0,
-    favorites: 0,
-    storefrontSetup: false,
+  const { data: kpiData, isLoading, isError } = useQuery<{ ok: boolean; data: DashboardKpis }>({
+    queryKey: ['/api/dashboard/kpis'],
   });
 
-  const profileProgress = kpis.storefrontSetup ? 65 : 35;
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <p className="text-sm text-muted-foreground">{t('common.error', 'Fehler')}</p>
+        <p className="text-xs text-muted-foreground mt-1">Dashboard-Daten konnten nicht geladen werden.</p>
+      </div>
+    );
+  }
+
+  const kpis = kpiData?.data ?? {
+    curations: 0,
+    events: 0,
+    contentSources: 0,
+    hasStorefront: false,
+  };
+
+  const profileSteps = [
+    !!authUser?.displayName,
+    !!authUser?.profileImageUrl,
+    kpis.hasStorefront,
+    kpis.curations > 0,
+  ];
+  const profileProgress = Math.round((profileSteps.filter(Boolean).length / profileSteps.length) * 100);
 
   const nextActions: NextAction[] = [];
 
-  if (!kpis.storefrontSetup && context?.hasModule?.('creator_storefront')) {
+  if (!kpis.hasStorefront && context?.hasModule?.('creator_storefront')) {
     nextActions.push({
       id: 'setup-store',
       title: t('dashboardOverview.setupStore', 'Buchhandlung einrichten'),
@@ -47,56 +73,78 @@ export function DashboardOverview() {
     });
   }
 
-  if (kpis.ratings === 0) {
+  if (kpis.curations === 0) {
     nextActions.push({
-      id: 'first-rating',
-      title: t('dashboardOverview.firstRating', 'Erstes Buch bewerten'),
-      description: t('dashboardOverview.firstRatingDesc', 'Bewerte ein Buch und hilf anderen bei der Buchauswahl.'),
-      icon: Star,
-      path: '/dashboard/bewertungen',
+      id: 'create-curation',
+      title: t('dashboardOverview.createCuration', 'Kuration erstellen'),
+      description: t('dashboardOverview.createCurationDesc', 'Stelle Bücher zu einem Thema zusammen und teile sie.'),
+      icon: BookOpen,
+      path: '/dashboard/kurationen',
       priority: 2,
     });
   }
 
-  if (kpis.reviews === 0) {
+  if (kpis.events === 0) {
     nextActions.push({
-      id: 'first-review',
-      title: t('dashboardOverview.firstReview', 'Erste Rezension schreiben'),
-      description: t('dashboardOverview.firstReviewDesc', 'Teile deine Meinung und inspiriere andere Leser:innen.'),
-      icon: MessageSquare,
-      path: '/dashboard/rezensionen',
+      id: 'create-event',
+      title: t('dashboardOverview.createEvent', 'Veranstaltung erstellen'),
+      description: t('dashboardOverview.createEventDesc', 'Plane eine Lesung, einen Buchklub oder ein anderes Event.'),
+      icon: Calendar,
+      path: '/dashboard/veranstaltungen',
       priority: 3,
     });
   }
 
-  nextActions.push({
-    id: 'create-curation',
-    title: t('dashboardOverview.createCuration', 'Kuration erstellen'),
-    description: t('dashboardOverview.createCurationDesc', 'Stelle Bücher zu einem Thema zusammen und teile sie.'),
-    icon: BookOpen,
-    path: '/dashboard/kurationen',
-    priority: 4,
-  });
+  if (kpis.contentSources === 0) {
+    nextActions.push({
+      id: 'add-content',
+      title: t('dashboardOverview.addContent', 'Content-Quelle hinzufügen'),
+      description: t('dashboardOverview.addContentDesc', 'Verbinde deinen Podcast oder RSS-Feed für automatische Buchempfehlungen.'),
+      icon: Rss,
+      path: '/dashboard/content-quellen',
+      priority: 4,
+    });
+  }
+
+  if (!authUser?.profileImageUrl) {
+    nextActions.push({
+      id: 'complete-profile',
+      title: t('dashboardOverview.completeProfile', 'Profil vervollständigen'),
+      description: t('dashboardOverview.completeProfileDesc', 'Füge ein Profilbild hinzu, damit andere dich erkennen.'),
+      icon: User,
+      path: '/dashboard/profil',
+      priority: 5,
+    });
+  }
 
   const sortedActions = nextActions.sort((a, b) => a.priority - b.priority).slice(0, 3);
 
   const kpiCards = [
-    { label: t('dashboardOverview.kpiRatings', 'Bewertungen'), value: String(kpis.ratings), icon: Star, subtitle: kpis.ratings === 0 ? t('dashboardOverview.noRatingsYet', 'Noch keine Bewertungen') : undefined },
-    { label: t('dashboardOverview.kpiReviews', 'Rezensionen'), value: String(kpis.reviews), icon: MessageSquare, subtitle: kpis.reviews === 0 ? t('dashboardOverview.noReviewsYet', 'Noch keine Rezensionen') : undefined },
-    { label: t('dashboardOverview.kpiFavorites', 'Favoriten'), value: String(kpis.favorites), icon: Heart, subtitle: kpis.favorites === 0 ? t('dashboardOverview.noFavoritesYet', 'Noch keine Favoriten') : undefined },
-    { label: t('dashboardOverview.kpiStore', 'Buchhandlung'), value: kpis.storefrontSetup ? '✓' : '—', icon: Store, subtitle: kpis.storefrontSetup ? t('dashboardOverview.storeActive', 'Eingerichtet') : t('dashboardOverview.storeNotSetup', 'Noch nicht eingerichtet') },
+    { label: t('dashboardOverview.kpiCurations', 'Kurationen'), value: kpis.curations, icon: BookOpen, path: '/dashboard/kurationen' },
+    { label: t('dashboardOverview.kpiEvents', 'Veranstaltungen'), value: kpis.events, icon: Calendar, path: '/dashboard/veranstaltungen' },
+    { label: t('dashboardOverview.kpiContentSources', 'Content-Quellen'), value: kpis.contentSources, icon: Rss, path: '/dashboard/content-quellen' },
+    { label: t('dashboardOverview.kpiStore', 'Buchhandlung'), value: kpis.hasStorefront ? '✓' : '—', icon: Store, path: '/dashboard/buchhandlung', subtitle: kpis.hasStorefront ? t('dashboardOverview.storeActive', 'Eingerichtet') : t('dashboardOverview.storeNotSetup', 'Noch nicht eingerichtet') },
   ];
 
   return (
     <div className="space-y-6">
       <section className="rounded-lg p-5 md:p-8 border bg-card" data-testid="dashboard-welcome">
         <div className="flex items-start gap-4 md:gap-6">
-          <div
-            className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-          >
-            <User className="w-7 h-7 md:w-8 md:h-8" />
-          </div>
+          {authUser?.profileImageUrl ? (
+            <img
+              src={authUser.profileImageUrl}
+              alt={userName}
+              className="w-14 h-14 md:w-16 md:h-16 rounded-full object-cover flex-shrink-0"
+              data-testid="avatar-image"
+            />
+          ) : (
+            <div
+              className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
+            >
+              <User className="w-7 h-7 md:w-8 md:h-8" />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <h1
               className="text-xl md:text-2xl lg:text-3xl mb-1"
@@ -132,9 +180,10 @@ export function DashboardOverview() {
         {kpiCards.map((kpi, i) => {
           const Icon = kpi.icon;
           return (
-            <div
+            <button
               key={i}
-              className="rounded-lg p-4 border bg-card"
+              onClick={() => navigate(kpi.path)}
+              className="rounded-lg p-4 border bg-card text-left hover:border-[#247ba0]/30 transition-colors"
               data-testid={`kpi-card-${i}`}
             >
               <div className="flex items-center gap-2 mb-2">
@@ -142,12 +191,12 @@ export function DashboardOverview() {
                 <span className="text-xs text-muted-foreground">{kpi.label}</span>
               </div>
               <div className="text-2xl font-bold" style={{ color: '#1F2937' }}>
-                {kpi.value}
+                {isLoading ? '…' : String(kpi.value)}
               </div>
-              {kpi.subtitle && (
+              {'subtitle' in kpi && kpi.subtitle && (
                 <span className="text-xs text-muted-foreground">{kpi.subtitle}</span>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
@@ -172,7 +221,7 @@ export function DashboardOverview() {
                 >
                   <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: '#247ba0', opacity: 0.1 }}
+                    style={{ backgroundColor: 'rgba(36, 123, 160, 0.1)' }}
                   >
                     <Icon className="w-5 h-5" style={{ color: '#247ba0' }} />
                   </div>

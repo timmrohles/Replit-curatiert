@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, Star, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { ReviewWizard } from '../../components/review-wizard/ReviewWizard';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 // Mock data
 const mockReviews = [
@@ -44,6 +46,7 @@ const mockReviews = [
 ];
 
 export function DashboardReviews() {
+  const { t } = useTranslation();
   const [showWizard, setShowWizard] = useState(false);
   const [editingReview, setEditingReview] = useState<string | null>(null);
 
@@ -61,35 +64,15 @@ export function DashboardReviews() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-          Rezensionen
-        </h1>
-        <p className="text-xs md:text-sm text-center" style={{ color: '#6B7280' }}>
-          {mockReviews.length} Rezension{mockReviews.length !== 1 ? 'en' : ''} verfasst
-        </p>
-      </div>
-
-      {/* Action Card */}
-      <div className="p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-lg md:text-xl mb-1" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-            Neue Rezension schreiben
-          </h2>
-          <p className="text-xs md:text-sm" style={{ color: '#6B7280' }}>
-            Teile deine Meinung zu einem Buch
-          </p>
-        </div>
-        <button
-          onClick={() => setShowWizard(true)}
-          className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md touch-manipulation"
-          style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-        >
-          <Plus className="w-5 h-5" />
-          <span>Neue Rezension</span>
-        </button>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.reviewsTitle', 'Rezensionen')}
+        description={t('dashboardPages.reviewsDesc', 'Verwalte deine Buchrezensionen und teile deine Meinung.')}
+        action={{
+          label: t('dashboardPages.newReview', 'Neue Rezension'),
+          onClick: () => setShowWizard(true),
+          icon: Plus,
+        }}
+      />
 
       {/* Reviews List */}
       {mockReviews.length === 0 ? (

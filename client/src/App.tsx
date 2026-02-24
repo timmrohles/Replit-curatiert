@@ -105,15 +105,17 @@ const Setup = React.lazy(() => import('./pages/admin/Setup').then(m => ({ defaul
 const PublishControlPanel = React.lazy(() => import('./pages/admin/PublishControlPanel'));
 const PublicBookstore = React.lazy(() => import('./pages/PublicBookstore').then(m => ({ default: m.PublicBookstore })));
 
-const RESERVED_ROOT_PREFIXES: string[] = [
+const RESERVED_ROOT_PREFIXES = [
   'api', 'sys-mgmt-xK9', 'de-de', 'de-at', 'de-ch', 'uploads', 'assets', 'src', 'vite-hmr', '@',
-];
+] as const;
+const reservedPrefixes: readonly string[] = RESERVED_ROOT_PREFIXES;
 
 function isBookstoreCandidate(pathname: string): boolean {
-  const segments = pathname.split('/').filter(Boolean);
+  const parts = pathname.split('/');
+  const segments: string[] = parts.filter(s => s.length > 0);
   if (segments.length !== 1) return false;
-  const slug = segments[0];
-  if (RESERVED_ROOT_PREFIXES.includes(slug.toLowerCase())) return false;
+  const slug = segments[0]!;
+  if (reservedPrefixes.includes(slug.toLowerCase())) return false;
   if (isValidLocale(slug)) return false;
   if (slug.includes('.')) return false;
   return true;

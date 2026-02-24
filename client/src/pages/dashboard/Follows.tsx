@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Heart, UserMinus, Users, BookOpen, Building2, Tag, List } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 // Mock data
 const mockFollows = {
@@ -65,6 +67,7 @@ const mockFollows = {
 type TabType = 'curators' | 'authors' | 'publishers' | 'categories' | 'tags' | 'curations';
 
 export function DashboardFollows() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('curators');
 
   const tabs = [
@@ -78,15 +81,10 @@ export function DashboardFollows() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-          Favoriten
-        </h1>
-        <p className="text-sm" style={{ color: '#6B7280' }}>
-          Deine Kurator:innen, Autor:innen und Interessensgebiete
-        </p>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.followsTitle', 'Follower')}
+        description={t('dashboardPages.followsDesc', 'Verwalte wen du verfolgst und wer dir folgt.')}
+      />
 
       {/* Tabs */}
       <div className="rounded-lg p-4 shadow-sm border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>

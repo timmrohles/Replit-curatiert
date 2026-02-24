@@ -7462,6 +7462,47 @@ export async function registerRoutes(
   });
 
   // ==================================================================
+  // DASHBOARD KPIs
+  // ==================================================================
+  app.get('/api/dashboard/kpis', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ ok: false, error: 'Nicht authentifiziert' });
+      }
+      const sessionUser = req.user as any;
+      const userId = sessionUser.claims?.sub || sessionUser.id;
+      if (!userId) {
+        return res.status(401).json({ ok: false, error: 'Benutzer nicht identifizierbar' });
+      }
+
+      const [curationsResult, eventsResult, contentSourcesResult] = await Promise.all([
+        queryDB(`SELECT COUNT(*) as count FROM user_curations WHERE user_id = $1`, [userId]).catch(() => ({ rows: [{ count: 0 }] })),
+        queryDB(`SELECT COUNT(*) as count FROM user_events WHERE user_id = $1`, [userId]).catch(() => ({ rows: [{ count: 0 }] })),
+        queryDB(`SELECT COUNT(*) as count FROM content_sources WHERE user_id = $1`, [userId]).catch(() => ({ rows: [{ count: 0 }] })),
+      ]);
+
+      const curatorRow = await queryDB(
+        `SELECT id FROM curators WHERE user_id = $1::text LIMIT 1`, [userId]
+      ).catch(() => ({ rows: [] }));
+
+      const hasStorefront = curatorRow.rows.length > 0;
+
+      return res.json({
+        ok: true,
+        data: {
+          curations: parseInt(curationsResult.rows[0]?.count || '0', 10),
+          events: parseInt(eventsResult.rows[0]?.count || '0', 10),
+          contentSources: parseInt(contentSourcesResult.rows[0]?.count || '0', 10),
+          hasStorefront,
+        }
+      });
+    } catch (error) {
+      log.error('Dashboard KPIs error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
   // USER CURATIONS CRUD
   // ==================================================================
   app.get('/api/user-curations', async (req: Request, res: Response) => {

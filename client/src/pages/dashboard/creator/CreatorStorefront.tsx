@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Store, Plus, Edit, Trash2, Eye, EyeOff, Filter, X, BookOpen, Settings } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { DashboardPageHeader } from '../../../components/dashboard/DashboardPageHeader';
 
 type StorefrontStatus = 'draft' | 'published';
 
@@ -16,6 +18,7 @@ interface Storefront {
 }
 
 export function CreatorStorefront() {
+  const { t } = useTranslation();
   const [storefronts, setStorefronts] = useState<Storefront[]>([
     {
       id: '1',
@@ -96,25 +99,10 @@ export function CreatorStorefront() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-            Meine Bookstores
-          </h1>
-          <p className="text-xs md:text-sm" style={{ color: '#6B7280' }}>
-            Verwalte deine kuratierten Buchsammlungen
-          </p>
-        </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg touch-manipulation"
-          style={{ backgroundColor: '#10B981', color: '#FFFFFF' }}
-        >
-          <Plus className="w-5 h-5" />
-          Neuer Bookstore
-        </button>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.storefrontTitle', 'Buchhandlung')}
+        description={t('dashboardPages.storefrontDesc', 'Richte deine eigene Buchhandlung ein und präsentiere deine Empfehlungen.')}
+      />
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">

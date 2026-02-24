@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { User, Save, ExternalLink, Globe, Instagram, Podcast, Check, Plus, Search, X, Store, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { UserBookstore } from './UserBookstore';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../../hooks/use-auth';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 const CURATOR_STORAGE_KEY = 'coratiert-curator-id';
 
 export function PublicProfile() {
+  const { t } = useTranslation();
   const { user: authUser } = useAuth();
   const userId = authUser?.id || 'demo-user-123';
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -186,14 +189,10 @@ export function PublicProfile() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl md:text-3xl mb-2 text-center" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
-          Öffentliches Profil
-        </h1>
-        <p className="text-sm text-center" style={{ color: '#4B5563' }}>
-          So sehen andere Nutzer:innen dein Profil auf coratiert.de
-        </p>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.publicProfileTitle', 'Öffentliches Profil')}
+        description={t('dashboardPages.publicProfileDesc', 'So sehen andere dein Profil auf der Plattform.')}
+      />
 
       <section className="p-5 md:p-6" data-testid="hero-profile-card">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 items-center">
