@@ -7,6 +7,7 @@ import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
+import { queryDB } from "./db";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -109,6 +110,14 @@ app.use((req, res, next) => {
   await setupAuth(app);
   registerAuthRoutes(app);
   await registerRoutes(httpServer, app);
+
+  try {
+    await queryDB(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS page_type VARCHAR(50) DEFAULT 'composed'`);
+    await queryDB(`ALTER TABLE pages ADD COLUMN IF NOT EXISTS category_id INTEGER`);
+    console.log('[migration] pages.page_type and pages.category_id columns ensured');
+  } catch (e) {
+    console.warn('[migration] pages columns migration skipped:', e);
+  }
 
   startScoreCron();
 

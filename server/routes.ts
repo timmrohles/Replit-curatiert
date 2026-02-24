@@ -6052,6 +6052,8 @@ export async function registerRoutes(
           seo_description: page.seo_description,
           canonical_url: page.canonical_url,
           robots: page.robots,
+          page_type: page.page_type || 'composed',
+          category_id: page.category_id || null,
           title: page.seo_title || page.slug,
           description: page.seo_description,
           enabled: page.status === 'published' && page.visibility === 'visible',
@@ -6284,7 +6286,9 @@ export async function registerRoutes(
         seo_description,
         template_key,
         canonical_url,
-        robots = 'index,follow'
+        robots = 'index,follow',
+        page_type = 'composed',
+        category_id = null
       } = body;
 
       if (!slug || typeof slug !== 'string' || slug.trim().length === 0) {
@@ -6299,19 +6303,22 @@ export async function registerRoutes(
         `INSERT INTO public.pages (
           slug, type, template_key, status, visibility,
           seo_title, seo_description, canonical_url, robots,
+          page_type, category_id,
           content_version, created_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1, NOW(), NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 1, NOW(), NOW())
         RETURNING
           id, slug, type, template_key, status, visibility,
           seo_title, seo_description, canonical_url, robots,
+          page_type, category_id,
           publish_at, unpublish_at, content_version,
           created_at, updated_at`,
         [
           slug.trim(), type, template_key || null,
           status, visibility,
           seo_title || null, seo_description || null,
-          canonical_url || null, robots
+          canonical_url || null, robots,
+          page_type, category_id ? parseInt(category_id) : null
         ]
       );
 
@@ -6347,7 +6354,7 @@ export async function registerRoutes(
     if (!id) return res.status(400).json({ ok: false, success: false, error: { code: 'INVALID_PAGE_ID' } });
 
     try {
-      const result = await queryDB(`SELECT id, slug, type, template_key, status, visibility, seo_title, seo_description, canonical_url, robots, publish_at, unpublish_at, content_version, created_at, updated_at FROM public.pages WHERE id = $1`, [id]);
+      const result = await queryDB(`SELECT id, slug, type, template_key, status, visibility, seo_title, seo_description, canonical_url, robots, page_type, category_id, publish_at, unpublish_at, content_version, created_at, updated_at FROM public.pages WHERE id = $1`, [id]);
       if (result.rows.length === 0) return res.status(404).json({ ok: false, success: false, error: { code: 'NOT_FOUND' } });
       return res.json({ ok: true, success: true, data: result.rows[0] });
     } catch (error) {
@@ -6368,7 +6375,7 @@ export async function registerRoutes(
       const updates: string[] = [];
       const values: any[] = [];
       let paramIndex = 1;
-      const allowedFields = ['slug', 'type', 'template_key', 'status', 'visibility', 'seo_title', 'seo_description', 'canonical_url', 'robots', 'publish_at', 'unpublish_at'];
+      const allowedFields = ['slug', 'type', 'template_key', 'status', 'visibility', 'seo_title', 'seo_description', 'canonical_url', 'robots', 'publish_at', 'unpublish_at', 'page_type', 'category_id'];
       for (const field of allowedFields) {
         if (field in body) {
           updates.push(`${field} = $${paramIndex}`);
@@ -6378,7 +6385,7 @@ export async function registerRoutes(
       }
       if (updates.length === 0) return res.status(400).json({ ok: false, success: false, error: { code: 'NO_UPDATES' } });
       values.push(id);
-      const result = await queryDB(`UPDATE public.pages SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${paramIndex} RETURNING id, slug, type, template_key, status, visibility, seo_title, seo_description, canonical_url, robots, publish_at, unpublish_at, content_version, created_at, updated_at`, values);
+      const result = await queryDB(`UPDATE public.pages SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${paramIndex} RETURNING id, slug, type, template_key, status, visibility, seo_title, seo_description, canonical_url, robots, page_type, category_id, publish_at, unpublish_at, content_version, created_at, updated_at`, values);
       if (result.rows.length === 0) return res.status(404).json({ ok: false, success: false, error: { code: 'NOT_FOUND' } });
       return res.json({ ok: true, success: true, data: result.rows[0] });
     } catch (error) {
