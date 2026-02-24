@@ -6276,6 +6276,7 @@ export async function registerRoutes(
         SELECT
           id, slug, type, template_key, status, visibility,
           seo_title, publish_at, unpublish_at,
+          page_type, category_id,
           created_at, updated_at
         FROM public.pages
       `;
@@ -6986,6 +6987,9 @@ export async function registerRoutes(
         `UPDATE menu_items
          SET target_type = 'page',
              target_page_id = $2,
+             target_category_id = NULL,
+             target_tag_id = NULL,
+             target_template_key = NULL,
              updated_at = NOW()
          WHERE id = $1`,
         [menuItemId, pageId]
