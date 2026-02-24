@@ -2608,7 +2608,7 @@ export async function registerRoutes(
   app.post('/api/navigation/admin/items', async (req: Request, res: Response) => {
     try {
       const body = req.body;
-      const { id, parent_id, name, path, description, icon, visible, display_order, target_type, target_page_id, location, kind, scope, panel_layout, clickable, level } = body;
+      const { id, parent_id, name, path, description, icon, visible, display_order, target_type, target_page_id, location, kind, scope, panel_layout, clickable, level, status } = body;
 
       if (!name || (typeof name === 'string' && name.trim() === '')) {
         return res.status(400).json({ success: false, error: 'Name is required and cannot be empty' });
@@ -2622,8 +2622,10 @@ export async function registerRoutes(
       const panelLayoutValue = panel_layout || 'none';
       const clickableValue = clickable !== false;
       const levelValue = level || 0;
+      const statusValue = status === 'published' ? 'published' : 'draft';
 
       if (id) {
+        const displayOrderValue = display_order != null ? display_order : 0;
         const result = await queryDB(
           `UPDATE menu_items
            SET
@@ -2647,10 +2649,11 @@ export async function registerRoutes(
              panel_layout = $19,
              clickable = $20,
              level = $21,
+             status = $22,
              updated_at = NOW()
            WHERE id = $15
            RETURNING *`,
-          [parent_id, nameValue, nameValue, slug, path, path, description || '', icon || '', visible !== false, visible !== false, display_order || 0, display_order || 0, target_type || null, target_page_id || null, id, locationValue, kindValue, scopeValue, panelLayoutValue, clickableValue, levelValue]
+          [parent_id, nameValue, nameValue, slug, path, path, description || '', icon || '', visible !== false, visible !== false, displayOrderValue, displayOrderValue, target_type || null, target_page_id || null, id, locationValue, kindValue, scopeValue, panelLayoutValue, clickableValue, levelValue, statusValue]
         );
 
         if (result.rows.length === 0) {
@@ -2665,11 +2668,11 @@ export async function registerRoutes(
              visible, is_active, display_order, sort_order,
              target_type, target_page_id,
              location, kind, scope, panel_layout, clickable, level,
-             created_at, updated_at
+             status, created_at, updated_at
            )
-           VALUES ($1, $2::varchar, $3::text, $4, $5::varchar, $6::text, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, NOW(), NOW())
+           VALUES ($1, $2::varchar, $3::text, $4, $5::varchar, $6::text, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, NOW(), NOW())
            RETURNING *`,
-          [parent_id, nameValue, nameValue, slug, path, path, description || '', icon || '', visible !== false, visible !== false, display_order || 0, display_order || 0, target_type || null, target_page_id || null, locationValue, kindValue, scopeValue, panelLayoutValue, clickableValue, levelValue]
+          [parent_id, nameValue, nameValue, slug, path, path, description || '', icon || '', visible !== false, visible !== false, display_order || 0, display_order || 0, target_type || null, target_page_id || null, locationValue, kindValue, scopeValue, panelLayoutValue, clickableValue, levelValue, statusValue]
         );
         return res.json({ success: true, data: result.rows[0] });
       }

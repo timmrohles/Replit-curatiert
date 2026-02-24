@@ -993,7 +993,12 @@ export function AdminNavigationV2() {
         column_id: item.column_id || null,
         display_order: item.display_order || 0,
         visible: item.visible !== false,
-        status: 'draft',
+        status: item.status || 'draft',
+        kind: item.kind || 'link',
+        location: item.location || 'header',
+        scope: item.scope || 'public',
+        panel_layout: item.panel_layout || 'none',
+        clickable: item.clickable !== false,
       };
 
       const response = await fetch(`${getApiBase()}/navigation/admin/items`, {
