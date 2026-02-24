@@ -2967,10 +2967,13 @@ export async function registerRoutes(
         );
         for (const row of awardRes.rows || []) {
           if (!row.book_id) continue;
-          if (!awardMap[row.book_id]) awardMap[row.book_id] = { wins: 0, nominations: 0, details: [] };
+          if (!awardMap[row.book_id]) awardMap[row.book_id] = { wins: 0, nominations: 0, shortlisted: 0, details: [] };
           const status = (row.result_status || '').toLowerCase();
           if (status === 'winner' || status === 'gewinner') {
             awardMap[row.book_id].wins++;
+          } else if (status === 'shortlisted') {
+            awardMap[row.book_id].shortlisted++;
+            awardMap[row.book_id].nominations++;
           } else {
             awardMap[row.book_id].nominations++;
           }
@@ -3005,14 +3008,15 @@ export async function registerRoutes(
         const isAuthorPublisher = authorLower && publisherLower && (
           authorLower === publisherLower || publisherLower.includes(authorLower) || authorLower.includes(publisherLower)
         );
-        const awards = awardMap[book.id] || { wins: 0, nominations: 0, details: [] };
+        const awards = awardMap[book.id] || { wins: 0, nominations: 0, shortlisted: 0, details: [] };
+        const isAwarded = awards.wins > 0 || awards.shortlisted > 0;
         return {
           ...book,
           is_indie: isIndieVerlag || isSelfPublisher || isAuthorPublisher,
           indie_type: isIndieVerlag ? 'indie_verlag' : (isSelfPublisher || isAuthorPublisher) ? 'selfpublisher' : null,
-          is_hidden_gem: awards.nominations > 0 && awards.wins === 0,
-          award_count: awards.wins,
-          nomination_count: awards.nominations,
+          is_hidden_gem: awards.nominations > 0 && !isAwarded,
+          award_count: awards.wins + awards.shortlisted,
+          nomination_count: awards.nominations - awards.shortlisted,
           award_details: awards.details,
           onix_tag_ids: onixTagMap[book.id] || [],
         };
@@ -3119,15 +3123,28 @@ export async function registerRoutes(
 
       let useAwardSort = sort === 'awarded' || sort === 'hidden-gems';
       if (useAwardSort) {
-        const awardFilter = sort === 'hidden-gems'
-          ? "JOIN award_outcomes ao2 ON ar2.award_outcome_id = ao2.id WHERE ar2.book_id IS NOT NULL AND ao2.result_status != 'winner'"
-          : "WHERE ar2.book_id IS NOT NULL";
-        joins.push(` LEFT JOIN (
-          SELECT ar2.book_id, COUNT(*) as award_sort_count
-          FROM award_recipients ar2
-          ${awardFilter}
-          GROUP BY ar2.book_id
-        ) award_sort ON award_sort.book_id = b.id`);
+        if (sort === 'hidden-gems') {
+          joins.push(` LEFT JOIN (
+            SELECT ar2.book_id, COUNT(*) as award_sort_count
+            FROM award_recipients ar2
+            JOIN award_outcomes ao2 ON ar2.award_outcome_id = ao2.id
+            WHERE ar2.book_id IS NOT NULL AND ao2.result_status NOT IN ('winner', 'shortlisted')
+            AND ar2.book_id NOT IN (
+              SELECT ar3.book_id FROM award_recipients ar3
+              JOIN award_outcomes ao3 ON ar3.award_outcome_id = ao3.id
+              WHERE ar3.book_id IS NOT NULL AND ao3.result_status IN ('winner', 'shortlisted')
+            )
+            GROUP BY ar2.book_id
+          ) award_sort ON award_sort.book_id = b.id`);
+        } else {
+          joins.push(` LEFT JOIN (
+            SELECT ar2.book_id, COUNT(*) as award_sort_count
+            FROM award_recipients ar2
+            JOIN award_outcomes ao2 ON ar2.award_outcome_id = ao2.id
+            WHERE ar2.book_id IS NOT NULL AND ao2.result_status IN ('winner', 'shortlisted')
+            GROUP BY ar2.book_id
+          ) award_sort ON award_sort.book_id = b.id`);
+        }
       }
 
       let orderClause: string;

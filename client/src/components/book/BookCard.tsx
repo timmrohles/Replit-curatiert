@@ -291,19 +291,19 @@ export const BookCard = memo(function BookCard({
               </div>
             )}
             
-            {/* Enrichment Badges - top right corner */}
-            {((awardCount && awardCount > 0) || isHiddenGem) && (
+            {/* Enrichment Badges - top right corner (mutually exclusive) */}
+            {awardCount !== undefined && awardCount > 0 && (
               <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
-                {awardCount !== undefined && awardCount > 0 && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold-royal)', color: 'var(--color-charcoal)' }}>
-                    AUSGEZEICHNET
-                  </div>
-                )}
-                {isHiddenGem && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant)', color: 'var(--color-white)' }}>
-                    HIDDEN GEM
-                  </div>
-                )}
+                <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold-royal)', color: 'var(--color-charcoal)' }} data-testid="badge-awarded">
+                  AUSGEZEICHNET
+                </div>
+              </div>
+            )}
+            {isHiddenGem && !(awardCount && awardCount > 0) && (
+              <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
+                <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant)', color: 'var(--color-white)' }} data-testid="badge-hidden-gem">
+                  HIDDEN GEM
+                </div>
               </div>
             )}
 

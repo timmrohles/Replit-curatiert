@@ -326,19 +326,19 @@ const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarou
               </div>
             )}
             
-            {/* Enrichment Badges - top right corner */}
-            {((book.award_count && book.award_count > 0) || book.is_hidden_gem) && (
+            {/* Enrichment Badges - top right corner (mutually exclusive) */}
+            {book.award_count !== undefined && book.award_count > 0 && (
               <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
-                {book.award_count !== undefined && book.award_count > 0 && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold, #ffe066)', color: '#2a2a2a' }}>
-                    AUSGEZEICHNET
-                  </div>
-                )}
-                {book.is_hidden_gem && (
-                  <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant, #f25f5c)', color: '#fff' }}>
-                    HIDDEN GEM
-                  </div>
-                )}
+                <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold, #ffe066)', color: '#2a2a2a' }} data-testid="badge-awarded">
+                  AUSGEZEICHNET
+                </div>
+              </div>
+            )}
+            {book.is_hidden_gem && !(book.award_count && book.award_count > 0) && (
+              <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
+                <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant, #f25f5c)', color: '#fff' }} data-testid="badge-hidden-gem">
+                  HIDDEN GEM
+                </div>
               </div>
             )}
 
