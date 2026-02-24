@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { useSafeNavigate } from '../../utils/routing';
 import { Search, X, ChevronDown, Loader2 } from 'lucide-react';
 import { BookCarouselItem, BookCarouselItemData } from '../book/BookCarouselItem';
@@ -458,6 +459,15 @@ export function ShopPage() {
 
   return (
     <div className="bg-background min-h-screen">
+      <Helmet>
+        <title>Bücher entdecken – Kuratierte Buchempfehlungen | coratiert.de</title>
+        <meta name="description" content="Durchstöbere unseren kuratierten Buchkatalog. Finde Bücher nach Autor:innen, Verlagen, Genres, Auszeichnungen und mehr – empfohlen von echten Literaturkenner:innen." />
+        <link rel="canonical" href="https://coratiert.de/de-de/buecher" />
+        <meta property="og:title" content="Bücher entdecken – Kuratierte Buchempfehlungen | coratiert.de" />
+        <meta property="og:description" content="Durchstöbere unseren kuratierten Buchkatalog. Finde Bücher nach Autor:innen, Verlagen, Genres, Auszeichnungen und mehr." />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://coratiert.de/de-de/buecher" />
+      </Helmet>
       <InfoBar />
       <Header />
 

@@ -49,8 +49,6 @@ const DataDrivenHomepage = React.lazy(() => import('./components/homepage/DataDr
 const Homepage = React.lazy(() => import('./components/homepage/NewHomepage').then(m => ({ default: m.Homepage })));
 const BookDetailPage = React.lazy(() => import('./components/book/BookDetailPage').then(m => ({ default: m.BookDetailPage })));
 const BookstoreTemplate = React.lazy(() => import('./components/creator/BookstoreTemplate').then(m => ({ default: m.BookstoreTemplate })));
-const AuthorsPage = React.lazy(() => import('./components/creator/AuthorsPage').then(m => ({ default: m.AuthorsPage })));
-const PublishersPage = React.lazy(() => import('./components/creator/PublishersPage').then(m => ({ default: m.PublishersPage })));
 const SeriesPage = React.lazy(() => import('./components/book/SeriesPage').then(m => ({ default: m.SeriesPage })));
 const AllCuratorsPage = React.lazy(() => import('./components/creator/AllCuratorsPage').then(m => ({ default: m.AllCuratorsPage })));
 const AllListsPage = React.lazy(() => import('./components/creator/AllListsPage').then(m => ({ default: m.AllListsPage })));
@@ -240,8 +238,8 @@ function App() {
                       <Route path="book/:bookId" element={<S><BookDetailPage /></S>} />
                       <Route path="bookstore/:bookId" element={<S><BookstoreTemplate /></S>} />
 
-                      <Route path="authors" element={<S><AuthorsPage /></S>} />
-                      <Route path="publishers" element={<S><PublishersPage /></S>} />
+                      <Route path="authors" element={<Navigate to="../buecher" replace />} />
+                      <Route path="publishers" element={<Navigate to="../buecher" replace />} />
                       <Route path="series" element={<S><SeriesPage /></S>} />
 
                       <Route path="curators" element={<S><AllCuratorsPage onGoBack={() => {}} /></S>} />

@@ -938,7 +938,7 @@ export function BookDetailPage() {
         items={[
           { label: "Start", href: "/" },
           { label: "Bücher", href: "/" },
-          { label: book.author, href: "/authors" },
+          { label: book.author, href: "/buecher" },
           ...(book.collection ? [{ 
             label: `${book.collection} (Reihe)`, 
             href: "/series" 
