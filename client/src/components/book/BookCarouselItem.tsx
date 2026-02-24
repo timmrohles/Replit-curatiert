@@ -359,83 +359,84 @@ const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarou
               </div>
             )}
             
-            {/* Reviews Overlay - Pressestimmen */}
-            {showReviewsOverlay && book.reviews && (
-              <div 
-                className="absolute inset-0 p-3 md:p-4 flex flex-col gap-2 md:gap-3 overflow-y-auto bg-white"
-                style={{ zIndex: 100 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Heading 
-                  as="h5" 
-                  variant="h6" 
-                  className="text-[#2a2a2a] !normal-case"
-                >
-                  Pressestimmen
-                </Heading>
-                
-                <div className="flex flex-col gap-2 md:gap-3">
-                  {book.reviews.slice(0, 3).map((review, index) => (
-                    <div key={index} className="flex flex-col gap-1">
-                      <Text 
-                        as="p" 
-                        variant="small" 
-                        className="text-[#2a2a2a] !normal-case !tracking-normal leading-relaxed italic"
-                      >
-                        "{review.quote}"
-                      </Text>
-                      <Text 
-                        as="p" 
-                        variant="xs" 
-                        className="text-[#2a2a2a] opacity-60 !normal-case !tracking-normal"
-                      >
-                        — {review.source}
-                      </Text>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Awards Overlay - Auszeichnungen */}
-            {showAwardsOverlay && awardTags.length > 0 && (
-              <div 
-                className="absolute inset-0 p-3 md:p-4 flex flex-col gap-2 md:gap-3 overflow-y-auto bg-white"
-                style={{ zIndex: 100 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Heading 
-                  as="h5" 
-                  variant="h6" 
-                  className="text-[#2a2a2a] !normal-case"
-                >
-                  Auszeichnungen
-                </Heading>
-                
-                <div className="flex flex-wrap gap-2">
-                  {awardTags.map((tag) => (
-                    <div 
-                      key={tag.id}
-                      className="bg-[#247ba0]/10 text-[#247ba0] border border-[#247ba0]/20 rounded-full px-3 py-1.5 inline-flex items-center gap-1.5"
-                    >
-                      <span className="text-xs md:text-sm whitespace-nowrap">{tag.displayName}</span>
-                      <LikeButton 
-                        entityId={`onix-tag-${tag.id}`}
-                        entityType="tag"
-                        entityTitle={tag.displayName}
-                        entitySubtitle={tag.type}
-                        entityColor={tag.color}
-                        variant="minimal"
-                        size="sm"
-                        iconColor="#247ba0"
-                        backgroundColor="transparent"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Reviews Overlay - Pressestimmen (outside overflow-hidden container) */}
+          {showReviewsOverlay && book.reviews && (
+            <div 
+              className="absolute inset-0 p-3 md:p-4 flex flex-col gap-2 md:gap-3 overflow-y-auto bg-white rounded-[1px]"
+              style={{ zIndex: 200, border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-book-cover)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Heading 
+                as="h5" 
+                variant="h6" 
+                className="text-[#2a2a2a] !normal-case"
+              >
+                Pressestimmen
+              </Heading>
+              
+              <div className="flex flex-col gap-2 md:gap-3">
+                {book.reviews.slice(0, 3).map((review, index) => (
+                  <div key={index} className="flex flex-col gap-1">
+                    <Text 
+                      as="p" 
+                      variant="small" 
+                      className="text-[#2a2a2a] !normal-case !tracking-normal leading-relaxed italic"
+                    >
+                      "{review.quote}"
+                    </Text>
+                    <Text 
+                      as="p" 
+                      variant="xs" 
+                      className="text-[#2a2a2a] opacity-60 !normal-case !tracking-normal"
+                    >
+                      — {review.source}
+                    </Text>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Awards Overlay - Buchpreise (outside overflow-hidden container) */}
+          {showAwardsOverlay && awardTags.length > 0 && (
+            <div 
+              className="absolute inset-0 p-3 md:p-4 flex flex-col gap-2 md:gap-3 overflow-y-auto bg-white rounded-[1px]"
+              style={{ zIndex: 200, border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-book-cover)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Heading 
+                as="h5" 
+                variant="h6" 
+                className="text-[#2a2a2a] !normal-case"
+              >
+                Buchpreise
+              </Heading>
+              
+              <div className="flex flex-wrap gap-2">
+                {awardTags.map((tag) => (
+                  <div 
+                    key={tag.id}
+                    className="bg-[#247ba0]/10 text-[#247ba0] border border-[#247ba0]/20 rounded-full px-3 py-1.5 inline-flex items-center gap-1.5"
+                  >
+                    <span className="text-xs md:text-sm whitespace-nowrap">{tag.displayName}</span>
+                    <LikeButton 
+                      entityId={`onix-tag-${tag.id}`}
+                      entityType="tag"
+                      entityTitle={tag.displayName}
+                      entitySubtitle={tag.type}
+                      entityColor={tag.color}
+                      variant="minimal"
+                      size="sm"
+                      iconColor="#247ba0"
+                      backgroundColor="transparent"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
