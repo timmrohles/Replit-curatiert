@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from '../../utils/routing';
-import { Search, X, ChevronDown, Loader2 } from 'lucide-react';
+import { Search, X, ChevronDown, Loader2, SlidersHorizontal } from 'lucide-react';
 import { BookCarouselItem, BookCarouselItemData } from '../book/BookCarouselItem';
 import { Breadcrumb } from '../layout/Breadcrumb';
 import { Container } from '../ui/container';
@@ -15,6 +15,8 @@ import { Footer } from '../layout/Footer';
 import { InfoBar } from '../layout/InfoBar';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { FilterSection } from './FilterSection';
+import { MobileFilterDrawer } from './MobileFilterDrawer';
 
 type SortOption = 'relevance' | 'newest' | 'most-awarded' | 'popular' | 'hidden-gems' | 'az' | 'date';
 
@@ -267,6 +269,37 @@ function apiBookToCarouselItem(book: APIBook): BookCarouselItemData {
   };
 }
 
+function FilterModeToggle({ filterMode, onFilterModeChange }: { filterMode: 'and' | 'or'; onFilterModeChange: (mode: 'and' | 'or') => void }) {
+  return (
+    <div className="flex items-center gap-0 border" style={{ borderColor: 'var(--color-border)', borderRadius: '4px', overflow: 'hidden' }}>
+      <button
+        type="button"
+        onClick={() => onFilterModeChange('and')}
+        className="px-3 py-1.5 text-xs font-semibold transition-colors"
+        style={{
+          backgroundColor: filterMode === 'and' ? 'var(--color-blue)' : 'transparent',
+          color: filterMode === 'and' ? 'white' : 'var(--color-foreground)',
+        }}
+        data-testid="filter-mode-and"
+      >
+        UND
+      </button>
+      <button
+        type="button"
+        onClick={() => onFilterModeChange('or')}
+        className="px-3 py-1.5 text-xs font-semibold transition-colors"
+        style={{
+          backgroundColor: filterMode === 'or' ? 'var(--color-blue)' : 'transparent',
+          color: filterMode === 'or' ? 'white' : 'var(--color-foreground)',
+        }}
+        data-testid="filter-mode-or"
+      >
+        ODER
+      </button>
+    </div>
+  );
+}
+
 export function ShopPage() {
   const { t } = useTranslation();
   const navigate = useSafeNavigate();
@@ -280,7 +313,9 @@ export function ShopPage() {
   const [showPopular, setShowPopular] = useState(false);
   const PAGE_SIZE = 50;
 
-  const [selectedCurators, setSelectedCurators] = useState<string[]>([]);
+  const [filterMode, setFilterMode] = useState<'and' | 'or'>('and');
+  const [isMobileFilterOpen, setMobileFilterOpen] = useState(false);
+
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedThemes, setSelectedThemes] = useState<string[]>([]);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
@@ -293,12 +328,11 @@ export function ShopPage() {
 
   const formatOptions = ['Hardcover', 'Softcover', 'eBook', 'Hörbuch'];
   const pubTypeOptions = [
-    { id: 'indie', label: t('shop.pubTypeIndie', 'Indie-Verlag') },
-    { id: 'selfpublishing', label: t('shop.pubTypeSelfpub', 'Self-Publishing') },
-    { id: 'debut', label: t('shop.pubTypeDebut', 'Debütroman') },
+    { id: 'indie', label: 'Indie (Kurt-Wolff-Verlage)' },
+    { id: 'selfpublishing', label: 'Selfpublishing' },
+    { id: 'debut', label: 'Debüt' },
   ];
 
-  const [curatorOptions, setCuratorOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
   const [themeOptions, setThemeOptions] = useState<string[]>([]);
   const [seriesOptions] = useState<string[]>([]);
@@ -320,18 +354,13 @@ export function ShopPage() {
     });
 
     Promise.all([
-      safeFetch('/api/curators'),
       safeFetch('/api/categories?include_drafts=true'),
       safeFetch('/api/onix-tags'),
       safeFetch('/api/public/content-source-names'),
       safeFetch('/api/books/filter/authors?limit=50'),
       safeFetch('/api/books/filter/publishers?limit=50'),
       safeFetch('/api/awards'),
-    ]).then(([curatorsData, catData, tagsData, mediaData, authorsData, pubsData, awardsData]) => {
-      const curators = (curatorsData?.data || []).map((c: any) => c.name).filter(Boolean);
-      const uniqueCurators = Array.from(new Set<string>(curators)).sort((a, b) => a.localeCompare(b, 'de'));
-      if (uniqueCurators.length > 0) setCuratorOptions(uniqueCurators);
-
+    ]).then(([catData, tagsData, mediaData, authorsData, pubsData, awardsData]) => {
       const cats = (catData?.data || []).map((c: any) => c.name || c).sort((a: string, b: string) => a.localeCompare(b, 'de'));
       if (cats.length > 0) setCategoryOptions(cats);
 
@@ -387,13 +416,13 @@ export function ShopPage() {
       params.set('limit', String(PAGE_SIZE));
       params.set('offset', String(offset));
       params.set('sort', sortBy);
+      params.set('filterMode', filterMode);
       if (searchQuery) params.set('q', searchQuery);
       if (selectedAuthors.length > 0) params.set('authors', selectedAuthors.join(','));
       if (selectedPublishers.length > 0) params.set('publishers', selectedPublishers.join(','));
       if (selectedAwards.length > 0) params.set('awards', selectedAwards.join(','));
       if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
       if (selectedThemes.length > 0) params.set('themes', selectedThemes.join(','));
-      if (selectedCurators.length > 0) params.set('curators', selectedCurators.join(','));
       if (selectedMedia.length > 0) params.set('podcasts', selectedMedia.join(','));
       if (selectedPubTypes.length > 0) params.set('pubTypes', selectedPubTypes.join(','));
 
@@ -413,7 +442,7 @@ export function ShopPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, sortBy, selectedAuthors, selectedPublishers, selectedAwards, selectedCategories, selectedThemes, selectedCurators, selectedMedia, selectedPubTypes]);
+  }, [searchQuery, sortBy, filterMode, selectedAuthors, selectedPublishers, selectedAwards, selectedCategories, selectedThemes, selectedMedia, selectedPubTypes]);
 
   useEffect(() => {
     setPage(0);
@@ -445,12 +474,11 @@ export function ShopPage() {
 
   const sortedBooks = books;
 
-  const hasActiveFilters = selectedCurators.length > 0 || selectedCategories.length > 0 || selectedThemes.length > 0 ||
+  const hasActiveFilters = selectedCategories.length > 0 || selectedThemes.length > 0 ||
     selectedSeries.length > 0 || selectedPublishers.length > 0 || selectedAuthors.length > 0 ||
     selectedAwards.length > 0 || selectedMedia.length > 0 || selectedFormats.length > 0 || selectedPubTypes.length > 0;
 
   const clearAllFilters = () => {
-    setSelectedCurators([]);
     setSelectedCategories([]);
     setSelectedThemes([]);
     setSelectedSeries([]);
@@ -472,7 +500,6 @@ export function ShopPage() {
   ];
 
   const allSelectedFilters = [
-    ...selectedCurators.map(v => ({ label: v, type: 'curator' as const })),
     ...selectedCategories.map(v => ({ label: v, type: 'category' as const })),
     ...selectedThemes.map(v => ({ label: v, type: 'theme' as const })),
     ...selectedSeries.map(v => ({ label: v, type: 'series' as const })),
@@ -483,6 +510,8 @@ export function ShopPage() {
     ...selectedFormats.map(v => ({ label: v, type: 'format' as const })),
     ...selectedPubTypes.map(v => ({ label: pubTypeOptions.find(p => p.id === v)?.label || v, type: 'pubtype' as const })),
   ];
+
+  const pubTypeLabelItems = pubTypeOptions.map(p => p.label);
 
   return (
     <div className="bg-background min-h-screen">
@@ -540,98 +569,7 @@ export function ShopPage() {
             </form>
           </div>
 
-          <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-            <FilterDropdown
-              label="Kuratoren"
-              options={curatorOptions}
-              selected={selectedCurators}
-              onToggle={(v) => toggleFilter(selectedCurators, v, setSelectedCurators)}
-              totalLabel="Kurator*innen"
-            />
-            <FilterDropdown
-              label="Kategorien"
-              options={categoryOptions}
-              selected={selectedCategories}
-              onToggle={(v) => toggleFilter(selectedCategories, v, setSelectedCategories)}
-              totalLabel="Kategorien"
-            />
-            <FilterDropdown
-              label="Themen"
-              options={themeOptions}
-              selected={selectedThemes}
-              onToggle={(v) => toggleFilter(selectedThemes, v, setSelectedThemes)}
-              totalLabel="Themen"
-            />
-            <FilterDropdown
-              label="Buchreihen"
-              options={seriesOptions}
-              selected={selectedSeries}
-              onToggle={(v) => toggleFilter(selectedSeries, v, setSelectedSeries)}
-              totalLabel="Buchreihen"
-            />
-            <FilterDropdown
-              label="Autoren"
-              options={authorOptions}
-              selected={selectedAuthors}
-              onToggle={(v) => toggleFilter(selectedAuthors, v, setSelectedAuthors)}
-              onSearch={searchAuthors}
-              isLoading={authorLoading}
-              totalLabel="Autor*innen"
-            />
-            <FilterDropdown
-              label="Verlage"
-              options={publisherOptions}
-              selected={selectedPublishers}
-              onToggle={(v) => toggleFilter(selectedPublishers, v, setSelectedPublishers)}
-              onSearch={searchPublishers}
-              isLoading={publisherLoading}
-              totalLabel="Verlage"
-            />
-            <FilterDropdown
-              label="Auszeichnungen"
-              options={awardOptions}
-              selected={selectedAwards}
-              onToggle={(v) => toggleFilter(selectedAwards, v, setSelectedAwards)}
-              totalLabel="Auszeichnungen"
-            />
-            <FilterDropdown
-              label="Podcasts"
-              options={mediaOptions}
-              selected={selectedMedia}
-              onToggle={(v) => toggleFilter(selectedMedia, v, setSelectedMedia)}
-              totalLabel="Podcasts"
-            />
-            <FilterDropdown
-              label="Medienarten"
-              options={formatOptions}
-              selected={selectedFormats}
-              onToggle={(v) => toggleFilter(selectedFormats, v, setSelectedFormats)}
-              totalLabel="Medienarten"
-            />
-            <FilterDropdown
-              label={t('shop.pubTypeLabel', 'Verlagstyp')}
-              options={pubTypeOptions.map(p => p.label)}
-              selected={selectedPubTypes.map(id => pubTypeOptions.find(p => p.id === id)?.label || id)}
-              onToggle={(label) => {
-                const opt = pubTypeOptions.find(p => p.label === label);
-                if (opt) toggleFilter(selectedPubTypes, opt.id, setSelectedPubTypes);
-              }}
-              totalLabel={t('shop.pubTypeLabel', 'Verlagstypen')}
-            />
-            {hasActiveFilters && (
-              <button
-                onClick={clearAllFilters}
-                className="text-xs flex items-center gap-1 hover:opacity-70 transition-opacity px-3 py-2 flex-shrink-0 whitespace-nowrap"
-                style={{ color: 'var(--color-teal)' }}
-                data-testid="button-clear-filters"
-              >
-                <X className="w-3.5 h-3.5" />
-                Zurücksetzen
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+          <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-wrap" style={{ scrollbarWidth: 'none' }}>
             <Text variant="xs" className="whitespace-nowrap text-foreground/50 flex-shrink-0 !font-semibold">Sortieren:</Text>
             {sortOptions.map((option) => (
               <button
@@ -657,7 +595,6 @@ export function ShopPage() {
                   variant="secondary"
                   className="gap-1 cursor-pointer"
                   onClick={() => {
-                    if (f.type === 'curator') toggleFilter(selectedCurators, f.label, setSelectedCurators);
                     if (f.type === 'category') toggleFilter(selectedCategories, f.label, setSelectedCategories);
                     if (f.type === 'theme') toggleFilter(selectedThemes, f.label, setSelectedThemes);
                     if (f.type === 'series') toggleFilter(selectedSeries, f.label, setSelectedSeries);
@@ -676,6 +613,15 @@ export function ShopPage() {
                   <X className="w-3 h-3" />
                 </Badge>
               ))}
+              <button
+                onClick={clearAllFilters}
+                className="text-xs flex items-center gap-1 hover:opacity-70 transition-opacity px-3 py-1 flex-shrink-0 whitespace-nowrap"
+                style={{ color: 'var(--color-teal)' }}
+                data-testid="button-clear-filters"
+              >
+                <X className="w-3.5 h-3.5" />
+                Zurücksetzen
+              </button>
             </div>
           )}
         </Container>
@@ -683,74 +629,218 @@ export function ShopPage() {
 
       <Section className="!py-6 md:!py-8 px-2 md:px-4">
         <Container>
-          <div className="mb-4">
-            <Text variant="base" className="text-foreground/70" data-testid="text-result-count">
-              {isLoading && books.length === 0
-                ? t('shop.searching', 'Suche...')
-                : searchQuery
-                  ? t('shop.searchResults', '{{count}} Ergebnis{{plural}} für "{{query}}"', { count: totalCount, plural: totalCount !== 1 ? 'se' : '', query: searchQuery })
-                  : t('shop.totalBooks', '{{count}} Bücher', { count: totalCount })
-              }
-            </Text>
-          </div>
+          <div className="flex gap-8">
+            <aside className="hidden lg:block w-72 flex-shrink-0">
+              <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+                <div className="flex items-center justify-between mb-4">
+                  <Heading as="h3" variant="h5">Filter</Heading>
+                  <FilterModeToggle filterMode={filterMode} onFilterModeChange={setFilterMode} />
+                </div>
 
-          {isLoading && books.length === 0 ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-foreground/40" />
-            </div>
-          ) : sortedBooks.length > 0 ? (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
-                {sortedBooks.map(book => (
-                  <BookCarouselItem
-                    key={book.id}
-                    book={apiBookToCarouselItem(book)}
-                    size="sm"
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="text-xs flex items-center gap-1 hover:opacity-70 transition-opacity mb-4"
+                    style={{ color: 'var(--color-teal)' }}
+                    data-testid="button-sidebar-clear-filters"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    Alle Filter zurücksetzen
+                  </button>
+                )}
+
+                <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
+                  <FilterSection
+                    title="Kategorien"
+                    items={categoryOptions}
+                    selectedItems={selectedCategories}
+                    onToggle={(v) => toggleFilter(selectedCategories, v, setSelectedCategories)}
+                    defaultExpanded
                   />
-                ))}
+                  <FilterSection
+                    title="Themen"
+                    items={themeOptions}
+                    selectedItems={selectedThemes}
+                    onToggle={(v) => toggleFilter(selectedThemes, v, setSelectedThemes)}
+                  />
+                  <FilterSection
+                    title="Buchpreise"
+                    items={awardOptions}
+                    selectedItems={selectedAwards}
+                    onToggle={(v) => toggleFilter(selectedAwards, v, setSelectedAwards)}
+                  />
+                  <FilterSection
+                    title="Medienresonanz"
+                    items={mediaOptions}
+                    selectedItems={selectedMedia}
+                    onToggle={(v) => toggleFilter(selectedMedia, v, setSelectedMedia)}
+                  />
+                  <FilterSection
+                    title="Autor*innen"
+                    items={authorOptions}
+                    selectedItems={selectedAuthors}
+                    onToggle={(v) => toggleFilter(selectedAuthors, v, setSelectedAuthors)}
+                  />
+                  <FilterSection
+                    title="Verlage"
+                    items={publisherOptions}
+                    selectedItems={selectedPublishers}
+                    onToggle={(v) => toggleFilter(selectedPublishers, v, setSelectedPublishers)}
+                  />
+                  <FilterSection
+                    title="Buchreihen"
+                    items={seriesOptions}
+                    selectedItems={selectedSeries}
+                    onToggle={(v) => toggleFilter(selectedSeries, v, setSelectedSeries)}
+                  />
+                  <FilterSection
+                    title="Medienarten"
+                    items={formatOptions}
+                    selectedItems={selectedFormats}
+                    onToggle={(v) => toggleFilter(selectedFormats, v, setSelectedFormats)}
+                  />
+                  <FilterSection
+                    title="Publikationsform"
+                    items={pubTypeLabelItems}
+                    selectedItems={selectedPubTypes.map(id => pubTypeOptions.find(p => p.id === id)?.label || id)}
+                    onToggle={(label) => {
+                      const opt = pubTypeOptions.find(p => p.label === label);
+                      if (opt) toggleFilter(selectedPubTypes, opt.id, setSelectedPubTypes);
+                    }}
+                  />
+                </div>
+              </div>
+            </aside>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+                <Text variant="base" className="text-foreground/70" data-testid="text-result-count">
+                  {isLoading && books.length === 0
+                    ? t('shop.searching', 'Suche...')
+                    : searchQuery
+                      ? t('shop.searchResults', '{{count}} Ergebnis{{plural}} für "{{query}}"', { count: totalCount, plural: totalCount !== 1 ? 'se' : '', query: searchQuery })
+                      : t('shop.totalBooks', '{{count}} Bücher', { count: totalCount })
+                  }
+                </Text>
+
+                <button
+                  className="lg:hidden flex items-center gap-2 px-4 py-2.5 border bg-card text-sm font-medium"
+                  style={{ borderColor: 'var(--color-border)', borderRadius: '4px' }}
+                  onClick={() => setMobileFilterOpen(true)}
+                  data-testid="button-mobile-filter"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Filter
+                  {hasActiveFilters && (
+                    <span
+                      style={{ backgroundColor: 'var(--color-blue)', color: 'white' }}
+                      className="rounded-sm px-1.5 text-xs font-bold"
+                    >
+                      {allSelectedFilters.length}
+                    </span>
+                  )}
+                </button>
               </div>
 
-              {sortedBooks.length < totalCount && (
-                <div className="flex justify-center mt-8">
-                  <Button
-                    variant="outline"
-                    onClick={handleLoadMore}
-                    disabled={isLoading}
-                    data-testid="button-load-more"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        {t('shop.loading', 'Laden...')}
-                      </>
-                    ) : (
-                      t('shop.loadMore', 'Mehr Bücher laden ({{loaded}} von {{total}})', { loaded: sortedBooks.length, total: totalCount })
-                    )}
-                  </Button>
+              {isLoading && books.length === 0 ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="w-8 h-8 animate-spin text-foreground/40" />
+                </div>
+              ) : sortedBooks.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+                    {sortedBooks.map(book => (
+                      <BookCarouselItem
+                        key={book.id}
+                        book={apiBookToCarouselItem(book)}
+                        size="sm"
+                      />
+                    ))}
+                  </div>
+
+                  {sortedBooks.length < totalCount && (
+                    <div className="flex justify-center mt-8">
+                      <Button
+                        variant="outline"
+                        onClick={handleLoadMore}
+                        disabled={isLoading}
+                        data-testid="button-load-more"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            {t('shop.loading', 'Laden...')}
+                          </>
+                        ) : (
+                          t('shop.loadMore', 'Mehr Bücher laden ({{loaded}} von {{total}})', { loaded: sortedBooks.length, total: totalCount })
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-12">
+                  <Heading as="h2" variant="h2" className="mb-3">
+                    {searchQuery ? `Keine Ergebnisse für "${searchQuery}"` : 'Keine Bücher gefunden'}
+                  </Heading>
+                  <Text variant="large" className="mb-6 text-foreground/60">
+                    {searchQuery ? 'Versuchen Sie einen anderen Suchbegriff' : 'Versuchen Sie, einige Filter zu entfernen'}
+                  </Text>
+                  {hasActiveFilters && (
+                    <Button
+                      variant="default"
+                      onClick={clearAllFilters}
+                      data-testid="button-reset-all-filters"
+                    >
+                      Alle Filter zurücksetzen
+                    </Button>
+                  )}
                 </div>
               )}
-            </>
-          ) : (
-            <div className="text-center py-12">
-              <Heading as="h2" variant="h2" className="mb-3">
-                {searchQuery ? `Keine Ergebnisse für "${searchQuery}"` : 'Keine Bücher gefunden'}
-              </Heading>
-              <Text variant="large" className="mb-6 text-foreground/60">
-                {searchQuery ? 'Versuchen Sie einen anderen Suchbegriff' : 'Versuchen Sie, einige Filter zu entfernen'}
-              </Text>
-              {hasActiveFilters && (
-                <Button
-                  variant="default"
-                  onClick={clearAllFilters}
-                  data-testid="button-reset-all-filters"
-                >
-                  Alle Filter zurücksetzen
-                </Button>
-              )}
             </div>
-          )}
+          </div>
         </Container>
       </Section>
+
+      <MobileFilterDrawer
+        isOpen={isMobileFilterOpen}
+        onClose={() => setMobileFilterOpen(false)}
+        hasActiveFilters={hasActiveFilters}
+        clearAllFilters={clearAllFilters}
+        resultCount={totalCount}
+        filterMode={filterMode}
+        onFilterModeChange={setFilterMode}
+        categories={categoryOptions}
+        selectedCategories={selectedCategories}
+        onToggleCategory={(v) => toggleFilter(selectedCategories, v, setSelectedCategories)}
+        themes={themeOptions}
+        selectedThemes={selectedThemes}
+        onToggleTheme={(v) => toggleFilter(selectedThemes, v, setSelectedThemes)}
+        awards={awardOptions}
+        selectedAwards={selectedAwards}
+        onToggleAward={(v) => toggleFilter(selectedAwards, v, setSelectedAwards)}
+        media={mediaOptions}
+        selectedMedia={selectedMedia}
+        onToggleMedia={(v) => toggleFilter(selectedMedia, v, setSelectedMedia)}
+        authors={authorOptions}
+        selectedAuthors={selectedAuthors}
+        onToggleAuthor={(v) => toggleFilter(selectedAuthors, v, setSelectedAuthors)}
+        publishers={publisherOptions}
+        selectedPublishers={selectedPublishers}
+        onTogglePublisher={(v) => toggleFilter(selectedPublishers, v, setSelectedPublishers)}
+        series={seriesOptions}
+        selectedSeries={selectedSeries}
+        onToggleSeries={(v) => toggleFilter(selectedSeries, v, setSelectedSeries)}
+        formats={formatOptions}
+        selectedFormats={selectedFormats}
+        onToggleFormat={(v) => toggleFilter(selectedFormats, v, setSelectedFormats)}
+        pubTypeLabels={pubTypeLabelItems}
+        selectedPubTypeLabels={selectedPubTypes.map(id => pubTypeOptions.find(p => p.id === id)?.label || id)}
+        onTogglePubType={(label) => {
+          const opt = pubTypeOptions.find(p => p.label === label);
+          if (opt) toggleFilter(selectedPubTypes, opt.id, setSelectedPubTypes);
+        }}
+      />
 
       <Footer />
     </div>

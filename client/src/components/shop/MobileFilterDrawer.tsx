@@ -1,7 +1,6 @@
 import { X } from 'lucide-react';
 import { Heading } from '../ui/typography';
 import { DSButton } from '../design-system/DSButton';
-import { CategoryFilter } from './CategoryFilter';
 import { FilterSection } from './FilterSection';
 
 interface MobileFilterDrawerProps {
@@ -10,38 +9,44 @@ interface MobileFilterDrawerProps {
   hasActiveFilters: boolean;
   clearAllFilters: () => void;
   resultCount: number;
-  
-  // Category filters
-  categorySubcategoryMap: Record<string, string[]>;
+  filterMode: 'and' | 'or';
+  onFilterModeChange: (mode: 'and' | 'or') => void;
+
+  categories: string[];
   selectedCategories: string[];
-  selectedSubcategories: string[];
   onToggleCategory: (cat: string) => void;
-  onToggleSubcategory: (sub: string) => void;
-  
-  // Other filters
-  tags: string[];
-  selectedTags: string[];
-  onToggleTag: (tag: string) => void;
-  
+
+  themes: string[];
+  selectedThemes: string[];
+  onToggleTheme: (theme: string) => void;
+
   awards: string[];
   selectedAwards: string[];
   onToggleAward: (award: string) => void;
-  
+
+  media: string[];
+  selectedMedia: string[];
+  onToggleMedia: (media: string) => void;
+
   authors: string[];
   selectedAuthors: string[];
   onToggleAuthor: (author: string) => void;
-  
+
   publishers: string[];
   selectedPublishers: string[];
   onTogglePublisher: (publisher: string) => void;
-  
+
   series: string[];
   selectedSeries: string[];
   onToggleSeries: (series: string) => void;
-  
-  curators: string[];
-  selectedCurators: string[];
-  onToggleCurator: (curator: string) => void;
+
+  formats: string[];
+  selectedFormats: string[];
+  onToggleFormat: (format: string) => void;
+
+  pubTypeLabels: string[];
+  selectedPubTypeLabels: string[];
+  onTogglePubType: (label: string) => void;
 }
 
 export function MobileFilterDrawer({
@@ -50,17 +55,20 @@ export function MobileFilterDrawer({
   hasActiveFilters,
   clearAllFilters,
   resultCount,
-  categorySubcategoryMap,
+  filterMode,
+  onFilterModeChange,
+  categories,
   selectedCategories,
-  selectedSubcategories,
   onToggleCategory,
-  onToggleSubcategory,
-  tags,
-  selectedTags,
-  onToggleTag,
+  themes,
+  selectedThemes,
+  onToggleTheme,
   awards,
   selectedAwards,
   onToggleAward,
+  media,
+  selectedMedia,
+  onToggleMedia,
   authors,
   selectedAuthors,
   onToggleAuthor,
@@ -70,9 +78,12 @@ export function MobileFilterDrawer({
   series,
   selectedSeries,
   onToggleSeries,
-  curators,
-  selectedCurators,
-  onToggleCurator
+  formats,
+  selectedFormats,
+  onToggleFormat,
+  pubTypeLabels,
+  selectedPubTypeLabels,
+  onTogglePubType
 }: MobileFilterDrawerProps) {
   if (!isOpen) return null;
 
@@ -82,7 +93,6 @@ export function MobileFilterDrawer({
         className="absolute inset-y-0 right-0 w-full sm:w-96 overflow-y-auto bg-surface"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="sticky top-0 z-10 px-4 py-4 flex items-center justify-between border-b bg-surface" style={{ borderColor: 'var(--color-border)' }}>
           <Heading as="h2" variant="h3">
             Filter
@@ -97,6 +107,7 @@ export function MobileFilterDrawer({
                   color: 'var(--color-teal)',
                   fontFamily: 'Inter'
                 }}
+                data-testid="button-mobile-clear-filters"
               >
                 <X className="w-3 h-3" />
                 Zurücksetzen
@@ -106,35 +117,72 @@ export function MobileFilterDrawer({
               onClick={onClose}
               className="p-2 hover:opacity-70 rounded-lg transition-opacity"
               style={{ color: 'var(--color-foreground)' }}
+              data-testid="button-mobile-close-filters"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
         </div>
 
-        {/* Filter Content */}
+        <div className="px-4 py-3 border-b flex items-center gap-3" style={{ borderColor: 'var(--color-border)' }}>
+          <span className="text-xs font-medium text-foreground/60">Verknüpfung:</span>
+          <div className="flex items-center gap-0 border" style={{ borderColor: 'var(--color-border)', borderRadius: '4px', overflow: 'hidden' }}>
+            <button
+              type="button"
+              onClick={() => onFilterModeChange('and')}
+              className="px-3 py-1.5 text-xs font-semibold transition-colors"
+              style={{
+                backgroundColor: filterMode === 'and' ? 'var(--color-blue)' : 'transparent',
+                color: filterMode === 'and' ? 'white' : 'var(--color-foreground)',
+              }}
+              data-testid="mobile-filter-mode-and"
+            >
+              UND
+            </button>
+            <button
+              type="button"
+              onClick={() => onFilterModeChange('or')}
+              className="px-3 py-1.5 text-xs font-semibold transition-colors"
+              style={{
+                backgroundColor: filterMode === 'or' ? 'var(--color-blue)' : 'transparent',
+                color: filterMode === 'or' ? 'white' : 'var(--color-foreground)',
+              }}
+              data-testid="mobile-filter-mode-or"
+            >
+              ODER
+            </button>
+          </div>
+        </div>
+
         <div className="px-4 pb-24">
           <div className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
-            <CategoryFilter
-              categorySubcategoryMap={categorySubcategoryMap}
-              selectedCategories={selectedCategories}
-              selectedSubcategories={selectedSubcategories}
-              onToggleCategory={onToggleCategory}
-              onToggleSubcategory={onToggleSubcategory}
+            <FilterSection
+              title="Kategorien"
+              items={categories}
+              selectedItems={selectedCategories}
+              onToggle={onToggleCategory}
+              defaultExpanded
             />
 
             <FilterSection
               title="Themen"
-              items={tags}
-              selectedItems={selectedTags}
-              onToggle={onToggleTag}
+              items={themes}
+              selectedItems={selectedThemes}
+              onToggle={onToggleTheme}
             />
 
             <FilterSection
-              title="Auszeichnungen"
+              title="Buchpreise"
               items={awards}
               selectedItems={selectedAwards}
               onToggle={onToggleAward}
+            />
+
+            <FilterSection
+              title="Medienresonanz"
+              items={media}
+              selectedItems={selectedMedia}
+              onToggle={onToggleMedia}
             />
 
             <FilterSection
@@ -159,15 +207,21 @@ export function MobileFilterDrawer({
             />
 
             <FilterSection
-              title="Kurator*innen"
-              items={curators}
-              selectedItems={selectedCurators}
-              onToggle={onToggleCurator}
+              title="Medienarten"
+              items={formats}
+              selectedItems={selectedFormats}
+              onToggle={onToggleFormat}
+            />
+
+            <FilterSection
+              title="Publikationsform"
+              items={pubTypeLabels}
+              selectedItems={selectedPubTypeLabels}
+              onToggle={onTogglePubType}
             />
           </div>
         </div>
 
-        {/* Footer with Apply Button */}
         <div className="sticky bottom-0 left-0 right-0 p-4 border-t bg-surface" style={{ borderColor: 'var(--color-border)' }}>
           <DSButton
             onClick={onClose}

@@ -326,18 +326,30 @@ const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarou
               </div>
             )}
             
-            {/* Enrichment Badges - top right corner (mutually exclusive) */}
+            {/* Enrichment Badges - top right corner */}
             {book.award_count !== undefined && book.award_count > 0 && (
-              <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
-                <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-gold, #ffe066)', color: '#2a2a2a' }} data-testid="badge-awarded">
-                  AUSGEZEICHNET
+              <div className="absolute top-2 right-2" style={{ zIndex: 52 }}>
+                <div
+                  className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shadow-lg"
+                  style={{ backgroundColor: '#1a1a1a' }}
+                  title={`${book.award_count} Auszeichnung${book.award_count > 1 ? 'en' : ''}`}
+                  data-testid="badge-awarded"
+                >
+                  <Award className="w-4 h-4 md:w-[18px] md:h-[18px] text-white" strokeWidth={2} />
                 </div>
               </div>
             )}
             {book.is_hidden_gem && !(book.award_count && book.award_count > 0) && (
-              <div className="absolute top-2 right-2 flex flex-col gap-1" style={{ zIndex: 52 }}>
-                <div className="px-2 py-0.5 text-[10px] font-semibold rounded-sm shadow-sm" style={{ backgroundColor: 'var(--color-coral-vibrant, #f25f5c)', color: '#fff' }} data-testid="badge-hidden-gem">
-                  HIDDEN GEM
+              <div className="absolute top-2 right-2" style={{ zIndex: 52 }}>
+                <div
+                  className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shadow-lg"
+                  style={{ backgroundColor: '#1a1a1a' }}
+                  title="Geheimtipp"
+                  data-testid="badge-hidden-gem"
+                >
+                  <svg className="w-4 h-4 md:w-[18px] md:h-[18px] text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
                 </div>
               </div>
             )}
