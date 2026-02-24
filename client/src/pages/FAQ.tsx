@@ -64,6 +64,11 @@ export default function FAQ() {
       category: 'general'
     },
     {
+      question: "Wie wird die Relevanz berechnet?",
+      answer: 'Unsere Relevanzsortierung basiert auf einem Meta-Signal-System: Wir bewerten Bücher anhand von Auszeichnungen und Nominierungen, Medienbesprechungen sowie Empfehlungen durch Kurator*innen. coratiert ist keine Sterne- oder Rezensionsplattform \u2014 stattdessen kombinieren wir redaktionelle und kulturelle Signale zu einem transparenten Relevanzwert. Die Sortierung \u201eBeliebt\u201c wird erst freigeschaltet, sobald gen\u00FCgend Nutzerdaten vorhanden sind. Stornos oder fehlende H\u00E4ndlerprovisionen betreffen ausschlie\u00DFlich Affiliate-Auszahlungen und haben keinen Einfluss auf die Relevanzsortierung.',
+      category: 'general'
+    },
+    {
       question: "Wie unterscheidet sich coratiert.de von anderen Online-Buchhandlungen?",
       answer: (
         <>
