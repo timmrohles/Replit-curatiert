@@ -130,6 +130,14 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
   const [curators, setCurators] = useState<any[]>([]);
   const [curatorsLoading, setCuratorsLoading] = useState(false);
   const [curatorSearch, setCuratorSearch] = useState('');
+  const [allOnixTags, setAllOnixTags] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/onix-tags?limit=500')
+      .then(r => r.json())
+      .then(data => { if (data.ok) setAllOnixTags(data.data || []); })
+      .catch(() => {});
+  }, []);
 
   const loadCurators = useCallback(async () => {
     if (curators.length > 0) return;
@@ -1574,6 +1582,36 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                     rows={3}
                     className="w-full px-3 py-2 border rounded text-sm"
                   />
+                </div>
+
+                {/* Category Filter (optional, auto-applied on category pages) */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Kategorie-Filter
+                    <span className="text-xs text-gray-500 ml-2">(optional — wird auf Kategorie-Seiten automatisch gesetzt)</span>
+                  </label>
+                  <Select
+                    value={editingSection.config?.categoryId ? String(editingSection.config.categoryId) : 'none'}
+                    onValueChange={(val) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, categoryId: val === 'none' ? undefined : parseInt(val) }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Keine Kategorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Keine Kategorie</SelectItem>
+                      {(allOnixTags || [])
+                        .filter((t: any) => t.tag_type === 'category' || t.tag_type === 'topic' || t.onix_code)
+                        .slice(0, 50)
+                        .map((t: any) => (
+                          <SelectItem key={t.id} value={String(t.id)}>
+                            {t.displayName || t.name} {t.tag_type ? `(${t.tag_type})` : ''}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <Separator />

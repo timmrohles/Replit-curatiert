@@ -5780,11 +5780,13 @@ export async function registerRoutes(
         }
       });
 
+      const pageCategoryId = page.page_type === 'category' && page.category_id ? Number(page.category_id) : null;
+
       for (const section of sections) {
         const cfg = section.section_config || section.config || {};
         const sType = section.section_type;
-        if ((sType === 'book_carousel' || sType === 'horizontal_row') && cfg.books?.query) {
-          const query = cfg.books.query;
+        if ((sType === 'book_carousel' || sType === 'horizontal_row') && (cfg.books?.query || pageCategoryId)) {
+          const query = cfg.books?.query || {};
           const include = query.include || {};
           const limit = Math.min(query.limit || 20, 50);
           const operator = query.operator || 'any';
@@ -5798,9 +5800,10 @@ export async function registerRoutes(
           const awardDefIds: number[] = (include.awardDefinitionIds || []).map(Number).filter(Boolean);
 
           if (tagIds.length > 0) {
-            const tagPlaceholders = tagIds.map(() => `$${paramIdx++}`).join(',');
-            conditions.push(`b.id IN (SELECT bt.book_id FROM book_tags bt WHERE bt.tag_id IN (${tagPlaceholders}))`);
-            params.push(...tagIds);
+            const ph1 = tagIds.map(() => `$${paramIdx++}`).join(',');
+            const ph2 = tagIds.map(() => `$${paramIdx++}`).join(',');
+            conditions.push(`(b.id IN (SELECT bt.book_id FROM book_tags bt WHERE bt.tag_id IN (${ph1})) OR b.id IN (SELECT bot.book_id FROM book_onix_tags bot WHERE bot.tag_id IN (${ph2})))`);
+            params.push(...tagIds, ...tagIds);
           }
 
           if (categoryIds.length > 0) {
@@ -5815,9 +5818,25 @@ export async function registerRoutes(
             params.push(...awardDefIds);
           }
 
+          const effectiveCategoryId = pageCategoryId || (cfg.categoryId ? Number(cfg.categoryId) : null);
+          if (effectiveCategoryId) {
+            const catPh1 = `$${paramIdx++}`;
+            const catPh2 = `$${paramIdx++}`;
+            conditions.push(`(b.id IN (SELECT bt.book_id FROM book_tags bt WHERE bt.tag_id = ${catPh1}) OR b.id IN (SELECT bot.book_id FROM book_onix_tags bot WHERE bot.tag_id = ${catPh2}))`);
+            params.push(effectiveCategoryId, effectiveCategoryId);
+          }
+
           if (conditions.length > 0) {
-            const joiner = operator === 'all' ? ' AND ' : ' OR ';
-            const whereClause = conditions.join(joiner);
+            const categoryConditionIdx = effectiveCategoryId ? conditions.length - 1 : -1;
+            let whereClause: string;
+            if (categoryConditionIdx >= 0 && conditions.length > 1) {
+              const categoryCondition = conditions.pop()!;
+              const joiner = operator === 'all' ? ' AND ' : ' OR ';
+              whereClause = `(${conditions.join(joiner)}) AND ${categoryCondition}`;
+            } else {
+              const joiner = operator === 'all' ? ' AND ' : ' OR ';
+              whereClause = conditions.join(joiner);
+            }
             const sortClause = query.sort === 'newest' ? 'ORDER BY b.created_at DESC'
               : query.sort === 'awarded' ? 'ORDER BY b.award_count DESC NULLS LAST'
               : 'ORDER BY b.created_at DESC';
