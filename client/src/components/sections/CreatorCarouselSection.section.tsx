@@ -6,6 +6,7 @@ interface CreatorCarouselSectionProps {
   section: any;
   books?: any[];
   className?: string;
+  categoryId?: number | null;
 }
 
 function mapBookForCarousel(book: any) {
@@ -33,7 +34,7 @@ function mapBookForCarousel(book: any) {
   };
 }
 
-export function CreatorCarouselSection({ section, books = [], className = '' }: CreatorCarouselSectionProps) {
+export function CreatorCarouselSection({ section, books = [], className = '', categoryId }: CreatorCarouselSectionProps) {
   const config = section.config || {};
   const title = section.title || config.title || '';
   const description = section.content?.description || config.description || '';
@@ -82,7 +83,7 @@ export function CreatorCarouselSection({ section, books = [], className = '' }: 
             isVerified: config.isVerified || config.verified || false,
           }}
           books={mappedBooks}
-          category={config.category || undefined}
+          category={config.category || (categoryId ? String(categoryId) : undefined)}
           tags={resolvedTagNames.length > 0 ? resolvedTagNames : undefined}
           showHeader={true}
           showCta={false}

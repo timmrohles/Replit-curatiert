@@ -28,6 +28,7 @@ interface UniversalSectionRendererProps {
   books?: any[];
   className?: string;
   debug?: boolean;
+  categoryId?: number | null;
 }
 
 // ============================================================================
@@ -97,7 +98,8 @@ export function UniversalSectionRenderer({
   section, 
   books = [],
   className = '',
-  debug = true 
+  debug = true,
+  categoryId = null
 }: UniversalSectionRendererProps) {
   const sectionType = section.section_type || section.type;
   const SectionComponent = getSectionComponent(sectionType);
@@ -107,7 +109,7 @@ export function UniversalSectionRenderer({
   }
 
   try {
-    return <SectionComponent section={section} books={books} className={className} />;
+    return <SectionComponent section={section} books={books} className={className} categoryId={categoryId} />;
   } catch (error) {
     const sectionType = section.section_type || section.type;
     console.error(`[UniversalSectionRenderer] Error rendering section type "${sectionType}":`, error);

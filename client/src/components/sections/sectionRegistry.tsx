@@ -19,6 +19,8 @@ import { HeroSection } from './HeroSection.section';
 import { CreatorCarouselSection } from './CreatorCarouselSection.section';
 import { SupportersSection } from './SupportersSection.section';
 import { GenreCategoriesSection } from '../tags/GenreCategoriesSection';
+import { BookGridFilteredSection } from './BookGridFiltered.section';
+import { UserCurationsSection } from './UserCurationsSection.section';
 import type { PageSection } from '../../types/page-resolve';
 import { normalizeType } from '../../types/normalize';
 
@@ -89,6 +91,18 @@ export const SECTION_TYPES: SectionTypeDefinition[] = [
     allowedZones: ['main'],
     description: 'Partner und Unterstützer der Plattform'
   },
+  { 
+    value: 'book_grid_filtered', 
+    label: 'Buch-Grid (gefiltert)', 
+    allowedZones: ['main'],
+    description: 'Buchgrid mit vordefiniertem Filter (z.B. Debüts, Indie, Ausgezeichnet)'
+  },
+  { 
+    value: 'user_curations', 
+    label: 'Nutzer-Kurationen', 
+    allowedZones: ['main'],
+    description: 'Kurationen von Nutzer:innen, optional nach Kategorie gefiltert'
+  },
 ];
 
 // ============================================================================
@@ -99,6 +113,7 @@ export interface SectionComponentProps {
   section: PageSection;
   books?: any[];
   className?: string;
+  categoryId?: number | null;
 }
 
 /**
@@ -139,6 +154,8 @@ export const SECTION_COMPONENTS: Record<string, React.FC<SectionComponentProps>>
   ),
   genre_categories: GenreCategoriesSection as any,
   supporters: SupportersSection as any,
+  book_grid_filtered: BookGridFilteredSection as any,
+  user_curations: UserCurationsSection as any,
 };
 
 // ============================================================================

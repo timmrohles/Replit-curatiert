@@ -521,7 +521,6 @@ export function ContentManager() {
     console.log('🔍 DEBUG handleSavePage - editingPage:', editingPage);
     console.log('🔍 DEBUG handleSavePage - editingPage.id:', editingPage.id);
 
-    // ✅ Nur die Felder senden, die das Backend erwartet
     const pageData: Partial<Page> = {
       slug: editingPage.slug,
       type: editingPage.type || 'composed',
@@ -532,6 +531,8 @@ export function ContentManager() {
       seo_description: editingPage.seo_description || null,
       canonical_url: editingPage.canonical_url || null,
       robots: editingPage.robots || 'index,follow',
+      page_type: (editingPage as any).page_type || 'composed',
+      category_id: (editingPage as any).category_id || null,
     };
 
     // ✅ FIX: Include ID for updates!

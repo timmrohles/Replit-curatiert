@@ -2,8 +2,9 @@ import { Plus, Save, Edit2, Trash2, FileText, Database, Calendar, Eye, EyeOff, A
 import { Page } from '../../utils/api';
 import { seedDemoData } from '../../utils/seedDemoData';
 import { useState, useEffect } from 'react';
-import { PageComposer } from './PageComposer';  // ✅ NEW: Modern Page Composer
-import { API_BASE_URL } from '../../config/apiClient';  // ✅ FIXED: Use canonical import
+import { PageComposer } from './PageComposer';
+import { API_BASE_URL } from '../../config/apiClient';
+import { getAllONIXTags, type ONIXTag } from '../../utils/api/tags';
 
 interface PagesTabContentProps {
   pages: Page[];
@@ -33,9 +34,15 @@ export function PagesTabContent({
   const [menuItemsLoading, setMenuItemsLoading] = useState(false);
   const [menuItemsError, setMenuItemsError] = useState<string | null>(null);
   
-  // ✅ NEW: Existing Navigation Links State
   const [existingLinks, setExistingLinks] = useState<Array<{ id: number; name: string; href_resolved: string }>>([]);
   const [existingLinksLoading, setExistingLinksLoading] = useState(false);
+  const [onixCategories, setOnixCategories] = useState<ONIXTag[]>([]);
+
+  useEffect(() => {
+    getAllONIXTags()
+      .then(tags => setOnixCategories(tags.filter((t: any) => t.type === 'category' || !t.type)))
+      .catch(() => {});
+  }, []);
 
   // ✅ CRASH-SAFE: Ensure pages is always an array
   const safePages = Array.isArray(pages) ? pages : [];
@@ -303,6 +310,51 @@ export function PagesTabContent({
                 className="w-full px-4 py-2 border rounded-lg"
                 style={{ borderColor: '#E5E7EB' }}
               />
+            </div>
+
+            {/* Page Type & Category */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm mb-1 font-medium" style={{ color: '#666666' }}>
+                  Seitenvorlage
+                </label>
+                <select
+                  value={(editingPage as any).page_type || 'composed'}
+                  onChange={(e) => setEditingPage({ ...editingPage, page_type: e.target.value as any })}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  style={{ borderColor: '#E5E7EB' }}
+                >
+                  <option value="composed">Standard (Composed)</option>
+                  <option value="category">Kategorie-Seite</option>
+                </select>
+                <p className="text-xs mt-1" style={{ color: '#999999' }}>
+                  Kategorie-Seiten filtern Sektionen automatisch nach der zugeordneten Kategorie.
+                </p>
+              </div>
+
+              {(editingPage as any).page_type === 'category' && (
+                <div>
+                  <label className="block text-sm mb-1 font-medium" style={{ color: '#666666' }}>
+                    Kategorie
+                  </label>
+                  <select
+                    value={(editingPage as any).category_id || ''}
+                    onChange={(e) => setEditingPage({ ...editingPage, category_id: e.target.value ? parseInt(e.target.value) : null } as any)}
+                    className="w-full px-4 py-2 border rounded-lg"
+                    style={{ borderColor: '#E5E7EB' }}
+                  >
+                    <option value="">Keine Kategorie</option>
+                    {onixCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {(cat as any).displayName || cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs mt-1" style={{ color: '#999999' }}>
+                    Sektionen auf dieser Seite erhalten diese Kategorie als Filter.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Status & Visibility */}

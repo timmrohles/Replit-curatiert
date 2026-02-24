@@ -70,7 +70,8 @@ interface Page {
   template?: string;
   sectionIds?: string[];
   enabled?: boolean;
-  // SEO Fields
+  page_type?: string;
+  category_id?: number | null;
   metaTitle?: string;
   metaDescription?: string;
   canonicalUrl?: string;
@@ -316,7 +317,7 @@ export function DynamicPage() {
 
                 return (
                   <div key={section.id} className="mb-section-gap">
-                    <UniversalSectionRenderer section={section} books={sectionBooks} />
+                    <UniversalSectionRenderer section={section} books={sectionBooks} categoryId={page?.category_id} />
                   </div>
                 );
               })

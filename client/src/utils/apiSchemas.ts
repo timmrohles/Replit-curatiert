@@ -207,9 +207,11 @@ export const PageSchema = z.object({
   seo_description: z.string().nullable().optional(),
   canonical_url: z.string().nullable().optional(),
   robots: z.string().optional(),
+  page_type: z.enum(['composed', 'category']).nullable().optional(),
+  category_id: z.number().nullable().optional(),
   created_at: z.string().optional(),
   updated_at: z.string().optional(),
-}).passthrough(); // Allow additional CMS fields
+}).passthrough();
 
 export type Page = z.infer<typeof PageSchema>;
 
