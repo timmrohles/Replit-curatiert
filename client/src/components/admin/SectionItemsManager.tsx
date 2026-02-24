@@ -218,11 +218,8 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
       // ✅ Use public Tags API (no auth required)
       const response = await fetch(`${API_BASE_URL}/tags`, { credentials: 'include' });
 
-      console.log('📦 Tags API Response:', response.status, response.ok);
-
       if (response.ok) {
         const result = await response.json();
-        console.log('📦 Tags Data:', result);
         setTags(Array.isArray(result.data) ? result.data : []);
       }
     } catch (err) {

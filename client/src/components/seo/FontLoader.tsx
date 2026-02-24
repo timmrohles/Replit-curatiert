@@ -81,7 +81,7 @@ export function FontLoader() {
     style.textContent = fontCSS;
     document.head.appendChild(style);
 
-    console.log('✅ Font-Faces dynamisch geladen (Runtime statt Build-Zeit)');
+
   }, []);
 
   return null; // Keine UI

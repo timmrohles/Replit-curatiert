@@ -28,8 +28,6 @@ export function loadCSSAsync(href: string, id?: string): void {
   };
   
   document.head.appendChild(link);
-  
-  console.log(`⚡ CSS loaded async: ${href}`);
 }
 
 /**
@@ -51,8 +49,6 @@ export function preloadCSS(href: string): void {
   };
   
   document.head.appendChild(link);
-  
-  console.log(`⚡ CSS preloaded: ${href}`);
 }
 
 /**
@@ -169,8 +165,6 @@ export function injectCriticalCSS(): void {
   
   // Insert at the beginning of <head> for highest priority
   document.head.insertBefore(style, document.head.firstChild);
-  
-  console.log('⚡ Critical CSS injected inline');
 }
 
 /**
@@ -206,8 +200,6 @@ export function setupOptimizedCSS(): void {
       }
     }
   });
-  
-  console.log('⚡ Optimized CSS loading setup complete');
 }
 
 /**

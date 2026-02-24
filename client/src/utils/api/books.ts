@@ -30,7 +30,6 @@ export async function getAllBooks(): Promise<Book[]> {
     if (!contentType || !contentType.includes('application/json')) {
       console.info('ℹ️ Books API not available, using mock data');
       const mockData = getMockBooksWithTags();
-      console.log('📚 Using mock books data:', mockData.length, 'books');
       return mockData;
     }
     
@@ -39,15 +38,11 @@ export async function getAllBooks(): Promise<Book[]> {
     // If no books from backend, return mock data with ONIX tags
     if (!result.data || result.data.length === 0) {
       const mockData = getMockBooksWithTags();
-      console.log('📚 No books in database yet.');
-      console.log('💡 TIP: Go to /sys-mgmt-xK9/login to add books via Admin Panel');
-      console.log('📚 Using mock books data:', mockData.length, 'books');
       return mockData;
     }
     
     // ✅ VALIDATION: Validate books array with Zod
     const validatedBooks = validateArray(BookSchema, result.data);
-    console.log('✅ Loaded', validatedBooks.length, 'books from database');
     return validatedBooks;
   } catch (error) {
     // Silent fallback - this is expected when server is not running

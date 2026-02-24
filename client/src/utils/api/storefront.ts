@@ -154,8 +154,6 @@ export async function getCreatorStorefront(id: string): Promise<Storefront | nul
  */
 export async function createStorefront(data: Partial<Storefront>): Promise<Storefront | null> {
   try {
-    console.log('📤 Creating storefront:', data);
-    
     const response = await fetch(`${API_BASE_URL}/creator/storefronts`, {
           credentials: 'include',
       method: 'POST',
@@ -163,10 +161,7 @@ export async function createStorefront(data: Partial<Storefront>): Promise<Store
       body: JSON.stringify(data),
     });
 
-    console.log('📥 Create response status:', response.status);
-    
     const result = await safeJsonParse<Storefront>(response);
-    console.log('📥 Create response data:', result);
     
     if (!result?.ok) {
       console.error('❌ Failed to create storefront:', result?.error);
@@ -185,8 +180,6 @@ export async function createStorefront(data: Partial<Storefront>): Promise<Store
  */
 export async function updateStorefront(id: string, data: Partial<Storefront>): Promise<Storefront | null> {
   try {
-    console.log('📤 Updating storefront:', id, data);
-    
     const response = await fetch(`${API_BASE_URL}/creator/storefronts/${id}`, {
           credentials: 'include',
       method: 'PUT',
@@ -194,10 +187,7 @@ export async function updateStorefront(id: string, data: Partial<Storefront>): P
       body: JSON.stringify(data),
     });
 
-    console.log('📥 Update response status:', response.status);
-    
     const result = await safeJsonParse<Storefront>(response);
-    console.log('📥 Update response data:', result);
     
     if (!result?.ok) {
       console.error('❌ Failed to update storefront:', result?.error);
@@ -216,18 +206,13 @@ export async function updateStorefront(id: string, data: Partial<Storefront>): P
  */
 export async function deleteStorefront(id: string): Promise<boolean> {
   try {
-    console.log('📤 Deleting storefront:', id);
-    
     const response = await fetch(`${API_BASE_URL}/creator/storefronts/${id}`, {
           credentials: 'include',
       method: 'DELETE',
       headers: getCreatorAuthHeaders(),
     });
 
-    console.log('📥 Delete response status:', response.status);
-    
     const result = await safeJsonParse<any>(response);
-    console.log('📥 Delete response data:', result);
     
     return result?.ok === true;
   } catch (error) {
@@ -241,8 +226,6 @@ export async function deleteStorefront(id: string): Promise<boolean> {
  */
 export async function publishStorefront(id: string, isPublished: boolean): Promise<Storefront | null> {
   try {
-    console.log('📤 Publishing storefront:', id, isPublished);
-    
     const response = await fetch(`${API_BASE_URL}/creator/storefronts/${id}/publish`, {
           credentials: 'include',
       method: 'POST',
@@ -250,10 +233,7 @@ export async function publishStorefront(id: string, isPublished: boolean): Promi
       body: JSON.stringify({ is_published: isPublished }),
     });
 
-    console.log('📥 Publish response status:', response.status);
-    
     const result = await safeJsonParse<Storefront>(response);
-    console.log('📥 Publish response data:', result);
     
     if (!result?.ok) {
       console.error('❌ Failed to publish storefront:', result?.error);

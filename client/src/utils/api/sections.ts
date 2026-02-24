@@ -53,7 +53,6 @@ export async function getAllSections(status?: 'active' | 'archived' | 'scheduled
     }
     
     const result = await response.json();
-    console.log('✅ Sections fetched:', result.count || 0);
     return result.data || [];
   } catch (error) {
     console.error('❌ Error fetching sections:', error);
@@ -91,8 +90,6 @@ export async function saveSection(section: Partial<import('../apiSchemas').Secti
       : `${API_BASE_URL}/sections`;
     const method = isUpdate ? 'PUT' : 'POST';
     
-    console.log(`${isUpdate ? '📝' : '➕'} ${isUpdate ? 'Updating' : 'Creating'} section:`, section.id || 'new');
-    
     const response = await fetch(url, {
           credentials: 'include',
       method,
@@ -107,7 +104,6 @@ export async function saveSection(section: Partial<import('../apiSchemas').Secti
     }
     
     const result = await response.json();
-    console.log('✅ Section saved successfully');
     return result.data || null;
   } catch (error) {
     console.error('❌ Error saving section:', error);
@@ -118,8 +114,6 @@ export async function saveSection(section: Partial<import('../apiSchemas').Secti
 // ✅ NEW API: Delete section (soft delete)
 export async function deleteSection(id: string): Promise<boolean> {
   try {
-    console.log('🗑️ Deleting section:', id);
-    
     const response = await fetch(`${API_BASE_URL}/sections/${id}`, {
       method: 'DELETE',
       credentials: 'include',
@@ -132,7 +126,6 @@ export async function deleteSection(id: string): Promise<boolean> {
     }
     
     const result = await response.json();
-    console.log('✅ Section deleted successfully');
     return result.success || false;
   } catch (error) {
     console.error('❌ Error deleting section:', error);

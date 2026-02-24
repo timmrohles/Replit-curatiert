@@ -430,8 +430,6 @@ export function ContentManager() {
 
     const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     
-    console.log(`🔄 Verschiebe "${menuItems[currentIndex].name}" von Position ${currentIndex + 1} → ${newIndex + 1}`);
-    
     // Create a copy of the array
     const newMenuItems = [...menuItems];
     
@@ -455,8 +453,6 @@ export function ContentManager() {
       await Promise.all(
         reorderedItems.map(item => saveMenuItem(item))
       );
-      
-      console.log('✅ Reihenfolge gespeichert!');
       
       // Refresh the data to ensure sync with backend
       const freshData = await getAllMenuItems();
@@ -517,10 +513,6 @@ export function ContentManager() {
       return;
     }
 
-    // 🔍 DEBUG: Log the editing page state
-    console.log('🔍 DEBUG handleSavePage - editingPage:', editingPage);
-    console.log('🔍 DEBUG handleSavePage - editingPage.id:', editingPage.id);
-
     const pageData: Partial<Page> = {
       slug: editingPage.slug,
       type: editingPage.type || 'composed',
@@ -539,10 +531,6 @@ export function ContentManager() {
     if (editingPage.id) {
       pageData.id = editingPage.id;
     }
-
-    // 🔍 DEBUG: Log the page data being sent
-    console.log('🔍 DEBUG handleSavePage - pageData:', pageData);
-    console.log('🔍 DEBUG handleSavePage - pageData.id:', pageData.id);
 
     const result = await savePage(pageData);
     if (result) {
@@ -573,8 +561,6 @@ export function ContentManager() {
 
     const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     
-    console.log(`🔄 Verschiebe "${sections[currentIndex].name}" von Position ${currentIndex + 1} → ${newIndex + 1}`);
-    
     // Create a copy of the array
     const newSections = [...sections];
     
@@ -598,8 +584,6 @@ export function ContentManager() {
       await Promise.all(
         reorderedItems.map(item => saveSection({ ...item, displayOrder: item.order }))
       );
-      
-      console.log('✅ Reihenfolge gespeichert!');
       
       // Refresh the data to ensure sync with backend
       const freshData = await getAllSections();

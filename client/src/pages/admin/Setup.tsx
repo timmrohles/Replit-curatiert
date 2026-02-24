@@ -23,7 +23,6 @@ export function Setup() {
       navigate('/sys-mgmt-xK9/login');
       return;
     }
-    console.log('✅ Setup: Token found, user authenticated');
     setIsAuthenticated(true);
     setAuthLoading(false);
   }, [navigate]);

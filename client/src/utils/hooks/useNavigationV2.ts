@@ -110,8 +110,6 @@ export const FALLBACK_NAVIGATION_V2: NavigationDataV2 = {
 async function fetchNavigationV2(): Promise<NavigationDataV2> {
   try {
     const fullUrl = `${API_BASE_URL}${API_ENDPOINTS.navigation.public}`;
-    console.log('📡 Fetching navigation from:', fullUrl);
-    console.log('🔍 API_BASE_URL:', API_BASE_URL);
     
     // ✅ ADD TIMEOUT: Prevent browser hanging if server doesn't respond
     const controller = new AbortController();
@@ -136,8 +134,6 @@ async function fetchNavigationV2(): Promise<NavigationDataV2> {
     // ✅ IMPORTANT: Backend returns NavigationDataV2 DIRECTLY (not wrapped in {success, data})
     // Format: { schema_version: "nav-v2", content_version: 1, items: [...], meta: {...} }
     const rawData = await response.json();
-    
-    console.log('📊 V2 Navigation Data:', rawData);
 
     // 🛡️ DEFENSIVE: Check if we got valid V2 format
     if (!rawData || typeof rawData !== 'object') {
@@ -157,9 +153,6 @@ async function fetchNavigationV2(): Promise<NavigationDataV2> {
       console.warn('⚠️ Navigation loaded with backend error:', normalized.meta.error);
     }
 
-    // Log success
-    console.log(`✅ Navigation loaded: ${normalized.items.length} items`);
-
     return normalized;
 
   } catch (error) {
@@ -169,7 +162,6 @@ async function fetchNavigationV2(): Promise<NavigationDataV2> {
       console.error('❌ Navigation fetch error:', error);
     }
     // ⚠️ GRACEFUL DEGRADATION - Return fallback instead of crashing
-    console.log('🔄 Using fallback navigation');
     return FALLBACK_NAVIGATION_V2;
   }
 }

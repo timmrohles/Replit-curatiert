@@ -166,10 +166,7 @@ export function DynamicPage() {
         })));
         setBooks(pageData.books || []);
         
-        console.log('📄 DynamicPage loaded:', pageData.page);
-        console.log('  - Page ID:', pageData.page.id);
-        console.log('  - Title:', pageData.page.title);
-        console.log('  - Sections:', pageData.sections?.length || 0);
+
       } catch (err) {
         console.error('Error fetching page:', err);
         setError('Fehler beim Laden der Seite');

@@ -97,10 +97,7 @@ export function CMSHomepage() {
         })));
         setBooks(pageData.books || []);
 
-        console.log('🏠 CMS Homepage loaded:', pageData.page);
-        console.log('  - Page ID:', pageData.page.id);
-        console.log('  - Title:', pageData.page.title);
-        console.log('  - Sections:', pageData.sections?.length || 0);
+
       } catch (err) {
         console.error('❌ Error fetching CMS homepage:', err);
         setError(t('cms.homepageNotLoaded'));

@@ -247,12 +247,6 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
       
       if (response.ok) {
         const result = await response.json();
-        console.log('📚 Book Search Response:', {
-          ok: result.ok,
-          dataLength: result.data?.length || 0,
-          data: result.data,
-          searchQuery: searchQuery,
-        });
         // Server returns { ok: true, data: [...] } format
         const books = result.data || [];
         setSearchResults(books);

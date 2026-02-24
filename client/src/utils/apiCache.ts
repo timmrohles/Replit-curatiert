@@ -38,7 +38,6 @@ class APICache {
       return null;
     }
     
-    console.log(`✅ Cache HIT: ${key}`);
     return entry.data as T;
   }
   
@@ -54,7 +53,6 @@ class APICache {
       timestamp: Date.now(),
       ttl
     });
-    console.log(`💾 Cache SET: ${key} (TTL: ${ttl}ms)`);
   }
   
   /**
@@ -63,7 +61,6 @@ class APICache {
    */
   invalidate(key: string): void {
     this.cache.delete(key);
-    console.log(`🗑️ Cache INVALIDATE: ${key}`);
   }
   
   /**
@@ -71,7 +68,6 @@ class APICache {
    */
   clear(): void {
     this.cache.clear();
-    console.log(`🗑️ Cache CLEARED`);
   }
   
   /**
@@ -106,8 +102,6 @@ export async function withCache<T>(
     return cached;
   }
   
-  // Fetch fresh data
-  console.log(`⚡ Cache MISS: ${key} - Fetching...`);
   const data = await fetcher();
   
   // Store in cache

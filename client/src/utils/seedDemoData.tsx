@@ -3,8 +3,6 @@ import { seedDemoBooksWithONIXTags } from './seedDemoBooks';
 
 export async function seedDemoData() {
   try {
-    console.log('🌱 Seeding demo data...');
-
     // First, check what already exists
     const existingPages = await getAllPages();
     const existingMenuItems = await getAllMenuItems();
@@ -16,7 +14,6 @@ export async function seedDemoData() {
     const deprecatedMenuIds = ['nav-awarded-books'];
     for (const menuId of deprecatedMenuIds) {
       if (existingMenuIds.has(menuId)) {
-        console.log(`🗑️ Removing deprecated menu item: ${menuId}`);
         await deleteMenuItem(menuId);
         existingMenuIds.delete(menuId);
       }
@@ -290,9 +287,6 @@ export async function seedDemoData() {
     for (const page of pages) {
       if (!existingPageIds.has(page.id as any)) {
         await savePage(page as any);
-        console.log(`✅ Page created: ${page.name}`);
-      } else {
-        console.log(`✅ Page already exists: ${page.name}`);
       }
     }
 
@@ -381,18 +375,14 @@ export async function seedDemoData() {
     for (const item of menuItems) {
       if (!existingMenuIds.has(item.id)) {
         await saveMenuItem(item as any);
-        console.log(`✅ Menu item created: ${item.name}`);
       } else {
-        // Update existing menu items to reflect changes
         await saveMenuItem(item as any);
-        console.log(`✅ Menu item updated: ${item.name}`);
       }
     }
 
     // 3. Seed demo books with ONIX tags
     await seedDemoBooksWithONIXTags();
 
-    console.log('✅ Demo data seeded successfully!');
     return { success: true };
   } catch (error) {
     console.error('❌ Error seeding demo data:', error);

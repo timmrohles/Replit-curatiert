@@ -171,19 +171,5 @@ export function normalizeSections(sections: any[]): PageSection[] {
 // DEBUG UTILITIES
 // ==================================================================
 
-export function debugNormalization(raw: any, normalized: any) {
-  console.log('🔄 Normalization Debug:', {
-    raw: {
-      type: raw.section_type ?? raw.type,
-      zone: raw.zone,
-      sort_order: raw.sort_order,
-      items_count: raw.items?.length,
-    },
-    normalized: {
-      type: normalized.type,
-      zone: normalized.zone,
-      sortOrder: normalized.sortOrder,
-      items_count: normalized.items?.length,
-    },
-  });
+export function debugNormalization(_raw: any, _normalized: any) {
 }

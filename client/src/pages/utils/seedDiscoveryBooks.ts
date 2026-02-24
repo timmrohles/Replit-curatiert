@@ -9,8 +9,6 @@ const API_BASE_URL = '/api';
  */
 export async function seedDiscoveryBooks(): Promise<boolean> {
   try {
-    console.log('🌱 Seeding Discovery Books...');
-
     // Fetch all ONIX tags first
     const allTags = await getAllONIXTags();
     
@@ -307,7 +305,6 @@ export async function seedDiscoveryBooks(): Promise<boolean> {
 
         if (response.ok) {
           successCount++;
-          console.log(`✅ Created book: ${book.title}`);
         } else {
           const error = await response.text();
           console.error(`❌ Failed to create book: ${book.title}`, error);
@@ -317,7 +314,6 @@ export async function seedDiscoveryBooks(): Promise<boolean> {
       }
     }
 
-    console.log(`🎉 Successfully created ${successCount}/${discoveryBooks.length} Discovery books!`);
     return successCount === discoveryBooks.length;
   } catch (error) {
     console.error('❌ Error seeding Discovery books:', error);

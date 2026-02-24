@@ -110,7 +110,6 @@ class AwardsAPI {
   // Safe JSON parsing helper
   private async safeJsonParse(response: Response): Promise<any> {
     const text = await response.text();
-    console.log('📡 Raw response text:', text);
     
     if (!text) {
       throw new Error('Empty response from server');
@@ -173,15 +172,11 @@ class AwardsAPI {
   }
 
   async searchBooks(query: string): Promise<Book[]> {
-    console.log('🔍 Frontend searchBooks called with query:', query);
     const url = `${this.baseUrl}/awards/search/books?q=${encodeURIComponent(query)}&limit=10`;
-    console.log('📡 Fetching URL:', url);
     
     const response = await fetch(url, {
           credentials: 'include', headers: this.headers });
     const data = await response.json();
-    
-    console.log('📦 Search response:', data);
     
     if (!data.ok) {
       console.error('❌ Search failed with error:', data.error);
@@ -191,7 +186,6 @@ class AwardsAPI {
       throw new Error(data.error?.message || 'Search failed');
     }
     
-    console.log(`✅ Found ${data.data.books.length} books`);
     return data.data.books;
   }
 
@@ -223,16 +217,12 @@ class AwardsAPI {
   }
 
   async createAward(award: Partial<Award>): Promise<Award> {
-    console.log('🚀 createAward called with:', award);
-    
     const response = await fetch(`${this.baseUrl}/admin/awards`, {
       method: 'POST',
       credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders(),
       body: JSON.stringify(award)
     });
-    
-    console.log('📡 Response received, status:', response.status);
     
     // Use safe JSON parsing
     const data = await this.safeJsonParse(response);
@@ -249,8 +239,6 @@ class AwardsAPI {
       body: JSON.stringify(award)
     });
     
-    console.log('📡 Response received, status:', response.status);
-    
     // Use safe JSON parsing
     const data = await this.safeJsonParse(response);
     
@@ -265,8 +253,6 @@ class AwardsAPI {
       headers: this.getAdminHeaders()
     });
     
-    console.log('📡 deleteAward response status:', response.status);
-    
     // Use safe JSON parsing
     const data = await this.safeJsonParse(response);
     
@@ -280,8 +266,6 @@ class AwardsAPI {
       headers: this.getAdminHeaders(),
       body: JSON.stringify(edition)
     });
-    
-    console.log('📡 createEdition response status:', response.status);
     
     // Use safe JSON parsing
     const data = await this.safeJsonParse(response);
@@ -298,8 +282,6 @@ class AwardsAPI {
       body: JSON.stringify(outcome)
     });
     
-    console.log('📡 createOutcome response status:', response.status);
-    
     // Use safe JSON parsing
     const data = await this.safeJsonParse(response);
     
@@ -308,16 +290,12 @@ class AwardsAPI {
   }
 
   async addRecipient(outcomeId: number, recipient: Partial<AwardRecipient>): Promise<AwardRecipient> {
-    console.log('🚀 addRecipient called with:', { outcomeId, recipient });
-    
     const response = await fetch(`${this.baseUrl}/admin/awards/outcomes/${outcomeId}/recipients`, {
       method: 'POST',
       credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders(),
       body: JSON.stringify(recipient)
     });
-    
-    console.log('📡 Response received, status:', response.status);
     
     // Use safe JSON parsing
     const data = await this.safeJsonParse(response);
@@ -354,8 +332,6 @@ class AwardsAPI {
       credentials: 'include' as RequestCredentials,
       headers: this.getAdminHeaders()
     });
-    
-    console.log('📡 removeRecipient response status:', response.status);
     
     // Use safe JSON parsing
     const data = await this.safeJsonParse(response);
@@ -408,7 +384,6 @@ export function AdminAwards() {
     setTesting(true);
     try {
       const result = await api.testCreateOutcome();
-      console.log('✅ Test Result:', result);
       
       alert(`✅ Test erfolgreich!\n\n` +
         `Award: ${result.data.award.name}\n` +
@@ -434,7 +409,6 @@ export function AdminAwards() {
     setTesting(true);
     try {
       const result = await api.testCreateOutcomePublic();
-      console.log('✅ PUBLIC Test Result:', result);
       
       // Check if this is diagnostic data or actual test data
       if (result.data.enum_values) {

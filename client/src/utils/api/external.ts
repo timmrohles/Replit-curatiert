@@ -39,18 +39,14 @@ export async function getGoogleBooksRating(isbn: string): Promise<GoogleBooksRat
     const data = await response.json();
     
     if (!data.items || data.items.length === 0) {
-      console.log(`📚 Google Books: No data found for ISBN ${isbn}`);
       return null;
     }
     
     const volumeInfo = data.items[0].volumeInfo;
     
     if (!volumeInfo.averageRating || !volumeInfo.ratingsCount) {
-      console.log(`📚 Google Books: No ratings available for ISBN ${isbn}`);
       return null;
     }
-    
-    console.log(`✅ Google Books: Found ${volumeInfo.ratingsCount} ratings (avg: ${volumeInfo.averageRating}) for ISBN ${isbn}`);
     
     return {
       averageRating: volumeInfo.averageRating,

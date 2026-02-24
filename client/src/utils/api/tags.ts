@@ -111,18 +111,15 @@ let onixTagsPromise: Promise<import('../apiSchemas').ONIXTag[]> | null = null;
 export async function getAllONIXTags(): Promise<import('../apiSchemas').ONIXTag[]> {
   // Return cached data if available
   if (onixTagsCache !== null) {
-    console.log('⚡ ONIX Tags: Using cache (0 API calls)');
     return onixTagsCache;
   }
   
   // Return existing promise if request is in flight (deduplication)
   if (onixTagsPromise !== null) {
-    console.log('⚡ ONIX Tags: Request deduplicated (shared fetch)');
     return onixTagsPromise;
   }
   
   // Create new request
-  console.log('⚡ ONIX Tags: Fetching from API...');
   onixTagsPromise = (async () => {
     try {
       // ✅ ADD TIMEOUT: Prevent browser hanging if server doesn't respond
@@ -164,8 +161,6 @@ export async function getAllONIXTags(): Promise<import('../apiSchemas').ONIXTag[
       
       // If no tags from backend, return empty array
       if (tags.length === 0) {
-        console.log('📚 No ONIX tags in database yet.');
-        console.log('💡 TIP: Go to Admin → ONIX Tags to create tags');
         onixTagsCache = [];
         onixTagsPromise = null;
         return [];
@@ -175,7 +170,6 @@ export async function getAllONIXTags(): Promise<import('../apiSchemas').ONIXTag[
       onixTagsCache = tags;
       onixTagsPromise = null;
       
-      console.log(`✅ Loaded ${tags.length} ONIX tags from database`);
       return tags;
     } catch (error) {
       // Handle timeout/abort

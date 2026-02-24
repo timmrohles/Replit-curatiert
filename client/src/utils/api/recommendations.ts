@@ -97,8 +97,6 @@ export async function getRecommendedBooks(
   maxResults: number = 4
 ): Promise<Book[]> {
   
-  console.log(`🎯 Recommendation System: Finding similar books to "${currentBook.title}"`);
-  
   // Exclude current book and unavailable books
   const candidateBooks = allBooks.filter(b => 
     b.id !== currentBook.id && 
@@ -106,13 +104,11 @@ export async function getRecommendedBooks(
   );
   
   if (candidateBooks.length === 0) {
-    console.log('⚠️ No candidate books available');
     return [];
   }
   
   // Determine book world
   const world = getBookWorld(currentBook.warengruppe);
-  console.log(`📚 Book World: ${world} (WGS: ${currentBook.warengruppe || 'N/A'})`);
   
   // Special case: Foreign language books
   if (currentBook.languageCode && currentBook.languageCode !== 'ger') {
@@ -146,7 +142,6 @@ export async function getRecommendedBooks(
  * BELLETRISTIK: Genre + Schauplatz + Lesemotiv
  */
 function getRecommendationsForBelletristik(currentBook: Book, candidates: Book[], maxResults: number): Book[] {
-  console.log('📖 Using Belletristik algorithm');
   
   // Versuch 1: Volles Matching (Genre + Ort + Motiv)
   let results = candidates.map(book => ({
@@ -162,7 +157,6 @@ function getRecommendationsForBelletristik(currentBook: Book, candidates: Book[]
   .slice(0, maxResults);
   
   if (results.length >= maxResults) {
-    console.log(`✅ Attempt 1 (Full Match): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
@@ -178,7 +172,6 @@ function getRecommendationsForBelletristik(currentBook: Book, candidates: Book[]
   .slice(0, maxResults);
   
   if (results.length >= maxResults) {
-    console.log(`✅ Attempt 2 (Reduced Match): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
@@ -192,12 +185,10 @@ function getRecommendationsForBelletristik(currentBook: Book, candidates: Book[]
   .slice(0, maxResults);
   
   if (results.length > 0) {
-    console.log(`✅ Attempt 3 (Minimal Match): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
   // Versuch 4: Hard Fallback (Same Warengruppe or recent books)
-  console.log('⚠️ Using hard fallback');
   return candidates
     .filter(b => b.warengruppe && b.warengruppe.startsWith('1')) // Any Belletristik
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -208,7 +199,6 @@ function getRecommendationsForBelletristik(currentBook: Book, candidates: Book[]
  * KINDERBUCH: Altersstufe + Genre
  */
 function getRecommendationsForKinderbuch(currentBook: Book, candidates: Book[], maxResults: number): Book[] {
-  console.log('👶 Using Kinderbuch algorithm');
   
   // Versuch 1: Exakte Altersstufe + Genre
   let results = candidates.map(book => ({
@@ -222,7 +212,6 @@ function getRecommendationsForKinderbuch(currentBook: Book, candidates: Book[], 
   .slice(0, maxResults);
   
   if (results.length >= maxResults) {
-    console.log(`✅ Attempt 1 (Age + Genre): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
@@ -236,7 +225,6 @@ function getRecommendationsForKinderbuch(currentBook: Book, candidates: Book[], 
   .slice(0, maxResults);
   
   if (results.length >= maxResults) {
-    console.log(`✅ Attempt 2 (Age Only): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
@@ -250,12 +238,10 @@ function getRecommendationsForKinderbuch(currentBook: Book, candidates: Book[], 
   .slice(0, maxResults);
   
   if (results.length > 0) {
-    console.log(`✅ Attempt 3 (Genre Only): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
   // Hard Fallback: Any children's books
-  console.log('⚠️ Using hard fallback');
   return candidates
     .filter(b => b.warengruppe && b.warengruppe.startsWith('2'))
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -266,7 +252,6 @@ function getRecommendationsForKinderbuch(currentBook: Book, candidates: Book[], 
  * SACHBUCH: Thema-Code + Aktualität
  */
 function getRecommendationsForSachbuch(currentBook: Book, candidates: Book[], maxResults: number): Book[] {
-  console.log('📚 Using Sachbuch algorithm');
   
   const currentYear = new Date().getFullYear();
   const bookYear = parseInt(currentBook.year || '0');
@@ -289,7 +274,6 @@ function getRecommendationsForSachbuch(currentBook: Book, candidates: Book[], ma
   .slice(0, maxResults);
   
   if (results.length >= maxResults) {
-    console.log(`✅ Attempt 1 (Theme + Recency): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
@@ -303,12 +287,10 @@ function getRecommendationsForSachbuch(currentBook: Book, candidates: Book[], ma
   .slice(0, maxResults);
   
   if (results.length > 0) {
-    console.log(`✅ Attempt 2 (Theme Only): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
   // Hard Fallback: Recent books in Sachbuch
-  console.log('⚠️ Using hard fallback');
   return candidates
     .filter(b => {
       if (!b.warengruppe) return false;
@@ -327,7 +309,6 @@ function getRecommendationsForSachbuch(currentBook: Book, candidates: Book[], ma
  * FACHBUCH: Thema-Code + Expertise-Level
  */
 function getRecommendationsForFachbuch(currentBook: Book, candidates: Book[], maxResults: number): Book[] {
-  console.log('🎓 Using Fachbuch algorithm');
   
   // Versuch 1: Thema + Expertise Level
   let results = candidates.map(book => {
@@ -346,7 +327,6 @@ function getRecommendationsForFachbuch(currentBook: Book, candidates: Book[], ma
   .slice(0, maxResults);
   
   if (results.length >= maxResults) {
-    console.log(`✅ Attempt 1 (Theme + Expertise): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
@@ -360,12 +340,10 @@ function getRecommendationsForFachbuch(currentBook: Book, candidates: Book[], ma
   .slice(0, maxResults);
   
   if (results.length > 0) {
-    console.log(`✅ Attempt 2 (Theme Only): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
   // Hard Fallback: Same expertise level or recent books
-  console.log('⚠️ Using hard fallback');
   return candidates
     .filter(b => {
       if (!b.warengruppe) return false;
@@ -380,7 +358,6 @@ function getRecommendationsForFachbuch(currentBook: Book, candidates: Book[], ma
  * FREMDSPRACHE: Gleiche Sprache + Sprachniveau
  */
 function getRecommendationsForForeignLanguage(currentBook: Book, candidates: Book[], maxResults: number): Book[] {
-  console.log('🌍 Using Foreign Language algorithm');
   
   // Versuch 1: Same language + Same level
   let results = candidates.map(book => {
@@ -397,7 +374,6 @@ function getRecommendationsForForeignLanguage(currentBook: Book, candidates: Boo
   .slice(0, maxResults);
   
   if (results.length >= maxResults) {
-    console.log(`✅ Attempt 1 (Language + Level): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
@@ -411,12 +387,10 @@ function getRecommendationsForForeignLanguage(currentBook: Book, candidates: Boo
   .slice(0, maxResults);
   
   if (results.length > 0) {
-    console.log(`✅ Attempt 2 (Language Only): Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
   // Hard Fallback: Any foreign language books
-  console.log('⚠️ Using hard fallback');
   return candidates
     .filter(b => b.languageCode && b.languageCode !== 'ger')
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -427,7 +401,6 @@ function getRecommendationsForForeignLanguage(currentBook: Book, candidates: Boo
  * GENERIC: Fallback for unknown categories
  */
 function getGenericRecommendations(currentBook: Book, candidates: Book[], maxResults: number): Book[] {
-  console.log('🔧 Using Generic algorithm');
   
   // Try theme codes + tags
   let results = candidates.map(book => ({
@@ -442,12 +415,10 @@ function getGenericRecommendations(currentBook: Book, candidates: Book[], maxRes
   .slice(0, maxResults);
   
   if (results.length >= maxResults) {
-    console.log(`✅ Generic Match: Found ${results.length} books`);
     return results.map(r => r.book);
   }
   
   // Hard Fallback: Same author or curator
-  console.log('⚠️ Using hard fallback (same author/curator)');
   const sameAuthor = candidates.filter(b => 
     b.author.toLowerCase() === currentBook.author.toLowerCase()
   ).slice(0, 2);

@@ -42,19 +42,19 @@ export function MatchingPage() {
       </section>
 
       {/* 1. Mood Selector - Was suchst du heute? */}
-      <MoodSelector onMoodSelect={(mood) => console.log('Selected mood:', mood)} />
+      <MoodSelector onMoodSelect={() => {}} />
 
       {/* 2. Daily Recommendations - Top-Empfehlungen des Tages */}
-      <DailyRecommendations onViewAll={() => console.log('View all daily recommendations')} />
+      <DailyRecommendations onViewAll={() => {}} />
 
       {/* 3. Taste Quiz - Der Geschmackstest */}
-      <TasteQuiz onComplete={(answers) => console.log('Quiz completed:', answers)} />
+      <TasteQuiz onComplete={() => {}} />
 
       {/* 4. Most Recommended - Die meistempfohlenen Bücher */}
-      <MostRecommended onViewAll={() => console.log('View all most recommended')} />
+      <MostRecommended onViewAll={() => {}} />
 
       {/* 5. Recipient Finder - Ich suche etwas für... */}
-      <RecipientFinder onRecipientSelect={(recipientId) => console.log('Selected recipient:', recipientId)} />
+      <RecipientFinder onRecipientSelect={() => {}} />
 
       {/* Curator Matchmaking Section */}
       <CuratorMatchmaking />

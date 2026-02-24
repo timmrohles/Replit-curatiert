@@ -22,8 +22,6 @@ export function PageNavigationBadge({ pageId }: Props) {
   const isPreview = searchParams.get('preview') === 'true';
 
   useEffect(() => {
-    // ✅ ALWAYS log page ID for debugging
-    console.log('📍 PageNavigationBadge mounted with pageId:', pageId, 'preview:', isPreview);
     
     if (!isPreview) {
       setLoading(false);
@@ -74,12 +72,6 @@ export function PageNavigationBadge({ pageId }: Props) {
             };
           });
 
-        console.log('🔍 PageNavigationBadge Debug:', {
-          pageId,
-          totalItems: data.data.length,
-          linkedItems: linkedItems.length,
-          links: linkedItems
-        });
 
         setLinks(linkedItems);
       } catch (error) {

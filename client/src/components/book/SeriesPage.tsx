@@ -653,16 +653,12 @@ export function SeriesPage() {
                   <div
                     key={index}
                     className="px-3 py-1.5 border border-transparent hover:border-blue rounded-full transition-all duration-200 inline-flex items-center gap-2 shadow-lg bg-coral cursor-pointer"
-                    onClick={() => {
-                      // Optional: Navigation zu Topic-Seite
-                      console.log(`Topic clicked: ${topic}`);
-                    }}
+                    onClick={() => {}}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        console.log(`Topic clicked: ${topic}`);
                       }
                     }}
                   >

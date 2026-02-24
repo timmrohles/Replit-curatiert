@@ -64,10 +64,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     
     if (actualTheme === 'dark') {
       root.classList.add('dark');
-      console.log('🌙 DARK MODE ACTIVATED - classList:', root.classList.toString());
     } else {
       root.classList.remove('dark');
-      console.log('☀️ LIGHT MODE ACTIVATED - classList:', root.classList.toString());
     }
     
     setResolvedTheme(actualTheme);

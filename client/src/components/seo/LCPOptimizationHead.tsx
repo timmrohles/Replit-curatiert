@@ -33,9 +33,7 @@ export function LCPOptimizationHead() {
       }
     });
 
-    console.log('⚡ LCP Optimization: Preconnect & DNS-Prefetch aktiviert');
-    console.log('✅ Layout bleibt intakt - keine aggressive CSS-Manipulation');
-    console.log('✅ Self-Hosted Fonts nutzen lokale Dateien (-409ms Latenz)');
+
   }, []);
 
   return null;

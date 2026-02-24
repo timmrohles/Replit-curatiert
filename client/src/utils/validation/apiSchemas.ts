@@ -332,8 +332,6 @@ export function validateArray<T>(
         error.errors.forEach(err => {
           console.warn(`   - ${err.path.join('.')}: ${err.message}`);
         });
-        // Log the actual item for debugging
-        console.log('   Item data:', item);
       }
     }
   });

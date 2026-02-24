@@ -75,7 +75,6 @@ export function PagesTabContent({
       if (response.ok) {
         const result = await response.json();
         setMenuItems(Array.isArray(result.data) ? result.data : []);
-        console.log('✅ [loadMenuItems] Loaded:', result.data);
       } else {
         const errorText = await response.text();
         console.error('❌ [loadMenuItems] Failed:', response.status, errorText);
@@ -101,7 +100,6 @@ export function PagesTabContent({
       if (response.ok) {
         const result = await response.json();
         setExistingLinks(Array.isArray(result.data) ? result.data : []);
-        console.log('✅ [loadExistingLinks] Loaded:', result.data);
         
         // ✅ Auto-select existing link if there is one
         if (result.data && result.data.length > 0) {
@@ -137,7 +135,6 @@ export function PagesTabContent({
         });
 
         if (response.ok) {
-          console.log('✅ Page linked to navigation');
           alert('✅ Seite gespeichert und mit Navigation verknüpft!');
           
           // ✅ RELOAD: Refresh existing links to show the connection
@@ -191,7 +188,6 @@ export function PagesTabContent({
       });
 
       if (response.ok) {
-        console.log(`✅ Unlinked menu item ${menuItemId} from page`);
         alert(`✅ Verknüpfung "${menuItemName}" entfernt!`);
         
         // Reload existing links
@@ -664,7 +660,7 @@ export function PagesTabContent({
             <div className="mt-8">
               <PageComposer 
                 page={editingPage as any} 
-                onPageUpdate={() => console.log('Page updated')} 
+                onPageUpdate={() => {}} 
               />
             </div>
           )}

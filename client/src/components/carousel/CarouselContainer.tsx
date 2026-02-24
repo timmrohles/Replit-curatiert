@@ -80,11 +80,6 @@ export function CarouselContainer({
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
     
-    console.log('🔄 Scroll triggered:', direction);
-    console.log('   Current scrollLeft:', scrollRef.current.scrollLeft);
-    console.log('   Container width:', scrollRef.current.clientWidth);
-    console.log('   Total scroll width:', scrollRef.current.scrollWidth);
-    
     const container = scrollRef.current;
     
     // Simple scroll: use container width as scroll distance
@@ -92,8 +87,6 @@ export function CarouselContainer({
     const newPosition = direction === 'right' 
       ? container.scrollLeft + scrollDistance 
       : container.scrollLeft - scrollDistance;
-    
-    console.log('   Scrolling to:', newPosition);
     
     container.scrollTo({
       left: newPosition,
@@ -103,7 +96,6 @@ export function CarouselContainer({
     // Re-check scroll state after animation
     setTimeout(() => {
       checkScroll();
-      console.log('   After scroll - scrollLeft:', container.scrollLeft);
     }, 500);
   };
 

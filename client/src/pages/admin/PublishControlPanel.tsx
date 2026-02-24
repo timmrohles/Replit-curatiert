@@ -87,9 +87,6 @@ export default function PublishControlPanel() {
       const data: PublishResult = await response.json();
       setResult(data);
 
-      if (data.ok) {
-        console.log(`✅ ${entityType} ${id} ${action} successful`);
-      }
     } catch (error) {
       setResult({
         ok: false,

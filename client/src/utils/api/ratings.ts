@@ -519,12 +519,10 @@ export async function getBookRating(
  */
 export async function getBookAggregateRatings(bookId: string): Promise<AggregateRatings | null> {
   try {
-    console.log('🌐 [API] Fetching aggregate ratings for bookId:', bookId);
     const response = await fetch(`${API_BASE_URL}/ratings/${bookId}/aggregate`, {
       headers: {
       },
     });
-    console.log('🌐 [API] Response status:', response.status);
     
     // Check if response is actually JSON
     const contentType = response.headers.get('content-type');
@@ -534,7 +532,6 @@ export async function getBookAggregateRatings(bookId: string): Promise<Aggregate
     }
     
     const result: ApiResponse<AggregateRatings> = await response.json();
-    console.log('🌐 [API] Parsed result:', result);
     return result.data || null;
   } catch (error) {
     // Silent fallback - this is expected when server is not running

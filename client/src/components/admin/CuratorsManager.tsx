@@ -77,20 +77,16 @@ export function CuratorsManager() {
   const loadCurators = async () => {
     setLoading(true);
     try {
-      console.log('🔄 Loading curators from /api/curators...');
       const response = await fetch(`${API_BASE_URL}/curators`, {
             credentials: 'include',
         headers: { 'Content-Type': 'application/json' }
       });
-
-      console.log('📡 Response status:', response.status);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('📦 Curators data received:', data);
       
       if (data.ok && data.data) {
         // ✅ BACKEND RETURNS {ok: true, data: [...]}\n        // Map DB columns to frontend format with robust validation
@@ -117,7 +113,6 @@ export function CuratorsManager() {
             created_at: c.created_at || c.createdAt || new Date().toISOString(),
             updated_at: c.updated_at || c.updatedAt || new Date().toISOString()
           }));
-        console.log(`✅ Setting ${mappedCurators.length} curators to state`);
         setCurators(mappedCurators);
       } else {
         console.error('❌ API error:', data);
@@ -138,8 +133,6 @@ export function CuratorsManager() {
     }
 
     try {
-      console.log('💾 Saving curator:', editingCurator);
-      
       // ✅ BACKEND EXPECTS avatar_url (not image_url!)
       const backendCurator = {
         id: editingCurator.id,
@@ -156,8 +149,6 @@ export function CuratorsManager() {
         display_order: (editingCurator as any).display_order || 0
       };
       
-      console.log('📤 Sending curator payload:', JSON.stringify(backendCurator, null, 2));
-      
       const response = await fetch(`${API_BASE_URL}/curators`, {
           method: 'POST',
           credentials: 'include',
@@ -165,13 +156,10 @@ export function CuratorsManager() {
         body: JSON.stringify(backendCurator)
       });
 
-      console.log('📡 Save response status:', response.status);
       const data = await response.json();
-      console.log('📦 Save response data:', data);
 
       if (data.ok) {
         toast.success(editingCurator.id ? 'Kurator aktualisiert' : 'Kurator erstellt');
-        console.log('✅ Curator saved successfully, now reloading...');
         setEditingCurator(null);
         loadCurators();
       } else {

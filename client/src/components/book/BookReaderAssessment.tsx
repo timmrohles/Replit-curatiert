@@ -32,16 +32,8 @@ export function BookReaderAssessment({
 
   async function loadAggregateRatings() {
     setLoading(true);
-    console.log('🔍 [BookReaderAssessment] Loading aggregate ratings for bookId:', bookId);
     try {
       const data = await getBookAggregateRatings(bookId);
-      console.log('✅ [BookReaderAssessment] Received aggregate data:', data);
-      console.log('✅ [BookReaderAssessment] Data details:', {
-        hasData: !!data,
-        totalRatings: data?.totalRatings,
-        scalesKeys: data?.scales ? Object.keys(data.scales) : [],
-        scalesData: data?.scales
-      });
       setAggregateRatings(data);
     } catch (error) {
       console.error('❌ [BookReaderAssessment] Failed to load aggregate ratings:', error);
@@ -67,11 +59,6 @@ export function BookReaderAssessment({
   }
 
   if (!aggregateRatings || aggregateRatings.totalRatings < minRatings) {
-    console.log('⚠️ [BookReaderAssessment] Not enough ratings:', { 
-      hasData: !!aggregateRatings, 
-      totalRatings: aggregateRatings?.totalRatings, 
-      minRequired: minRatings 
-    });
     return (
       <div className="bg-white/30 backdrop-blur-md rounded-lg shadow-lg p-6 md:p-8 border border-white/40">
         <div className="flex items-center gap-2 mb-2">
@@ -93,12 +80,6 @@ export function BookReaderAssessment({
 
   // Generiere sprachliche Bullets
   const bullets = aggregateToTextBullets(aggregateRatings.scales, bookWorld, 1);
-  console.log('📊 [BookReaderAssessment] Generated bullets:', { 
-    scales: aggregateRatings.scales,
-    bookWorld,
-    bulletsCount: bullets.length,
-    bullets 
-  });
 
   if (bullets.length === 0) {
     return (

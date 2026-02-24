@@ -22,10 +22,6 @@ export interface AdminLoginResponse {
 // Creator Dashboard Login (uses simpler KV-based auth)
 export async function creatorLogin(password: string): Promise<AdminLoginResponse> {
   try {
-    console.log('🔐 Starting creator login...');
-    console.log('🔐 API_BASE_URL:', API_BASE_URL);
-    console.log('🔐 Full URL:', `${API_BASE_URL}/admin/auth/login`);
-    
     const response = await fetch(`${API_BASE_URL}/admin/auth/login`, {
       method: 'POST',
       headers: {
@@ -33,9 +29,6 @@ export async function creatorLogin(password: string): Promise<AdminLoginResponse
       },
       body: JSON.stringify({ password }),
     });
-    
-    console.log('🔐 Login response status:', response.status);
-    console.log('🔐 Login response ok:', response.ok);
     
     if (!response.ok) {
       const text = await response.text();
@@ -47,11 +40,9 @@ export async function creatorLogin(password: string): Promise<AdminLoginResponse
     }
     
     const result = await response.json();
-    console.log('🔐 Login response data:', result);
     
     // Backend returns { ok: true, data: { token, ... } }
     if (result.ok && result.data?.token) {
-      console.log('✅ Creator login successful!');
       return { 
         success: true, 
         token: result.data.token,
@@ -82,8 +73,6 @@ export async function creatorLogin(password: string): Promise<AdminLoginResponse
 // Admin Login (uses Neon-based auth for main admin panel)
 export async function adminLogin(password: string): Promise<AdminLoginResponse> {
   try {
-    console.log('🔐 Starting admin login...');
-    
     // ✅ MIGRATED: Use canonical /api/admin/auth/login endpoint
     const response = await fetch(`${API_BASE_URL}/admin/auth/login`, {
       method: 'POST',
@@ -93,13 +82,10 @@ export async function adminLogin(password: string): Promise<AdminLoginResponse> 
       body: JSON.stringify({ password }),
     });
     
-    console.log('🔐 Login response status:', response.status);
     const result = await response.json();
-    console.log('🔐 Login response data:', result);
     
     // Transform response to match AdminLoginResponse interface
     if (result.ok && result.data?.token) {
-      console.log('✅ Login successful!');
       return { 
         success: true, 
         token: result.data.token,
@@ -120,7 +106,6 @@ export async function adminLogin(password: string): Promise<AdminLoginResponse> 
 
 export async function adminVerify(token: string): Promise<boolean> {
   try {
-    console.log('🔍 adminVerify called with token:', token.substring(0, 20) + '...');
     // ✅ MIGRATED: Use canonical /api/admin/auth/verify endpoint
     const response = await fetch(`${API_BASE_URL}/admin/auth/verify`, {
       method: 'POST',
@@ -129,9 +114,7 @@ export async function adminVerify(token: string): Promise<boolean> {
       },
       body: JSON.stringify({ token }),
     });
-    console.log('🔍 adminVerify response status:', response.status);
     const result = await response.json();
-    console.log('🔍 adminVerify result:', result);
     return result.ok === true && result.data?.valid === true;
   } catch (error) {
     console.error('❌ Error verifying admin session:', error);

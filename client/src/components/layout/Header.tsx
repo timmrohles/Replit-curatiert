@@ -271,8 +271,6 @@ export function Header({
       // V2 data is already in the right format (NavigationItemV2[])
       // But MegaMenu expects the legacy format, so transform it
       
-      console.log('🔄 Transforming V2 Navigation:', navDataV2.items.length, 'items');
-      
       // Transform V2 to legacy format
       // NOTE: V2 uses 'label' and 'href', legacy uses 'name' and 'path'
       const transformed: NavMenuItem[] = navDataV2.items.map((item, index) => {
@@ -299,8 +297,6 @@ export function Header({
         logger.warn('V2 Navigation: Items with missing names detected:', missingNames);
       }
       
-      console.log('✅ Transformed navigation:', transformed.map(i => i.name).join(', '));
-      
       return transformed;
     }
     
@@ -315,12 +311,6 @@ export function Header({
       console.error('❌ V2 Navigation API failed:', navErrorV2);
     }
     if (navDataV2) {
-      console.log('📊 V2 Navigation Data:', {
-        schema_version: navDataV2.schema_version,
-        content_version: navDataV2.content_version,
-        items_count: navDataV2.items.length,
-        needs_setup: navDataV2.meta.needs_setup
-      });
     }
   }, [navDataV2, navErrorV2]);
 

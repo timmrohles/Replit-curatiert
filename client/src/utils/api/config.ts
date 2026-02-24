@@ -10,9 +10,6 @@
 
 export const API_BASE_URL = '/api';
 
-// Version tracking
-console.log('🚀 API MODULE LOADED - VERSION 2.1.0 - ZOD VALIDATION ACTIVE');
-
 // ============================================
 // ADMIN AUTH HEADERS HELPER
 // ============================================

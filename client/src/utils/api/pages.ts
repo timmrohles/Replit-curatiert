@@ -34,7 +34,6 @@ export async function getAllPages(): Promise<import('../apiSchemas').Page[]> {
       return [];
     }
     
-    console.log(`✅ Fetched ${result.data?.length || 0} pages from new API`);
     return result.data || [];
   } catch (error) {
     console.error('Error fetching pages:', error);
@@ -68,17 +67,12 @@ export async function savePage(page: Partial<import('../apiSchemas').Page>): Pro
       : `${API_BASE_URL}/admin/pages`;
     const method = isUpdate ? 'PATCH' : 'POST';
     
-    console.log(`🔍 savePage ${method} ${url}`);
-    console.log('🔍 Page data:', page);
-    
     const response = await fetch(url, {
           credentials: 'include',
       method,
       headers: getAdminAuthHeaders(),
       body: JSON.stringify(page),
     });
-    
-    console.log('🔍 Response status:', response.status);
     
     if (!response.ok) {
       // ✅ FIX: Show detailed error message to user
@@ -90,7 +84,6 @@ export async function savePage(page: Partial<import('../apiSchemas').Page>): Pro
     }
     
     const result: ApiResponse<import('../apiSchemas').Page> = await response.json();
-    console.log('🔍 Result:', result);
     return result.data || null;
   } catch (error) {
     console.error('Error saving page:', error);

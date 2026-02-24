@@ -317,16 +317,12 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
         max_clicks: editingSection.max_clicks ?? null,
       };
 
-      console.log('📤 Saving section with payload:', JSON.stringify(payload, null, 2));
-
       // ✅ FIX: Use PATCH for existing sections, POST for new sections
       const isUpdate = !!editingSection.id;
       const url = isUpdate 
         ? `${API_BASE_URL}/admin/sections/${editingSection.id}`
         : `${API_BASE_URL}/admin/pages/${page.id}/sections`;
       const method = isUpdate ? 'PATCH' : 'POST';
-
-      console.log(`📤 ${method} ${url}`);
 
       const response = await fetch(url, {
         method,
@@ -341,8 +337,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
         throw new Error(`Failed to save section: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
       }
 
-      const savedData = await response.json().catch(() => null);
-      console.log('✅ Section saved successfully:', savedData);
+      await response.json().catch(() => null);
 
       setError(null);
       try {

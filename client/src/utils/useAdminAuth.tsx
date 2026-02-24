@@ -62,8 +62,6 @@ export function useAdminAuth() {
   const checkAuth = async () => {
     const storedToken = localStorage.getItem('admin_token');
     
-    console.log('🔍 Checking auth... Token exists:', !!storedToken);
-    
     if (!storedToken) {
       console.warn('❌ No token found, redirecting to login');
       setIsAuthenticated(false);
@@ -72,13 +70,9 @@ export function useAdminAuth() {
       return;
     }
 
-    // Verify token with backend
-    console.log('🔍 Verifying token with backend...');
     const isValid = await adminVerify(storedToken);
-    console.log('🔍 Token verification result:', isValid);
     
     if (isValid) {
-      console.log('✅ Token valid, user authenticated');
       setIsAuthenticated(true);
       setToken(storedToken);
     } else {

@@ -6,8 +6,6 @@ import { saveBook, saveONIXTag, getAllONIXTags } from '../api';
  */
 export async function seedDemoBooksWithONIXTags() {
   try {
-    console.log('📚 Seeding demo books with ONIX tags...');
-
     // Get existing ONIX tags
     const onixTags = await getAllONIXTags();
     
@@ -246,11 +244,9 @@ export async function seedDemoBooksWithONIXTags() {
     // Save books
     const books = [book1, book2, book3, book4, book5, book6, book7, book8];
     for (const book of books) {
-      console.log(`📖 Creating demo book: ${book.title}`);
       await saveBook(book);
     }
 
-    console.log('✅ Demo books with ONIX tags created successfully!');
     return true;
   } catch (error) {
     console.error('❌ Error seeding demo books:', error);

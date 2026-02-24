@@ -29,8 +29,6 @@ export function QuickLogin() {
     localStorage.setItem('admin_neon_expires', expiresAt);
     localStorage.setItem('admin_last_activity', Date.now().toString());
     
-    console.log('✅ Emergency token set:', fakeToken);
-    
     // Redirect to content manager
     navigate('/sys-mgmt-xK9/content-manager');
   };
