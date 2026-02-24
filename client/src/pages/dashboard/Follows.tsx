@@ -1,100 +1,130 @@
-import { useState } from 'react';
-import { Heart, UserMinus, Users, BookOpen, Building2, Tag, List } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Heart, Users, BookOpen, Building2, Tag, List, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 import { DashboardEmptyState } from '../../components/dashboard/DashboardEmptyState';
-
-const mockFollows = {
-  curators: [
-    {
-      id: '1',
-      name: 'Lena Kraus',
-      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400',
-      focus: 'Literatur & Belletristik',
-      description: 'Literaturkritikerin mit Schwerpunkt auf deutschsprachiger Gegenwartsliteratur'
-    },
-    {
-      id: '2',
-      name: 'Max Weber',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-      focus: 'Sachbuch & Politik',
-      description: 'Journalist und Politikwissenschaftler'
-    }
-  ],
-  authors: [
-    {
-      id: '1',
-      name: 'Annie Ernaux',
-      avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400',
-      description: 'Französische Autorin, Nobelpreis für Literatur 2022'
-    },
-    {
-      id: '2',
-      name: 'Olga Tokarczuk',
-      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400',
-      description: 'Polnische Schriftstellerin, Nobelpreis für Literatur 2018'
-    }
-  ],
-  publishers: [
-    {
-      id: '1',
-      name: 'Suhrkamp Verlag',
-      logo: 'https://images.unsplash.com/photo-1568667256549-094345857637?w=400',
-      description: 'Renommierter deutscher Literaturverlag'
-    }
-  ],
-  categories: [
-    { id: '1', name: 'Belletristik', count: 342 },
-    { id: '2', name: 'Sachbuch', count: 218 },
-    { id: '3', name: 'Politik & Gesellschaft', count: 156 }
-  ],
-  tags: [
-    { id: '1', name: 'Feminismus', count: 89 },
-    { id: '2', name: 'Philosophie', count: 134 },
-    { id: '3', name: 'Queere Literatur', count: 67 }
-  ],
-  curations: [
-    {
-      id: '1',
-      title: 'Literarische Entdeckungen 2024',
-      curator: 'Lena Kraus',
-      bookCount: 12,
-      cover: 'https://i.ibb.co/chrm0Tbt/die-jahre.jpg'
-    }
-  ]
-};
+import { useFavorites, type FavoriteItem, type FrontendEntityType } from '../../components/favorites/FavoritesContext';
+import { ImageWithFallback } from '../../components/figma/ImageWithFallback';
 
 type TabType = 'curators' | 'authors' | 'publishers' | 'categories' | 'tags' | 'curations';
 
+const TAB_TO_ENTITY: Record<TabType, FrontendEntityType[]> = {
+  curators: ['creator'],
+  authors: ['author'],
+  publishers: ['publisher'],
+  categories: ['category'],
+  tags: ['tag', 'topic', 'genre'],
+  curations: ['storefront'],
+};
+
+function makeInitials(name: string): string {
+  return name.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
+}
+
+function FollowCard({ item, onUnfollow }: { item: FavoriteItem; onUnfollow: (item: FavoriteItem) => void }) {
+  return (
+    <div className="flex items-center gap-4 p-4 rounded-lg border bg-card" data-testid={`follow-card-${item.id}`}>
+      <div className="w-12 h-12 rounded-full flex-shrink-0 overflow-hidden bg-muted flex items-center justify-center">
+        {item.image ? (
+          <ImageWithFallback
+            src={item.image}
+            alt={item.title}
+            className="w-12 h-12 rounded-full object-cover"
+          />
+        ) : (
+          <span className="text-sm font-bold text-muted-foreground">{makeInitials(item.title)}</span>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-medium text-foreground truncate">{item.title}</h3>
+        {item.subtitle && (
+          <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
+        )}
+      </div>
+      <button
+        onClick={() => onUnfollow(item)}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-muted text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+        data-testid={`button-unfollow-${item.id}`}
+      >
+        <Heart className="w-3.5 h-3.5 fill-current" />
+        Entfolgen
+      </button>
+    </div>
+  );
+}
+
+function TagFollowCard({ item, onUnfollow }: { item: FavoriteItem; onUnfollow: (item: FavoriteItem) => void }) {
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg border bg-card" data-testid={`follow-tag-${item.id}`}>
+      <div
+        className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: item.color ? `${item.color}20` : '#247ba020' }}
+      >
+        <Tag className="w-4 h-4" style={{ color: item.color || '#247ba0' }} />
+      </div>
+      <span className="text-sm font-medium text-foreground flex-1 truncate">{item.title}</span>
+      <button
+        onClick={() => onUnfollow(item)}
+        className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+        data-testid={`button-unfollow-tag-${item.id}`}
+      >
+        <Heart className="w-3.5 h-3.5 fill-current" />
+      </button>
+    </div>
+  );
+}
+
 export function DashboardFollows() {
   const { t } = useTranslation();
+  const { favorites, isLoading, toggleFavorite } = useFavorites();
   const [activeTab, setActiveTab] = useState<TabType>('curators');
 
+  const groupedFavorites = useMemo(() => {
+    const groups: Record<TabType, FavoriteItem[]> = {
+      curators: [],
+      authors: [],
+      publishers: [],
+      categories: [],
+      tags: [],
+      curations: [],
+    };
+    for (const fav of favorites) {
+      for (const [tab, types] of Object.entries(TAB_TO_ENTITY)) {
+        if (types.includes(fav.type)) {
+          groups[tab as TabType].push(fav);
+          break;
+        }
+      }
+    }
+    return groups;
+  }, [favorites]);
+
   const tabs = [
-    { id: 'curators' as TabType, label: 'Kurator:innen', icon: Users, count: mockFollows.curators.length },
-    { id: 'authors' as TabType, label: 'Autor:innen', icon: BookOpen, count: mockFollows.authors.length },
-    { id: 'publishers' as TabType, label: 'Verlage', icon: Building2, count: mockFollows.publishers.length },
-    { id: 'categories' as TabType, label: 'Kategorien', icon: Tag, count: mockFollows.categories.length },
-    { id: 'tags' as TabType, label: 'Themen', icon: Tag, count: mockFollows.tags.length },
-    { id: 'curations' as TabType, label: 'Kurationen', icon: List, count: mockFollows.curations.length },
+    { id: 'curators' as TabType, label: t('dashboardPages.followsCurators', 'Kurator:innen'), icon: Users },
+    { id: 'authors' as TabType, label: t('dashboardPages.followsAuthors', 'Autor:innen'), icon: BookOpen },
+    { id: 'publishers' as TabType, label: t('dashboardPages.followsPublishers', 'Verlage'), icon: Building2 },
+    { id: 'categories' as TabType, label: t('dashboardPages.followsCategories', 'Kategorien'), icon: Tag },
+    { id: 'tags' as TabType, label: t('dashboardPages.followsTags', 'Themen'), icon: Tag },
+    { id: 'curations' as TabType, label: t('dashboardPages.followsCurations', 'Kurationen'), icon: List },
   ];
 
-  const totalFollows = Object.values(mockFollows).reduce((sum, arr) => sum + arr.length, 0);
+  const totalFollows = favorites.length;
+  const activeItems = groupedFavorites[activeTab];
 
-  if (totalFollows === 0) {
+  const handleUnfollow = async (item: FavoriteItem) => {
+    await toggleFavorite(item);
+  };
+
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <DashboardPageHeader
-          title={t('dashboardPages.followsTitle', 'Follower')}
-          description={t('dashboardPages.followsDesc', 'Verwalte wen du verfolgst und wer dir folgt.')}
+          title={t('dashboardPages.followsTitle', 'Follower & Folge ich')}
+          description={t('dashboardPages.followsDesc', 'Verwalte deine Follows.')}
         />
-        <DashboardEmptyState
-          icon={Heart}
-          title={t('dashboardPages.followsEmptyTitle', 'Noch keine Follows')}
-          description={t('dashboardPages.followsEmptyDesc', 'Folge Kurator:innen, Autor:innen und Verlagen, um ihre neuesten Empfehlungen in deinem Feed zu sehen.')}
-          actionLabel={t('dashboardPages.followsEmptyAction', 'Kurator:innen entdecken')}
-          onAction={() => { window.location.href = '/de-de/kuratoren'; }}
-        />
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
       </div>
     );
   }
@@ -102,193 +132,55 @@ export function DashboardFollows() {
   return (
     <div className="space-y-6">
       <DashboardPageHeader
-        title={t('dashboardPages.followsTitle', 'Follower')}
-        description={t('dashboardPages.followsDesc', 'Verwalte wen du verfolgst und wer dir folgt.')}
+        title={t('dashboardPages.followsTitle', 'Follower & Folge ich')}
+        description={t('dashboardPages.followsDesc', 'Verwalte deine Follows.')}
       />
 
-      <div className="rounded-lg p-4 shadow-sm border bg-card border-border">
-        <div className="flex flex-wrap gap-2">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-[#247ba0] text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                  }`}
-                >
-                  {tab.count}
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <Heart className="w-4 h-4 text-[#247ba0]" />
+        <span>{t('dashboardPages.followsTotal', '{{count}} Follows insgesamt', { count: totalFollows })}</span>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {tabs.map(tab => {
+          const Icon = tab.icon;
+          const count = groupedFavorites[tab.id].length;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${activeTab === tab.id ? 'bg-[#247ba0] text-white' : 'bg-muted text-muted-foreground hover:bg-muted/80'}`}
+              data-testid={`tab-follows-${tab.id}`}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+              {count > 0 && (
+                <span className={`inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-xs ${activeTab === tab.id ? 'bg-white/20 text-white' : 'bg-foreground/10 text-foreground/60'}`}>
+                  {count}
                 </span>
-              </button>
-            );
-          })}
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {activeItems.length === 0 ? (
+        <DashboardEmptyState
+          icon={Heart}
+          title={t('dashboardPages.noFollows', 'Noch keine Follows')}
+          description={t('dashboardPages.noFollowsDesc', 'Durchstöbere Bücher, Kurator:innen und Themen und folge, was dich interessiert. Deine Follows erscheinen dann hier.')}
+        />
+      ) : (
+        <div className={activeTab === 'tags' || activeTab === 'categories' ? 'grid grid-cols-1 sm:grid-cols-2 gap-2' : 'space-y-2'}>
+          {activeItems.map(item => (
+            activeTab === 'tags' || activeTab === 'categories' ? (
+              <TagFollowCard key={item.id} item={item} onUnfollow={handleUnfollow} />
+            ) : (
+              <FollowCard key={item.id} item={item} onUnfollow={handleUnfollow} />
+            )
+          ))}
         </div>
-      </div>
-
-      <div className="space-y-4">
-        {activeTab === 'curators' && mockFollows.curators.map((curator) => (
-          <div key={curator.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-start gap-4">
-              <img
-                src={curator.avatar}
-                alt={curator.name}
-                className="w-16 h-16 rounded-full object-cover flex-shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
-                  {curator.name}
-                </h3>
-                <p className="text-sm mb-2 font-medium text-[#247ba0]">
-                  {curator.focus}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {curator.description}
-                </p>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
-                <UserMinus className="w-4 h-4" />
-                <span className="hidden sm:inline">Entfolgen</span>
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {activeTab === 'authors' && mockFollows.authors.map((author) => (
-          <div key={author.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-start gap-4">
-              <img
-                src={author.avatar}
-                alt={author.name}
-                className="w-16 h-16 rounded-full object-cover flex-shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
-                  {author.name}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {author.description}
-                </p>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
-                <UserMinus className="w-4 h-4" />
-                <span className="hidden sm:inline">Entfolgen</span>
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {activeTab === 'publishers' && mockFollows.publishers.map((publisher) => (
-          <div key={publisher.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-start gap-4">
-              <img
-                src={publisher.logo}
-                alt={publisher.name}
-                className="w-16 h-16 rounded object-cover flex-shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
-                  {publisher.name}
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {publisher.description}
-                </p>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
-                <UserMinus className="w-4 h-4" />
-                <span className="hidden sm:inline">Entfolgen</span>
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {activeTab === 'categories' && mockFollows.categories.map((category) => (
-          <div key={category.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
-                  <Tag className="w-5 h-5 text-[#247ba0]" />
-                </div>
-                <div>
-                  <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
-                    {category.name}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {category.count} Bücher
-                  </p>
-                </div>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
-                <UserMinus className="w-4 h-4" />
-                <span className="hidden sm:inline">Entfolgen</span>
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {activeTab === 'tags' && mockFollows.tags.map((tag) => (
-          <div key={tag.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20">
-                  <Tag className="w-5 h-5 text-amber-500" />
-                </div>
-                <div>
-                  <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
-                    {tag.name}
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {tag.count} Bücher
-                  </p>
-                </div>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
-                <UserMinus className="w-4 h-4" />
-                <span className="hidden sm:inline">Entfolgen</span>
-              </button>
-            </div>
-          </div>
-        ))}
-
-        {activeTab === 'curations' && mockFollows.curations.map((curation) => (
-          <div key={curation.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
-            <div className="flex items-start gap-4">
-              <img
-                src={curation.cover}
-                alt={curation.title}
-                className="w-16 h-24 rounded object-cover flex-shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
-                  {curation.title}
-                </h3>
-                <p className="text-sm mb-1 text-gray-500 dark:text-gray-400">
-                  von {curation.curator}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {curation.bookCount} Bücher
-                </p>
-              </div>
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
-                <UserMinus className="w-4 h-4" />
-                <span className="hidden sm:inline">Entfolgen</span>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      )}
     </div>
   );
 }

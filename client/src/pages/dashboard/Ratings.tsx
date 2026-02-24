@@ -20,36 +20,7 @@ interface BookRating {
 
 export function DashboardRatings() {
   const { t } = useTranslation();
-  const [ratings, setRatings] = useState<BookRating[]>([
-    {
-      id: '1',
-      bookTitle: 'Die Jahre',
-      bookAuthor: 'Annie Ernaux',
-      rating: 5,
-      review: 'Ein beeindruckendes Werk über die Vergänglichkeit der Zeit und das kollektive Gedächtnis.',
-      status: 'published',
-      createdAt: '2025-01-10',
-      publishedAt: '2025-01-10'
-    },
-    {
-      id: '2',
-      bookTitle: 'Convenience Store Woman',
-      bookAuthor: 'Sayaka Murata',
-      rating: 4,
-      review: 'Faszinierende Geschichte über Konformität und Individualität.',
-      status: 'published',
-      createdAt: '2025-01-15',
-      publishedAt: '2025-01-15'
-    },
-    {
-      id: '3',
-      bookTitle: 'Der Zauberberg',
-      bookAuthor: 'Thomas Mann',
-      rating: 5,
-      status: 'draft',
-      createdAt: '2025-01-20'
-    }
-  ]);
+  const [ratings, setRatings] = useState<BookRating[]>([]);
 
   const [statusFilter, setStatusFilter] = useState<'all' | RatingStatus>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
