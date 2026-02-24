@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from '../../utils/routing';
 import { Search, X, ChevronDown, Loader2 } from 'lucide-react';
 import { BookCarouselItem, BookCarouselItemData } from '../book/BookCarouselItem';
@@ -15,7 +16,7 @@ import { InfoBar } from '../layout/InfoBar';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 
-type SortOption = 'popularity' | 'awarded' | 'hidden-gems' | 'az' | 'date';
+type SortOption = 'relevance' | 'newest' | 'most-awarded' | 'popular' | 'hidden-gems' | 'az' | 'date';
 
 interface FilterDropdownProps {
   label: string;
@@ -39,12 +40,24 @@ function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoadin
     if (!buttonRef.current || !panelRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
     const panelW = 320;
+    const panelH = panelRef.current.scrollHeight || 300;
     let left = rect.left;
     if (left + panelW > window.innerWidth - 8) {
       left = window.innerWidth - panelW - 8;
     }
     if (left < 8) left = 8;
-    panelRef.current.style.top = `${rect.bottom + 4}px`;
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    if (spaceBelow < panelH && spaceAbove > spaceBelow) {
+      const maxH = Math.min(spaceAbove, 384);
+      const top = Math.max(8, rect.top - maxH - 4);
+      panelRef.current.style.top = `${top}px`;
+      panelRef.current.style.maxHeight = `${maxH}px`;
+    } else {
+      const maxH = Math.min(spaceBelow, 384);
+      panelRef.current.style.top = `${rect.bottom + 4}px`;
+      panelRef.current.style.maxHeight = `${maxH}px`;
+    }
     panelRef.current.style.left = `${left}px`;
   }, []);
 
@@ -128,7 +141,7 @@ function FilterDropdown({ label, options, selected, onToggle, onSearch, isLoadin
       {isOpen && createPortal(
         <div
           ref={panelRef}
-          className="fixed w-80 max-h-96 overflow-hidden bg-card border shadow-lg flex flex-col"
+          className="fixed w-80 overflow-hidden bg-card border shadow-lg flex flex-col"
           style={{ borderColor: 'var(--color-border)', borderRadius: '4px', zIndex: 9999 }}
         >
           <div className="p-3 border-b" style={{ borderColor: 'var(--color-border)' }}>
@@ -255,13 +268,16 @@ function apiBookToCarouselItem(book: APIBook): BookCarouselItemData {
 }
 
 export function ShopPage() {
+  const { t } = useTranslation();
   const navigate = useSafeNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get('q') || '');
-  const [sortBy, setSortBy] = useState<SortOption>('popularity');
+  const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [books, setBooks] = useState<APIBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [showPopular, setShowPopular] = useState(false);
   const PAGE_SIZE = 50;
 
   const [selectedCurators, setSelectedCurators] = useState<string[]>([]);
@@ -273,8 +289,14 @@ export function ShopPage() {
   const [selectedAwards, setSelectedAwards] = useState<string[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
   const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
+  const [selectedPubTypes, setSelectedPubTypes] = useState<string[]>([]);
 
   const formatOptions = ['Hardcover', 'Softcover', 'eBook', 'Hörbuch'];
+  const pubTypeOptions = [
+    { id: 'indie', label: t('shop.pubTypeIndie', 'Indie-Verlag') },
+    { id: 'selfpublishing', label: t('shop.pubTypeSelfpub', 'Self-Publishing') },
+    { id: 'debut', label: t('shop.pubTypeDebut', 'Debütroman') },
+  ];
 
   const [curatorOptions, setCuratorOptions] = useState<string[]>([]);
   const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
@@ -293,6 +315,10 @@ export function ShopPage() {
   useEffect(() => {
     const safeFetch = (url: string) => fetch(url).then(r => r.json()).catch(() => ({ ok: false, data: [] }));
 
+    safeFetch('/api/books/score-thresholds').then(data => {
+      if (data?.ok) setShowPopular(data.showPopular === true);
+    });
+
     Promise.all([
       safeFetch('/api/curators'),
       safeFetch('/api/categories?include_drafts=true'),
@@ -303,7 +329,7 @@ export function ShopPage() {
       safeFetch('/api/awards'),
     ]).then(([curatorsData, catData, tagsData, mediaData, authorsData, pubsData, awardsData]) => {
       const curators = (curatorsData?.data || []).map((c: any) => c.name).filter(Boolean);
-      const uniqueCurators = [...new Set(curators)].sort((a: string, b: string) => a.localeCompare(b, 'de'));
+      const uniqueCurators = Array.from(new Set<string>(curators)).sort((a, b) => a.localeCompare(b, 'de'));
       if (uniqueCurators.length > 0) setCuratorOptions(uniqueCurators);
 
       const cats = (catData?.data || []).map((c: any) => c.name || c).sort((a: string, b: string) => a.localeCompare(b, 'de'));
@@ -321,7 +347,7 @@ export function ShopPage() {
       const awardNames = new Set<string>();
       (tags || []).filter((t: any) => t.tag_type === 'award').forEach((t: any) => awardNames.add(t.name));
       (awardsData?.data || []).forEach((a: any) => { if (a.name) awardNames.add(a.name); });
-      const sortedAwards = [...awardNames].sort((a, b) => a.localeCompare(b, 'de'));
+      const sortedAwards = Array.from(awardNames).sort((a, b) => a.localeCompare(b, 'de'));
       if (sortedAwards.length > 0) setAwardOptions(sortedAwards);
 
       const media = (mediaData?.data || []).map((m: any) => m.name || m.title).filter(Boolean).sort((a: string, b: string) => a.localeCompare(b, 'de'));
@@ -369,6 +395,7 @@ export function ShopPage() {
       if (selectedThemes.length > 0) params.set('themes', selectedThemes.join(','));
       if (selectedCurators.length > 0) params.set('curators', selectedCurators.join(','));
       if (selectedMedia.length > 0) params.set('podcasts', selectedMedia.join(','));
+      if (selectedPubTypes.length > 0) params.set('pubTypes', selectedPubTypes.join(','));
 
       const res = await fetch(`/api/books?${params.toString()}`);
       const data = await res.json();
@@ -376,6 +403,7 @@ export function ShopPage() {
         const fetched: APIBook[] = data.data || [];
         if (offset === 0) {
           setBooks(fetched);
+          setTotalCount(data.total ?? fetched.length);
         } else {
           setBooks(prev => [...prev, ...fetched]);
         }
@@ -385,7 +413,7 @@ export function ShopPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, sortBy, selectedAuthors, selectedPublishers, selectedAwards, selectedCategories, selectedThemes, selectedCurators, selectedMedia]);
+  }, [searchQuery, sortBy, selectedAuthors, selectedPublishers, selectedAwards, selectedCategories, selectedThemes, selectedCurators, selectedMedia, selectedPubTypes]);
 
   useEffect(() => {
     setPage(0);
@@ -419,7 +447,7 @@ export function ShopPage() {
 
   const hasActiveFilters = selectedCurators.length > 0 || selectedCategories.length > 0 || selectedThemes.length > 0 ||
     selectedSeries.length > 0 || selectedPublishers.length > 0 || selectedAuthors.length > 0 ||
-    selectedAwards.length > 0 || selectedMedia.length > 0 || selectedFormats.length > 0;
+    selectedAwards.length > 0 || selectedMedia.length > 0 || selectedFormats.length > 0 || selectedPubTypes.length > 0;
 
   const clearAllFilters = () => {
     setSelectedCurators([]);
@@ -431,14 +459,16 @@ export function ShopPage() {
     setSelectedAwards([]);
     setSelectedMedia([]);
     setSelectedFormats([]);
+    setSelectedPubTypes([]);
   };
 
   const sortOptions: { id: SortOption; label: string }[] = [
-    { id: 'popularity', label: 'Beliebtheit' },
-    { id: 'awarded', label: 'Auszeichnungen' },
-    { id: 'hidden-gems', label: 'Hidden Gems' },
-    { id: 'az', label: 'A-Z' },
-    { id: 'date', label: 'Veröffentlichung' },
+    { id: 'relevance', label: t('shop.sortRelevance', 'Relevanz') },
+    { id: 'newest', label: t('shop.sortNewest', 'Neuerscheinungen') },
+    { id: 'most-awarded', label: t('shop.sortAwarded', 'Auszeichnungen') },
+    ...(showPopular ? [{ id: 'popular' as SortOption, label: t('shop.sortPopular', 'Beliebtheit') }] : []),
+    { id: 'hidden-gems', label: t('shop.sortHiddenGems', 'Hidden Gems') },
+    { id: 'az', label: t('shop.sortAZ', 'A–Z') },
   ];
 
   const allSelectedFilters = [
@@ -451,6 +481,7 @@ export function ShopPage() {
     ...selectedAwards.map(v => ({ label: v, type: 'award' as const })),
     ...selectedMedia.map(v => ({ label: v, type: 'media' as const })),
     ...selectedFormats.map(v => ({ label: v, type: 'format' as const })),
+    ...selectedPubTypes.map(v => ({ label: pubTypeOptions.find(p => p.id === v)?.label || v, type: 'pubtype' as const })),
   ];
 
   return (
@@ -577,6 +608,16 @@ export function ShopPage() {
               onToggle={(v) => toggleFilter(selectedFormats, v, setSelectedFormats)}
               totalLabel="Medienarten"
             />
+            <FilterDropdown
+              label={t('shop.pubTypeLabel', 'Verlagstyp')}
+              options={pubTypeOptions.map(p => p.label)}
+              selected={selectedPubTypes.map(id => pubTypeOptions.find(p => p.id === id)?.label || id)}
+              onToggle={(label) => {
+                const opt = pubTypeOptions.find(p => p.label === label);
+                if (opt) toggleFilter(selectedPubTypes, opt.id, setSelectedPubTypes);
+              }}
+              totalLabel={t('shop.pubTypeLabel', 'Verlagstypen')}
+            />
             {hasActiveFilters && (
               <button
                 onClick={clearAllFilters}
@@ -625,6 +666,10 @@ export function ShopPage() {
                     if (f.type === 'award') toggleFilter(selectedAwards, f.label, setSelectedAwards);
                     if (f.type === 'media') toggleFilter(selectedMedia, f.label, setSelectedMedia);
                     if (f.type === 'format') toggleFilter(selectedFormats, f.label, setSelectedFormats);
+                    if (f.type === 'pubtype') {
+                      const opt = pubTypeOptions.find(p => p.label === f.label);
+                      toggleFilter(selectedPubTypes, opt?.id || f.label, setSelectedPubTypes);
+                    }
                   }}
                 >
                   {f.label}
@@ -638,13 +683,16 @@ export function ShopPage() {
 
       <Section className="!py-6 md:!py-8 px-2 md:px-4">
         <Container>
-          {searchQuery && (
-            <div className="mb-4">
-              <Text variant="base" className="text-foreground/70">
-                {isLoading ? 'Suche...' : `${sortedBooks.length} Ergebnis${sortedBooks.length !== 1 ? 'se' : ''} für "${searchQuery}"`}
-              </Text>
-            </div>
-          )}
+          <div className="mb-4">
+            <Text variant="base" className="text-foreground/70" data-testid="text-result-count">
+              {isLoading && books.length === 0
+                ? t('shop.searching', 'Suche...')
+                : searchQuery
+                  ? t('shop.searchResults', '{{count}} Ergebnis{{plural}} für "{{query}}"', { count: totalCount, plural: totalCount !== 1 ? 'se' : '', query: searchQuery })
+                  : t('shop.totalBooks', '{{count}} Bücher', { count: totalCount })
+              }
+            </Text>
+          </div>
 
           {isLoading && books.length === 0 ? (
             <div className="flex items-center justify-center py-20">
@@ -662,7 +710,7 @@ export function ShopPage() {
                 ))}
               </div>
 
-              {!searchQuery && sortedBooks.length >= PAGE_SIZE && (
+              {sortedBooks.length < totalCount && (
                 <div className="flex justify-center mt-8">
                   <Button
                     variant="outline"
@@ -673,10 +721,10 @@ export function ShopPage() {
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        Laden...
+                        {t('shop.loading', 'Laden...')}
                       </>
                     ) : (
-                      'Mehr Bücher laden'
+                      t('shop.loadMore', 'Mehr Bücher laden ({{loaded}} von {{total}})', { loaded: sortedBooks.length, total: totalCount })
                     )}
                   </Button>
                 </div>

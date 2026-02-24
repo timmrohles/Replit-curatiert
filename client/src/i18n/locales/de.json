@@ -665,5 +665,22 @@
     "emptyContentSourcesAction": "Erste Quelle hinzufügen",
     "authorRequestTitle": "Autor:in werden",
     "authorRequestDesc": "Suche deinen Namen in unserer Buchdatenbank. Falls du dort gelistet bist, können wir dein Profil mit deinen Büchern verknüpfen."
+  },
+  "shop": {
+    "sortRelevance": "Relevanz",
+    "sortNewest": "Neuerscheinungen",
+    "sortAwarded": "Auszeichnungen",
+    "sortPopular": "Beliebtheit",
+    "sortHiddenGems": "Hidden Gems",
+    "sortAZ": "A–Z",
+    "pubTypeLabel": "Verlagstyp",
+    "pubTypeIndie": "Indie-Verlag",
+    "pubTypeSelfpub": "Self-Publishing",
+    "pubTypeDebut": "Debütroman",
+    "searching": "Suche...",
+    "searchResults": "{{count}} Ergebnis{{plural}} für \"{{query}}\"",
+    "totalBooks": "{{count}} Bücher",
+    "loading": "Laden...",
+    "loadMore": "Mehr Bücher laden ({{loaded}} von {{total}})"
   }
 }

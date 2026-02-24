@@ -665,5 +665,22 @@
     "emptyContentSourcesAction": "Add first source",
     "authorRequestTitle": "Become an Author",
     "authorRequestDesc": "Search for your name in our book database. If listed, we can link your profile with your books."
+  },
+  "shop": {
+    "sortRelevance": "Relevance",
+    "sortNewest": "New Releases",
+    "sortAwarded": "Awards",
+    "sortPopular": "Popularity",
+    "sortHiddenGems": "Hidden Gems",
+    "sortAZ": "A–Z",
+    "pubTypeLabel": "Publisher Type",
+    "pubTypeIndie": "Indie Publisher",
+    "pubTypeSelfpub": "Self-Publishing",
+    "pubTypeDebut": "Debut Novel",
+    "searching": "Searching...",
+    "searchResults": "{{count}} result{{plural}} for \"{{query}}\"",
+    "totalBooks": "{{count}} Books",
+    "loading": "Loading...",
+    "loadMore": "Load more books ({{loaded}} of {{total}})"
   }
 }
