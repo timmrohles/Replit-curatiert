@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Heart, UserMinus, Users, BookOpen, Building2, Tag, List } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
+import { DashboardEmptyState } from '../../components/dashboard/DashboardEmptyState';
 
-// Mock data
 const mockFollows = {
   curators: [
     {
@@ -79,6 +79,26 @@ export function DashboardFollows() {
     { id: 'curations' as TabType, label: 'Kurationen', icon: List, count: mockFollows.curations.length },
   ];
 
+  const totalFollows = Object.values(mockFollows).reduce((sum, arr) => sum + arr.length, 0);
+
+  if (totalFollows === 0) {
+    return (
+      <div className="space-y-6">
+        <DashboardPageHeader
+          title={t('dashboardPages.followsTitle', 'Follower')}
+          description={t('dashboardPages.followsDesc', 'Verwalte wen du verfolgst und wer dir folgt.')}
+        />
+        <DashboardEmptyState
+          icon={Heart}
+          title={t('dashboardPages.followsEmptyTitle', 'Noch keine Follows')}
+          description={t('dashboardPages.followsEmptyDesc', 'Folge Kurator:innen, Autor:innen und Verlagen, um ihre neuesten Empfehlungen in deinem Feed zu sehen.')}
+          actionLabel={t('dashboardPages.followsEmptyAction', 'Kurator:innen entdecken')}
+          onAction={() => { window.location.href = '/de-de/kuratoren'; }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <DashboardPageHeader
@@ -86,8 +106,7 @@ export function DashboardFollows() {
         description={t('dashboardPages.followsDesc', 'Verwalte wen du verfolgst und wer dir folgt.')}
       />
 
-      {/* Tabs */}
-      <div className="rounded-lg p-4 shadow-sm border" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+      <div className="rounded-lg p-4 shadow-sm border bg-card border-border">
         <div className="flex flex-wrap gap-2">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -96,20 +115,20 @@ export function DashboardFollows() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                style={{
-                  backgroundColor: isActive ? '#247ba0' : '#F3F4F6',
-                  color: isActive ? '#FFFFFF' : '#3A3A3A'
-                }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  isActive
+                    ? 'bg-[#247ba0] text-white'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                }`}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
-                <span 
-                  className="px-2 py-0.5 rounded-full text-xs"
-                  style={{
-                    backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : '#E5E7EB',
-                    color: isActive ? '#FFFFFF' : '#6B7280'
-                  }}
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                  }`}
                 >
                   {tab.count}
                 </span>
@@ -119,31 +138,27 @@ export function DashboardFollows() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="space-y-4">
         {activeTab === 'curators' && mockFollows.curators.map((curator) => (
-          <div key={curator.id} className="rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow duration-200" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+          <div key={curator.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
             <div className="flex items-start gap-4">
-              <img 
-                src={curator.avatar} 
+              <img
+                src={curator.avatar}
                 alt={curator.name}
                 className="w-16 h-16 rounded-full object-cover flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <h3 className="mb-1" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+                <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
                   {curator.name}
                 </h3>
-                <p className="text-sm mb-2" style={{ color: '#247ba0', fontWeight: '500' }}>
+                <p className="text-sm mb-2 font-medium text-[#247ba0]">
                   {curator.focus}
                 </p>
-                <p className="text-sm" style={{ color: '#6B7280' }}>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {curator.description}
                 </p>
               </div>
-              <button
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200"
-                style={{ backgroundColor: '#FEE2E2', color: '#EF4444' }}
-              >
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
                 <UserMinus className="w-4 h-4" />
                 <span className="hidden sm:inline">Entfolgen</span>
               </button>
@@ -152,25 +167,22 @@ export function DashboardFollows() {
         ))}
 
         {activeTab === 'authors' && mockFollows.authors.map((author) => (
-          <div key={author.id} className="rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow duration-200" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+          <div key={author.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
             <div className="flex items-start gap-4">
-              <img 
-                src={author.avatar} 
+              <img
+                src={author.avatar}
                 alt={author.name}
                 className="w-16 h-16 rounded-full object-cover flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <h3 className="mb-1" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+                <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
                   {author.name}
                 </h3>
-                <p className="text-sm" style={{ color: '#6B7280' }}>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {author.description}
                 </p>
               </div>
-              <button
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200"
-                style={{ backgroundColor: '#FEE2E2', color: '#EF4444' }}
-              >
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
                 <UserMinus className="w-4 h-4" />
                 <span className="hidden sm:inline">Entfolgen</span>
               </button>
@@ -179,25 +191,22 @@ export function DashboardFollows() {
         ))}
 
         {activeTab === 'publishers' && mockFollows.publishers.map((publisher) => (
-          <div key={publisher.id} className="rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow duration-200" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+          <div key={publisher.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
             <div className="flex items-start gap-4">
-              <img 
-                src={publisher.logo} 
+              <img
+                src={publisher.logo}
                 alt={publisher.name}
                 className="w-16 h-16 rounded object-cover flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <h3 className="mb-1" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+                <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
                   {publisher.name}
                 </h3>
-                <p className="text-sm" style={{ color: '#6B7280' }}>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {publisher.description}
                 </p>
               </div>
-              <button
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200"
-                style={{ backgroundColor: '#FEE2E2', color: '#EF4444' }}
-              >
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
                 <UserMinus className="w-4 h-4" />
                 <span className="hidden sm:inline">Entfolgen</span>
               </button>
@@ -206,25 +215,22 @@ export function DashboardFollows() {
         ))}
 
         {activeTab === 'categories' && mockFollows.categories.map((category) => (
-          <div key={category.id} className="rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow duration-200" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+          <div key={category.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg" style={{ backgroundColor: '#EEF2FF' }}>
-                  <Tag className="w-5 h-5" style={{ color: '#247ba0' }} />
+                <div className="p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+                  <Tag className="w-5 h-5 text-[#247ba0]" />
                 </div>
                 <div>
-                  <h3 className="mb-1" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+                  <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
                     {category.name}
                   </h3>
-                  <p className="text-sm" style={{ color: '#6B7280' }}>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {category.count} Bücher
                   </p>
                 </div>
               </div>
-              <button
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200"
-                style={{ backgroundColor: '#FEE2E2', color: '#EF4444' }}
-              >
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
                 <UserMinus className="w-4 h-4" />
                 <span className="hidden sm:inline">Entfolgen</span>
               </button>
@@ -233,25 +239,22 @@ export function DashboardFollows() {
         ))}
 
         {activeTab === 'tags' && mockFollows.tags.map((tag) => (
-          <div key={tag.id} className="rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow duration-200" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+          <div key={tag.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-lg" style={{ backgroundColor: '#FEF3C7' }}>
-                  <Tag className="w-5 h-5" style={{ color: '#F59E0B' }} />
+                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20">
+                  <Tag className="w-5 h-5 text-amber-500" />
                 </div>
                 <div>
-                  <h3 className="mb-1" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+                  <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
                     {tag.name}
                   </h3>
-                  <p className="text-sm" style={{ color: '#6B7280' }}>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {tag.count} Bücher
                   </p>
                 </div>
               </div>
-              <button
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200"
-                style={{ backgroundColor: '#FEE2E2', color: '#EF4444' }}
-              >
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
                 <UserMinus className="w-4 h-4" />
                 <span className="hidden sm:inline">Entfolgen</span>
               </button>
@@ -260,28 +263,25 @@ export function DashboardFollows() {
         ))}
 
         {activeTab === 'curations' && mockFollows.curations.map((curation) => (
-          <div key={curation.id} className="rounded-lg p-6 shadow-sm border hover:shadow-md transition-shadow duration-200" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+          <div key={curation.id} className="rounded-lg p-6 shadow-sm border bg-card border-border hover:shadow-md transition-shadow duration-200">
             <div className="flex items-start gap-4">
-              <img 
-                src={curation.cover} 
+              <img
+                src={curation.cover}
                 alt={curation.title}
                 className="w-16 h-24 rounded object-cover flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
-                <h3 className="mb-1" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
+                <h3 className="mb-1 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
                   {curation.title}
                 </h3>
-                <p className="text-sm mb-1" style={{ color: '#6B7280' }}>
+                <p className="text-sm mb-1 text-gray-500 dark:text-gray-400">
                   von {curation.curator}
                 </p>
-                <p className="text-sm" style={{ color: '#6B7280' }}>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {curation.bookCount} Bücher
                 </p>
               </div>
-              <button
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200"
-                style={{ backgroundColor: '#FEE2E2', color: '#EF4444' }}
-              >
+              <button className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-all duration-200 bg-red-50 dark:bg-red-900/20 text-red-500">
                 <UserMinus className="w-4 h-4" />
                 <span className="hidden sm:inline">Entfolgen</span>
               </button>
