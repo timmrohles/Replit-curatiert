@@ -66,12 +66,7 @@ export function CreatorCarouselSection({ section, books = [], className = '', ca
       .filter(Boolean) as string[];
   }, [config.books?.query?.include?.tagIds, onixTags]);
 
-  const resolvedCategoryName = useMemo(() => {
-    if (config.category) return config.category;
-    if (!categoryId || onixTags.length === 0) return undefined;
-    const tag = onixTags.find(t => String(t.id) === String(categoryId));
-    return tag ? (tag as any).displayName || tag.name : undefined;
-  }, [config.category, categoryId, onixTags]);
+  const resolvedCategoryName = config.category || undefined;
 
   const mappedBooks = books.map(mapBookForCarousel);
 
