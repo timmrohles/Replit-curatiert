@@ -1685,6 +1685,159 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
             )}
 
             {/* ============================================================================ */}
+            {/* BOOK GRID FILTERED CONFIG EDITOR */}
+            {/* ============================================================================ */}
+
+            {editingSection.type === 'book_grid_filtered' && (
+              <div className="space-y-4 pt-4 border-t">
+                <Heading variant="h5" className="text-sm font-semibold">Buch-Grid (gefiltert) Konfiguration</Heading>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="z.B. Debüts in Belletristik"
+                    value={editingSection.config?.title || ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, title: e.target.value }
+                    })}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Description</label>
+                  <textarea
+                    placeholder="z.B. Neue Stimmen in der Belletristik"
+                    value={editingSection.config?.description || ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, description: e.target.value }
+                    })}
+                    rows={2}
+                    className="w-full px-3 py-2 border rounded text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Sortierung / Filter-Preset
+                  </label>
+                  <Select
+                    value={editingSection.config?.filterPreset || 'relevance'}
+                    onValueChange={(value) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, filterPreset: value }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="relevance">Relevanz</SelectItem>
+                      <SelectItem value="newest">Neueste</SelectItem>
+                      <SelectItem value="most-awarded">Buchpreise</SelectItem>
+                      <SelectItem value="popular">Beliebt</SelectItem>
+                      <SelectItem value="hidden-gems">Hidden Gems</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">Bestimmt, welche Bücher in welcher Reihenfolge angezeigt werden.</p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Anzahl Bücher</label>
+                  <Select
+                    value={String(editingSection.config?.limit || 12)}
+                    onValueChange={(value) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, limit: parseInt(value) }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="6">6 Bücher</SelectItem>
+                      <SelectItem value="12">12 Bücher (Standard)</SelectItem>
+                      <SelectItem value="18">18 Bücher</SelectItem>
+                      <SelectItem value="24">24 Bücher</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
+                  <strong>💡 Hinweis:</strong> Auf Kategorie-Seiten wird automatisch nach der Seitenkategorie gefiltert.
+                  Die Sortierung bestimmt zusätzlich die Reihenfolge der Bücher.
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================================ */}
+            {/* USER CURATIONS CONFIG EDITOR */}
+            {/* ============================================================================ */}
+
+            {editingSection.type === 'user_curations' && (
+              <div className="space-y-4 pt-4 border-t">
+                <Heading variant="h5" className="text-sm font-semibold">Nutzer-Kurationen Konfiguration</Heading>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Title</label>
+                  <Input
+                    type="text"
+                    placeholder="z.B. Kurationen unserer Community"
+                    value={editingSection.config?.title || ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, title: e.target.value }
+                    })}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Description</label>
+                  <textarea
+                    placeholder="z.B. Entdecke Bücherlisten zu diesem Thema"
+                    value={editingSection.config?.description || ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, description: e.target.value }
+                    })}
+                    rows={2}
+                    className="w-full px-3 py-2 border rounded text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Anzahl Kurationen</label>
+                  <Select
+                    value={String(editingSection.config?.limit || 6)}
+                    onValueChange={(value) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, limit: parseInt(value) }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3">3 Kurationen</SelectItem>
+                      <SelectItem value="6">6 Kurationen (Standard)</SelectItem>
+                      <SelectItem value="9">9 Kurationen</SelectItem>
+                      <SelectItem value="12">12 Kurationen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
+                  <strong>💡 Hinweis:</strong> Auf Kategorie-Seiten werden automatisch nur Kurationen angezeigt,
+                  die zur Seitenkategorie passen.
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================================ */}
             {/* ALL OTHER BOOK SECTIONS (book_grid, book_list_row, book_featured) */}
             {/* ============================================================================ */}
             

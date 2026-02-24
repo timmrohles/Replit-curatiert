@@ -17,11 +17,10 @@ interface CurationItem {
   id: number;
   title: string;
   description: string | null;
-  cover_image_url: string | null;
   book_count: number;
   user_name: string;
   user_avatar: string | null;
-  slug: string;
+  tags?: string[];
 }
 
 export function UserCurationsSection({ section, categoryId, className = '' }: UserCurationsSectionProps) {
@@ -89,7 +88,7 @@ export function UserCurationsSection({ section, categoryId, className = '' }: Us
             {curations.map((curation) => (
               <button
                 key={curation.id}
-                onClick={() => navigate(`${localePrefix}/kurationen/${curation.slug || curation.id}`)}
+                onClick={() => navigate(`${localePrefix}/kurationen/${curation.id}`)}
                 className="group text-left rounded-xl border border-border bg-card p-5 transition-all hover:shadow-md hover:border-foreground/20"
                 data-testid={`curation-card-${curation.id}`}
               >

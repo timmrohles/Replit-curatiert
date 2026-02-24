@@ -3061,13 +3061,32 @@ export async function registerRoutes(
       }
 
       if (categories.length > 0) {
-        const catPlaceholders = categories.map(() => `$${paramIdx++}`).join(',');
-        conditions.push(`b.id IN (
-          SELECT bt.book_id FROM book_tags bt
-          JOIN tags t ON bt.tag_id = t.id
-          WHERE t.tag_type IN ('genre') AND t.name IN (${catPlaceholders}) AND bt.deleted_at IS NULL
-        )`);
-        categories.forEach(c => params.push(c));
+        const allNumeric = categories.every(c => /^\d+$/.test(c));
+        if (allNumeric) {
+          const ph1 = categories.map(() => `$${paramIdx++}`).join(',');
+          const ph2 = categories.map(() => `$${paramIdx++}`).join(',');
+          conditions.push(`(b.id IN (
+            SELECT bt.book_id FROM book_tags bt WHERE bt.tag_id IN (${ph1}) AND bt.deleted_at IS NULL
+          ) OR b.id IN (
+            SELECT bot.book_id FROM book_onix_tags bot WHERE bot.tag_id IN (${ph2})
+          ))`);
+          categories.forEach(c => params.push(parseInt(c)));
+          categories.forEach(c => params.push(parseInt(c)));
+        } else {
+          const ph1 = categories.map(() => `$${paramIdx++}`).join(',');
+          const ph2 = categories.map(() => `$${paramIdx++}`).join(',');
+          conditions.push(`(b.id IN (
+            SELECT bt.book_id FROM book_tags bt
+            JOIN tags t ON bt.tag_id = t.id
+            WHERE t.tag_type IN ('genre') AND t.name IN (${ph1}) AND bt.deleted_at IS NULL
+          ) OR b.id IN (
+            SELECT bot.book_id FROM book_onix_tags bot
+            JOIN tags t2 ON bot.tag_id = t2.id
+            WHERE t2.name IN (${ph2})
+          ))`);
+          categories.forEach(c => params.push(c));
+          categories.forEach(c => params.push(c));
+        }
       }
 
       if (themes.length > 0) {
@@ -7530,6 +7549,48 @@ export async function registerRoutes(
       });
     } catch (error) {
       log.error('Dashboard KPIs error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // PUBLIC CURATIONS (for CMS sections)
+  // ==================================================================
+  app.get('/api/public/curations', async (req: Request, res: Response) => {
+    try {
+      const limit = Math.min(parseInt((req.query.limit as string) || '10'), 50);
+      const offset = parseInt((req.query.offset as string) || '0');
+      const categoryId = req.query.category_id ? parseInt(req.query.category_id as string) : null;
+      const status = (req.query.status as string) || 'published';
+
+      let query = `
+        SELECT uc.id, uc.title, uc.description, uc.category_id, uc.tags,
+               (SELECT COUNT(*) FROM curation_books cb WHERE cb.curation_id = uc.id) AS book_count,
+               COALESCE(bp.display_name, uc.user_id) AS user_name,
+               bp.avatar_url AS user_avatar
+        FROM user_curations uc
+        LEFT JOIN bookstore_profiles bp ON bp.user_id = uc.user_id
+        WHERE 1=1
+      `;
+      const params: any[] = [];
+      let paramIdx = 1;
+
+      if (status === 'published') {
+        query += ` AND uc.is_published = true`;
+      }
+
+      if (categoryId) {
+        query += ` AND uc.category_id = $${paramIdx++}`;
+        params.push(categoryId);
+      }
+
+      query += ` ORDER BY uc.created_at DESC LIMIT $${paramIdx++} OFFSET $${paramIdx++}`;
+      params.push(limit, offset);
+
+      const result = await queryDB(query, params);
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Public curations error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });
