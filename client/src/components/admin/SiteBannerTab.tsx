@@ -245,10 +245,10 @@ export function SiteBannerTab() {
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="space-y-2">
-            <Heading as="h2" variant="h3" className="text-white">
+            <Heading as="h2" variant="h3" className="text-gray-900">
               Site Banner Verwaltung
             </Heading>
-            <Text variant="small" className="text-white/70">
+            <Text variant="small" className="text-gray-600">
               Verwalte Banner, die auf der Seite angezeigt werden (top/bottom)
             </Text>
           </div>
@@ -267,21 +267,21 @@ export function SiteBannerTab() {
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-red-500/10 border-2 border-red-500/50 rounded-lg">
+        <div className="flex items-center gap-3 p-4 bg-red-900/40 border-2 border-red-500/50 rounded-lg">
           <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-400" />
-          <Text variant="small" className="text-red-300">{error}</Text>
+          <Text variant="small" className="text-red-400">{error}</Text>
         </div>
       )}
 
       {success && (
-        <div className="flex items-center gap-3 p-4 bg-green-500/10 border-2 border-green-500/50 rounded-lg">
+        <div className="flex items-center gap-3 p-4 bg-green-900/40 border-2 border-green-500/50 rounded-lg">
           <CheckCircle className="w-5 h-5 flex-shrink-0 text-green-400" />
-          <Text variant="small" className="text-green-300">{success}</Text>
+          <Text variant="small" className="text-green-400">{success}</Text>
         </div>
       )}
 
       {editingBanner && (
-        <div className="border-2 border-white/20 rounded-xl p-6 bg-charcoal/80 backdrop-blur-sm space-y-6 shadow-2xl">
+        <div className="border-2 border-gray-700 rounded-xl p-6 bg-[#2a2a2a] space-y-6 shadow-2xl">
           <div className="flex items-center justify-between pb-4 border-b border-white/10">
             <Heading as="h3" variant="h5" className="text-white">
               {isCreating ? 'Neuen Banner erstellen' : `Banner bearbeiten: ${editingBanner.name}`}
@@ -295,7 +295,7 @@ export function SiteBannerTab() {
           </div>
 
           {editingBanner.message && (
-            <div className="border-2 border-gold/30 rounded-lg p-4 bg-charcoal/50 space-y-2">
+            <div className="border-2 border-gold/30 rounded-lg p-4 bg-[#1f1f1f] space-y-2">
               <Text variant="xs" className="text-white/60 uppercase tracking-wider">
                 Vorschau:
               </Text>
@@ -350,7 +350,7 @@ export function SiteBannerTab() {
                 value={editingBanner.name}
                 onChange={(e) => setEditingBanner({ ...editingBanner, name: e.target.value })}
                 placeholder="z.B. Beta-Hinweis, Sale-Banner"
-                className="w-full px-4 py-2.5 bg-white/10 border-2 border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                className="w-full px-4 py-2.5 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
                 data-testid="input-banner-name"
               />
             </div>
@@ -362,11 +362,11 @@ export function SiteBannerTab() {
               <select
                 value={editingBanner.position}
                 onChange={(e) => setEditingBanner({ ...editingBanner, position: e.target.value as 'top' | 'bottom' })}
-                className="w-full px-4 py-2.5 bg-white/10 border-2 border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                className="w-full px-4 py-2.5 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
                 data-testid="select-banner-position"
               >
-                <option value="top">Oben (über Header)</option>
-                <option value="bottom">Unten (über Footer)</option>
+                <option value="top" className="bg-[#3a3a3a] text-white">Oben (über Header)</option>
+                <option value="bottom" className="bg-[#3a3a3a] text-white">Unten (über Footer)</option>
               </select>
             </div>
 
@@ -377,12 +377,12 @@ export function SiteBannerTab() {
               <select
                 value={editingBanner.status}
                 onChange={(e) => setEditingBanner({ ...editingBanner, status: e.target.value as Banner['status'] })}
-                className="w-full px-4 py-2.5 bg-white/10 border-2 border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                className="w-full px-4 py-2.5 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
                 data-testid="select-banner-status"
               >
-                <option value="draft">Entwurf</option>
-                <option value="published">Veröffentlicht</option>
-                <option value="archived">Archiviert</option>
+                <option value="draft" className="bg-[#3a3a3a] text-white">Entwurf</option>
+                <option value="published" className="bg-[#3a3a3a] text-white">Veröffentlicht</option>
+                <option value="archived" className="bg-[#3a3a3a] text-white">Archiviert</option>
               </select>
             </div>
 
@@ -416,7 +416,7 @@ export function SiteBannerTab() {
               onChange={(e) => setEditingBanner({ ...editingBanner, message: e.target.value })}
               placeholder="z.B. Diese Seite befindet sich derzeit in der Beta-Phase"
               rows={3}
-              className="w-full px-4 py-2.5 bg-white/10 border-2 border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all resize-none"
+              className="w-full px-4 py-2.5 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all resize-none"
               data-testid="input-banner-message"
             />
           </div>
@@ -431,7 +431,7 @@ export function SiteBannerTab() {
               onChange={(e) => setEditingBanner({ ...editingBanner, badge_text: e.target.value })}
               placeholder="z.B. NEU, BETA, SALE"
               maxLength={50}
-              className="w-full px-4 py-2.5 bg-white/10 border-2 border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+              className="w-full px-4 py-2.5 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
               data-testid="input-banner-badge"
             />
           </div>
@@ -456,7 +456,7 @@ export function SiteBannerTab() {
                       bg_color: preset.bg,
                       text_color: preset.text,
                     })}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/20 hover:border-white/40 transition-all"
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-600 hover:border-gray-400 transition-all"
                     title={preset.name}
                   >
                     <span
@@ -479,14 +479,14 @@ export function SiteBannerTab() {
                     type="color"
                     value={editingBanner.bg_color}
                     onChange={(e) => setEditingBanner({ ...editingBanner, bg_color: e.target.value })}
-                    className="w-10 h-10 rounded-lg border-2 border-white/20 cursor-pointer bg-transparent"
+                    className="w-10 h-10 rounded-lg border-2 border-gray-600 cursor-pointer bg-transparent"
                     data-testid="input-banner-bg-color"
                   />
                   <input
                     type="text"
                     value={editingBanner.bg_color}
                     onChange={(e) => setEditingBanner({ ...editingBanner, bg_color: e.target.value })}
-                    className="flex-1 px-3 py-2 bg-white/10 border-2 border-white/20 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-gold"
+                    className="flex-1 px-3 py-2 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-gold"
                   />
                 </div>
               </div>
@@ -500,14 +500,14 @@ export function SiteBannerTab() {
                     type="color"
                     value={editingBanner.text_color}
                     onChange={(e) => setEditingBanner({ ...editingBanner, text_color: e.target.value })}
-                    className="w-10 h-10 rounded-lg border-2 border-white/20 cursor-pointer bg-transparent"
+                    className="w-10 h-10 rounded-lg border-2 border-gray-600 cursor-pointer bg-transparent"
                     data-testid="input-banner-text-color"
                   />
                   <input
                     type="text"
                     value={editingBanner.text_color}
                     onChange={(e) => setEditingBanner({ ...editingBanner, text_color: e.target.value })}
-                    className="flex-1 px-3 py-2 bg-white/10 border-2 border-white/20 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-gold"
+                    className="flex-1 px-3 py-2 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-gold"
                   />
                 </div>
               </div>
@@ -521,14 +521,14 @@ export function SiteBannerTab() {
                     type="color"
                     value={editingBanner.badge_bg_color}
                     onChange={(e) => setEditingBanner({ ...editingBanner, badge_bg_color: e.target.value })}
-                    className="w-10 h-10 rounded-lg border-2 border-white/20 cursor-pointer bg-transparent"
+                    className="w-10 h-10 rounded-lg border-2 border-gray-600 cursor-pointer bg-transparent"
                     data-testid="input-banner-badge-bg-color"
                   />
                   <input
                     type="text"
                     value={editingBanner.badge_bg_color}
                     onChange={(e) => setEditingBanner({ ...editingBanner, badge_bg_color: e.target.value })}
-                    className="flex-1 px-3 py-2 bg-white/10 border-2 border-white/20 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-gold"
+                    className="flex-1 px-3 py-2 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-gold"
                   />
                 </div>
               </div>
@@ -542,14 +542,14 @@ export function SiteBannerTab() {
                     type="color"
                     value={editingBanner.badge_text_color}
                     onChange={(e) => setEditingBanner({ ...editingBanner, badge_text_color: e.target.value })}
-                    className="w-10 h-10 rounded-lg border-2 border-white/20 cursor-pointer bg-transparent"
+                    className="w-10 h-10 rounded-lg border-2 border-gray-600 cursor-pointer bg-transparent"
                     data-testid="input-banner-badge-text-color"
                   />
                   <input
                     type="text"
                     value={editingBanner.badge_text_color}
                     onChange={(e) => setEditingBanner({ ...editingBanner, badge_text_color: e.target.value })}
-                    className="flex-1 px-3 py-2 bg-white/10 border-2 border-white/20 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-gold"
+                    className="flex-1 px-3 py-2 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-gold"
                   />
                 </div>
               </div>
@@ -572,7 +572,7 @@ export function SiteBannerTab() {
                   onChange={(e) => setEditingBanner({ ...editingBanner, button_text: e.target.value })}
                   placeholder="z.B. Mehr erfahren"
                   maxLength={100}
-                  className="w-full px-4 py-2.5 bg-white/10 border-2 border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                  className="w-full px-4 py-2.5 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
                   data-testid="input-banner-button-text"
                 />
               </div>
@@ -586,7 +586,7 @@ export function SiteBannerTab() {
                   value={editingBanner.button_url}
                   onChange={(e) => setEditingBanner({ ...editingBanner, button_url: e.target.value })}
                   placeholder="z.B. /about oder https://..."
-                  className="w-full px-4 py-2.5 bg-white/10 border-2 border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                  className="w-full px-4 py-2.5 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
                   data-testid="input-banner-button-url"
                 />
               </div>
@@ -603,7 +603,7 @@ export function SiteBannerTab() {
                 value={editingBanner.display_order}
                 onChange={(e) => setEditingBanner({ ...editingBanner, display_order: parseInt(e.target.value) || 0 })}
                 placeholder="0"
-                className="w-full px-4 py-2.5 bg-white/10 border-2 border-white/20 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
+                className="w-full px-4 py-2.5 bg-[#3a3a3a] border-2 border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold transition-all"
                 data-testid="input-banner-order"
               />
               <Text variant="xs" className="text-white/60 mt-1">
@@ -635,7 +635,7 @@ export function SiteBannerTab() {
       {!editingBanner && (
         <div className="space-y-4">
           {banners.length === 0 ? (
-            <div className="text-center py-20 border-2 border-dashed border-white/20 rounded-xl bg-charcoal/30 backdrop-blur-sm">
+            <div className="text-center py-20 border-2 border-dashed border-gray-600 rounded-xl bg-[#2a2a2a]">
               <div className="max-w-md mx-auto space-y-4">
                 <div className="w-16 h-16 mx-auto rounded-full bg-white/5 flex items-center justify-center">
                   <Plus className="w-8 h-8 text-white/40" />
@@ -660,7 +660,7 @@ export function SiteBannerTab() {
             banners.map((banner) => (
               <div
                 key={banner.id}
-                className="border-2 border-white/20 rounded-xl p-5 bg-charcoal/50 backdrop-blur-sm hover:bg-charcoal/70 hover:border-white/30 transition-all shadow-lg"
+                className="border-2 border-gray-700 rounded-xl p-5 bg-[#2a2a2a] hover:bg-[#333333] hover:border-gray-600 transition-all shadow-lg"
                 data-testid={`banner-item-${banner.id}`}
               >
                 <div className="flex items-start justify-between gap-4">
