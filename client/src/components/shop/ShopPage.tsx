@@ -266,6 +266,7 @@ function apiBookToCarouselItem(book: APIBook): BookCarouselItemData {
     award_count: book.award_count,
     nomination_count: book.nomination_count,
     onixTagIds: book.onix_tag_ids,
+    award_details: book.award_details,
   };
 }
 

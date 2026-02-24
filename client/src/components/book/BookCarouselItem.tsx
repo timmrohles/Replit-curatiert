@@ -86,6 +86,7 @@ export interface BookCarouselItemData {
   is_hidden_gem?: boolean;
   award_count?: number;
   nomination_count?: number;
+  award_details?: Array<{ name: string; year?: number | string; outcome: string }>;
   klappentext?: string; // Klappentext/Beschreibung
   
   // ============================================
