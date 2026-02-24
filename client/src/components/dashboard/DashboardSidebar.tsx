@@ -63,6 +63,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
       label: t('dashboardNav.community', 'COMMUNITY'),
       defaultOpen: false,
       items: [
+        { id: 'oeffentliches-profil', path: '/dashboard/oeffentliches-profil', label: t('dashboardNav.publicProfile', 'Öffentliches Profil') },
         { id: 'feed', path: '/dashboard/feed', label: t('dashboardNav.feed', 'Feed') },
         { id: 'veranstaltungen', path: '/dashboard/veranstaltungen', label: t('dashboardNav.events', 'Veranstaltungen') },
       ]
@@ -82,7 +83,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
       label: t('dashboardNav.settings', 'EINSTELLUNGEN'),
       defaultOpen: false,
       items: [
-        { id: 'profil', path: '/dashboard/profil', label: t('dashboardNav.profile', 'Profil') },
+        { id: 'profil', path: '/dashboard/profil', label: t('dashboardNav.myData', 'Meine Daten') },
         { id: 'benachrichtigungen', path: '/dashboard/benachrichtigungen', label: t('dashboardNav.notifications', 'Benachrichtigungen') },
         { id: 'datenschutz', path: '/dashboard/datenschutz', label: t('dashboardNav.privacy', 'Datenschutz') },
       ]

@@ -76,6 +76,7 @@ const SectionIndex = React.lazy(() => import('./pages/sections/SectionIndex'));
 const DashboardLayout = React.lazy(() => import('./components/dashboard/DashboardLayout').then(m => ({ default: m.DashboardLayout })));
 const DashboardOverview = React.lazy(() => import('./pages/dashboard/DashboardOverview').then(m => ({ default: m.DashboardOverview })));
 const DashboardProfile = React.lazy(() => import('./pages/dashboard/Profile').then(m => ({ default: m.DashboardProfile })));
+const PublicProfile = React.lazy(() => import('./pages/dashboard/PublicProfile').then(m => ({ default: m.PublicProfile })));
 const DashboardRatings = React.lazy(() => import('./pages/dashboard/Ratings').then(m => ({ default: m.DashboardRatings })));
 const DashboardReviews = React.lazy(() => import('./pages/dashboard/Reviews').then(m => ({ default: m.DashboardReviews })));
 const DashboardNotifications = React.lazy(() => import('./pages/dashboard/Notifications').then(m => ({ default: m.DashboardNotifications })));
@@ -270,6 +271,7 @@ function App() {
                         <Route path="einnahmen" element={<EarningsOverview />} />
                         <Route path="einnahmen/affiliate" element={<EarningsAffiliate />} />
                         <Route path="einnahmen/statistiken" element={<EarningsStatistics />} />
+                        <Route path="oeffentliches-profil" element={<PublicProfile />} />
                         <Route path="profil" element={<DashboardProfile />} />
                         <Route path="benachrichtigungen" element={<DashboardNotifications />} />
                         <Route path="datenschutz" element={<DashboardPrivacy />} />
