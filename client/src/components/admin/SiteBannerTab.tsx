@@ -96,6 +96,9 @@ export function SiteBannerTab() {
   const handleEdit = (banner: Banner) => {
     setEditingBanner({
       ...banner,
+      badge_text: banner.badge_text || '',
+      button_text: banner.button_text || '',
+      button_url: banner.button_url || '',
       bg_color: banner.bg_color || '#247ba0',
       text_color: banner.text_color || '#ffffff',
       badge_bg_color: banner.badge_bg_color || '#ffe066',
