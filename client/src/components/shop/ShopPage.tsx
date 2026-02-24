@@ -228,8 +228,11 @@ interface APIBook {
   language: string | null;
   is_indie?: boolean;
   indie_type?: string | null;
+  is_hidden_gem?: boolean;
   award_count?: number;
   nomination_count?: number;
+  onix_tag_ids?: string[];
+  award_details?: Array<{ name: string; year?: number; outcome: string }>;
 }
 
 function apiBookToCarouselItem(book: APIBook): BookCarouselItemData {
@@ -242,6 +245,12 @@ function apiBookToCarouselItem(book: APIBook): BookCarouselItemData {
     isbn: book.isbn13 || book.isbn || undefined,
     publisher: book.publisher || undefined,
     klappentext: book.description || undefined,
+    is_indie: book.is_indie,
+    indie_type: book.indie_type,
+    is_hidden_gem: book.is_hidden_gem,
+    award_count: book.award_count,
+    nomination_count: book.nomination_count,
+    onixTagIds: book.onix_tag_ids,
   };
 }
 
@@ -345,13 +354,23 @@ export function ShopPage() {
       .finally(() => setPublisherLoading(false));
   }, []);
 
-  const fetchBooks = useCallback(async (query: string, offset: number) => {
+  const fetchBooks = useCallback(async (offset: number) => {
     setIsLoading(true);
     try {
-      const url = query
-        ? `/api/books/search?q=${encodeURIComponent(query)}&limit=${PAGE_SIZE}`
-        : `/api/books?limit=${PAGE_SIZE}&offset=${offset}`;
-      const res = await fetch(url);
+      const params = new URLSearchParams();
+      params.set('limit', String(PAGE_SIZE));
+      params.set('offset', String(offset));
+      params.set('sort', sortBy);
+      if (searchQuery) params.set('q', searchQuery);
+      if (selectedAuthors.length > 0) params.set('authors', selectedAuthors.join(','));
+      if (selectedPublishers.length > 0) params.set('publishers', selectedPublishers.join(','));
+      if (selectedAwards.length > 0) params.set('awards', selectedAwards.join(','));
+      if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
+      if (selectedThemes.length > 0) params.set('themes', selectedThemes.join(','));
+      if (selectedCurators.length > 0) params.set('curators', selectedCurators.join(','));
+      if (selectedMedia.length > 0) params.set('podcasts', selectedMedia.join(','));
+
+      const res = await fetch(`/api/books?${params.toString()}`);
       const data = await res.json();
       if (data.ok) {
         const fetched: APIBook[] = data.data || [];
@@ -366,12 +385,12 @@ export function ShopPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [searchQuery, sortBy, selectedAuthors, selectedPublishers, selectedAwards, selectedCategories, selectedThemes, selectedCurators, selectedMedia]);
 
   useEffect(() => {
     setPage(0);
-    fetchBooks(searchQuery, 0);
-  }, [searchQuery, fetchBooks]);
+    fetchBooks(0);
+  }, [fetchBooks]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -385,7 +404,7 @@ export function ShopPage() {
   const handleLoadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
-    fetchBooks(searchQuery, nextPage * PAGE_SIZE);
+    fetchBooks(nextPage * PAGE_SIZE);
   };
 
   const toggleFilter = (list: string[], item: string, setter: (v: string[]) => void) => {
@@ -396,30 +415,7 @@ export function ShopPage() {
     }
   };
 
-  const filteredBooks = books.filter(book => {
-    if (selectedPublishers.length > 0 && !selectedPublishers.includes(book.publisher)) {
-      return false;
-    }
-    if (selectedAuthors.length > 0 && !selectedAuthors.includes(book.author)) {
-      return false;
-    }
-    return true;
-  });
-
-  const sortedBooks = [...filteredBooks].sort((a, b) => {
-    switch (sortBy) {
-      case 'az':
-        return (a.title || '').localeCompare(b.title || '', 'de');
-      case 'date':
-        return b.id - a.id;
-      case 'awarded':
-        return (b.award_count || 0) - (a.award_count || 0);
-      case 'popularity':
-      case 'hidden-gems':
-      default:
-        return 0;
-    }
-  });
+  const sortedBooks = books;
 
   const hasActiveFilters = selectedCurators.length > 0 || selectedCategories.length > 0 || selectedThemes.length > 0 ||
     selectedSeries.length > 0 || selectedPublishers.length > 0 || selectedAuthors.length > 0 ||

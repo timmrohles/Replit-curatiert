@@ -2939,15 +2939,228 @@ export async function registerRoutes(
 
   // BOOKS
   // ==================================================================
+  async function enrichBooksWithAwards(books: any[]): Promise<any[]> {
+    if (books.length === 0) return books;
+    try {
+      const bookIds = books.map((b: any) => b.id);
+      const placeholders = bookIds.map((_: any, i: number) => `$${i + 1}`).join(',');
+
+      let indieNames: string[] = [];
+      let spPatterns: any[] = [];
+      try {
+        const indieRes = await queryDB('SELECT name FROM indie_publishers');
+        indieNames = (indieRes.rows || []).map((r: any) => r.name.toLowerCase());
+        const spRes = await queryDB('SELECT pattern, match_type FROM selfpublisher_patterns');
+        spPatterns = spRes.rows || [];
+      } catch { /* tables may not exist */ }
+
+      let awardMap: Record<number, { wins: number; nominations: number; details: Array<{ name: string; year?: number; outcome: string }> }> = {};
+      try {
+        const awardRes = await queryDB(
+          `SELECT ar.book_id, ao.result_status, ao.outcome_type, a.name AS award_name, ae.year AS award_year
+           FROM award_recipients ar
+           JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
+           JOIN award_editions ae ON ao.award_edition_id = ae.id
+           JOIN awards a ON ae.award_id = a.id
+           WHERE ar.book_id IN (${placeholders})`,
+          bookIds
+        );
+        for (const row of awardRes.rows || []) {
+          if (!row.book_id) continue;
+          if (!awardMap[row.book_id]) awardMap[row.book_id] = { wins: 0, nominations: 0, details: [] };
+          const status = (row.result_status || '').toLowerCase();
+          if (status === 'winner' || status === 'gewinner') {
+            awardMap[row.book_id].wins++;
+          } else {
+            awardMap[row.book_id].nominations++;
+          }
+          awardMap[row.book_id].details.push({
+            name: row.award_name || 'Literaturpreis',
+            year: row.award_year || undefined,
+            outcome: row.outcome_type || 'nominee',
+          });
+        }
+      } catch { /* award tables may not exist */ }
+
+      let onixTagMap: Record<number, string[]> = {};
+      try {
+        const tagRes = await queryDB(
+          `SELECT book_id, tag_id FROM book_onix_tags WHERE book_id IN (${placeholders})`,
+          bookIds
+        );
+        for (const row of tagRes.rows || []) {
+          if (!onixTagMap[row.book_id]) onixTagMap[row.book_id] = [];
+          onixTagMap[row.book_id].push(String(row.tag_id));
+        }
+      } catch { /* table may not exist */ }
+
+      return books.map((book: any) => {
+        const publisherLower = (book.publisher || '').toLowerCase();
+        const authorLower = (book.author || '').toLowerCase();
+        const isIndieVerlag = indieNames.some(name => publisherLower === name);
+        const isSelfPublisher = spPatterns.some((sp: any) => {
+          if (sp.match_type === 'exact') return publisherLower === sp.pattern.toLowerCase();
+          return publisherLower.includes(sp.pattern.toLowerCase());
+        });
+        const isAuthorPublisher = authorLower && publisherLower && (
+          authorLower === publisherLower || publisherLower.includes(authorLower) || authorLower.includes(publisherLower)
+        );
+        const awards = awardMap[book.id] || { wins: 0, nominations: 0, details: [] };
+        return {
+          ...book,
+          is_indie: isIndieVerlag || isSelfPublisher || isAuthorPublisher,
+          indie_type: isIndieVerlag ? 'indie_verlag' : (isSelfPublisher || isAuthorPublisher) ? 'selfpublisher' : null,
+          is_hidden_gem: awards.nominations > 0 && awards.wins === 0,
+          award_count: awards.wins,
+          nomination_count: awards.nominations,
+          award_details: awards.details,
+          onix_tag_ids: onixTagMap[book.id] || [],
+        };
+      });
+    } catch (err) {
+      log.warn('Book enrichment error (non-fatal):', err);
+      return books;
+    }
+  }
+
   app.get('/api/books', async (req: Request, res: Response) => {
     try {
-      const limit = parseInt((req.query.limit as string) || '20');
+      const limit = Math.min(parseInt((req.query.limit as string) || '50'), 200);
       const offset = parseInt((req.query.offset as string) || '0');
-      const result = await queryDB(
-        'SELECT * FROM books ORDER BY created_at DESC LIMIT $1 OFFSET $2',
-        [limit, offset]
-      );
-      return res.json({ ok: true, data: result.rows });
+      const q = (req.query.q as string) || '';
+      const sort = (req.query.sort as string) || 'date';
+      const authors = req.query.authors ? (req.query.authors as string).split(',') : [];
+      const publishers = req.query.publishers ? (req.query.publishers as string).split(',') : [];
+      const awards = req.query.awards ? (req.query.awards as string).split(',') : [];
+      const categories = req.query.categories ? (req.query.categories as string).split(',') : [];
+      const themes = req.query.themes ? (req.query.themes as string).split(',') : [];
+      const curators = req.query.curators ? (req.query.curators as string).split(',') : [];
+      const podcasts = req.query.podcasts ? (req.query.podcasts as string).split(',') : [];
+
+      let query = 'SELECT DISTINCT b.* FROM books b';
+      const joins: string[] = [];
+      const conditions: string[] = ['b.deleted_at IS NULL'];
+      const params: any[] = [];
+      let paramIdx = 1;
+
+      if (q) {
+        conditions.push(`(b.title ILIKE $${paramIdx} OR b.author ILIKE $${paramIdx} OR b.publisher ILIKE $${paramIdx} OR b.isbn13 ILIKE $${paramIdx})`);
+        params.push(`%${q}%`);
+        paramIdx++;
+      }
+
+      if (authors.length > 0) {
+        const authorConditions = authors.map(() => `b.author ILIKE $${paramIdx++}`).join(' OR ');
+        conditions.push(`(${authorConditions})`);
+        authors.forEach(a => params.push(`%${a}%`));
+      }
+
+      if (publishers.length > 0) {
+        const pubConditions = publishers.map(() => `b.publisher ILIKE $${paramIdx++}`).join(' OR ');
+        conditions.push(`(${pubConditions})`);
+        publishers.forEach(p => params.push(`%${p}%`));
+      }
+
+      if (awards.length > 0) {
+        const awardPlaceholders = awards.map(() => `$${paramIdx++}`).join(',');
+        conditions.push(`b.id IN (
+          SELECT ar.book_id FROM award_recipients ar
+          JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
+          JOIN award_editions ae ON ao.award_edition_id = ae.id
+          JOIN awards a ON ae.award_id = a.id
+          WHERE ar.book_id IS NOT NULL AND a.name IN (${awardPlaceholders})
+        )`);
+        awards.forEach(a => params.push(a));
+      }
+
+      if (categories.length > 0) {
+        const catPlaceholders = categories.map(() => `$${paramIdx++}`).join(',');
+        conditions.push(`b.id IN (
+          SELECT bt.book_id FROM book_tags bt
+          JOIN tags t ON bt.tag_id = t.id
+          WHERE t.tag_type IN ('genre') AND t.name IN (${catPlaceholders}) AND bt.deleted_at IS NULL
+        )`);
+        categories.forEach(c => params.push(c));
+      }
+
+      if (themes.length > 0) {
+        const themePlaceholders = themes.map(() => `$${paramIdx++}`).join(',');
+        conditions.push(`b.id IN (
+          SELECT bt.book_id FROM book_tags bt
+          JOIN tags t ON bt.tag_id = t.id
+          WHERE t.tag_type IN ('topic', 'audience', 'feature', 'publisher_cluster') AND t.name IN (${themePlaceholders}) AND bt.deleted_at IS NULL
+        )`);
+        themes.forEach(t => params.push(t));
+      }
+
+      if (curators.length > 0) {
+        const curPlaceholders = curators.map(() => `$${paramIdx++}`).join(',');
+        conditions.push(`b.id IN (
+          SELECT si.book_id FROM section_items si
+          JOIN page_sections ps ON si.section_id = ps.id
+          JOIN pages p ON ps.page_id = p.id
+          JOIN curators c ON CAST(ps.config->>'curatorId' AS INTEGER) = c.id
+          WHERE si.book_id IS NOT NULL AND c.name IN (${curPlaceholders})
+        )`);
+        curators.forEach(c => params.push(c));
+      }
+
+      if (podcasts.length > 0) {
+        const podPlaceholders = podcasts.map(() => `$${paramIdx++}`).join(',');
+        conditions.push(`b.id IN (
+          SELECT DISTINCT csb.matched_book_id FROM content_source_books csb
+          JOIN content_sources cs ON csb.content_source_id = cs.id
+          WHERE csb.matched_book_id IS NOT NULL AND cs.name IN (${podPlaceholders})
+        )`);
+        podcasts.forEach(p => params.push(p));
+      }
+
+      const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
+
+      let useAwardSort = sort === 'awarded' || sort === 'hidden-gems';
+      if (useAwardSort) {
+        joins.push(` LEFT JOIN (
+          SELECT ar2.book_id, COUNT(*) as award_sort_count
+          FROM award_recipients ar2
+          ${sort === 'hidden-gems' ? 'JOIN award_outcomes ao2 ON ar2.award_outcome_id = ao2.id' : ''}
+          WHERE ar2.book_id IS NOT NULL
+          ${sort === 'hidden-gems' ? "AND ao2.result_status != 'winner'" : ''}
+          GROUP BY ar2.book_id
+        ) award_sort ON award_sort.book_id = b.id`);
+      }
+
+      let orderClause: string;
+      switch (sort) {
+        case 'az': orderClause = 'ORDER BY b.title ASC'; break;
+        case 'date': orderClause = 'ORDER BY b.created_at DESC'; break;
+        case 'awarded':
+        case 'hidden-gems':
+          orderClause = 'ORDER BY award_sort.award_sort_count DESC NULLS LAST, b.title ASC';
+          break;
+        case 'popularity':
+        default:
+          orderClause = 'ORDER BY b.display_order DESC NULLS LAST, b.created_at DESC';
+          break;
+      }
+
+      const selectCols = useAwardSort
+        ? 'b.*, award_sort.award_sort_count'
+        : 'b.*';
+      query = `SELECT ${selectCols} FROM books b` + joins.join(' ') + whereClause + ` ${orderClause} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+      params.push(limit, offset);
+
+      const result = await queryDB(query, params);
+      const enriched = await enrichBooksWithAwards(result.rows || []);
+
+      const countQuery = `SELECT COUNT(DISTINCT b.id) as total FROM books b${joins.join(' ')}${whereClause}`;
+      const countParams = params.slice(0, -2);
+      let total = enriched.length;
+      try {
+        const countResult = await queryDB(countQuery, countParams);
+        total = parseInt(countResult.rows[0]?.total || '0');
+      } catch { /* count query may fail for complex filters */ }
+
+      return res.json({ ok: true, data: enriched, total, limit, offset });
     } catch (error) {
       log.error('Books fetch error:', error);
       return res.status(500).json({ ok: false, error: String(error), data: [] });
@@ -2958,50 +3171,30 @@ export async function registerRoutes(
     try {
       const q = req.query.q as string;
       const category = req.query.category as string;
-      const limit = parseInt((req.query.limit as string) || '200');
+      const limit = Math.min(parseInt((req.query.limit as string) || '50'), 200);
 
-      // Check available columns
-      const colCheck = await queryDB(
-        `SELECT column_name FROM information_schema.columns WHERE table_name = 'books' AND table_schema = 'public'`, []
-      );
-      const cols = new Set(colCheck.rows.map((r: any) => r.column_name));
-
-      if (cols.size === 0) {
-        return res.json({ ok: true, data: [] });
-      }
-
-      let query = 'SELECT * FROM books WHERE 1=1';
+      let query = 'SELECT * FROM books WHERE deleted_at IS NULL';
       const params: any[] = [];
       let paramIndex = 1;
 
       if (q) {
-        const searchParts: string[] = [];
-        if (cols.has('title')) searchParts.push(`title ILIKE $${paramIndex}`);
-        if (cols.has('author')) searchParts.push(`author ILIKE $${paramIndex}`);
-        if (cols.has('publisher')) searchParts.push(`publisher ILIKE $${paramIndex}`);
-        if (cols.has('isbn13')) searchParts.push(`isbn13 ILIKE $${paramIndex}`);
-        if (searchParts.length > 0) {
-          query += ` AND (${searchParts.join(' OR ')})`;
-          params.push(`%${q}%`);
-          paramIndex++;
-        }
+        query += ` AND (title ILIKE $${paramIndex} OR author ILIKE $${paramIndex} OR publisher ILIKE $${paramIndex} OR isbn13 ILIKE $${paramIndex})`;
+        params.push(`%${q}%`);
+        paramIndex++;
       }
 
       if (category) {
-        const catParts: string[] = [];
-        if (cols.has('genre')) catParts.push(`genre ILIKE $${paramIndex}`);
-        if (cols.has('category')) catParts.push(`category ILIKE $${paramIndex}`);
-        if (catParts.length > 0) {
-          query += ` AND (${catParts.join(' OR ')})`;
-          params.push(`%${category}%`);
-          paramIndex++;
-        }
+        query += ` AND (genre ILIKE $${paramIndex} OR category ILIKE $${paramIndex})`;
+        params.push(`%${category}%`);
+        paramIndex++;
       }
 
-      query += ` ORDER BY created_at DESC LIMIT ${limit}`;
+      query += ` ORDER BY created_at DESC LIMIT $${paramIndex}`;
+      params.push(limit);
 
       const result = await queryDB(query, params);
-      return res.json({ ok: true, data: result.rows });
+      const enriched = await enrichBooksWithAwards(result.rows || []);
+      return res.json({ ok: true, data: enriched });
     } catch (error) {
       log.error('Books search error:', error);
       return res.status(500).json({ ok: false, error: String(error), data: [] });
