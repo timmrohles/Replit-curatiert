@@ -251,35 +251,18 @@ const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarou
         <div className="aspect-[2/3] bg-muted rounded-[1px] relative overflow-visible">
           {/* Interactive Icons - OUTSIDE flip container, always visible */}
           <div className="absolute top-3 right-3 flex flex-col gap-2" style={{ zIndex: 150 }}>
-            {/* Pressestimmen Button */}
-            {book.reviews && book.reviews.length > 0 && (
-              <button
-                onClick={handleReviewsToggle}
-                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
-                style={{ 
-                  backgroundColor: '#247ba0',
-                  color: '#FFFFFF'
-                }}
-                title="Pressestimmen anzeigen"
-              >
-                <Quote className="w-5 h-5 md:w-6 md:h-6" />
-              </button>
-            )}
-            {/* Auszeichnungen Button */}
+            <BookEnrichmentBadges book={book} />
             {awardTags.length > 0 && (
               <button
                 onClick={handleAwardsToggle}
-                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg"
-                style={{ 
-                  backgroundColor: '#247ba0',
-                  color: '#FFFFFF'
-                }}
-                title="Auszeichnungen anzeigen"
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-md text-white"
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
+                title="ONIX-Auszeichnungen anzeigen"
+                data-testid="badge-onix-awards"
               >
-                <Award className="w-5 h-5 md:w-6 md:h-6" />
+                <Award className="w-4 h-4" />
               </button>
             )}
-            <BookEnrichmentBadges book={book} />
           </div>
 
           {/* Cover Container - NO MORE FLIP */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, ChevronDown, Award } from 'lucide-react';
+import { Tags, ArrowRight, ChevronDown, Award } from 'lucide-react';
 import { BookEnrichmentBadges } from './BookEnrichmentBadges';
 
 import { Button } from '../ui/button';
@@ -147,7 +147,6 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
   const navigate = useSafeNavigate();
   const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
   const [showAwardsOverlay, setShowAwardsOverlay] = useState(false);
-  const [showInfoOverlay, setShowInfoOverlay] = useState(false);
   const [isKlappentextExpanded, setIsKlappentextExpanded] = useState(false);
   const [affiliates, setAffiliates] = useState<ActiveAffiliate[]>([]);
   const { textRef: klappentextRef, isOverflowing: isKlappentextOverflowing } = useTextOverflow<HTMLParagraphElement>();
@@ -207,17 +206,6 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
             {/* All icons - vertical column, right side */}
             <div className="absolute top-2 right-2 flex flex-col gap-2" style={{ zIndex: 150 }}>
               <BookEnrichmentBadges book={book} />
-              {book.reviews && (
-                <EnrichmentBadge
-                  type="pressestimmen"
-                  icon={<Quote className="w-4 h-4" />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowInfoOverlay(!showInfoOverlay);
-                    setShowAwardsOverlay(false);
-                  }}
-                />
-              )}
               {awardTags.length > 0 && (
                 <EnrichmentBadge
                   type="onix-awards"
@@ -225,7 +213,6 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowAwardsOverlay(!showAwardsOverlay);
-                    setShowInfoOverlay(false);
                   }}
                 />
               )}
@@ -341,22 +328,6 @@ export function EditorialBookCard({ book, onBookClick }: EditorialBookCardProps)
               </div>
             )}
             
-            {/* Reviews/Kommentare Overlay */}
-            {showInfoOverlay && book.reviews && (
-              <div className="book-card-overlay absolute inset-0 p-4 flex flex-col gap-3 overflow-y-auto">
-                <h5 className="font-headline text-base normal-case">
-                  Kommentare
-                </h5>
-                
-                <Text 
-                  as="div" 
-                  variant="small" 
-                  className="!normal-case !tracking-normal leading-relaxed whitespace-pre-line"
-                >
-                  {book.reviews}
-                </Text>
-              </div>
-            )}
           </div>
         </div>
 

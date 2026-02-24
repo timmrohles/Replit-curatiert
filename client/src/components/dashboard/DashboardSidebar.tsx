@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSafeNavigate } from '../../utils/routing';
-import { ChevronDown, ChevronRight, X } from 'lucide-react';
+import {
+  ChevronDown, ChevronRight, X,
+  LayoutDashboard, BookOpen, Users, Banknote, Settings, PenLine
+} from 'lucide-react';
 
 interface SidebarItem {
   id: string;
@@ -14,6 +17,7 @@ interface SidebarItem {
 interface SidebarGroup {
   id: string;
   label: string;
+  icon: typeof LayoutDashboard;
   items: SidebarItem[];
   defaultOpen?: boolean;
 }
@@ -40,6 +44,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
   const groups: SidebarGroup[] = [
     {
       id: 'overview',
+      icon: LayoutDashboard,
       label: t('dashboardNav.overview', 'ÜBERSICHT'),
       defaultOpen: true,
       items: [
@@ -48,6 +53,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
     },
     {
       id: 'content',
+      icon: BookOpen,
       label: t('dashboardNav.myContent', 'MEINE INHALTE'),
       defaultOpen: true,
       items: [

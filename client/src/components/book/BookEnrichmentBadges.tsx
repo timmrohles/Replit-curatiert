@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Gem, Bird, PenLine } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Gem, Bird, PenLine, Quote, Award, X } from 'lucide-react';
 
 function LaurelWreathIcon({ className }: { className?: string }) {
   return (
@@ -27,10 +27,17 @@ const OUTCOME_LABELS: Record<string, string> = {
   special: 'Sonderpreis',
 };
 
+const WIN_OUTCOMES = new Set(['winner', 'special']);
+
 interface AwardDetail {
   name: string;
   outcome: string;
   year?: number | string;
+}
+
+interface ReviewDetail {
+  source: string;
+  quote: string;
 }
 
 export interface BookEnrichmentData {
@@ -40,6 +47,7 @@ export interface BookEnrichmentData {
   is_indie?: boolean;
   indie_type?: string | null;
   award_details?: AwardDetail[];
+  reviews?: string | ReviewDetail[] | null;
 }
 
 interface BookEnrichmentBadgesProps {
@@ -47,109 +55,214 @@ interface BookEnrichmentBadgesProps {
   size?: 'sm' | 'md';
 }
 
+function BadgeModal({
+  open,
+  onClose,
+  title,
+  icon,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', handleClick);
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('mousedown', handleClick);
+      document.removeEventListener('keydown', handleKey);
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      ref={panelRef}
+      className="absolute top-0 right-full mr-2 z-[200] w-[280px] bg-card border border-border rounded-xl shadow-xl text-left animate-in fade-in slide-in-from-right-2 duration-200"
+      onClick={(e) => e.stopPropagation()}
+      data-testid="badge-modal"
+    >
+      <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
+        <div className="flex items-center gap-2">
+          {icon}
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); onClose(); }}
+          className="p-1 rounded-md hover:bg-muted transition-colors"
+          data-testid="badge-modal-close"
+        >
+          <X className="w-3.5 h-3.5 text-muted-foreground" />
+        </button>
+      </div>
+      <div className="px-4 pb-4">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function EnrichmentBadge({
   type,
   icon,
-  tooltipContent,
+  modalTitle,
+  modalIcon,
+  modalContent,
   size = 'md',
 }: {
   type: string;
   icon: React.ReactNode;
-  tooltipContent?: React.ReactNode;
+  modalTitle?: string;
+  modalIcon?: React.ReactNode;
+  modalContent?: React.ReactNode;
   size?: 'sm' | 'md';
 }) {
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [open, setOpen] = useState(false);
 
   const sizeClass = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
 
   return (
-    <div
-      className="relative inline-flex"
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-    >
+    <div className="relative inline-flex">
       <button
         className={`${sizeClass} rounded-full flex items-center justify-center shadow-md transition-transform hover:scale-110 text-white`}
         style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
         data-testid={`badge-${type}`}
         onClick={(e) => {
           e.stopPropagation();
-          setShowTooltip(!showTooltip);
+          setOpen(!open);
         }}
       >
         {icon}
       </button>
-      {showTooltip && tooltipContent && (
-        <div
-          className="absolute top-0 right-full mr-2 z-[200] min-w-[200px] max-w-[280px] bg-card border border-border rounded-lg shadow-lg p-3 text-left"
-          onClick={(e) => e.stopPropagation()}
+      {modalContent && modalTitle && (
+        <BadgeModal
+          open={open}
+          onClose={() => setOpen(false)}
+          title={modalTitle}
+          icon={modalIcon || icon}
         >
-          {tooltipContent}
-        </div>
+          {modalContent}
+        </BadgeModal>
       )}
     </div>
   );
 }
 
 export function BookEnrichmentBadges({ book, size = 'md' }: BookEnrichmentBadgesProps) {
-  const hasAward = book.award_count !== undefined && book.award_count > 0;
-  const hasHiddenGem = book.is_hidden_gem && !hasAward;
+  const hasAwards = book.award_details && book.award_details.length > 0;
+  const wins = hasAwards ? book.award_details!.filter(d => WIN_OUTCOMES.has(d.outcome)) : [];
+  const nominations = hasAwards ? book.award_details!.filter(d => !WIN_OUTCOMES.has(d.outcome)) : [];
+  const hasWins = wins.length > 0;
+  const hasNominations = nominations.length > 0;
   const hasIndie = book.is_indie;
 
-  if (!hasAward && !hasHiddenGem && !hasIndie) return null;
+  const hasReviews = !!book.reviews && (
+    typeof book.reviews === 'string'
+      ? book.reviews.length > 0
+      : book.reviews.length > 0
+  );
+
+  const showAnything = hasWins || hasNominations || hasIndie || hasReviews;
+  if (!showAnything) return null;
 
   const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
-  const tooltipIconSize = size === 'sm' ? 'w-3 h-3' : 'w-3.5 h-3.5';
+  const modalIconSize = 'w-4 h-4';
 
   return (
     <>
-      {hasAward && (
+      {hasWins && (
         <EnrichmentBadge
           type="award"
           size={size}
           icon={<LaurelWreathIcon className={iconSize} />}
-          tooltipContent={
-            book.award_details && book.award_details.length > 0 ? (
-              <div>
-                <p className="text-xs font-semibold text-foreground mb-2">Auszeichnungen</p>
-                <ul className="space-y-1.5">
-                  {book.award_details.map((d, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs">
-                      <LaurelWreathIcon className={`${tooltipIconSize} mt-0.5 flex-shrink-0 text-foreground`} />
-                      <span className="text-muted-foreground">
-                        <span className="font-medium text-foreground">{OUTCOME_LABELS[d.outcome] || d.outcome}</span>
-                        {' '}{d.name}{d.year ? ` ${d.year}` : ''}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : undefined
+          modalTitle={`Auszeichnung${wins.length > 1 ? 'en' : ''}`}
+          modalIcon={<LaurelWreathIcon className={`${modalIconSize} text-foreground`} />}
+          modalContent={
+            <div className="space-y-3">
+              <ul className="space-y-2">
+                {wins.map((d, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+                      <LaurelWreathIcon className="w-3.5 h-3.5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-foreground">
+                        {OUTCOME_LABELS[d.outcome] || d.outcome}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {d.name}{d.year ? ` ${d.year}` : ''}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              {hasNominations && (
+                <>
+                  <div className="border-t border-border" />
+                  <p className="text-xs font-medium text-muted-foreground">Weitere Nominierungen</p>
+                  <ul className="space-y-2">
+                    {nominations.map((d, i) => (
+                      <li key={i} className="flex items-start gap-2.5">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-muted">
+                          <Gem className="w-3.5 h-3.5 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-foreground">
+                            {OUTCOME_LABELS[d.outcome] || d.outcome}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {d.name}{d.year ? ` ${d.year}` : ''}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </div>
           }
         />
       )}
-      {hasHiddenGem && (
+      {hasNominations && !hasWins && (
         <EnrichmentBadge
           type="hidden-gem"
           size={size}
           icon={<Gem className={iconSize} />}
-          tooltipContent={
-            book.award_details && book.award_details.length > 0 ? (
-              <div>
-                <p className="text-xs font-semibold text-foreground mb-2">Nominierungen</p>
-                <ul className="space-y-1.5">
-                  {book.award_details.map((d, i) => (
-                    <li key={i} className="flex items-start gap-2 text-xs">
-                      <Gem className={`${tooltipIconSize} mt-0.5 flex-shrink-0 text-foreground`} />
-                      <span className="text-muted-foreground">
-                        <span className="font-medium text-foreground">{OUTCOME_LABELS[d.outcome] || d.outcome}</span>
-                        {' '}{d.name}{d.year ? ` ${d.year}` : ''}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : undefined
+          modalTitle={`Nominierung${nominations.length > 1 ? 'en' : ''}`}
+          modalIcon={<Gem className={`${modalIconSize} text-foreground`} />}
+          modalContent={
+            <ul className="space-y-2">
+              {nominations.map((d, i) => (
+                <li key={i} className="flex items-start gap-2.5">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-muted">
+                    <Gem className="w-3.5 h-3.5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-foreground">
+                      {OUTCOME_LABELS[d.outcome] || d.outcome}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {d.name}{d.year ? ` ${d.year}` : ''}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           }
         />
       )}
@@ -160,16 +273,47 @@ export function BookEnrichmentBadges({ book, size = 'md' }: BookEnrichmentBadges
           icon={book.indie_type === 'selfpublisher'
             ? <PenLine className={iconSize} />
             : <Bird className={iconSize} />}
-          tooltipContent={
-            <div>
-              <p className="text-xs font-semibold text-foreground">
-                {book.indie_type === 'selfpublisher' ? 'Selfpublisher' : 'Indie-Verlag'}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {book.indie_type === 'selfpublisher'
-                  ? 'Dieses Buch wurde unabhängig veröffentlicht.'
-                  : 'Erschienen bei einem unabhängigen Verlag.'}
-              </p>
+          modalTitle={book.indie_type === 'selfpublisher' ? 'Selfpublisher' : 'Indie-Verlag'}
+          modalIcon={book.indie_type === 'selfpublisher'
+            ? <PenLine className={`${modalIconSize} text-foreground`} />
+            : <Bird className={`${modalIconSize} text-foreground`} />}
+          modalContent={
+            <p className="text-xs text-muted-foreground">
+              {book.indie_type === 'selfpublisher'
+                ? 'Dieses Buch wurde unabhängig veröffentlicht — ohne Verlag, direkt von der Autorin oder dem Autor.'
+                : 'Erschienen bei einem unabhängigen Verlag. Indie-Verlage stehen für besondere Vielfalt und individuelle Buchkultur.'}
+            </p>
+          }
+        />
+      )}
+      {hasReviews && (
+        <EnrichmentBadge
+          type="pressestimmen"
+          size={size}
+          icon={<Quote className={iconSize} />}
+          modalTitle="Pressestimmen"
+          modalIcon={<Quote className={`${modalIconSize} text-foreground`} />}
+          modalContent={
+            <div className="space-y-3 max-h-[300px] overflow-y-auto">
+              {typeof book.reviews === 'string' ? (
+                <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+                  {book.reviews}
+                </p>
+              ) : (
+                (book.reviews as ReviewDetail[]).map((r, i) => (
+                  <div key={i} className="flex flex-col gap-1">
+                    <p className="text-xs text-muted-foreground leading-relaxed italic">
+                      &bdquo;{r.quote}&ldquo;
+                    </p>
+                    <p className="text-xs font-medium text-foreground">
+                      — {r.source}
+                    </p>
+                    {i < (book.reviews as ReviewDetail[]).length - 1 && (
+                      <div className="border-t border-border mt-1" />
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           }
         />
