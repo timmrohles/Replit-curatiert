@@ -2962,39 +2962,21 @@ export async function registerRoutes(
       const bookIds = books.map((b: any) => b.id);
       const placeholders = bookIds.map((_: any, i: number) => `$${i + 1}`).join(',');
 
-      let indieNames: string[] = [];
-      let spPatterns: any[] = [];
-      try {
-        const indieRes = await queryDB('SELECT name FROM indie_publishers');
-        indieNames = (indieRes.rows || []).map((r: any) => r.name.toLowerCase());
-        const spRes = await queryDB('SELECT pattern, match_type FROM selfpublisher_patterns');
-        spPatterns = spRes.rows || [];
-      } catch { /* tables may not exist */ }
-
-      let awardMap: Record<number, { wins: number; nominations: number; details: Array<{ name: string; year?: number; outcome: string }> }> = {};
+      let awardDetailMap: Record<number, Array<{ name: string; year?: number; outcome: string }>> = {};
       try {
         const awardRes = await queryDB(
-          `SELECT ar.book_id, ao.result_status, ao.outcome_type, a.name AS award_name, ae.year AS award_year
-           FROM award_recipients ar
-           JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
+          `SELECT aor.book_id, ao.outcome_type, a.name AS award_name, ae.year AS award_year
+           FROM award_outcome_recipients aor
+           JOIN award_outcomes ao ON aor.award_outcome_id = ao.id
            JOIN award_editions ae ON ao.award_edition_id = ae.id
            JOIN awards a ON ae.award_id = a.id
-           WHERE ar.book_id IN (${placeholders})`,
+           WHERE aor.book_id IN (${placeholders}) AND aor.deleted_at IS NULL`,
           bookIds
         );
         for (const row of awardRes.rows || []) {
           if (!row.book_id) continue;
-          if (!awardMap[row.book_id]) awardMap[row.book_id] = { wins: 0, nominations: 0, shortlisted: 0, details: [] };
-          const status = (row.result_status || '').toLowerCase();
-          if (status === 'winner' || status === 'gewinner') {
-            awardMap[row.book_id].wins++;
-          } else if (status === 'shortlisted') {
-            awardMap[row.book_id].shortlisted++;
-            awardMap[row.book_id].nominations++;
-          } else {
-            awardMap[row.book_id].nominations++;
-          }
-          awardMap[row.book_id].details.push({
+          if (!awardDetailMap[row.book_id]) awardDetailMap[row.book_id] = [];
+          awardDetailMap[row.book_id].push({
             name: row.award_name || 'Literaturpreis',
             year: row.award_year || undefined,
             outcome: row.outcome_type || 'nominee',
@@ -3014,30 +2996,11 @@ export async function registerRoutes(
         }
       } catch { /* table may not exist */ }
 
-      return books.map((book: any) => {
-        const publisherLower = (book.publisher || '').toLowerCase();
-        const authorLower = (book.author || '').toLowerCase();
-        const isIndieVerlag = indieNames.some(name => publisherLower === name);
-        const isSelfPublisher = spPatterns.some((sp: any) => {
-          if (sp.match_type === 'exact') return publisherLower === sp.pattern.toLowerCase();
-          return publisherLower.includes(sp.pattern.toLowerCase());
-        });
-        const isAuthorPublisher = authorLower && publisherLower && (
-          authorLower === publisherLower || publisherLower.includes(authorLower) || authorLower.includes(publisherLower)
-        );
-        const awards = awardMap[book.id] || { wins: 0, nominations: 0, shortlisted: 0, details: [] };
-        const isAwarded = awards.wins > 0 || awards.shortlisted > 0;
-        return {
-          ...book,
-          is_indie: isIndieVerlag || isSelfPublisher || isAuthorPublisher,
-          indie_type: isIndieVerlag ? 'indie_verlag' : (isSelfPublisher || isAuthorPublisher) ? 'selfpublisher' : null,
-          is_hidden_gem: awards.nominations > 0 && !isAwarded,
-          award_count: awards.wins + awards.shortlisted,
-          nomination_count: awards.nominations - awards.shortlisted,
-          award_details: awards.details,
-          onix_tag_ids: onixTagMap[book.id] || [],
-        };
-      });
+      return books.map((book: any) => ({
+        ...book,
+        award_details: awardDetailMap[book.id] || [],
+        onix_tag_ids: onixTagMap[book.id] || [],
+      }));
     } catch (err) {
       log.warn('Book enrichment error (non-fatal):', err);
       return books;
@@ -3086,11 +3049,11 @@ export async function registerRoutes(
       if (awards.length > 0) {
         const awardPlaceholders = awards.map(() => `$${paramIdx++}`).join(',');
         conditions.push(`b.id IN (
-          SELECT ar.book_id FROM award_recipients ar
-          JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
+          SELECT aor.book_id FROM award_outcome_recipients aor
+          JOIN award_outcomes ao ON aor.award_outcome_id = ao.id
           JOIN award_editions ae ON ao.award_edition_id = ae.id
           JOIN awards a ON ae.award_id = a.id
-          WHERE ar.book_id IS NOT NULL AND a.name IN (${awardPlaceholders})
+          WHERE aor.book_id IS NOT NULL AND aor.deleted_at IS NULL AND a.name IN (${awardPlaceholders})
         )`);
         awards.forEach(a => params.push(a));
       }
@@ -3164,21 +3127,30 @@ export async function registerRoutes(
         }
       }
 
-      const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
-
       let orderClause: string;
       switch (sort) {
         case 'relevance': orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
         case 'newest': orderClause = 'ORDER BY b.created_at DESC'; break;
-        case 'most-awarded': orderClause = 'ORDER BY b.award_score DESC NULLS LAST, b.title ASC'; break;
+        case 'most-awarded':
+          conditions.push('b.award_count > 0');
+          orderClause = 'ORDER BY b.award_score DESC NULLS LAST, b.award_count DESC NULLS LAST, b.title ASC';
+          break;
         case 'popular': orderClause = 'ORDER BY b.user_score DESC NULLS LAST, b.base_score DESC NULLS LAST'; break;
-        case 'hidden-gems': orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
+        case 'hidden-gems':
+          conditions.push('b.is_hidden_gem = true');
+          orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC';
+          break;
         case 'az': orderClause = 'ORDER BY b.title ASC'; break;
         case 'date': orderClause = 'ORDER BY b.created_at DESC'; break;
-        case 'awarded': orderClause = 'ORDER BY b.award_score DESC NULLS LAST, b.title ASC'; break;
+        case 'awarded':
+          conditions.push('b.award_count > 0');
+          orderClause = 'ORDER BY b.award_score DESC NULLS LAST, b.award_count DESC NULLS LAST, b.title ASC';
+          break;
         case 'popularity': orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
         default: orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
       }
+
+      const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
 
       query = `SELECT DISTINCT b.* FROM books b` + joins.join(' ') + whereClause + ` ${orderClause} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
       params.push(limit, offset);

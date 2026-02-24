@@ -283,10 +283,10 @@ const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarou
               <div
                 className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg"
                 style={{ 
-                  backgroundColor: 'var(--color-teal, #70c1b3)',
+                  backgroundColor: '#1a1a1a',
                   color: '#FFFFFF'
                 }}
-                title="Indie-Verlag"
+                title={book.indie_type === 'selfpublishing' ? 'Selfpublishing' : 'Indie-Verlag'}
                 data-testid="badge-indie-verlag"
               >
                 <Building2 className="w-5 h-5 md:w-6 md:h-6" />
