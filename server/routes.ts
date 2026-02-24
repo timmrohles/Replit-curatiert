@@ -10127,10 +10127,10 @@ ${urls}
       let awardMap: Record<number, { winner: number; shortlist: number; longlist: number }> = {};
       try {
         const awardRes = await queryDB(
-          `SELECT ar.book_id, ao.outcome_type
-           FROM award_recipients ar
-           JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
-           WHERE ar.book_id IS NOT NULL`
+          `SELECT aor.book_id, ao.outcome_type
+           FROM award_outcome_recipients aor
+           JOIN award_outcomes ao ON aor.award_outcome_id = ao.id
+           WHERE aor.book_id IS NOT NULL AND aor.deleted_at IS NULL`
         );
         for (const row of awardRes.rows || []) {
           if (!row.book_id) continue;
@@ -10145,10 +10145,10 @@ ${urls}
       let mediaMap: Record<number, number> = {};
       try {
         const mediaRes = await queryDB(
-          `SELECT eb.book_id, COUNT(DISTINCT eb.episode_id) AS mention_count
+          `SELECT eb.matched_book_id AS book_id, COUNT(DISTINCT eb.episode_id) AS mention_count
            FROM extracted_books eb
-           WHERE eb.book_id IS NOT NULL AND eb.is_verified = true
-           GROUP BY eb.book_id`
+           WHERE eb.matched_book_id IS NOT NULL AND eb.is_verified = true
+           GROUP BY eb.matched_book_id`
         );
         for (const row of mediaRes.rows || []) {
           mediaMap[row.book_id] = parseInt(row.mention_count) || 0;
@@ -10200,11 +10200,20 @@ ${urls}
           const baseScore = awardScore + mediaScore + curationScore + structureBonus;
           const totalScore = baseScore;
 
+          const awardCount = awards.winner + awards.shortlist + awards.longlist;
+          const nominationCount = awards.shortlist + awards.longlist;
+
+          const indieType = isIndieVerlag ? 'indie' : (isSelfPublisher || isAuthorPublisher) ? 'selfpublishing' : null;
+          const isIndie = isIndieVerlag || isSelfPublisher || isAuthorPublisher;
+          const isHiddenGem = baseScore >= 5 && curationCount <= 1 && mediaMentions <= 1;
+
           await queryDB(
             `UPDATE books SET award_score = $1, media_score = $2, curation_score = $3,
-             structure_bonus = $4, base_score = $5, total_score = $6
-             WHERE id = $7`,
-            [awardScore, mediaScore, curationScore, structureBonus, baseScore, totalScore, book.id]
+             structure_bonus = $4, base_score = $5, total_score = $6,
+             award_count = $7, nomination_count = $8, is_indie = $9, indie_type = $10, is_hidden_gem = $11
+             WHERE id = $12`,
+            [awardScore, mediaScore, curationScore, structureBonus, baseScore, totalScore,
+             awardCount, nominationCount, isIndie, indieType, isHiddenGem, book.id]
           );
           updated++;
         });
