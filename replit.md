@@ -31,7 +31,8 @@ coratiert.de is a curated book recommendation platform for personalized book dis
 - **Book Enrichment & Badges**: Unified badge system (awards, indie, reviews) via `BookEnrichmentBadges`, sourced from `enrichBooksWithAwards()` and `book_onix_tags`.
 - **Sorting**: `relevance`, `newest`, `most-awarded`, `popular`, `manual`, `hidden-gems`.
 - **Dashboard** ✅: Restructured with sidebar navigation, real routes under `/dashboard/*`, merged pages, `DashboardOverview` with KPIs + next-best-actions, 3 earnings sub-pages, full i18n (de + en).
-- **Bookstore & Curations**: Thematic book collections and public bookstore profiles.
+- **Bookstore & Curations**: Thematic book collections and public bookstore profiles. Dynamic curations support tag-based AND award-based filtering (via `tag_rules.awardIds` + `awardOutcome`).
+- **Award System**: `awards` → `award_editions` → `award_outcomes` → `award_outcome_recipients` (with `book_id`). Award types/genres managed via `award_tag_links`. Tags with `tag_type='award'` removed from tag management (awards have their own system). Seed data: 14 Preistypen + 20 Genres.
 - **Events**: User-created events with management.
 - **Affiliate & Revenue-Share**: Creator affiliate program with click tracking, session-based attribution, dual-source commission (REFERRAL + CURATION).
 - **Content Extraction**: AI (OpenRouter/Mistral) extracts book mentions from RSS feeds with DB matching.

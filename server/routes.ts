@@ -2942,6 +2942,24 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/api/public/awards-list', async (req: Request, res: Response) => {
+    try {
+      const search = (req.query.search as string) || '';
+      let query = `SELECT id, name, country FROM awards WHERE deleted_at IS NULL`;
+      const params: any[] = [];
+      if (search) {
+        params.push(`%${search}%`);
+        query += ` AND name ILIKE $1`;
+      }
+      query += ` ORDER BY name ASC LIMIT 200`;
+      const result = await queryDB(query, params);
+      return res.json({ ok: true, data: result.rows });
+    } catch (error) {
+      log.error('Public awards list error:', error);
+      return res.json({ ok: true, data: [] });
+    }
+  });
+
   app.get('/api/public/content-source-names', async (_req: Request, res: Response) => {
     try {
       const result = await queryDB(
@@ -3251,10 +3269,9 @@ export async function registerRoutes(
 
   app.post('/api/books/resolve-by-tags', async (req: Request, res: Response) => {
     try {
-      const { includeAll, includeAny, exclude, category, maxYearsAgo, limit: reqLimit } = req.body;
+      const { includeAll, includeAny, exclude, category, maxYearsAgo, awardIds, awardOutcome, limit: reqLimit } = req.body;
       const bookLimit = parseInt(reqLimit || '50');
 
-      // First check which columns exist on books table
       const colCheck = await queryDB(
         `SELECT column_name FROM information_schema.columns WHERE table_name = 'books' AND table_schema = 'public'`, []
       );
@@ -3283,9 +3300,30 @@ export async function registerRoutes(
       };
 
       let query = 'SELECT DISTINCT b.* FROM books b';
+      const joins: string[] = [];
       const conditions: string[] = [];
       const params: any[] = [];
       let paramIndex = 1;
+
+      if (Array.isArray(awardIds) && awardIds.length > 0) {
+        joins.push(`
+          JOIN award_outcome_recipients aor ON aor.book_id = b.id AND aor.deleted_at IS NULL
+          JOIN award_outcomes ao ON aor.award_outcome_id = ao.id AND ao.deleted_at IS NULL
+          JOIN award_editions ae ON ao.award_edition_id = ae.id AND ae.deleted_at IS NULL
+          JOIN awards aw ON ae.award_id = aw.id AND aw.deleted_at IS NULL
+        `);
+        const awardPlaceholders = awardIds.map((_: any) => {
+          params.push(parseInt(_));
+          return `$${paramIndex++}`;
+        });
+        conditions.push(`aw.id IN (${awardPlaceholders.join(', ')})`);
+
+        if (awardOutcome && awardOutcome !== 'all') {
+          conditions.push(`ao.outcome_type = $${paramIndex}`);
+          params.push(awardOutcome);
+          paramIndex++;
+        }
+      }
 
       if (Array.isArray(includeAll) && includeAll.length > 0) {
         for (const tag of includeAll) {
@@ -3344,8 +3382,9 @@ export async function registerRoutes(
         }
       }
 
+      const joinStr = joins.length > 0 ? ' ' + joins.join(' ') : '';
       const where = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
-      query += `${where} ORDER BY b.created_at DESC LIMIT ${bookLimit}`;
+      query += `${joinStr}${where} ORDER BY b.created_at DESC LIMIT ${bookLimit}`;
 
       const result = await queryDB(query, params);
       return res.json({ ok: true, data: result.rows, count: result.rows.length });

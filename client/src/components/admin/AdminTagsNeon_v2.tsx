@@ -30,7 +30,7 @@ interface Tag {
   id: string;
   name: string;
   slug: string;
-  tag_type: 'genre' | 'topic' | 'award' | 'keyword';
+  tag_type: 'genre' | 'topic' | 'keyword';
   source: 'editorial' | 'onix' | 'awin' | 'derived';
   scope: string;
   
@@ -423,7 +423,6 @@ export function AdminTagsNeon() {
           <option value="all">Alle Typen</option>
           <option value="genre">Genre</option>
           <option value="topic">Topic</option>
-          <option value="award">Award</option>
           <option value="keyword">Keyword</option>
         </select>
         
@@ -614,7 +613,6 @@ export function AdminTagsNeon() {
                 >
                   <option value="genre">Genre (Gattung)</option>
                   <option value="topic">Topic (Thema)</option>
-                  <option value="award">Award (Auszeichnung)</option>
                   <option value="keyword">Keyword (Schlagwort)</option>
                 </select>
               </div>

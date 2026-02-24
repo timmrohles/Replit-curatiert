@@ -44,6 +44,14 @@ interface TagRules {
   includeAny?: string[];
   exclude?: string[];
   maxYearsAgo?: number | null;
+  awardIds?: number[];
+  awardOutcome?: string;
+}
+
+interface AwardOption {
+  id: number;
+  name: string;
+  country?: string;
 }
 
 interface BookResult {
@@ -327,6 +335,10 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
   const [tagRulesIncludeAny, setTagRulesIncludeAny] = useState<string[]>([]);
   const [tagRulesExclude, setTagRulesExclude] = useState<string[]>([]);
   const [maxYearsAgo, setMaxYearsAgo] = useState<number | null>(null);
+  const [selectedAwardIds, setSelectedAwardIds] = useState<number[]>([]);
+  const [awardOutcome, setAwardOutcome] = useState<string>('all');
+  const [availableAwards, setAvailableAwards] = useState<AwardOption[]>([]);
+  const [awardSearchQuery, setAwardSearchQuery] = useState('');
 
   const [saving, setSaving] = useState(false);
   const [bookCounts, setBookCounts] = useState<Record<number, number>>({});
@@ -448,7 +460,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
   }, [selectedCategory]);
 
   const resolveBooksByTags = useCallback(async () => {
-    if (tagRulesIncludeAll.length === 0 && tagRulesIncludeAny.length === 0) {
+    if (tagRulesIncludeAll.length === 0 && tagRulesIncludeAny.length === 0 && selectedAwardIds.length === 0) {
       setResolvedBooks([]);
       return;
     }
@@ -463,6 +475,8 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
           exclude: tagRulesExclude,
           category: selectedCategory?.name || null,
           maxYearsAgo: maxYearsAgo,
+          awardIds: selectedAwardIds.length > 0 ? selectedAwardIds : undefined,
+          awardOutcome: selectedAwardIds.length > 0 ? awardOutcome : undefined,
           limit: 50,
         }),
       });
@@ -475,7 +489,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
     } finally {
       setResolvingBooks(false);
     }
-  }, [tagRulesIncludeAll, tagRulesIncludeAny, tagRulesExclude, selectedCategory, maxYearsAgo]);
+  }, [tagRulesIncludeAll, tagRulesIncludeAny, tagRulesExclude, selectedCategory, maxYearsAgo, selectedAwardIds, awardOutcome]);
 
   useEffect(() => {
     const timer = setTimeout(() => { searchBooks(bookSearchQuery); }, 300);
@@ -483,13 +497,13 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
   }, [bookSearchQuery, searchBooks]);
 
   useEffect(() => {
-    if (curationType === 'dynamic' && (tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0)) {
+    if (curationType === 'dynamic' && (tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0 || selectedAwardIds.length > 0)) {
       const timer = setTimeout(() => { resolveBooksByTags(); }, 500);
       return () => clearTimeout(timer);
     } else {
       setResolvedBooks([]);
     }
-  }, [tagRulesIncludeAll, tagRulesIncludeAny, tagRulesExclude, curationType, resolveBooksByTags]);
+  }, [tagRulesIncludeAll, tagRulesIncludeAny, tagRulesExclude, curationType, resolveBooksByTags, selectedAwardIds, awardOutcome]);
 
   useEffect(() => {
     if (curationType === 'manual' && selectedBooks.length > 0) {
@@ -521,6 +535,9 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
     setTagRulesIncludeAny([]);
     setTagRulesExclude([]);
     setMaxYearsAgo(null);
+    setSelectedAwardIds([]);
+    setAwardOutcome('all');
+    setAwardSearchQuery('');
     setEditingCuration(null);
     setResolvedBooks([]);
     setDerivedTags([]);
@@ -560,6 +577,8 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
       setTagRulesIncludeAny(rules.includeAny || []);
       setTagRulesExclude(rules.exclude || []);
       setMaxYearsAgo(rules.maxYearsAgo ?? null);
+      setSelectedAwardIds(rules.awardIds || []);
+      setAwardOutcome(rules.awardOutcome || 'all');
     }
 
     try {
@@ -609,7 +628,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
         const wordCount = formDescription.trim() ? formDescription.trim().split(/\s+/).length : 0;
         return formTitle.trim().length > 0 && formDescription.trim().length > 0 && wordCount <= 300;
       }
-      case 'content': return curationType === 'manual' ? selectedBooks.length > 0 : (tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0);
+      case 'content': return curationType === 'manual' ? selectedBooks.length > 0 : (tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0 || selectedAwardIds.length > 0);
       case 'review': return true;
       default: return false;
     }
@@ -646,6 +665,8 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
     if (tagRulesIncludeAny.length > 0) tagRules.includeAny = tagRulesIncludeAny;
     if (tagRulesExclude.length > 0) tagRules.exclude = tagRulesExclude;
     if (maxYearsAgo !== null && maxYearsAgo > 0) tagRules.maxYearsAgo = maxYearsAgo;
+    if (selectedAwardIds.length > 0) tagRules.awardIds = selectedAwardIds;
+    if (selectedAwardIds.length > 0 && awardOutcome !== 'all') tagRules.awardOutcome = awardOutcome;
 
     const allTags = curationType === 'manual'
       ? derivedTags
@@ -1467,6 +1488,106 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
 
                 <div className="pt-3" style={{ borderTop: '1px solid #E5E7EB' }}>
                   <label className="block text-sm font-medium mb-1" style={{ color: '#3A3A3A' }}>
+                    Buchpreise (optional)
+                  </label>
+                  <Text as="p" variant="xs" className="mb-3" style={{ color: '#6B7280' }}>
+                    Nur Bücher anzeigen, die bestimmte Buchpreise erhalten haben. Kombinierbar mit Themen/Tags.
+                  </Text>
+
+                  {selectedAwardIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {selectedAwardIds.map(id => {
+                        const award = availableAwards.find(a => a.id === id);
+                        return (
+                          <span
+                            key={id}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs text-white"
+                            style={{ backgroundColor: '#D97706' }}
+                          >
+                            {award?.name || `Award #${id}`}
+                            <button
+                              type="button"
+                              onClick={() => setSelectedAwardIds(selectedAwardIds.filter(a => a !== id))}
+                              className="hover:opacity-70"
+                              data-testid={`button-remove-award-${id}`}
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 items-start">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={awardSearchQuery}
+                        onChange={(e) => {
+                          setAwardSearchQuery(e.target.value);
+                          if (e.target.value.trim()) {
+                            fetch(`${API_BASE}/public/awards-list?search=${encodeURIComponent(e.target.value.trim())}`)
+                              .then(r => r.json())
+                              .then(data => { if (data.ok) setAvailableAwards(data.data || []); })
+                              .catch(() => {});
+                          }
+                        }}
+                        onFocus={() => {
+                          if (availableAwards.length === 0) {
+                            fetch(`${API_BASE}/public/awards-list`)
+                              .then(r => r.json())
+                              .then(data => { if (data.ok) setAvailableAwards(data.data || []); })
+                              .catch(() => {});
+                          }
+                        }}
+                        placeholder="Buchpreis suchen..."
+                        className="w-full px-3 py-2 border rounded-lg text-sm"
+                        style={{ borderColor: '#E5E7EB' }}
+                        data-testid="input-award-search"
+                      />
+                      {awardSearchQuery && availableAwards.length > 0 && (
+                        <div className="absolute left-0 right-0 top-full mt-1 border rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto" style={{ backgroundColor: '#FFFFFF', borderColor: '#E5E7EB' }}>
+                          {availableAwards
+                            .filter(a => !selectedAwardIds.includes(a.id))
+                            .filter(a => a.name.toLowerCase().includes(awardSearchQuery.toLowerCase()))
+                            .map(a => (
+                              <button
+                                key={a.id}
+                                type="button"
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center justify-between"
+                                onClick={() => {
+                                  setSelectedAwardIds([...selectedAwardIds, a.id]);
+                                  setAwardSearchQuery('');
+                                }}
+                                data-testid={`button-add-award-${a.id}`}
+                              >
+                                <span>{a.name}</span>
+                                {a.country && <span className="text-xs" style={{ color: '#9CA3AF' }}>{a.country}</span>}
+                              </button>
+                            ))
+                          }
+                        </div>
+                      )}
+                    </div>
+
+                    <select
+                      value={awardOutcome}
+                      onChange={e => setAwardOutcome(e.target.value)}
+                      className="px-3 py-2 border rounded-lg text-sm"
+                      style={{ borderColor: '#E5E7EB' }}
+                      data-testid="select-award-outcome"
+                    >
+                      <option value="all">Alle Ergebnisse</option>
+                      <option value="winner">Gewinner</option>
+                      <option value="shortlist">Shortlist</option>
+                      <option value="longlist">Longlist</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="pt-3" style={{ borderTop: '1px solid #E5E7EB' }}>
+                  <label className="block text-sm font-medium mb-1" style={{ color: '#3A3A3A' }}>
                     Erscheinungsjahr eingrenzen
                   </label>
                   <Text as="p" variant="xs" className="mb-3" style={{ color: '#6B7280' }}>
@@ -1497,7 +1618,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                   </div>
                 </div>
 
-                {(tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0) && (
+                {(tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0 || selectedAwardIds.length > 0) && (
                   <div className="pt-3" style={{ borderTop: '1px solid #E5E7EB' }}>
                     <div className="flex items-center justify-between mb-2">
                       <Text as="span" variant="small" className="font-medium" style={{ color: '#3A3A3A' }}>
@@ -1543,7 +1664,7 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                         )}
                       </div>
                     )}
-                    {!resolvingBooks && resolvedBooks.length === 0 && (tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0) && (
+                    {!resolvingBooks && resolvedBooks.length === 0 && (tagRulesIncludeAll.length > 0 || tagRulesIncludeAny.length > 0 || selectedAwardIds.length > 0) && (
                       <Text as="p" variant="small" style={{ color: '#6B7280' }}>
                         Klicke auf "Bücher laden", um passende Bücher anzuzeigen.
                       </Text>
@@ -1713,6 +1834,22 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
                               {tagRulesExclude.map(t => (
                                 <span key={t} className="text-xs px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: '#DC2626' }}>{t}</span>
                               ))}
+                            </div>
+                          )}
+                          {selectedAwardIds.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className="text-xs font-medium" style={{ color: '#D97706' }}>Buchpreise:</span>
+                              {selectedAwardIds.map(id => {
+                                const award = availableAwards.find(a => a.id === id);
+                                return (
+                                  <span key={id} className="text-xs px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: '#D97706' }}>{award?.name || `#${id}`}</span>
+                                );
+                              })}
+                              {awardOutcome !== 'all' && (
+                                <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FEF3C7', color: '#92400E' }}>
+                                  {awardOutcome === 'winner' ? 'Gewinner' : awardOutcome === 'shortlist' ? 'Shortlist' : 'Longlist'}
+                                </span>
+                              )}
                             </div>
                           )}
                           {maxYearsAgo && (
