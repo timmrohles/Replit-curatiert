@@ -25,7 +25,25 @@ The platform is built with a modern web stack, featuring a React frontend and an
 
 **Core Features & Design Patterns**:
 -   **Dynamic Content Management**: Pages and sections are rendered dynamically based on database configurations. Page resolve endpoint supports both explicit `section_items.book_id` references and query-based book resolution (by tag IDs, category IDs, award definition IDs) for `book_carousel`/`horizontal_row` sections.
--   **Book Enrichment**: System for identifying indie/self-published books and displaying award badges.
+-   **Book Enrichment & Badge System**: Unified badge system across ALL book displays (BookCard, BookCarouselItem, EditorialBookCard, Kurationen, etc.). Single source of truth: `BookEnrichmentBadges` component (`client/src/components/book/BookEnrichmentBadges.tsx`). Every book list/card that shows books MUST use this component for consistent enrichment display.
+    -   **Badge Design**: Black semi-transparent circles (`rgba(0,0,0,0.75)`), white icons, `shadow-md`, click-to-open modals with full details.
+    -   **Badge Types & Icons**:
+        -   Award Wins (outcome = `winner` | `special`): Custom `LaurelWreathIcon` (laurel wreath SVG)
+        -   Nominations (outcome = `shortlist` | `longlist` | `nominee` | `finalist`): `Gem` icon from lucide-react
+        -   Indie Publisher (`is_indie=true`, `indie_type='indie-verlag'`): `Bird` icon
+        -   Self-Published (`is_indie=true`, `indie_type='selfpublisher'`): `PenLine` icon
+        -   Pressestimmen (reviews): `Quote` icon — supports both `string` and `Array<{source, quote}>` formats
+    -   **Data Source**: `enrichBooksWithAwards()` function in `server/routes.ts` — queries `award_outcome_recipients` table joined with `award_outcomes`, `award_editions`, `awards`. Returns `award_details[]` array with `{name, year, outcome}` per book. Also enriches with `onix_tag_ids` from `book_onix_tags`.
+    -   **Outcome Labels**: `winner` → "Gewinner", `shortlist` → "Shortlist", `longlist` → "Longlist", `nominee` → "Nominiert", `finalist` → "Finalist", `special` → "Sonderpreis".
+    -   **ONIX Award Tags**: Separate `Award` icon button for ONIX database tag badges (distinct from enrichment badges). Shows tag overlay with like buttons.
+    -   **Rule**: All Kurationen, carousels, book lists, and card components MUST use `BookEnrichmentBadges` for awards/indie/reviews. No inline badge implementations allowed.
+-   **Book Sorting Modes**: Backend sort modes applied to section book queries and book lists. Used in page resolve endpoint (`/api/pages/:slug/resolve`) and `/api/books`:
+    -   `relevance` (default): Sort by `base_score` descending
+    -   `newest`: Sort by `created_at` descending
+    -   `most-awarded` / `awarded`: Sort by `award_score` descending (books with most awards first)
+    -   `popular`: Sort by `user_score` descending
+    -   `manual`: Sort by `sort_order` ascending (admin-defined order)
+    -   `hidden-gems`: Filter for books with `is_hidden_gem=true` and high enrichment but low visibility
 -   **Content Scheduling & Tracking**: Features for scheduling content sections, setting view/click limits, and bot filtering for accurate analytics.
 -   **Curator Management**: Integrated curator selection with profile management.
 -   **Type Safety**: Extensive use of TypeScript with Zod for API validation.
