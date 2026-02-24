@@ -3119,12 +3119,13 @@ export async function registerRoutes(
 
       let useAwardSort = sort === 'awarded' || sort === 'hidden-gems';
       if (useAwardSort) {
+        const awardFilter = sort === 'hidden-gems'
+          ? "JOIN award_outcomes ao2 ON ar2.award_outcome_id = ao2.id WHERE ar2.book_id IS NOT NULL AND ao2.result_status != 'winner'"
+          : "WHERE ar2.book_id IS NOT NULL";
         joins.push(` LEFT JOIN (
           SELECT ar2.book_id, COUNT(*) as award_sort_count
           FROM award_recipients ar2
-          ${sort === 'hidden-gems' ? 'JOIN award_outcomes ao2 ON ar2.award_outcome_id = ao2.id' : ''}
-          WHERE ar2.book_id IS NOT NULL
-          ${sort === 'hidden-gems' ? "AND ao2.result_status != 'winner'" : ''}
+          ${awardFilter}
           GROUP BY ar2.book_id
         ) award_sort ON award_sort.book_id = b.id`);
       }
