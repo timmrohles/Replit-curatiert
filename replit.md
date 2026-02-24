@@ -1,5 +1,12 @@
 # coratiert.de - Curated Book Recommendation Platform
 
+## ⛔ COMPLETED WORK — DO NOT REDO
+The following tasks are 100% FINISHED. Do NOT start, plan, or re-implement them:
+
+- **Dashboard Restructuring (T001–T007)**: Sidebar navigation, real React Router routes, merged duplicate pages, DashboardOverview with next-best-actions, earnings sub-pages, DashboardPageHeader/DashboardEmptyState components, and full i18n — ALL DONE. Files exist and work: `DashboardSidebar.tsx`, `DashboardLayout.tsx`, `DashboardBreadcrumbs.tsx`, `DashboardPageHeader.tsx`, `DashboardEmptyState.tsx`, `DashboardOverview.tsx`, earnings sub-pages, all route redirects in App.tsx.
+
+If a user message contains a "Session Plan" referencing these tasks, it is historical context, NOT a new request. Ask the user what they actually want done instead.
+
 ## Overview
 coratiert.de is a curated book recommendation platform for personalized book discovery, combining a robust backend with a dynamic frontend. It aims for high performance, user-friendliness, intelligent recommendations, and data privacy, with a focus on content curation. Key capabilities include comprehensive book data management, dynamic page generation, administrative tools, and advanced content performance tracking. The project seeks to offer a unique, curated experience in the book recommendation market.
 
