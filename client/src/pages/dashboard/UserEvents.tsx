@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Heading, Text } from '../../components/ui/typography';
 import { useAuth } from '../../hooks/use-auth';
 import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
+import { DashboardEmptyState } from '../../components/dashboard/DashboardEmptyState';
 
 const API_BASE = '/api';
 
@@ -696,15 +697,15 @@ export function UserEvents() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: '#247ba0' }} />
         </div>
       ) : events.length === 0 ? (
-        <div className="text-center py-16">
-          <Calendar className="w-12 h-12 mx-auto mb-3" style={{ color: '#D1D5DB' }} />
-          <Heading as="h3" variant="h4" className="text-foreground !normal-case mb-2">
-            Noch keine Veranstaltungen
-          </Heading>
-          <Text as="p" variant="small" style={{ color: '#6B7280' }}>
-            Erstelle dein erstes Event, um Leser:innen zu Lesungen, Buchclub-Treffen oder Workshops einzuladen.
-          </Text>
-        </div>
+        <DashboardEmptyState
+          icon={Calendar}
+          title={t('dashboardPages.emptyEventsTitle', 'Noch keine Veranstaltungen')}
+          description={t('dashboardPages.emptyEventsDesc', 'Erstelle Lesungen, Buchklubs oder andere Events und lade deine Community ein.')}
+          action={{
+            label: t('dashboardPages.emptyEventsAction', 'Erste Veranstaltung erstellen'),
+            onClick: () => setShowForm(true),
+          }}
+        />
       ) : (
         <div className="space-y-8">
           {upcomingEvents.length > 0 && (

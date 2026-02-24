@@ -6,6 +6,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/use-auth';
 import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
+import { DashboardEmptyState } from '../../components/dashboard/DashboardEmptyState';
 
 const API_BASE = '/api';
 
@@ -498,12 +499,15 @@ export function ContentSourcesManager() {
       )}
 
       {sources.length === 0 ? (
-        <div className="text-center py-12">
-          <Rss className="w-12 h-12 mx-auto mb-3" style={{ color: '#D1D5DB' }} />
-          <p className="text-sm" style={{ color: '#6B7280' }}>
-            Noch keine Content-Quellen hinzugefügt. Füge einen Podcast-Feed hinzu, um Buchempfehlungen zu extrahieren.
-          </p>
-        </div>
+        <DashboardEmptyState
+          icon={Rss}
+          title={t('dashboardPages.emptyContentSourcesTitle', 'Noch keine Quellen')}
+          description={t('dashboardPages.emptyContentSourcesDesc', 'Füge Podcast- oder RSS-Feeds hinzu und lass Bucherwähnungen automatisch erkennen.')}
+          action={{
+            label: t('dashboardPages.emptyContentSourcesAction', 'Erste Quelle hinzufügen'),
+            onClick: () => setShowAddForm(true),
+          }}
+        />
       ) : (
         <div className="space-y-4">
           {sources.map(source => {

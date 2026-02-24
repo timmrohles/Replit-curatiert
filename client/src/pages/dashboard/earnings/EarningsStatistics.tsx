@@ -8,8 +8,8 @@ export function EarningsStatistics() {
   return (
     <div className="space-y-6">
       <DashboardPageHeader
-        title={t('dashboardNav.statistics', 'Statistiken')}
-        description="Detaillierte Klick-, Attributions- und Umsatzstatistiken deines Affiliate-Programms."
+        title={t('dashboardPages.statisticsTitle', 'Statistiken')}
+        description={t('dashboardPages.statisticsDesc', 'Detaillierte Klick-, Attributions- und Umsatzstatistiken deines Affiliate-Programms.')}
       />
       <CreatorAnalytics />
     </div>

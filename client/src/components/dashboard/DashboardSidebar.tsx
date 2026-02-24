@@ -144,18 +144,15 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
           <div key={group.id} className="mb-1.5">
             <button
               onClick={() => toggleGroup(group.id)}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors hover:bg-black/[0.04]"
+              className="w-full flex items-center justify-between px-3 py-2 rounded-md transition-colors hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
               data-testid={`sidebar-group-${group.id}`}
             >
-              <span
-                className="text-xs font-semibold tracking-wide"
-                style={{ color: '#4B5563', letterSpacing: '0.06em' }}
-              >
+              <span className="text-xs font-semibold tracking-wide text-gray-600 dark:text-gray-400" style={{ letterSpacing: '0.06em' }}>
                 {group.label}
               </span>
               {isOpen
-                ? <ChevronDown className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
-                : <ChevronRight className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
+                ? <ChevronDown className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
+                : <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
               }
             </button>
 
@@ -173,13 +170,9 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
                       data-testid={`sidebar-item-${item.id}`}
                       className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
                         active
-                          ? 'font-medium'
-                          : 'hover:bg-black/[0.04]'
+                          ? 'font-medium bg-[#247ba0] text-white'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                       }`}
-                      style={active
-                        ? { backgroundColor: '#247ba0', color: '#FFFFFF' }
-                        : { color: '#374151' }
-                      }
                     >
                       {item.label}
                     </button>
@@ -196,8 +189,8 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
   return (
     <>
       <aside
-        className="hidden lg:block w-56 flex-shrink-0 border-r overflow-y-auto"
-        style={{ borderColor: '#E5E7EB', minHeight: 'calc(100vh - 64px)' }}
+        className="hidden lg:block w-56 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 overflow-y-auto"
+        style={{ minHeight: 'calc(100vh - 64px)' }}
       >
         {sidebarContent}
       </aside>
@@ -205,13 +198,13 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
       {mobileOpen && (
         <>
           <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onMobileClose} />
-          <aside className="fixed inset-y-0 left-0 w-64 bg-white z-50 lg:hidden overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: '#E5E7EB' }}>
-              <span className="text-sm font-semibold" style={{ color: '#1F2937' }}>
+          <aside className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-900 z-50 lg:hidden overflow-y-auto shadow-2xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 Dashboard
               </span>
-              <button onClick={onMobileClose} className="p-1.5 rounded-md hover:bg-black/5 transition-colors" data-testid="sidebar-close">
-                <X className="w-4 h-4" style={{ color: '#374151' }} />
+              <button onClick={onMobileClose} className="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-colors" data-testid="sidebar-close">
+                <X className="w-4 h-4 text-gray-700 dark:text-gray-300" />
               </button>
             </div>
             {sidebarContent}

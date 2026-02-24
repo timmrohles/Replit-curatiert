@@ -86,14 +86,13 @@ export function DashboardBreadcrumbs() {
       data-testid="dashboard-breadcrumbs"
     >
       {isRoot ? (
-        <span style={{ color: '#1F2937', fontWeight: 600 }} data-testid="breadcrumb-dashboard">
+        <span className="font-semibold text-gray-800 dark:text-gray-100" data-testid="breadcrumb-dashboard">
           Dashboard
         </span>
       ) : (
         <button
           onClick={() => navigate('/dashboard')}
-          className="transition-colors hover:underline"
-          style={{ color: '#6B7280' }}
+          className="text-gray-500 dark:text-gray-400 transition-colors hover:underline"
           data-testid="breadcrumb-dashboard"
         >
           Dashboard
@@ -103,16 +102,15 @@ export function DashboardBreadcrumbs() {
         const isLast = i === crumbs.length - 1;
         return (
           <span key={crumb.path} className="flex items-center gap-2">
-            <ChevronRight className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
+            <ChevronRight className="w-3.5 h-3.5 text-gray-400 dark:text-gray-500" />
             {isLast ? (
-              <span style={{ color: '#1F2937', fontWeight: 600 }} data-testid={`breadcrumb-${i}`}>
+              <span className="font-semibold text-gray-800 dark:text-gray-100" data-testid={`breadcrumb-${i}`}>
                 {crumb.label}
               </span>
             ) : (
               <button
                 onClick={() => navigate(crumb.path)}
-                className="transition-colors hover:underline"
-                style={{ color: '#6B7280' }}
+                className="text-gray-500 dark:text-gray-400 transition-colors hover:underline"
                 data-testid={`breadcrumb-${i}`}
               >
                 {crumb.label}

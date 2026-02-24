@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, Star, ExternalLink, CheckCircle, XCircle } from 'l
 import { useTranslation } from 'react-i18next';
 import { ReviewWizard } from '../../components/review-wizard/ReviewWizard';
 import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
+import { DashboardEmptyState } from '../../components/dashboard/DashboardEmptyState';
 
 // Mock data
 const mockReviews = [
@@ -74,28 +75,16 @@ export function DashboardReviews() {
         }}
       />
 
-      {/* Reviews List */}
       {mockReviews.length === 0 ? (
-        <div className="p-12 text-center">
-          <div className="max-w-md mx-auto">
-            <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: '#EEF2FF' }}>
-              <Star className="w-8 h-8" style={{ color: '#247ba0' }} />
-            </div>
-            <h3 className="text-xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-              Noch keine Rezensionen
-            </h3>
-            <p className="text-sm mb-6" style={{ color: '#6B7280' }}>
-              Teile deine Meinung zu Büchern, die du gelesen hast.
-            </p>
-            <button
-              onClick={() => setShowWizard(true)}
-              className="px-6 py-3 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md"
-              style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-            >
-              Erste Rezension schreiben
-            </button>
-          </div>
-        </div>
+        <DashboardEmptyState
+          icon={Star}
+          title={t('dashboardPages.emptyReviewsTitle', 'Noch keine Rezensionen')}
+          description={t('dashboardPages.emptyReviewsDesc', 'Schreibe deine erste Buchrezension und teile deine Meinung mit anderen Leser:innen.')}
+          action={{
+            label: t('dashboardPages.emptyReviewsAction', 'Erste Rezension schreiben'),
+            onClick: () => setShowWizard(true),
+          }}
+        />
       ) : (
         <div className="space-y-4">
           {mockReviews.map((review) => (

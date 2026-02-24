@@ -6,6 +6,7 @@ import { ImageWithFallback } from '@/components/figma/ImageWithFallback';
 import { EditorialBookCard } from '@/components/book/EditorialBookCard';
 import { useAuth } from '../../hooks/use-auth';
 import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
+import { DashboardEmptyState } from '../../components/dashboard/DashboardEmptyState';
 
 const API_BASE = '/api';
 
@@ -823,23 +824,15 @@ export function UserCurations({ onNavigateToTab }: UserCurationsProps) {
       )}
 
       {curations.length === 0 ? (
-        <div className="p-12 text-center">
-          <BookOpen className="w-16 h-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
-          <h3 className="text-xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-            Keine Kurationen
-          </h3>
-          <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
-            Erstelle deine erste thematische Buchsammlung
-          </p>
-          <button
-            onClick={openCreateWizard}
-            data-testid="button-empty-new-curation"
-            className="px-4 py-2 rounded-lg text-sm text-white"
-            style={{ backgroundColor: '#247ba0' }}
-          >
-            Erste Kuration erstellen
-          </button>
-        </div>
+        <DashboardEmptyState
+          icon={BookOpen}
+          title={t('dashboardPages.emptyCurationsTitle', 'Noch keine Kurationen')}
+          description={t('dashboardPages.emptyCurationsDesc', 'Erstelle deine erste thematische Buchsammlung und teile sie mit deiner Community.')}
+          action={{
+            label: t('dashboardPages.emptyCurationsAction', 'Erste Kuration erstellen'),
+            onClick: openCreateWizard,
+          }}
+        />
       ) : (
         <div className="space-y-8">
           {curations.map((curation) => {

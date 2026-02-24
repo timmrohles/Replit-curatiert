@@ -138,17 +138,14 @@ export function DashboardOverview() {
               data-testid="avatar-image"
             />
           ) : (
-            <div
-              className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
-            >
+            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center flex-shrink-0 bg-[#247ba0] text-white">
               <User className="w-7 h-7 md:w-8 md:h-8" />
             </div>
           )}
           <div className="flex-1 min-w-0">
             <h1
-              className="text-xl md:text-2xl lg:text-3xl mb-1"
-              style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}
+              className="text-xl md:text-2xl lg:text-3xl mb-1 text-gray-800 dark:text-gray-100"
+              style={{ fontFamily: 'Fjalla One' }}
               data-testid="text-username"
             >
               {t('dashboardOverview.welcome', 'Willkommen, {{name}}!', { name: userName })}
@@ -158,7 +155,7 @@ export function DashboardOverview() {
                 <span className="text-xs sm:text-sm text-muted-foreground">
                   {t('dashboardOverview.profileProgress', 'Profil {{progress}}% vollständig', { progress: profileProgress })}
                 </span>
-                <span className="text-xs sm:text-sm font-medium" style={{ color: '#247ba0' }}>
+                <span className="text-xs sm:text-sm font-medium text-[#247ba0]">
                   {profileProgress}%
                 </span>
               </div>
@@ -190,7 +187,7 @@ export function DashboardOverview() {
                 <Icon className="w-4 h-4 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground">{kpi.label}</span>
               </div>
-              <div className="text-2xl font-bold" style={{ color: '#1F2937' }}>
+              <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">
                 {isLoading ? '…' : String(kpi.value)}
               </div>
               {'subtitle' in kpi && kpi.subtitle && (
@@ -203,10 +200,7 @@ export function DashboardOverview() {
 
       {sortedActions.length > 0 && (
         <section>
-          <h2
-            className="text-lg mb-3"
-            style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}
-          >
+          <h2 className="text-lg mb-3 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
             {t('dashboardOverview.nextSteps', 'Nächste Schritte')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -219,14 +213,11 @@ export function DashboardOverview() {
                   className="flex items-start gap-3 p-4 rounded-lg border bg-card text-left hover:border-[#247ba0]/30 transition-colors group"
                   data-testid={`action-${action.id}`}
                 >
-                  <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: 'rgba(36, 123, 160, 0.1)' }}
-                  >
-                    <Icon className="w-5 h-5" style={{ color: '#247ba0' }} />
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#247ba0]/10 dark:bg-[#247ba0]/20">
+                    <Icon className="w-5 h-5 text-[#247ba0]" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-medium mb-0.5" style={{ color: '#1F2937' }}>
+                    <h3 className="text-sm font-medium mb-0.5 text-gray-800 dark:text-gray-100">
                       {action.title}
                     </h3>
                     <p className="text-xs text-muted-foreground line-clamp-2">

@@ -56,25 +56,24 @@ export function DashboardLayout() {
 
   if (authLoading || loadingModules) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--header-bg, #F9FAFB)' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: '#247ba0' }} />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#247ba0]" />
       </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4" style={{ backgroundColor: 'var(--header-bg, #F9FAFB)' }}>
-        <h2 className="text-xl" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
+        <h2 className="text-xl text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
           {t('dashboardNav.loginRequired', 'Bitte melde dich an')}
         </h2>
-        <p className="text-sm" style={{ color: '#4B5563' }}>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           {t('dashboardNav.loginDescription', 'Du musst angemeldet sein, um dein Dashboard zu nutzen.')}
         </p>
         <button
           onClick={() => { window.location.href = '/api/login'; }}
-          className="px-6 py-3 rounded-lg text-white text-sm font-medium"
-          style={{ backgroundColor: '#247ba0' }}
+          className="px-6 py-3 rounded-lg text-white text-sm font-medium bg-[#247ba0] hover:bg-[#1d6584] transition-colors"
           data-testid="button-dashboard-login"
         >
           {t('dashboardNav.login', 'Anmelden')}
@@ -84,7 +83,7 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--header-bg, #F9FAFB)' }}>
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
       <div className="flex-1 flex">
@@ -96,13 +95,13 @@ export function DashboardLayout() {
         />
 
         <main className="flex-1 min-w-0 pb-20 lg:pb-0">
-          <div className="lg:hidden flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: '#E5E7EB' }}>
+          <div className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="p-2 -ml-1 rounded-lg hover:bg-black/5 transition-colors"
+              className="p-2 -ml-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
               data-testid="sidebar-toggle"
             >
-              <Menu className="w-5 h-5" style={{ color: '#374151' }} />
+              <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
             </button>
             <DashboardBreadcrumbs />
           </div>

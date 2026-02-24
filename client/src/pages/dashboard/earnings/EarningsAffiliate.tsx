@@ -88,8 +88,8 @@ export function EarningsAffiliate() {
   return (
     <div className="space-y-6">
       <DashboardPageHeader
-        title={t('dashboardNav.affiliate', 'Affiliate-Programm')}
-        description="Registriere dich als Creator und verwalte deine Identitaet, Steuerdaten und Auszahlungsinformationen."
+        title={t('dashboardPages.affiliateTitle', 'Affiliate-Programm')}
+        description={t('dashboardPages.affiliateDesc', 'Registriere dich als Creator und verwalte deine Identität, Steuerdaten und Auszahlungsinformationen.')}
       />
 
       <div className="space-y-3">

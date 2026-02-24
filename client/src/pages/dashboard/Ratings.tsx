@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Star, Plus, Edit, Trash2, Filter, X, Book, TrendingUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
+import { DashboardEmptyState } from '../../components/dashboard/DashboardEmptyState';
 
 type RatingStatus = 'draft' | 'published';
 
@@ -166,27 +167,13 @@ export function DashboardRatings() {
         </button>
       </div>
 
-      {/* Ratings List */}
       <div className="space-y-3">
         {filteredRatings.length === 0 ? (
-          <div className="p-12 text-center">
-            <Book className="w-16 h-16 mx-auto mb-4" style={{ color: '#9CA3AF' }} />
-            <h3 className="text-xl mb-2" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
-              Keine Bewertungen
-            </h3>
-            <p className="text-sm mb-4" style={{ color: '#6B7280' }}>
-              {statusFilter === 'all' ? 'Bewerte dein erstes Buch' : `Keine ${statusFilter === 'published' ? 'veröffentlichten' : 'Entwurf-'}Bewertungen`}
-            </p>
-            {statusFilter === 'all' && (
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="px-4 py-2 rounded-lg text-sm text-white"
-                style={{ backgroundColor: '#247ba0' }}
-              >
-                Buch bewerten
-              </button>
-            )}
-          </div>
+          <DashboardEmptyState
+            icon={Book}
+            title={t('dashboardPages.emptyRatingsTitle', 'Noch keine Bewertungen')}
+            description={t('dashboardPages.emptyRatingsDesc', 'Bewerte Bücher mit Sternen, um deine Leseeindrücke festzuhalten.')}
+          />
         ) : (
           filteredRatings.map((rating) => (
             <div 
