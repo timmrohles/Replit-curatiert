@@ -40,7 +40,7 @@ export function PagesTabContent({
 
   useEffect(() => {
     getAllONIXTags()
-      .then(tags => setOnixCategories(tags.filter((t: any) => t.type === 'category' || !t.type)))
+      .then(tags => setOnixCategories(tags))
       .catch(() => {});
   }, []);
 
@@ -297,21 +297,6 @@ export function PagesTabContent({
               </select>
             </div>
 
-            {/* Template Key */}
-            <div>
-              <label className="block text-sm mb-1 font-medium" style={{ color: '#666666' }}>
-                Template Key (optional)
-              </label>
-              <input
-                type="text"
-                placeholder="awards-overview"
-                value={editingPage.template_key || ''}
-                onChange={(e) => setEditingPage({ ...editingPage, template_key: e.target.value })}
-                className="w-full px-4 py-2 border rounded-lg"
-                style={{ borderColor: '#E5E7EB' }}
-              />
-            </div>
-
             {/* Page Type & Category */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -346,7 +331,7 @@ export function PagesTabContent({
                     <option value="">Keine Kategorie</option>
                     {onixCategories.map(cat => (
                       <option key={cat.id} value={cat.id}>
-                        {(cat as any).displayName || cat.name}
+                        {(cat as any).displayName || cat.name}{(cat as any).tag_type ? ` (${(cat as any).tag_type})` : ''}
                       </option>
                     ))}
                   </select>
