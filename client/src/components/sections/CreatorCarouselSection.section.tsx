@@ -66,6 +66,13 @@ export function CreatorCarouselSection({ section, books = [], className = '', ca
       .filter(Boolean) as string[];
   }, [config.books?.query?.include?.tagIds, onixTags]);
 
+  const resolvedCategoryName = useMemo(() => {
+    if (config.category) return config.category;
+    if (!categoryId || onixTags.length === 0) return undefined;
+    const tag = onixTags.find(t => String(t.id) === String(categoryId));
+    return tag ? (tag as any).displayName || tag.name : undefined;
+  }, [config.category, categoryId, onixTags]);
+
   const mappedBooks = books.map(mapBookForCarousel);
 
   return (
@@ -83,7 +90,7 @@ export function CreatorCarouselSection({ section, books = [], className = '', ca
             isVerified: config.isVerified || config.verified || false,
           }}
           books={mappedBooks}
-          category={config.category || (categoryId ? String(categoryId) : undefined)}
+          category={resolvedCategoryName}
           tags={resolvedTagNames.length > 0 ? resolvedTagNames : undefined}
           showHeader={true}
           showCta={false}
