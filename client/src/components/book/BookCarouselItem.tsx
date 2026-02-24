@@ -1,6 +1,7 @@
 import React, { useState, memo, useEffect, useMemo, useCallback } from 'react';
 import { useSafeNavigate } from '../../utils/routing';
-import { Tags, ArrowRight, Quote, ShoppingCart, Award, Building2 } from 'lucide-react';
+import { Tags, ArrowRight, Quote, ShoppingCart, Award } from 'lucide-react';
+import { BookEnrichmentBadges } from './BookEnrichmentBadges';
 import { useTheme } from '../../utils/ThemeContext';
 import { Button } from '../ui/button';
 import { Heading, Text } from '../ui/typography';
@@ -278,20 +279,7 @@ const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarou
                 <Award className="w-5 h-5 md:w-6 md:h-6" />
               </button>
             )}
-            {/* Indie-Verlage Icon */}
-            {book.is_indie && (
-              <div
-                className="w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center shadow-lg"
-                style={{ 
-                  backgroundColor: '#1a1a1a',
-                  color: '#FFFFFF'
-                }}
-                title={book.indie_type === 'selfpublishing' ? 'Selfpublishing' : 'Indie-Verlag'}
-                data-testid="badge-indie-verlag"
-              >
-                <Building2 className="w-5 h-5 md:w-6 md:h-6" />
-              </div>
-            )}
+            <BookEnrichmentBadges book={book} />
           </div>
 
           {/* Cover Container - NO MORE FLIP */}
@@ -326,33 +314,6 @@ const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarou
               </div>
             )}
             
-            {/* Enrichment Badges - top right corner */}
-            {book.award_count !== undefined && book.award_count > 0 && (
-              <div className="absolute top-2 right-2" style={{ zIndex: 52 }}>
-                <div
-                  className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shadow-lg"
-                  style={{ backgroundColor: '#1a1a1a' }}
-                  title={`${book.award_count} Auszeichnung${book.award_count > 1 ? 'en' : ''}`}
-                  data-testid="badge-awarded"
-                >
-                  <Award className="w-4 h-4 md:w-[18px] md:h-[18px] text-white" strokeWidth={2} />
-                </div>
-              </div>
-            )}
-            {book.is_hidden_gem && !(book.award_count && book.award_count > 0) && (
-              <div className="absolute top-2 right-2" style={{ zIndex: 52 }}>
-                <div
-                  className="w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shadow-lg"
-                  style={{ backgroundColor: '#1a1a1a' }}
-                  title="Geheimtipp"
-                  data-testid="badge-hidden-gem"
-                >
-                  <svg className="w-4 h-4 md:w-[18px] md:h-[18px] text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                </div>
-              </div>
-            )}
 
             {/* ONIX Tags on Cover - visible on hover (SAME AS BOOKCARD) */}
             {hoverTags.length > 0 && (
