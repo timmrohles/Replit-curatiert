@@ -52,7 +52,7 @@ export function SiteBannerTab() {
 
       const response = await fetch(`${API_BASE_URL}/site-config/banners`, {
             credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
       });
 
       if (!response.ok) {
@@ -146,7 +146,7 @@ export function SiteBannerTab() {
             credentials: 'include',
         method,
         headers: {
-          'Content-Type': 'application/json' },
+          'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
         body: JSON.stringify({
           name: editingBanner.name.trim(),
           message: editingBanner.message.trim(),
@@ -192,7 +192,7 @@ export function SiteBannerTab() {
       const response = await fetch(`${API_BASE_URL}/site-config/banner/${id}`, {
             credentials: 'include',
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
       });
 
       if (!response.ok) {
@@ -213,7 +213,7 @@ export function SiteBannerTab() {
             credentials: 'include',
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json' },
+          'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
         body: JSON.stringify({
           ...banner,
           visible: !banner.visible,
