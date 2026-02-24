@@ -467,7 +467,7 @@ export function ShopPage() {
     { id: 'newest', label: t('shop.sortNewest', 'Neuerscheinungen') },
     { id: 'most-awarded', label: t('shop.sortAwarded', 'Auszeichnungen') },
     ...(showPopular ? [{ id: 'popular' as SortOption, label: t('shop.sortPopular', 'Beliebtheit') }] : []),
-    { id: 'hidden-gems', label: t('shop.sortHiddenGems', 'Hidden Gems') },
+    { id: 'hidden-gems', label: t('shop.sortHiddenGems', 'Geheimtipps') },
     { id: 'az', label: t('shop.sortAZ', 'A–Z') },
   ];
 

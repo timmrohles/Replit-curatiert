@@ -522,7 +522,7 @@
     "sortPopularityTooltip": "Sortiert nach Saves und Interaktionen",
     "sortAwards": "Auszeichnungen",
     "sortAwardsTooltip": "Sortiert nach Anzahl der Auszeichnungen",
-    "sortHiddenGems": "Hidden Gems",
+    "sortHiddenGems": "Geheimtipps",
     "sortHiddenGemsTooltip": "Sortiert Bücher mit weniger Aufmerksamkeit nach vorne",
     "sortRecent": "Aktuell",
     "sortRecentTooltip": "Sortiert Neuerscheinungen zuerst"
@@ -671,7 +671,7 @@
     "sortNewest": "Neuerscheinungen",
     "sortAwarded": "Auszeichnungen",
     "sortPopular": "Beliebtheit",
-    "sortHiddenGems": "Hidden Gems",
+    "sortHiddenGems": "Geheimtipps",
     "sortAZ": "A–Z",
     "pubTypeLabel": "Verlagstyp",
     "pubTypeIndie": "Indie-Verlag",
