@@ -7090,15 +7090,8 @@ export async function registerRoutes(
   // ==================================================================
   app.get('/api/site-config/banners', async (req: Request, res: Response) => {
     try {
-      const authHeader = req.headers['x-admin-token'] as string;
-      if (!authHeader) {
-        return res.status(401).json({ ok: false, error: 'Unauthorized' });
-      }
-
-      const isValid = await verifyAdminToken(authHeader);
-      if (!isValid) {
-        return res.status(401).json({ ok: false, error: 'Invalid admin token' });
-      }
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
 
       const result = await queryDB(
         `SELECT * FROM site_banners
@@ -7115,15 +7108,8 @@ export async function registerRoutes(
 
   app.post('/api/site-config/banner', async (req: Request, res: Response) => {
     try {
-      const authHeader = req.headers['x-admin-token'] as string;
-      if (!authHeader) {
-        return res.status(401).json({ ok: false, error: 'Unauthorized' });
-      }
-
-      const isValid = await verifyAdminToken(authHeader);
-      if (!isValid) {
-        return res.status(401).json({ ok: false, error: 'Invalid admin token' });
-      }
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
 
       const body = req.body;
       const { name, message, badge_text, button_text, button_url, bg_color, text_color, badge_bg_color, badge_text_color, visible, status, position, display_order } = body;
@@ -7169,15 +7155,8 @@ export async function registerRoutes(
 
   app.put('/api/site-config/banner/:id', async (req: Request, res: Response) => {
     try {
-      const authHeader = req.headers['x-admin-token'] as string;
-      if (!authHeader) {
-        return res.status(401).json({ ok: false, error: 'Unauthorized' });
-      }
-
-      const isValid = await verifyAdminToken(authHeader);
-      if (!isValid) {
-        return res.status(401).json({ ok: false, error: 'Invalid admin token' });
-      }
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
 
       const id = req.params.id;
       const body = req.body;
@@ -7230,15 +7209,8 @@ export async function registerRoutes(
 
   app.delete('/api/site-config/banner/:id', async (req: Request, res: Response) => {
     try {
-      const authHeader = req.headers['x-admin-token'] as string;
-      if (!authHeader) {
-        return res.status(401).json({ ok: false, error: 'Unauthorized' });
-      }
-
-      const isValid = await verifyAdminToken(authHeader);
-      if (!isValid) {
-        return res.status(401).json({ ok: false, error: 'Invalid admin token' });
-      }
+      const isAuthed = await requireAdminGuard(req, res);
+      if (!isAuthed) return;
 
       const id = req.params.id;
       const result = await queryDB(
