@@ -668,9 +668,9 @@
   },
   "shop": {
     "sortRelevance": "Relevanz",
-    "sortNewest": "Neuerscheinungen",
-    "sortAwarded": "Auszeichnungen",
-    "sortPopular": "Beliebtheit",
+    "sortNewest": "Neu",
+    "sortAwarded": "Am meisten ausgezeichnet",
+    "sortPopular": "Beliebt",
     "sortHiddenGems": "Geheimtipps",
     "sortAZ": "A–Z",
     "pubTypeLabel": "Verlagstyp",

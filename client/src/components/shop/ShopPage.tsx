@@ -464,9 +464,9 @@ export function ShopPage() {
 
   const sortOptions: { id: SortOption; label: string }[] = [
     { id: 'relevance', label: t('shop.sortRelevance', 'Relevanz') },
-    { id: 'newest', label: t('shop.sortNewest', 'Neuerscheinungen') },
-    { id: 'most-awarded', label: t('shop.sortAwarded', 'Auszeichnungen') },
-    ...(showPopular ? [{ id: 'popular' as SortOption, label: t('shop.sortPopular', 'Beliebtheit') }] : []),
+    { id: 'newest', label: t('shop.sortNewest', 'Neu') },
+    { id: 'most-awarded', label: t('shop.sortAwarded', 'Am meisten ausgezeichnet') },
+    ...(showPopular ? [{ id: 'popular' as SortOption, label: t('shop.sortPopular', 'Beliebt') }] : []),
     { id: 'hidden-gems', label: t('shop.sortHiddenGems', 'Geheimtipps') },
     { id: 'az', label: t('shop.sortAZ', 'A–Z') },
   ];
