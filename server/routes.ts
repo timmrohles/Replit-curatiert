@@ -5249,11 +5249,18 @@ export async function registerRoutes(
   app.delete('/api/tags/:id', async (req: Request, res: Response) => {
     try {
       const id = req.params.id;
-      const result = await queryDB('DELETE FROM tags WHERE id = $1 RETURNING id', [id]);
-
-      if (result.rows.length === 0) {
+      const check = await queryDB('SELECT id FROM tags WHERE id = $1', [id]);
+      if (check.rows.length === 0) {
         return res.status(404).json({ success: false, error: 'Tag not found' });
       }
+
+      await queryDB('UPDATE curations SET tag_id = NULL WHERE tag_id = $1', [id]);
+      await queryDB('DELETE FROM book_tags WHERE tag_id = $1 OR derived_from_onix_tag_id = $1', [id]);
+      await queryDB('DELETE FROM tag_mappings WHERE from_tag_id = $1 OR to_tag_id = $1', [id]);
+      await queryDB('UPDATE section_items SET target_tag_id = NULL WHERE target_tag_id = $1', [id]);
+      await queryDB('UPDATE menu_items SET target_tag_id = NULL WHERE target_tag_id = $1', [id]);
+
+      await queryDB('DELETE FROM tags WHERE id = $1', [id]);
 
       return res.json({ success: true, data: { id } });
     } catch (error) {
