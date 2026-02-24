@@ -105,6 +105,23 @@ export const SECTION_TYPES: SectionTypeDefinition[] = [
   },
 ];
 
+/**
+ * Section types that load data via queries/APIs and don't use manual items.
+ * Used to hide the Items manager in the admin UI.
+ */
+export const QUERY_ONLY_SECTION_TYPES = [
+  'book_grid_filtered',
+  'user_curations',
+  'storefronts',
+  'events',
+  'supporters',
+  'genre_categories',
+];
+
+export function isQueryOnlySection(sectionType?: string): boolean {
+  return QUERY_ONLY_SECTION_TYPES.includes(sectionType || '');
+}
+
 // ============================================================================
 // SECTION COMPONENTS REGISTRY
 // ============================================================================

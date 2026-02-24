@@ -55,7 +55,7 @@ import { SectionItemsManager } from './SectionItemsManager';
 import { BookSourceBuilder, type BookSourceConfig } from './BookSourceBuilder';
 // ❌ BUILD-BLOCKER REMOVED: react-dnd prevents Figma Make publishing
 // import { useDrag, useDrop } from 'react-dnd';
-import { SECTION_TYPES, getSectionTypesForZone } from '../sections/sectionRegistry';
+import { SECTION_TYPES, getSectionTypesForZone, isQueryOnlySection } from '../sections/sectionRegistry';
 
 function toLocalDatetimeString(isoString: string): string {
   const d = new Date(isoString);
@@ -738,6 +738,21 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   <SelectItem value="hidden">Versteckt</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/50">
+              <Switch
+                id="hide-when-empty"
+                checked={editingSection.config?.hide_when_empty !== false}
+                onCheckedChange={(checked) => setEditingSection({
+                  ...editingSection,
+                  config: { ...(editingSection.config || {}), hide_when_empty: checked }
+                })}
+              />
+              <div>
+                <Label htmlFor="hide-when-empty" className="text-sm font-medium cursor-pointer">Ausblenden wenn leer</Label>
+                <p className="text-xs text-muted-foreground">Sektion wird auf der Website nicht angezeigt, wenn keine Bücher vorhanden sind.</p>
+              </div>
             </div>
 
             {/* ============================================================================ */}
@@ -1938,6 +1953,12 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
 
             <Separator />
 
+            {editingSection.id && !isQueryOnlySection(editingSection.type) && (
+              <SectionItemsManager sectionId={editingSection.id} sectionType={editingSection.type} />
+            )}
+
+            <Separator />
+
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => setEditingSection(null)}>
                 Abbrechen
@@ -2041,9 +2062,11 @@ function SectionCard({
         </div>
 
         <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" onClick={onToggleItems}>
+          {!isQueryOnlySection(section.type) && (
+          <Button size="sm" variant="ghost" onClick={onToggleItems} title={isExpanded ? 'Elemente ausblenden' : 'Elemente anzeigen'}>
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </Button>
+          )}
           <Button size="sm" variant="ghost" onClick={onEdit}>
             <Edit2 className="w-4 h-4" />
           </Button>
@@ -2056,8 +2079,7 @@ function SectionCard({
         </div>
       </div>
 
-      {/* Section Items */}
-      {isExpanded && (
+      {isExpanded && !isQueryOnlySection(section.type) && (
         <div className="border-t bg-gray-50 p-4">
           <SectionItemsManager sectionId={section.id} sectionType={section.type} />
         </div>

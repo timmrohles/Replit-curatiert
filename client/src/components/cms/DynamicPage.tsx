@@ -315,6 +315,11 @@ export function DynamicPage() {
 
                 const sectionBooks = [...pinnedBooks, ...queryBooks];
 
+                const hideWhenEmpty = section.config?.hide_when_empty !== false;
+                if (hideWhenEmpty && sectionBooks.length === 0) {
+                  return null;
+                }
+
                 return (
                   <div key={section.id} className="mb-section-gap">
                     <UniversalSectionRenderer section={section} books={sectionBooks} categoryId={page?.category_id} />

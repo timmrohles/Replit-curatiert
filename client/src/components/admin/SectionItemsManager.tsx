@@ -147,6 +147,18 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
 
   const isCategoryGrid = sectionType === 'category_grid' || sectionType === 'recipient_category_grid' || sectionType === 'topic_tags_grid';
 
+  const isBookSection = sectionType === 'book_carousel' || sectionType === 'book_grid' || sectionType === 'book_list_row' || sectionType === 'book_featured' || sectionType === 'creator_carousel';
+
+  const getItemsLabel = () => {
+    if (isCategoryGrid) return 'Kategorie-Karten';
+    if (isBookSection) return 'Bücher';
+    if (sectionType === 'hero') return 'Hero-Elemente';
+    if (sectionType === 'supporters') return 'Unterstützer';
+    if (sectionType === 'storefronts') return 'Bookstores';
+    if (sectionType === 'events') return 'Veranstaltungen';
+    return 'Elemente';
+  };
+
   // ============================================================================
   // DATA LOADING
   // ============================================================================
@@ -433,7 +445,7 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-lg" style={{ fontFamily: 'Fjalla One', color: '#3A3A3A' }}>
           <Box className="w-5 h-5 inline mr-2" />
-          Items ({items.length})
+          {getItemsLabel()} ({items.length})
         </h4>
         <div className="flex gap-2">
           {(sectionType === 'book_carousel' || sectionType === 'book_grid' || sectionType === 'book_list_row' || sectionType === 'book_featured') && (
@@ -1120,8 +1132,13 @@ export function SectionItemsManager({ sectionId, sectionType }: SectionItemsMana
                     )}
                     {!isCategoryGrid && (
                     <span className="px-2 py-0.5 rounded text-xs font-medium" style={{ backgroundColor: '#70c1b320', color: '#70c1b3' }}>
-                      {item.item_type}
+                      {item.item_type === 'book' ? 'Buch' : item.item_type === 'generic' ? 'Element' : item.item_type === 'category_card' ? 'Kategorie' : item.item_type}
                     </span>
+                    )}
+                    {item.data?.title && !isCategoryGrid && (
+                      <span className="text-sm font-medium truncate" style={{ color: '#3A3A3A' }}>
+                        {item.data.title}
+                      </span>
                     )}
                     <span className="px-2 py-0.5 rounded text-xs" style={{
                       backgroundColor: item.status === 'published' ? '#247ba020' : '#f0f0f0',
