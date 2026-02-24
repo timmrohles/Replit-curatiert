@@ -171,13 +171,14 @@ export function BookEnrichmentBadges({ book, size = 'md' }: BookEnrichmentBadges
   const hasNominations = nominations.length > 0;
   const hasIndie = book.is_indie;
 
+  const hasHiddenGem = !!book.is_hidden_gem;
   const hasReviews = !!book.reviews && (
     typeof book.reviews === 'string'
       ? book.reviews.length > 0
       : book.reviews.length > 0
   );
 
-  const showAnything = hasWins || hasNominations || hasIndie || hasReviews;
+  const showAnything = hasWins || hasNominations || hasIndie || hasHiddenGem || hasReviews;
   if (!showAnything) return null;
 
   const iconSize = size === 'sm' ? 'w-3.5 h-3.5' : 'w-4 h-4';
@@ -282,6 +283,20 @@ export function BookEnrichmentBadges({ book, size = 'md' }: BookEnrichmentBadges
               {book.indie_type === 'selfpublisher'
                 ? 'Dieses Buch wurde unabhängig veröffentlicht — ohne Verlag, direkt von der Autorin oder dem Autor.'
                 : 'Erschienen bei einem unabhängigen Verlag. Indie-Verlage stehen für besondere Vielfalt und individuelle Buchkultur.'}
+            </p>
+          }
+        />
+      )}
+      {hasHiddenGem && (
+        <EnrichmentBadge
+          type="geheimtipp"
+          size={size}
+          icon={<Gem className={iconSize} />}
+          modalTitle="Geheimtipp"
+          modalIcon={<Gem className={`${modalIconSize} text-foreground`} />}
+          modalContent={
+            <p className="text-xs text-muted-foreground">
+              Dieses Buch ist ein Geheimtipp — ein besonderes Werk, das noch nicht die breite Aufmerksamkeit erhalten hat, die es verdient.
             </p>
           }
         />
