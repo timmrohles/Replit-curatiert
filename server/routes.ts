@@ -9,6 +9,7 @@ import path from "path";
 import fs from "fs";
 import { isImpersonating, maskSensitiveData } from "./replit_integrations/auth/routes";
 import { authStorage } from "./replit_integrations/auth/storage";
+import { recalculateAllScores, recalculateSingleBookScore, startScoreCron } from "./scoreCalculation";
 
 const log = {
   info: (...args: unknown[]) => console.log('[INFO]', ...args),
@@ -4044,6 +4045,9 @@ export async function registerRoutes(
          RETURNING *`,
         [outcomeId, recipient_kind, book_id || null, person_id || null, notes || null]
       );
+      if (recipient_kind === 'book' && book_id) {
+        recalculateSingleBookScore(parseInt(book_id)).catch(e => log.warn('Score recalc after award add:', e));
+      }
       return res.json({ success: true, data: result.rows[0] });
     } catch (error) {
       log.error('Recipient save error:', error);
@@ -4058,12 +4062,17 @@ export async function registerRoutes(
       const id = req.params.id;
       const outcomeId = req.params.outcomeId;
       const result = await queryDB(
-        'DELETE FROM award_recipients WHERE id = $1 AND award_outcome_id = $2 RETURNING id',
+        'DELETE FROM award_recipients WHERE id = $1 AND award_outcome_id = $2 RETURNING id, book_id',
         [id, outcomeId]
       );
 
       if (result.rows.length === 0) {
         return res.status(404).json({ success: false, error: 'Recipient not found' });
+      }
+
+      const deletedBookId = result.rows[0]?.book_id;
+      if (deletedBookId) {
+        recalculateSingleBookScore(parseInt(deletedBookId)).catch(e => log.warn('Score recalc after award delete:', e));
       }
 
       return res.json({ success: true, data: { id } });
@@ -7644,6 +7653,7 @@ export async function registerRoutes(
       if (result.rows.length === 0) {
         return res.json({ ok: true, data: null, message: 'Book already in curation' });
       }
+      recalculateSingleBookScore(bookId).catch(e => log.warn('Score recalc after curation add:', e));
       return res.json({ ok: true, data: result.rows[0] });
     } catch (error) {
       log.error('Add curation book error:', error);
@@ -10083,116 +10093,7 @@ ${urls}
       const isAdmin = await requireAdminGuard(req, res);
       if (!isAdmin) return;
 
-      let indieNames: string[] = [];
-      let spPatterns: any[] = [];
-      try {
-        const indieRes = await queryDB('SELECT name FROM indie_publishers');
-        indieNames = (indieRes.rows || []).map((r: any) => r.name.toLowerCase());
-        const spRes = await queryDB('SELECT pattern, match_type FROM selfpublisher_patterns');
-        spPatterns = spRes.rows || [];
-      } catch { /* tables may not exist */ }
-
-      const allBooks = await queryDB(`SELECT id, author, publisher FROM books WHERE deleted_at IS NULL`);
-      const books = allBooks.rows || [];
-      if (books.length === 0) return res.json({ ok: true, updated: 0 });
-
-      let awardMap: Record<number, { winner: number; shortlist: number; longlist: number }> = {};
-      try {
-        const awardRes = await queryDB(
-          `SELECT aor.book_id, ao.outcome_type
-           FROM award_outcome_recipients aor
-           JOIN award_outcomes ao ON aor.award_outcome_id = ao.id
-           WHERE aor.book_id IS NOT NULL AND aor.deleted_at IS NULL`
-        );
-        for (const row of awardRes.rows || []) {
-          if (!row.book_id) continue;
-          if (!awardMap[row.book_id]) awardMap[row.book_id] = { winner: 0, shortlist: 0, longlist: 0 };
-          const ot = (row.outcome_type || '').toLowerCase();
-          if (ot === 'winner') awardMap[row.book_id].winner++;
-          else if (ot === 'shortlist' || ot === 'finalist') awardMap[row.book_id].shortlist++;
-          else if (ot === 'longlist' || ot === 'nominee') awardMap[row.book_id].longlist++;
-        }
-      } catch { /* award tables may not exist */ }
-
-      let mediaMap: Record<number, number> = {};
-      try {
-        const mediaRes = await queryDB(
-          `SELECT eb.matched_book_id AS book_id, COUNT(DISTINCT eb.episode_id) AS mention_count
-           FROM extracted_books eb
-           WHERE eb.matched_book_id IS NOT NULL AND eb.is_verified = true
-           GROUP BY eb.matched_book_id`
-        );
-        for (const row of mediaRes.rows || []) {
-          mediaMap[row.book_id] = parseInt(row.mention_count) || 0;
-        }
-      } catch { /* table may not exist */ }
-
-      let curationMap: Record<number, number> = {};
-      try {
-        const curationRes = await queryDB(
-          `SELECT cb.book_id, COUNT(DISTINCT cb.curation_id) AS curation_count
-           FROM curation_books cb
-           GROUP BY cb.book_id`
-        );
-        for (const row of curationRes.rows || []) {
-          curationMap[row.book_id] = parseInt(row.curation_count) || 0;
-        }
-      } catch { /* table may not exist */ }
-
-      let updated = 0;
-      const BATCH_SIZE = 100;
-      for (let i = 0; i < books.length; i += BATCH_SIZE) {
-        const batch = books.slice(i, i + BATCH_SIZE);
-        const updatePromises = batch.map(async (book: any) => {
-          const awards = awardMap[book.id] || { winner: 0, shortlist: 0, longlist: 0 };
-          const rawAward = awards.winner * 10 + awards.shortlist * 6 + awards.longlist * 4;
-          const awardScore = Math.min(rawAward, 20);
-
-          const mediaMentions = mediaMap[book.id] || 0;
-          const mediaScore = Math.min(mediaMentions * 3, 9);
-
-          const curationCount = curationMap[book.id] || 0;
-          const curationScore = Math.min(curationCount * 2, 10);
-
-          const publisherLower = (book.publisher || '').toLowerCase();
-          const authorLower = (book.author || '').toLowerCase();
-          const isIndieVerlag = indieNames.some(name => publisherLower === name);
-          const isSelfPublisher = spPatterns.some((sp: any) => {
-            if (sp.match_type === 'exact') return publisherLower === sp.pattern.toLowerCase();
-            return publisherLower.includes(sp.pattern.toLowerCase());
-          });
-          const isAuthorPublisher = authorLower && publisherLower && (
-            authorLower === publisherLower || publisherLower.includes(authorLower) || authorLower.includes(publisherLower)
-          );
-
-          let structureBonus = 0;
-          if (isIndieVerlag) structureBonus += 2;
-          if (isSelfPublisher || isAuthorPublisher) structureBonus += 1;
-
-          const baseScore = awardScore + mediaScore + curationScore + structureBonus;
-          const totalScore = baseScore;
-
-          const awardCount = awards.winner + awards.shortlist + awards.longlist;
-          const nominationCount = awards.shortlist + awards.longlist;
-
-          const indieType = isIndieVerlag ? 'indie' : (isSelfPublisher || isAuthorPublisher) ? 'selfpublishing' : null;
-          const isIndie = isIndieVerlag || isSelfPublisher || isAuthorPublisher;
-          const isHiddenGem = baseScore >= 5 && curationCount <= 1 && mediaMentions <= 1;
-
-          await queryDB(
-            `UPDATE books SET award_score = $1, media_score = $2, curation_score = $3,
-             structure_bonus = $4, base_score = $5, total_score = $6,
-             award_count = $7, nomination_count = $8, is_indie = $9, indie_type = $10, is_hidden_gem = $11
-             WHERE id = $12`,
-            [awardScore, mediaScore, curationScore, structureBonus, baseScore, totalScore,
-             awardCount, nominationCount, isIndie, indieType, isHiddenGem, book.id]
-          );
-          updated++;
-        });
-        await Promise.all(updatePromises);
-      }
-
-      log.info(`Recalculated scores for ${updated} books`);
+      const updated = await recalculateAllScores();
       return res.json({ ok: true, updated });
     } catch (error) {
       log.error('Score recalculation error:', error);
