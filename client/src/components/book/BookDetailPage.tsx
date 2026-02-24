@@ -745,7 +745,7 @@ export function BookDetailPage() {
     },
     { 
       id: 'awarded', 
-      label: 'Auszeichnungen',
+      label: 'Anzahl Buchpreise',
       tooltip: 'Sortiert nach Anzahl und Bedeutung von Preisen'
     },
     { 

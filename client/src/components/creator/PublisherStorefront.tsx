@@ -61,7 +61,7 @@ const SORT_OPTIONS = [
   { id: 'newest' as const, label: 'Neueste zuerst' },
   { id: 'oldest' as const, label: 'Älteste zuerst' },
   { id: 'popularity' as const, label: 'Beliebtheit' },
-  { id: 'awarded' as const, label: 'Ausgezeichnet' },
+  { id: 'awarded' as const, label: 'Anzahl Buchpreise' },
 ];
 
 const FORMAT_OPTIONS = [

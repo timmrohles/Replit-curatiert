@@ -80,7 +80,7 @@ interface Series {
 const SORT_OPTIONS = [
   { id: 'popularity' as const, label: 'Beliebtheit' },
   { id: 'trending' as const, label: 'Neueste zuerst' },
-  { id: 'awarded' as const, label: 'Ausgezeichnet' }
+  { id: 'awarded' as const, label: 'Anzahl Buchpreise' }
 ];
 
 export function SeriesPage() {

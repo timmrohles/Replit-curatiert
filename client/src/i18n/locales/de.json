@@ -520,7 +520,7 @@
   "creator": {
     "sortPopularity": "Beliebtheit",
     "sortPopularityTooltip": "Sortiert nach Saves und Interaktionen",
-    "sortAwards": "Auszeichnungen",
+    "sortAwards": "Anzahl Buchpreise",
     "sortAwardsTooltip": "Sortiert nach Anzahl der Auszeichnungen",
     "sortHiddenGems": "Geheimtipps",
     "sortHiddenGemsTooltip": "Sortiert Bücher mit weniger Aufmerksamkeit nach vorne",
