@@ -66,7 +66,7 @@ export const OptimizedImage = memo(function OptimizedImage({
 
   // Generate srcset for responsive images (Unsplash specific)
   const generateSrcSet = (url: string): string => {
-    if (!url.includes('unsplash.com') && !url.includes('images.')) {
+    if (!url || !url.includes('unsplash.com') && !url.includes('images.')) {
       return '';
     }
 
