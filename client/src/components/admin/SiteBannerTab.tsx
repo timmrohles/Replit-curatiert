@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Eye, EyeOff, Save, AlertCircle, CheckCircle, Plus, Edit2, Trash2, Palette } from 'lucide-react';
 import { API_BASE_URL } from '../../config/apiClient';
+import { getAdminToken } from '../../utils/adminToken';
 import { Container } from '../ui/container';
 import { Heading } from '../ui/typography';
 import { Text } from '../ui/typography';
@@ -31,10 +32,6 @@ const COLOR_PRESETS = [
   { name: 'Charcoal', bg: '#2a2a2a', text: '#ffffff' },
 ];
 
-function getAdminToken(): string {
-  return localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '';
-}
-
 export function SiteBannerTab() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
@@ -52,7 +49,7 @@ export function SiteBannerTab() {
 
       const response = await fetch(`${API_BASE_URL}/site-config/banners`, {
             credentials: 'include',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() || '' },
       });
 
       if (!response.ok) {
@@ -146,7 +143,7 @@ export function SiteBannerTab() {
             credentials: 'include',
         method,
         headers: {
-          'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
+          'Content-Type': 'application/json', 'x-admin-token': getAdminToken() || '' },
         body: JSON.stringify({
           name: editingBanner.name.trim(),
           message: editingBanner.message.trim(),
@@ -192,7 +189,7 @@ export function SiteBannerTab() {
       const response = await fetch(`${API_BASE_URL}/site-config/banner/${id}`, {
             credentials: 'include',
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': getAdminToken() || '' },
       });
 
       if (!response.ok) {
@@ -213,7 +210,7 @@ export function SiteBannerTab() {
             credentials: 'include',
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json', 'x-admin-token': getAdminToken() },
+          'Content-Type': 'application/json', 'x-admin-token': getAdminToken() || '' },
         body: JSON.stringify({
           ...banner,
           visible: !banner.visible,
