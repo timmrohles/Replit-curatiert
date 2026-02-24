@@ -3013,7 +3013,8 @@ export async function registerRoutes(
       const limit = Math.min(parseInt((req.query.limit as string) || '50'), 200);
       const offset = parseInt((req.query.offset as string) || '0');
       const q = (req.query.q as string) || '';
-      const sort = (req.query.sort as string) || 'relevance';
+      const sortValues = ((req.query.sort as string) || 'relevance').split(',').filter(Boolean);
+      const sortMode = (req.query.sortMode as string) || 'and';
       const authors = req.query.authors ? (req.query.authors as string).split(',') : [];
       const publishers = req.query.publishers ? (req.query.publishers as string).split(',') : [];
       const awards = req.query.awards ? (req.query.awards as string).split(',') : [];
@@ -3128,28 +3129,49 @@ export async function registerRoutes(
         }
       }
 
-      let orderClause: string;
-      switch (sort) {
-        case 'relevance': orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
-        case 'newest': orderClause = 'ORDER BY b.created_at DESC'; break;
-        case 'most-awarded':
-          conditions.push('b.award_count > 0');
-          orderClause = 'ORDER BY b.award_score DESC NULLS LAST, b.award_count DESC NULLS LAST, b.title ASC';
-          break;
-        case 'popular': orderClause = 'ORDER BY b.user_score DESC NULLS LAST, b.base_score DESC NULLS LAST'; break;
-        case 'hidden-gems':
-          conditions.push('b.is_hidden_gem = true');
-          orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC';
-          break;
-        case 'az': orderClause = 'ORDER BY b.title ASC'; break;
-        case 'date': orderClause = 'ORDER BY b.created_at DESC'; break;
-        case 'awarded':
-          conditions.push('b.award_count > 0');
-          orderClause = 'ORDER BY b.award_score DESC NULLS LAST, b.award_count DESC NULLS LAST, b.title ASC';
-          break;
-        case 'popularity': orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
-        default: orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
+      const sortFilterConditions: string[] = [];
+      const orderParts: string[] = [];
+
+      for (const sort of sortValues) {
+        switch (sort) {
+          case 'relevance':
+            orderParts.push('b.base_score DESC NULLS LAST, b.created_at DESC');
+            break;
+          case 'newest':
+          case 'date':
+            orderParts.push('b.created_at DESC');
+            break;
+          case 'most-awarded':
+          case 'awarded':
+            sortFilterConditions.push('b.award_count > 0');
+            orderParts.push('b.award_score DESC NULLS LAST, b.award_count DESC NULLS LAST');
+            break;
+          case 'popular':
+          case 'popularity':
+            orderParts.push('b.user_score DESC NULLS LAST, b.base_score DESC NULLS LAST');
+            break;
+          case 'hidden-gems':
+            sortFilterConditions.push('b.is_hidden_gem = true');
+            orderParts.push('b.base_score DESC NULLS LAST');
+            break;
+          case 'az':
+            orderParts.push('b.title ASC');
+            break;
+        }
       }
+
+      if (sortFilterConditions.length > 0) {
+        if (sortMode === 'or') {
+          conditions.push(`(${sortFilterConditions.join(' OR ')})`);
+        } else {
+          sortFilterConditions.forEach(c => conditions.push(c));
+        }
+      }
+
+      const uniqueOrderParts = [...new Set(orderParts)];
+      const orderClause = uniqueOrderParts.length > 0
+        ? `ORDER BY ${uniqueOrderParts.join(', ')}`
+        : 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC';
 
       const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
 

@@ -306,7 +306,8 @@ export function ShopPage() {
   const navigate = useSafeNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get('q') || '');
-  const [sortBy, setSortBy] = useState<SortOption>('relevance');
+  const [sortBy, setSortBy] = useState<SortOption[]>(['relevance']);
+  const [sortMode, setSortMode] = useState<'and' | 'or'>('and');
   const [books, setBooks] = useState<APIBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -416,7 +417,8 @@ export function ShopPage() {
       const params = new URLSearchParams();
       params.set('limit', String(PAGE_SIZE));
       params.set('offset', String(offset));
-      params.set('sort', sortBy);
+      params.set('sort', sortBy.join(','));
+      params.set('sortMode', sortMode);
       params.set('filterMode', filterMode);
       if (searchQuery) params.set('q', searchQuery);
       if (selectedAuthors.length > 0) params.set('authors', selectedAuthors.join(','));
@@ -443,7 +445,7 @@ export function ShopPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchQuery, sortBy, filterMode, selectedAuthors, selectedPublishers, selectedAwards, selectedCategories, selectedThemes, selectedMedia, selectedPubTypes]);
+  }, [searchQuery, sortBy, sortMode, filterMode, selectedAuthors, selectedPublishers, selectedAwards, selectedCategories, selectedThemes, selectedMedia, selectedPubTypes]);
 
   useEffect(() => {
     setPage(0);
@@ -572,20 +574,37 @@ export function ShopPage() {
 
           <div className="flex items-center justify-start md:justify-center gap-2 overflow-x-auto pb-2 scrollbar-hide flex-wrap" style={{ scrollbarWidth: 'none' }}>
             <Text variant="xs" className="whitespace-nowrap text-foreground/50 flex-shrink-0 !font-semibold">Sortieren:</Text>
-            {sortOptions.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => setSortBy(option.id)}
-                className="sort-chip flex-shrink-0"
-                aria-pressed={sortBy === option.id}
-                data-testid={`sort-${option.id}`}
-              >
-                <Text as="span" variant="xs" className="whitespace-nowrap !normal-case !tracking-normal !font-semibold">
-                  {option.label}
-                </Text>
-              </button>
-            ))}
+            {sortBy.length > 1 && (
+              <FilterModeToggle filterMode={sortMode} onFilterModeChange={setSortMode} />
+            )}
+            {sortOptions.map((option) => {
+              const isActive = sortBy.includes(option.id);
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => {
+                    setSortBy(prev => {
+                      if (isActive) {
+                        const next = prev.filter(s => s !== option.id);
+                        return next.length === 0 ? ['relevance'] : next;
+                      }
+                      if (prev.length === 1 && prev[0] === 'relevance') {
+                        return [option.id];
+                      }
+                      return [...prev, option.id];
+                    });
+                  }}
+                  className="sort-chip flex-shrink-0"
+                  aria-pressed={isActive}
+                  data-testid={`sort-${option.id}`}
+                >
+                  <Text as="span" variant="xs" className="whitespace-nowrap !normal-case !tracking-normal !font-semibold">
+                    {option.label}
+                  </Text>
+                </button>
+              );
+            })}
           </div>
 
           {allSelectedFilters.length > 0 && (
