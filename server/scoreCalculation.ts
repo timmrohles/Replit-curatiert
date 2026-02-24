@@ -45,10 +45,10 @@ async function loadScoreContext(): Promise<ScoreContext> {
   let mediaMap: Record<number, number> = {};
   try {
     const mediaRes = await queryDB(
-      `SELECT eb.matched_book_id AS book_id, COUNT(DISTINCT eb.episode_id) AS mention_count
+      `SELECT eb.book_id, COUNT(DISTINCT eb.episode_id) AS mention_count
        FROM extracted_books eb
-       WHERE eb.matched_book_id IS NOT NULL AND eb.is_verified = true
-       GROUP BY eb.matched_book_id`
+       WHERE eb.book_id IS NOT NULL AND eb.is_verified = true
+       GROUP BY eb.book_id`
     );
     for (const row of mediaRes.rows || []) {
       mediaMap[row.book_id] = parseInt(row.mention_count) || 0;
