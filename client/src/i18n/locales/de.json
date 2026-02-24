@@ -662,6 +662,8 @@
     "emptyFollowsDesc": "Folge anderen Kurator:innen, um ihre Empfehlungen in deinem Feed zu sehen.",
     "emptyContentSourcesTitle": "Noch keine Quellen",
     "emptyContentSourcesDesc": "Füge Podcast- oder RSS-Feeds hinzu und lass Bucherwähnungen automatisch erkennen.",
-    "emptyContentSourcesAction": "Erste Quelle hinzufügen"
+    "emptyContentSourcesAction": "Erste Quelle hinzufügen",
+    "authorRequestTitle": "Autor:in werden",
+    "authorRequestDesc": "Suche deinen Namen in unserer Buchdatenbank. Falls du dort gelistet bist, können wir dein Profil mit deinen Büchern verknüpfen."
   }
 }

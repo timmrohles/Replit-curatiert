@@ -51,10 +51,10 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
       label: t('dashboardNav.myContent', 'MEINE INHALTE'),
       defaultOpen: true,
       items: [
+        { id: 'buchhandlung', path: '/dashboard/buchhandlung', label: t('dashboardNav.buchhandlung', 'Buchhandlung'), moduleKey: 'creator_storefront' },
         { id: 'kurationen', path: '/dashboard/kurationen', label: t('dashboardNav.kurationen', 'Kurationen') },
         { id: 'rezensionen', path: '/dashboard/rezensionen', label: t('dashboardNav.rezensionen', 'Rezensionen') },
         { id: 'bewertungen', path: '/dashboard/bewertungen', label: t('dashboardNav.bewertungen', 'Bewertungen') },
-        { id: 'buchhandlung', path: '/dashboard/buchhandlung', label: t('dashboardNav.buchhandlung', 'Buchhandlung'), moduleKey: 'creator_storefront' },
         { id: 'content-quellen', path: '/dashboard/content-quellen', label: t('dashboardNav.contentSources', 'Content-Quellen'), moduleKey: 'creator_storefront' },
       ]
     },
@@ -63,7 +63,6 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
       label: t('dashboardNav.community', 'COMMUNITY'),
       defaultOpen: false,
       items: [
-        { id: 'oeffentliches-profil', path: '/dashboard/oeffentliches-profil', label: t('dashboardNav.publicProfile', 'Öffentliches Profil') },
         { id: 'feed', path: '/dashboard/feed', label: t('dashboardNav.feed', 'Feed') },
         { id: 'veranstaltungen', path: '/dashboard/veranstaltungen', label: t('dashboardNav.events', 'Veranstaltungen') },
         { id: 'follower', path: '/dashboard/follower', label: t('dashboardNav.follower', 'Follower') },
@@ -85,6 +84,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
       defaultOpen: false,
       items: [
         { id: 'profil', path: '/dashboard/profil', label: t('dashboardNav.myData', 'Meine Daten') },
+        { id: 'oeffentliches-profil', path: '/dashboard/oeffentliches-profil', label: t('dashboardNav.publicProfile', 'Öffentliches Profil') },
         { id: 'benachrichtigungen', path: '/dashboard/benachrichtigungen', label: t('dashboardNav.notifications', 'Benachrichtigungen') },
         { id: 'datenschutz', path: '/dashboard/datenschutz', label: t('dashboardNav.privacy', 'Datenschutz') },
       ]

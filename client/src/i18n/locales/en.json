@@ -662,6 +662,8 @@
     "emptyFollowsDesc": "Follow other curators to see their recommendations in your feed.",
     "emptyContentSourcesTitle": "No sources yet",
     "emptyContentSourcesDesc": "Add podcast or RSS feeds and let book mentions be detected automatically.",
-    "emptyContentSourcesAction": "Add first source"
+    "emptyContentSourcesAction": "Add first source",
+    "authorRequestTitle": "Become an Author",
+    "authorRequestDesc": "Search for your name in our book database. If listed, we can link your profile with your books."
   }
 }

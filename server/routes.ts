@@ -1224,6 +1224,23 @@ async function ensureSchemaReady() {
     log.warn('Could not create awards tables:', err);
   }
 
+  try {
+    await queryDB(`ALTER TABLE books ADD COLUMN IF NOT EXISTS award_score INTEGER DEFAULT 0`);
+    await queryDB(`ALTER TABLE books ADD COLUMN IF NOT EXISTS media_score INTEGER DEFAULT 0`);
+    await queryDB(`ALTER TABLE books ADD COLUMN IF NOT EXISTS curation_score INTEGER DEFAULT 0`);
+    await queryDB(`ALTER TABLE books ADD COLUMN IF NOT EXISTS structure_bonus INTEGER DEFAULT 0`);
+    await queryDB(`ALTER TABLE books ADD COLUMN IF NOT EXISTS base_score INTEGER DEFAULT 0`);
+    await queryDB(`ALTER TABLE books ADD COLUMN IF NOT EXISTS user_score REAL DEFAULT 0`);
+    await queryDB(`ALTER TABLE books ADD COLUMN IF NOT EXISTS total_score REAL DEFAULT 0`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_base_score ON books(base_score DESC NULLS LAST)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_total_score ON books(total_score DESC NULLS LAST)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_award_score ON books(award_score DESC NULLS LAST)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_user_score ON books(user_score DESC NULLS LAST)`);
+    log.info('Book score columns and indexes verified');
+  } catch (err) {
+    log.warn('Could not add book score columns:', err);
+  }
+
   log.info('Schema verification complete');
 }
 
@@ -3032,7 +3049,7 @@ export async function registerRoutes(
       const limit = Math.min(parseInt((req.query.limit as string) || '50'), 200);
       const offset = parseInt((req.query.offset as string) || '0');
       const q = (req.query.q as string) || '';
-      const sort = (req.query.sort as string) || 'date';
+      const sort = (req.query.sort as string) || 'relevance';
       const authors = req.query.authors ? (req.query.authors as string).split(',') : [];
       const publishers = req.query.publishers ? (req.query.publishers as string).split(',') : [];
       const awards = req.query.awards ? (req.query.awards as string).split(',') : [];
@@ -3040,6 +3057,7 @@ export async function registerRoutes(
       const themes = req.query.themes ? (req.query.themes as string).split(',') : [];
       const curators = req.query.curators ? (req.query.curators as string).split(',') : [];
       const podcasts = req.query.podcasts ? (req.query.podcasts as string).split(',') : [];
+      const pubTypes = req.query.pubTypes ? (req.query.pubTypes as string).split(',') : [];
 
       let query = 'SELECT DISTINCT b.* FROM books b';
       const joins: string[] = [];
@@ -3119,52 +3137,50 @@ export async function registerRoutes(
         podcasts.forEach(p => params.push(p));
       }
 
-      const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
-
-      let useAwardSort = sort === 'awarded' || sort === 'hidden-gems';
-      if (useAwardSort) {
-        if (sort === 'hidden-gems') {
-          joins.push(` LEFT JOIN (
-            SELECT ar2.book_id, COUNT(*) as award_sort_count
-            FROM award_recipients ar2
-            JOIN award_outcomes ao2 ON ar2.award_outcome_id = ao2.id
-            WHERE ar2.book_id IS NOT NULL AND ao2.result_status NOT IN ('winner', 'shortlisted')
-            AND ar2.book_id NOT IN (
-              SELECT ar3.book_id FROM award_recipients ar3
-              JOIN award_outcomes ao3 ON ar3.award_outcome_id = ao3.id
-              WHERE ar3.book_id IS NOT NULL AND ao3.result_status IN ('winner', 'shortlisted')
+      if (pubTypes.length > 0) {
+        const pubConditions: string[] = [];
+        if (pubTypes.includes('indie')) {
+          pubConditions.push(`b.id IN (
+            SELECT bk.id FROM books bk
+            JOIN indie_publishers ip ON LOWER(bk.publisher) = LOWER(ip.name)
+            WHERE bk.deleted_at IS NULL
+          )`);
+        }
+        if (pubTypes.includes('selfpublishing')) {
+          pubConditions.push(`b.id IN (
+            SELECT bk.id FROM books bk
+            JOIN selfpublisher_patterns sp ON (
+              (sp.match_type = 'exact' AND LOWER(bk.publisher) = LOWER(sp.pattern))
+              OR (sp.match_type != 'exact' AND LOWER(bk.publisher) LIKE '%' || LOWER(sp.pattern) || '%')
             )
-            GROUP BY ar2.book_id
-          ) award_sort ON award_sort.book_id = b.id`);
-        } else {
-          joins.push(` LEFT JOIN (
-            SELECT ar2.book_id, COUNT(*) as award_sort_count
-            FROM award_recipients ar2
-            JOIN award_outcomes ao2 ON ar2.award_outcome_id = ao2.id
-            WHERE ar2.book_id IS NOT NULL AND ao2.result_status IN ('winner', 'shortlisted')
-            GROUP BY ar2.book_id
-          ) award_sort ON award_sort.book_id = b.id`);
+            WHERE bk.deleted_at IS NULL
+          )`);
+        }
+        if (pubTypes.includes('debut')) {
+          pubConditions.push(`b.structure_bonus >= 2`);
+        }
+        if (pubConditions.length > 0) {
+          conditions.push(`(${pubConditions.join(' OR ')})`);
         }
       }
 
+      const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
+
       let orderClause: string;
       switch (sort) {
+        case 'relevance': orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
+        case 'newest': orderClause = 'ORDER BY b.created_at DESC'; break;
+        case 'most-awarded': orderClause = 'ORDER BY b.award_score DESC NULLS LAST, b.title ASC'; break;
+        case 'popular': orderClause = 'ORDER BY b.user_score DESC NULLS LAST, b.base_score DESC NULLS LAST'; break;
+        case 'hidden-gems': orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
         case 'az': orderClause = 'ORDER BY b.title ASC'; break;
         case 'date': orderClause = 'ORDER BY b.created_at DESC'; break;
-        case 'awarded':
-        case 'hidden-gems':
-          orderClause = 'ORDER BY award_sort.award_sort_count DESC NULLS LAST, b.title ASC';
-          break;
-        case 'popularity':
-        default:
-          orderClause = 'ORDER BY b.display_order DESC NULLS LAST, b.created_at DESC';
-          break;
+        case 'awarded': orderClause = 'ORDER BY b.award_score DESC NULLS LAST, b.title ASC'; break;
+        case 'popularity': orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
+        default: orderClause = 'ORDER BY b.base_score DESC NULLS LAST, b.created_at DESC'; break;
       }
 
-      const selectCols = useAwardSort
-        ? 'b.*, award_sort.award_sort_count'
-        : 'b.*';
-      query = `SELECT ${selectCols} FROM books b` + joins.join(' ') + whereClause + ` ${orderClause} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+      query = `SELECT DISTINCT b.* FROM books b` + joins.join(' ') + whereClause + ` ${orderClause} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
       params.push(limit, offset);
 
       const result = await queryDB(query, params);
@@ -5951,8 +5967,8 @@ export async function registerRoutes(
         }
 
         let sortedItems = Array.isArray(s.items) ? [...s.items] : [];
-        const sortMode = cfg.books?.query?.sort;
-        if (sortMode && sortedItems.length > 0) {
+        const sortMode = cfg.books?.query?.sort || 'relevance';
+        if (sortedItems.length > 0) {
           sortedItems.sort((a: any, b: any) => {
             const bookA = booksById[a.book_id];
             const bookB = booksById[b.book_id];
@@ -5960,13 +5976,19 @@ export async function registerRoutes(
             if (sortMode === 'newest') {
               return new Date(bookB.created_at || 0).getTime() - new Date(bookA.created_at || 0).getTime();
             }
-            if (sortMode === 'awarded') {
-              return (bookB.award_count || 0) - (bookA.award_count || 0);
+            if (sortMode === 'awarded' || sortMode === 'most-awarded') {
+              return (bookB.award_score || 0) - (bookA.award_score || 0);
+            }
+            if (sortMode === 'relevance') {
+              return (bookB.base_score || 0) - (bookA.base_score || 0);
             }
             if (sortMode === 'popular') {
-              return (bookB.follow_count || 0) - (bookA.follow_count || 0);
+              return (bookB.user_score || 0) - (bookA.user_score || 0);
             }
-            return (a.sort_order || 0) - (b.sort_order || 0);
+            if (sortMode === 'manual') {
+              return (a.sort_order || 0) - (b.sort_order || 0);
+            }
+            return (bookB.base_score || 0) - (bookA.base_score || 0);
           });
         }
 
@@ -10078,6 +10100,140 @@ ${urls}
     } catch (error) {
       log.error('Update commission error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ======================================================================
+  // BOOK SCORE RECALCULATION
+  // ======================================================================
+  app.post('/api/admin/books/recalculate-scores', async (req: Request, res: Response) => {
+    try {
+      const isAdmin = await requireAdminGuard(req, res);
+      if (!isAdmin) return;
+
+      let indieNames: string[] = [];
+      let spPatterns: any[] = [];
+      try {
+        const indieRes = await queryDB('SELECT name FROM indie_publishers');
+        indieNames = (indieRes.rows || []).map((r: any) => r.name.toLowerCase());
+        const spRes = await queryDB('SELECT pattern, match_type FROM selfpublisher_patterns');
+        spPatterns = spRes.rows || [];
+      } catch { /* tables may not exist */ }
+
+      const allBooks = await queryDB(`SELECT id, author, publisher FROM books WHERE deleted_at IS NULL`);
+      const books = allBooks.rows || [];
+      if (books.length === 0) return res.json({ ok: true, updated: 0 });
+
+      let awardMap: Record<number, { winner: number; shortlist: number; longlist: number }> = {};
+      try {
+        const awardRes = await queryDB(
+          `SELECT ar.book_id, ao.outcome_type
+           FROM award_recipients ar
+           JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
+           WHERE ar.book_id IS NOT NULL`
+        );
+        for (const row of awardRes.rows || []) {
+          if (!row.book_id) continue;
+          if (!awardMap[row.book_id]) awardMap[row.book_id] = { winner: 0, shortlist: 0, longlist: 0 };
+          const ot = (row.outcome_type || '').toLowerCase();
+          if (ot === 'winner') awardMap[row.book_id].winner++;
+          else if (ot === 'shortlist' || ot === 'finalist') awardMap[row.book_id].shortlist++;
+          else if (ot === 'longlist' || ot === 'nominee') awardMap[row.book_id].longlist++;
+        }
+      } catch { /* award tables may not exist */ }
+
+      let mediaMap: Record<number, number> = {};
+      try {
+        const mediaRes = await queryDB(
+          `SELECT eb.book_id, COUNT(DISTINCT eb.episode_id) AS mention_count
+           FROM extracted_books eb
+           WHERE eb.book_id IS NOT NULL AND eb.is_verified = true
+           GROUP BY eb.book_id`
+        );
+        for (const row of mediaRes.rows || []) {
+          mediaMap[row.book_id] = parseInt(row.mention_count) || 0;
+        }
+      } catch { /* table may not exist */ }
+
+      let curationMap: Record<number, number> = {};
+      try {
+        const curationRes = await queryDB(
+          `SELECT cb.book_id, COUNT(DISTINCT cb.curation_id) AS curation_count
+           FROM curation_books cb
+           GROUP BY cb.book_id`
+        );
+        for (const row of curationRes.rows || []) {
+          curationMap[row.book_id] = parseInt(row.curation_count) || 0;
+        }
+      } catch { /* table may not exist */ }
+
+      let updated = 0;
+      const BATCH_SIZE = 100;
+      for (let i = 0; i < books.length; i += BATCH_SIZE) {
+        const batch = books.slice(i, i + BATCH_SIZE);
+        const updatePromises = batch.map(async (book: any) => {
+          const awards = awardMap[book.id] || { winner: 0, shortlist: 0, longlist: 0 };
+          const rawAward = awards.winner * 10 + awards.shortlist * 6 + awards.longlist * 4;
+          const awardScore = Math.min(rawAward, 20);
+
+          const mediaMentions = mediaMap[book.id] || 0;
+          const mediaScore = Math.min(mediaMentions * 3, 9);
+
+          const curationCount = curationMap[book.id] || 0;
+          const curationScore = Math.min(curationCount * 2, 10);
+
+          const publisherLower = (book.publisher || '').toLowerCase();
+          const authorLower = (book.author || '').toLowerCase();
+          const isIndieVerlag = indieNames.some(name => publisherLower === name);
+          const isSelfPublisher = spPatterns.some((sp: any) => {
+            if (sp.match_type === 'exact') return publisherLower === sp.pattern.toLowerCase();
+            return publisherLower.includes(sp.pattern.toLowerCase());
+          });
+          const isAuthorPublisher = authorLower && publisherLower && (
+            authorLower === publisherLower || publisherLower.includes(authorLower) || authorLower.includes(publisherLower)
+          );
+
+          let structureBonus = 0;
+          if (isIndieVerlag) structureBonus += 2;
+          if (isSelfPublisher || isAuthorPublisher) structureBonus += 1;
+
+          const baseScore = awardScore + mediaScore + curationScore + structureBonus;
+          const totalScore = baseScore;
+
+          await queryDB(
+            `UPDATE books SET award_score = $1, media_score = $2, curation_score = $3,
+             structure_bonus = $4, base_score = $5, total_score = $6
+             WHERE id = $7`,
+            [awardScore, mediaScore, curationScore, structureBonus, baseScore, totalScore, book.id]
+          );
+          updated++;
+        });
+        await Promise.all(updatePromises);
+      }
+
+      log.info(`Recalculated scores for ${updated} books`);
+      return res.json({ ok: true, updated });
+    } catch (error) {
+      log.error('Score recalculation error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/books/score-thresholds', async (_req: Request, res: Response) => {
+    try {
+      const result = await queryDB(
+        `SELECT
+           COUNT(*) AS total_books,
+           COUNT(*) FILTER (WHERE user_score > 0) AS books_with_user_score,
+           SUM(user_score) AS total_user_score
+         FROM books WHERE deleted_at IS NULL`
+      );
+      const row = result.rows[0] || {};
+      const totalInteractions = parseFloat(row.total_user_score) || 0;
+      const showPopular = totalInteractions >= 300;
+      return res.json({ ok: true, showPopular, totalInteractions, totalBooks: parseInt(row.total_books) || 0 });
+    } catch (error) {
+      return res.json({ ok: true, showPopular: false, totalInteractions: 0, totalBooks: 0 });
     }
   });
 

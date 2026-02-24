@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, CheckCircle, Clock, XCircle, BookOpen, Send, AlertCircle, UserCheck } from 'lucide-react';
 import { useAuth } from '../../hooks/use-auth';
+import { useTranslation } from 'react-i18next';
+import { DashboardPageHeader } from '../../components/dashboard/DashboardPageHeader';
 
 const API_BASE = '/api';
 
@@ -26,6 +28,7 @@ interface AuthorRequestProps {
 }
 
 export function AuthorRequest({ userId: userIdProp }: AuthorRequestProps) {
+  const { t } = useTranslation();
   const { user: authUser } = useAuth();
   const userId = userIdProp || authUser?.id || 'demo-user-123';
   const [step, setStep] = useState<'loading' | 'check-status' | 'search' | 'form' | 'submitted'>('loading');
@@ -177,14 +180,10 @@ export function AuthorRequest({ userId: userIdProp }: AuthorRequestProps) {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold mb-1" style={{ color: '#1F2937' }} data-testid="text-author-request-title">
-          Autoren-Zugang beantragen
-        </h2>
-        <p className="text-sm" style={{ color: '#6B7280' }}>
-          Suche deinen Namen in unserer Buchdatenbank. Falls du dort gelistet bist, können wir dein Profil mit deinen Büchern verknüpfen.
-        </p>
-      </div>
+      <DashboardPageHeader
+        title={t('dashboardPages.authorRequestTitle', 'Autor:in werden')}
+        description={t('dashboardPages.authorRequestDesc', 'Suche deinen Namen in unserer Buchdatenbank. Falls du dort gelistet bist, können wir dein Profil mit deinen Büchern verknüpfen.')}
+      />
 
       {step === 'search' && (
         <div className="space-y-4">
