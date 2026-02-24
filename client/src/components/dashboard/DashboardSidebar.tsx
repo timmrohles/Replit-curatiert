@@ -66,6 +66,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
     },
     {
       id: 'community',
+      icon: Users,
       label: t('dashboardNav.community', 'COMMUNITY'),
       defaultOpen: false,
       items: [
@@ -76,6 +77,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
     },
     {
       id: 'earnings',
+      icon: Banknote,
       label: t('dashboardNav.earnings', 'EINNAHMEN'),
       defaultOpen: false,
       items: [
@@ -86,6 +88,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
     },
     {
       id: 'settings',
+      icon: Settings,
       label: t('dashboardNav.settings', 'EINSTELLUNGEN'),
       defaultOpen: false,
       items: [
@@ -100,6 +103,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
   if (hasAnyAuthorModule) {
     groups.push({
       id: 'author',
+      icon: PenLine,
       label: t('dashboardNav.author', 'AUTOR:IN'),
       defaultOpen: false,
       items: [
@@ -112,6 +116,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
   } else {
     groups.push({
       id: 'author',
+      icon: PenLine,
       label: t('dashboardNav.author', 'AUTOR:IN'),
       defaultOpen: false,
       items: [
