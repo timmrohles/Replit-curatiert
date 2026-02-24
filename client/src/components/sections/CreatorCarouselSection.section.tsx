@@ -30,6 +30,7 @@ function mapBookForCarousel(book: any) {
     nomination_count: book.nomination_count,
     award_details: book.award_details || [],
     awards: book.award_count || 0,
+    award_score: book.award_score || 0,
     shortlists: book.nomination_count || 0,
   };
 }

@@ -149,10 +149,9 @@ export function useShopFilters({ books }: UseShopFiltersProps) {
           return followsB - followsA;
         
         case 'awarded':
-          // Auszeichnungen = Anzahl der Preise
-          const awardsA = (a.awards?.length ?? 0);
-          const awardsB = (b.awards?.length ?? 0);
-          return awardsB - awardsA;
+          const scoreA = (a as any).award_score ?? (a.awards?.length ?? 0);
+          const scoreB = (b as any).award_score ?? (b.awards?.length ?? 0);
+          return scoreB - scoreA;
         
         case 'critics':
           // Kritiker-Lieblinge = Anzahl der Rezensionen

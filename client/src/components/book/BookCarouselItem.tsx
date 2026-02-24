@@ -85,6 +85,7 @@ export interface BookCarouselItemData {
   indie_type?: string | null;
   is_hidden_gem?: boolean;
   award_count?: number;
+  award_score?: number;
   nomination_count?: number;
   award_details?: Array<{ name: string; year?: number | string; outcome: string }>;
   klappentext?: string; // Klappentext/Beschreibung

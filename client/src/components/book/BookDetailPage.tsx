@@ -759,9 +759,9 @@ export function BookDetailPage() {
   const sortedRecommendedBooks = useMemo(() => {
     if (sortBy === 'awarded') {
       return [...recommendedBooks].sort((a, b) => {
-        const aAwards = (a.onixTagIds?.length || 0);
-        const bAwards = (b.onixTagIds?.length || 0);
-        return bAwards - aAwards;
+        const aScore = (a as any).award_score ?? (a.onixTagIds?.length || 0);
+        const bScore = (b as any).award_score ?? (b.onixTagIds?.length || 0);
+        return bScore - aScore;
       });
     } else if (sortBy === 'trending') {
       return [...recommendedBooks].sort((a, b) => {
@@ -781,9 +781,9 @@ export function BookDetailPage() {
     
     if (seriesSortBy === 'awarded') {
       return [...book.seriesBooks].sort((a, b) => {
-        const aAwards = (a.tags?.length || 0);
-        const bAwards = (b.tags?.length || 0);
-        return bAwards - aAwards;
+        const aScore = (a as any).award_score ?? (a.tags?.length || 0);
+        const bScore = (b as any).award_score ?? (b.tags?.length || 0);
+        return bScore - aScore;
       });
     } else if (seriesSortBy === 'trending') {
       return [...book.seriesBooks].sort((a, b) => {
@@ -807,9 +807,9 @@ export function BookDetailPage() {
     
     if (authorBooksSortBy === 'awarded') {
       return [...book.authorBooks].sort((a, b) => {
-        const aAwards = (a.tags?.length || 0);
-        const bAwards = (b.tags?.length || 0);
-        return bAwards - aAwards;
+        const aScore = (a as any).award_score ?? (a.tags?.length || 0);
+        const bScore = (b as any).award_score ?? (b.tags?.length || 0);
+        return bScore - aScore;
       });
     } else if (authorBooksSortBy === 'trending') {
       return [...book.authorBooks].sort((a, b) => {

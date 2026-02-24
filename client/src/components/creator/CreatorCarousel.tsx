@@ -78,6 +78,7 @@ interface Book {
   indie_type?: string | null;
   is_hidden_gem?: boolean;
   award_count?: number;
+  award_score?: number;
   nomination_count?: number;
   award_details?: Array<{ name: string; year?: number; outcome: string }>;
 }
@@ -348,7 +349,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
         return booksCopy.sort((a, b) => (b.followCount ?? 0) - (a.followCount ?? 0));
       
       case 'awarded':
-        return booksCopy.sort((a, b) => (b.awards ?? 0) - (a.awards ?? 0));
+        return booksCopy.sort((a, b) => (b.award_score ?? b.awards ?? 0) - (a.award_score ?? a.awards ?? 0));
       
       case 'hidden-gems':
         return booksCopy.sort((a, b) => {

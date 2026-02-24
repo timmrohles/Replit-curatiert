@@ -245,6 +245,7 @@ interface APIBook {
   indie_type?: string | null;
   is_hidden_gem?: boolean;
   award_count?: number;
+  award_score?: number;
   nomination_count?: number;
   onix_tag_ids?: string[];
   award_details?: Array<{ name: string; year?: number; outcome: string }>;
@@ -264,41 +265,11 @@ function apiBookToCarouselItem(book: APIBook): BookCarouselItemData {
     indie_type: book.indie_type,
     is_hidden_gem: book.is_hidden_gem,
     award_count: book.award_count,
+    award_score: book.award_score,
     nomination_count: book.nomination_count,
     onixTagIds: book.onix_tag_ids,
     award_details: book.award_details,
   };
-}
-
-function FilterModeToggle({ filterMode, onFilterModeChange }: { filterMode: 'and' | 'or'; onFilterModeChange: (mode: 'and' | 'or') => void }) {
-  return (
-    <div className="flex items-center gap-0 border" style={{ borderColor: 'var(--color-border)', borderRadius: '4px', overflow: 'hidden' }}>
-      <button
-        type="button"
-        onClick={() => onFilterModeChange('and')}
-        className="px-3 py-1.5 text-xs font-semibold transition-colors"
-        style={{
-          backgroundColor: filterMode === 'and' ? 'var(--color-blue)' : 'transparent',
-          color: filterMode === 'and' ? 'white' : 'var(--color-foreground)',
-        }}
-        data-testid="filter-mode-and"
-      >
-        UND
-      </button>
-      <button
-        type="button"
-        onClick={() => onFilterModeChange('or')}
-        className="px-3 py-1.5 text-xs font-semibold transition-colors"
-        style={{
-          backgroundColor: filterMode === 'or' ? 'var(--color-blue)' : 'transparent',
-          color: filterMode === 'or' ? 'white' : 'var(--color-foreground)',
-        }}
-        data-testid="filter-mode-or"
-      >
-        ODER
-      </button>
-    </div>
-  );
 }
 
 export function ShopPage() {
