@@ -35,7 +35,7 @@ The platform is built with a modern web stack, featuring a React frontend and an
 -   **Navigation Management**: Admin UI for managing navigation items.
 -   **Author Verification Workflow**: User-initiated author access requests with admin approval and ONIX database matching.
 -   **Internationalization (i18n)**: Directory-based locale prefixes (`/de-de/`, `/en-gb/`) with `de-de` as default. Translation files cover numerous namespaces.
--   **Dashboard & Feed System**: Restructured user dashboard with hierarchical sidebar navigation and nested React Router routes, providing sections for overview, content, community, earnings, and settings.
+-   **Dashboard & Feed System** ✅: Fully restructured user dashboard (completed). Hierarchical sidebar navigation (`DashboardSidebar.tsx`) with 5 collapsible groups (Übersicht, Meine Inhalte, Community, Einnahmen, Einstellungen) plus conditional Autor:in section. Real React Router routes under `/dashboard/*` with redirects from all legacy routes. All pages use `DashboardPageHeader` and `DashboardEmptyState`. `DashboardOverview` provides profile completion bar, KPI cards, and context-aware next-best-actions. Earnings split into 3 sub-pages (Übersicht, Affiliate, Statistiken). All duplicate pages merged (Curations, Reviews, Events, Storefront). Full i18n coverage (dashboardNav, dashboardOverview, dashboardPages) in de + en.
 -   **User Bookstore & Curations System**: Users can create thematic book collections (Kurationen) and public bookstore profiles.
 -   **Events System**: Users create and manage events.
 -   **Category Cards System**: Admin-managed category cards for homepage display.
