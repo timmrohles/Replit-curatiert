@@ -1,0 +1,131 @@
+Übernimm die Rolle eines Senior Full-Stack Engineers + SEO/IA-Architekten. Baue unsere Website so um, dass die Übersichtsseiten wie /verlage, /autoren, /buecher keine eigenen redundanten „Shop“-Implementierungen mehr sind, sondern Einstiegspunkte in eine universelle Discovery-/Entdecken-Seite (ein gemeinsames Listing-System mit Suche/Filter/Sort/Pagination).
+
+Zielbild
+
+Es gibt eine universelle Discovery-Seite (z. B. /entdecken), die:
+
+Suche, Filter, Sortierung, Pagination
+
+Facette/Typ-Auswahl (book/author/publisher/award/curation …)
+
+Ein einheitliches Layout/Komponenten-Set
+
+Seiten wie /verlage sind Landingpages, die:
+
+dieselbe Discovery-Komponente verwenden
+
+den Filter type=publisher vorauswählen
+
+eigene SEO-Intro-Texte (unique content) + H1 haben
+
+NICHT als eigenständige Logik gepflegt werden
+
+Konkrete Anforderungen
+1) Ein Discovery-Engine / Shared Component
+
+Erstelle oder refactore eine zentrale Komponente/Route:
+
+Route: /entdecken
+
+Query-Params (mindestens):
+
+type (book|author|publisher|award|curation)
+
+q (search query)
+
+sort (z. B. relevance|newest|popular)
+
+page
+
+filters[...] (weitere Filter nach Bedarf)
+
+Diese Seite rendert je nach type passende Card-Komponenten (BookCard, AuthorCard, PublisherCard).
+
+2) Landingpages als „Prefiltered Views“
+
+Refactore:
+
+/verlage
+
+/autoren
+
+/buecher
+(optional auch /preise, /medien)
+
+So, dass sie:
+
+KEINE eigene Listing-Logik haben
+
+Stattdessen eine DiscoveryPage/DiscoverLayout mit Default-Filtern verwenden:
+
+/verlage => type=publisher
+
+/autoren => type=author
+
+/buecher => type=book
+
+Die URL darf /verlage bleiben (kein harter Redirect), aber intern wird dieselbe Discovery-Engine genutzt.
+
+3) SEO sauber lösen (wichtig!)
+
+/verlage bleibt indexierbar und bekommt unique content:
+
+<h1>Verlage entdecken</h1>
+
+kurzer Intro-Text (2–4 Sätze)
+
+Canonical-Strategie:
+
+Canonical von /verlage soll auf /verlage selbst zeigen (nicht auf /entdecken?type=publisher), damit die Landingpage ihre SEO-Signale behält.
+
+Query-Varianten (z. B. /verlage?q=...&sort=...) sollen canonical auf /verlage oder auf die jeweilige gefilterte Variante zeigen (entscheide eine konsistente Strategie und begründe kurz).
+
+Stelle sicher, dass Metatitel/Description pro Landingpage einzigartig sind.
+
+4) UX/IA
+
+Auf /entdecken muss der Typwechsel (Bücher/Autoren/Verlage …) klar sichtbar sein (Tabs/Segmented Control).
+
+Auf /verlage ist der Typ „Verlage“ bereits aktiv; Nutzer können aber optional zu anderen Typen wechseln, ohne Kontextverlust.
+
+Filterpanel und Suchfeld sind identisch auf allen Einstiegen.
+
+5) Technische Umsetzung
+
+Identifiziere bestehende duplizierte Komponenten und entferne Redundanz.
+
+Extrahiere:
+
+useDiscoveryQueryState() (sync von URL params ↔ UI state)
+
+fetchDiscoveryResults(params) (eine API/DB Query-Schicht)
+
+API Layer:
+
+Eine universelle Endpoint-Route (z. B. /api/discover) die type + Filter annimmt und normalisierte Ergebnisse liefert
+
+Oder serverseitiges Laden (je nach Framework) – entscheide passend zum bestehenden Stack.
+
+6) Migration ohne Brüche
+
+Alte Detailseiten bleiben wie sie sind:
+
+/verlage/:slug (z. B. /verlage/beckverlag) bleibt als Publisher-Detailseite erhalten
+
+Die Übersichtsseiten werden nur refactored (keine URL-Änderung nötig).
+
+Stelle sicher, dass bestehende Links weiterhin funktionieren.
+
+Output, den ich von dir erwarte
+
+Kurze Bestandsaufnahme: wo ist aktuell Redundanz?
+
+Finales Ziel-Routing (Liste aller relevanten Routen)
+
+Implementation Plan (Schritte)
+
+Konkrete Code-Änderungen (Dateien/Komponenten/Endpunkte)
+
+SEO-Setup (Canonical/Meta)
+
+Testplan (smoke tests: Search, Filter, Pagination, SSR/CSR)
