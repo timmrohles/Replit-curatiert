@@ -738,7 +738,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
             <div className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/50">
               <Switch
                 id="hide-when-empty"
-                checked={editingSection.config?.hide_when_empty !== false}
+                checked={editingSection.config?.hide_when_empty === true}
                 onCheckedChange={(checked) => setEditingSection({
                   ...editingSection,
                   config: { ...(editingSection.config || {}), hide_when_empty: checked }

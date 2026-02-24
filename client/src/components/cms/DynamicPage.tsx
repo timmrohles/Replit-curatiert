@@ -312,8 +312,7 @@ export function DynamicPage() {
 
                 const sectionBooks = [...pinnedBooks, ...queryBooks];
 
-                const hideWhenEmpty = section.config?.hide_when_empty !== false;
-                if (hideWhenEmpty && sectionBooks.length === 0) {
+                if (section.config?.hide_when_empty === true && sectionBooks.length === 0) {
                   return null;
                 }
 
