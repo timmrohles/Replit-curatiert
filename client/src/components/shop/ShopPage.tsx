@@ -631,7 +631,7 @@ export function ShopPage() {
         <Container>
           <div className="flex gap-8">
             <aside className="hidden lg:block w-72 flex-shrink-0">
-              <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto">
+              <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto scrollbar-hide">
                 <div className="flex items-center justify-between mb-4">
                   <Heading as="h3" variant="h5">Filter</Heading>
                   <FilterModeToggle filterMode={filterMode} onFilterModeChange={setFilterMode} />

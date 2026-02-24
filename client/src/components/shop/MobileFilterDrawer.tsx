@@ -90,7 +90,7 @@ export function MobileFilterDrawer({
   return (
     <div className="lg:hidden fixed inset-0 z-50 bg-black/50" onClick={onClose}>
       <div 
-        className="absolute inset-y-0 right-0 w-full sm:w-96 overflow-y-auto bg-surface"
+        className="absolute inset-y-0 right-0 w-full sm:w-96 overflow-y-auto scrollbar-hide bg-surface"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 px-4 py-4 flex items-center justify-between border-b bg-surface" style={{ borderColor: 'var(--color-border)' }}>

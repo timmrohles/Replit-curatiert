@@ -58,7 +58,7 @@ export function FilterSection({
           </div>
 
           {/* Items List */}
-          <div className="space-y-3 max-h-72 overflow-y-auto pr-2">
+          <div className="space-y-3 max-h-72 overflow-y-auto scrollbar-hide">
             {filteredItems.map(item => (
               <label key={item} className="flex items-start gap-3 cursor-pointer group hover:opacity-70 transition-opacity">
                 <div className="relative flex items-center justify-center mt-0.5">
