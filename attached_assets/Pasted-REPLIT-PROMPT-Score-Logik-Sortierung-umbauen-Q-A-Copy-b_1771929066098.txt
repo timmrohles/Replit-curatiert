@@ -1,0 +1,113 @@
+REPLIT PROMPT (Score-Logik + Sortierung umbauen + Q&A Copy)
+
+Übernimm die Rolle eines Senior Engineer + Product/SEO Writer. Wir wollen unsere Sortier- und Rankinglogik umbauen, sodass sie sofort ohne viele Nutzersignale funktioniert und später nahtlos mit Nutzerinteraktionen wächst. Außerdem brauchen wir saubere Bezeichnungen (UI) und einen kurzen Erklärungstext für unsere Q&A-Seite.
+
+Ausgangslage
+
+Wir haben Signale: Auszeichnungen (Gewinner/Shortlist/Longlist), Medienbesprechungen (Podcasts/TV), Kurationen (wie oft ein Buch in Kurationen vorkommt), Publishing-Typ (Indie über Kurt-Wolff-Stiftung, Debüt, Selfpublisher).
+
+Frühphase: wenig Likes/Saves/Käufe → Popularitätssortierung darf nicht dominant sein.
+
+Aktuelle Logik ist unscharf („Auszeichnungen“ und „Hidden Gems“ als Sortierung).
+
+Ziel
+
+Einheitlicher Relevanz-Score als Default-Sortierung, der auf „Meta-Signalen“ basiert (Awards/Media/Kuration/Struktur).
+
+User-Signale werden später additiv integriert, aber logarithmisch/normalisiert, damit sie nicht alles überrollen.
+
+„Beliebt“ wird nur angezeigt, wenn ausreichend Signale vorhanden sind (Threshold).
+
+„Geheimtipps“ wird sauber definiert: hohe Basis-Relevanz, aber niedrige Popularität.
+
+A) Implementiere Score-Logik
+Phase 1: Base Score (ohne User-Signale)
+
+Berechne pro Buch:
+
+award_score:
+
+Winner = 10
+
+Shortlist = 6
+
+Longlist = 4
+
+Summe über unabhängige Preise
+
+Cap: max 20
+
+media_score:
+
+pro Medienerwähnung (Podcast/TV/etc.) = 3
+
+Cap: max 9
+
+curation_score:
+
+pro unabhängiger Kuration/Nennung = 2
+
+Cap: max 10
+
+structure_bonus:
+
+Indie (Kurt-Wolff) = +2
+
+Debüt = +2
+
+Selfpublisher = +1
+
+Base Score:
+base_score = award_score + media_score + curation_score + structure_bonus
+
+Phase 2: User Score (wenn genug Daten vorhanden)
+
+user_score_raw basiert auf Interaktionen:
+
+Like = 1
+
+Save = 2
+
+Purchase/Outbound-buy = 5 (falls verfügbar)
+
+Skaliere/normalisiere mit Logarithmus:
+user_score = log(1 + user_score_raw) * 3
+(oder eine äquivalente Normalisierung)
+
+Total Score (wenn user_score aktiv):
+total_score = base_score + user_score
+(oder optional gewichtet: 0.7*base + 0.3*user, wenn wir später wollen)
+
+B) Sortierungen (UI) neu definieren
+
+Implementiere folgende Sorts:
+
+Relevanz (Default)
+
+Phase 1: sort by base_score DESC
+
+Phase 2: sort by total_score DESC
+
+Neu
+
+sort by publication_date DESC (oder „zuletzt hinzugefügt“, wenn das besser passt → dann so benennen)
+
+Am meisten ausgezeichnet
+
+sort by award_score DESC
+
+Beliebt
+
+sort by user_score DESC
+
+nur anzeigen, wenn Mindestschwelle erfüllt (z. B. global >= 200 Likes oder >= 100 Saves oder >= 300 Interaktionen insgesamt; wähle sinnvollen Threshold + Config)
+
+Geheimtipps
+
+Filterbedingung: base_score >= X und user_score <= Y (oder wenn Phase 1: curation_score niedrig als Proxy)
+
+Sortierung: base_score DESC
+
+Ziel: „starke Signale, aber noch nicht Mainstream“
+
+Entferne/ersetze unscharfe Sorts wie „Auszeichnungen“ (das wird zu „Am meisten ausgezeichnet“) und „Hidden Gems“ (wird zu „Geheimtipps“ mit obiger Definition).
