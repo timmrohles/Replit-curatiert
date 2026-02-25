@@ -115,10 +115,8 @@ export function HeroSection({ section }: HeroSectionProps) {
                           transition: 'all 0.5s ease-out',
                         }}
                         onClick={() => {
-                          if (isActive && curator.storefrontSlug) {
-                            navigate(`/storefront/${curator.storefrontSlug}`);
-                          } else if (isActive && curator.slug) {
-                            navigate(`/kuratoren/${curator.slug}`);
+                          if (isActive && (curator.storefrontSlug || curator.slug)) {
+                            navigate(`/${curator.storefrontSlug || curator.slug}`);
                           } else {
                             setActiveIndex(index);
                             startAutoplay();

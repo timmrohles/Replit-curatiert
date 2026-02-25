@@ -661,7 +661,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                   </li>
                   <li className="text-white/40">/</li>
                   <li>
-                    <a href="/curators" className="text-white/70 hover:text-white transition-colors">Kurator:innen</a>
+                    <a href="/de-de/curators" className="text-white/70 hover:text-white transition-colors">Kurator:innen</a>
                   </li>
                   <li className="text-white/40">/</li>
                   <li className="text-white font-medium">{profile.display_name}</li>
@@ -844,7 +844,7 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
           <Header isHomePage={false} />
           <Breadcrumb items={[
             { label: 'Startseite', href: '/' },
-            { label: 'Kurator:innen', href: '/curators' },
+            { label: 'Kurator:innen', href: '/de-de/curators' },
             { label: profile.display_name },
           ]} />
 

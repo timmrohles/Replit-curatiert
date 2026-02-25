@@ -10140,6 +10140,22 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/:locale/kuratoren/:slug', (req: Request, res: Response) => {
+    res.redirect(301, `/${req.params.slug}`);
+  });
+
+  app.get('/:locale/storefront/:slug', (req: Request, res: Response) => {
+    res.redirect(301, `/${req.params.slug}`);
+  });
+
+  app.get('/kuratoren/:slug', (req: Request, res: Response) => {
+    res.redirect(301, `/${req.params.slug}`);
+  });
+
+  app.get('/storefront/:slug', (req: Request, res: Response) => {
+    res.redirect(301, `/${req.params.slug}`);
+  });
+
   app.get('/robots.txt', (_req: Request, res: Response) => {
     const robotsTxt = `User-agent: Googlebot
 Allow: /

@@ -117,12 +117,12 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
                 "position": index + 1,
                 "item": {
                   "@type": "Person",
-                  "@id": `https://coratiert.de/storefront/${curator.slug}`,
+                  "@id": `https://coratiert.de/${curator.slug}`,
                   "name": curator.name,
                   "description": curator.bio,
                   "jobTitle": curator.focus,
                   "image": curator.avatar,
-                  "url": `https://coratiert.de/storefront/${curator.slug}`
+                  "url": `https://coratiert.de/${curator.slug}`
                 }
               }))
             }
@@ -210,12 +210,12 @@ export function AllCuratorsPage({ onGoBack, pageTitle, pageSubtitle, breadcrumbL
                       boxShadow: '-8px 8px 12px 2px rgba(0, 0, 0, 0.3)'
                     }}
                     onClick={() => {
-                      safeNavigate(`/storefront/${curator.slug}`);
+                      safeNavigate(`/${curator.slug}`);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        safeNavigate(`/storefront/${curator.slug}`);
+                        safeNavigate(`/${curator.slug}`);
                       }
                     }}
                     tabIndex={0}
