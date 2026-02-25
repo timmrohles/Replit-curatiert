@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Save, Globe, Instagram, Podcast, Check, Plus, Search, X, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon, MapPin, Loader2, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { User, Save, Globe, Instagram, Podcast, Check, Plus, Search, X, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon, MapPin, Loader2, Eye, EyeOff, AlertTriangle, ExternalLink } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
@@ -740,6 +740,17 @@ export function PublicProfile() {
             <><Eye className="w-4 h-4" />Profil veröffentlichen</>
           )}
         </button>
+
+        <a
+          href={bookstoreSlug ? `/de-de/bookstore/${bookstoreSlug}` : '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="link-public-profile"
+          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-sm transition-all duration-200 border ${!bookstoreSlug ? 'pointer-events-none opacity-50' : 'hover:shadow-md'}`}
+          style={{ borderColor: '#D1D5DB', color: '#374151', backgroundColor: '#FFFFFF' }}
+        >
+          <ExternalLink className="w-4 h-4" />Zum öffentlichen Profil
+        </a>
       </div>
 
       {showHideModal && (
