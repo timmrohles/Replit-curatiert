@@ -39,7 +39,8 @@ import {
   Search,
   User,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  ExternalLink
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -564,16 +565,27 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                 </Badge>
               </div>
             </div>
-            {/* ✅ NEW: Draft Preview Toggle */}
-            <div className="flex items-center gap-2">
-              <Label htmlFor="include-draft" className="text-sm font-normal">
-                Entwürfe anzeigen
-              </Label>
-              <Switch
-                id="include-draft"
-                checked={includeDraft}
-                onCheckedChange={setIncludeDraft}
-              />
+            <div className="flex items-center gap-4">
+              <a
+                href={`/${page.slug === '/' ? '' : page.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border transition-colors hover:bg-gray-50"
+                data-testid="link-page-preview"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Vorschau
+              </a>
+              <div className="flex items-center gap-2" title="Zeigt auch Sektionen mit Status 'Entwurf' in dieser Liste an">
+                <Label htmlFor="include-draft" className="text-sm font-normal text-muted-foreground">
+                  Entwurf-Sektionen
+                </Label>
+                <Switch
+                  id="include-draft"
+                  checked={includeDraft}
+                  onCheckedChange={setIncludeDraft}
+                />
+              </div>
             </div>
           </div>
         </CardHeader>
