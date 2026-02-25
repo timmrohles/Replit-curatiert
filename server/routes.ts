@@ -5950,6 +5950,11 @@ export async function registerRoutes(
             params.push(effectiveCategoryId, effectiveCategoryId);
           }
 
+          const hasUserContext = !!(query.userContext?.followedBy || (query.userContext?.readingStatus?.length > 0) || query.userContext?.inMedia?.enabled);
+          if (conditions.length === 0 && hasUserContext) {
+            conditions.push('TRUE');
+          }
+
           if (conditions.length > 0) {
             const categoryConditionIdx = effectiveCategoryId ? conditions.length - 1 : -1;
             let whereClause: string;
@@ -5961,13 +5966,31 @@ export async function registerRoutes(
               const joiner = operator === 'all' ? ' AND ' : ' OR ';
               whereClause = conditions.join(joiner);
             }
+
+            if (query.userContext?.inMedia?.enabled) {
+              const period = query.userContext.inMedia.period || 'all';
+              let dateCond = '';
+              if (period === 'week') dateCond = `AND ce.published_at >= NOW() - INTERVAL '7 days'`;
+              else if (period === 'month') dateCond = `AND ce.published_at >= NOW() - INTERVAL '30 days'`;
+              else if (period === 'quarter') dateCond = `AND ce.published_at >= NOW() - INTERVAL '90 days'`;
+              else if (period === 'year') dateCond = `AND ce.published_at >= NOW() - INTERVAL '365 days'`;
+              conditions.push(`b.id IN (SELECT COALESCE(eb.matched_book_id, eb.book_id) FROM extracted_books eb JOIN content_episodes ce ON eb.episode_id = ce.id WHERE eb.is_verified = true ${dateCond} AND COALESCE(eb.matched_book_id, eb.book_id) IS NOT NULL)`);
+            }
+
             const sortClause = query.sort === 'newest' ? 'ORDER BY b.created_at DESC'
               : query.sort === 'awarded' ? 'ORDER BY b.award_count DESC NULLS LAST'
+              : query.sort === 'popularity' ? 'ORDER BY b.total_score DESC NULLS LAST'
+              : query.sort === 'relevance' ? 'ORDER BY b.total_score DESC NULLS LAST'
+              : query.sort === 'hidden_gems' ? 'ORDER BY b.is_hidden_gem DESC NULLS LAST, b.total_score DESC NULLS LAST'
               : 'ORDER BY b.created_at DESC';
 
             try {
+              const finalWhere = conditions.length > 1 && conditions[conditions.length - 1].startsWith('b.id IN (SELECT COALESCE')
+                ? `(${whereClause}) AND ${conditions[conditions.length - 1]}`
+                : whereClause;
+
               const queryBooks = await queryDB(
-                `SELECT b.* FROM books b WHERE b.deleted_at IS NULL AND (${whereClause}) ${sortClause} LIMIT $${paramIdx}`,
+                `SELECT b.* FROM books b WHERE b.deleted_at IS NULL AND (${finalWhere}) ${sortClause} LIMIT $${paramIdx}`,
                 [...params, limit]
               );
               const fetchedBooks = queryBooks.rows || [];

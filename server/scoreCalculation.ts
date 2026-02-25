@@ -127,16 +127,16 @@ async function updateBookScore(bookId: number, scores: ReturnType<typeof calcula
   try {
     if (scores.isIndie) {
       await queryDB(
-        `INSERT INTO book_onix_tags (book_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+        `INSERT INTO book_tags (book_id, tag_id, origin) VALUES ($1, $2, 'derived') ON CONFLICT (book_id, tag_id) DO NOTHING`,
         [bookId, INDIE_TAG_ID]
       );
     } else {
       await queryDB(
-        `DELETE FROM book_onix_tags WHERE book_id = $1 AND tag_id = $2`,
+        `DELETE FROM book_tags WHERE book_id = $1 AND tag_id = $2 AND origin = 'derived'`,
         [bookId, INDIE_TAG_ID]
       );
     }
-  } catch { /* book_onix_tags table may not exist yet */ }
+  } catch { /* book_tags table may not exist yet */ }
 }
 
 export async function recalculateAllScores(): Promise<number> {
