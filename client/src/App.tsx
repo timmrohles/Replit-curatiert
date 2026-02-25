@@ -84,6 +84,7 @@ const EarningsAffiliate = React.lazy(() => import('./pages/dashboard/earnings/Ea
 const EarningsStatistics = React.lazy(() => import('./pages/dashboard/earnings/EarningsStatistics').then(m => ({ default: m.EarningsStatistics })));
 const UserCurations = React.lazy(() => import('./pages/dashboard/UserCurations').then(m => ({ default: m.UserCurations })));
 const UserEvents = React.lazy(() => import('./pages/dashboard/UserEvents').then(m => ({ default: m.UserEvents })));
+const DashboardReadingLists = React.lazy(() => import('./pages/dashboard/DashboardReadingLists').then(m => ({ default: m.DashboardReadingLists })));
 const ContentSourcesManager = React.lazy(() => import('./pages/dashboard/ContentSources').then(m => ({ default: m.ContentSourcesManager })));
 const DashboardCreatorStorefront = React.lazy(() => import('./pages/dashboard/creator/CreatorStorefront').then(m => ({ default: m.CreatorStorefront })));
 const AuthorBooks = React.lazy(() => import('./pages/dashboard/author/AuthorBooks').then(m => ({ default: m.AuthorBooks })));
@@ -263,6 +264,7 @@ function App() {
                         <Route path="kurationen" element={<UserCurations />} />
                         <Route path="rezensionen" element={<DashboardReviews />} />
                         <Route path="bewertungen" element={<DashboardRatings />} />
+                        <Route path="leselisten" element={<DashboardReadingLists />} />
                         <Route path="content-quellen" element={<ContentSourcesManager />} />
                         <Route path="feed" element={<DashboardFeed />} />
                         <Route path="follower" element={<DashboardFollows />} />

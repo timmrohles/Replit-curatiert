@@ -62,6 +62,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
         { id: 'kurationen', path: '/dashboard/kurationen', label: t('dashboardNav.kurationen', 'Kurationen') },
         { id: 'rezensionen', path: '/dashboard/rezensionen', label: t('dashboardNav.rezensionen', 'Rezensionen') },
         { id: 'bewertungen', path: '/dashboard/bewertungen', label: t('dashboardNav.bewertungen', 'Bewertungen') },
+        { id: 'leselisten', path: '/dashboard/leselisten', label: t('dashboardNav.readingLists', 'Meine Leselisten') },
         { id: 'content-quellen', path: '/dashboard/content-quellen', label: t('dashboardNav.contentSources', 'Content-Quellen'), moduleKey: 'creator_storefront' },
       ]
     },
