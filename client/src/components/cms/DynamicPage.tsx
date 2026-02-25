@@ -191,20 +191,7 @@ function DynamicPageInner() {
     fetchPage();
   }, [slug, subslug, fullSlug]);
 
-  if (loading) {
-    return (
-      <>
-        <InfoBar />
-        <Header isHomePage={false} />
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
-  if (error || !page) {
+  if (error && !page) {
     return (
       <>
         <InfoBar />
@@ -224,143 +211,145 @@ function DynamicPageInner() {
     );
   }
 
-  if (!page.enabled) {
-    return (
-      <>
-        <InfoBar />
-        <Header isHomePage={false} />
-        <div className="min-h-screen flex flex-col items-center justify-center px-4">
-          <h1 className="text-4xl mb-4">Seite nicht verfügbar</h1>
-          <p className="text-xl mb-8">Diese Seite ist derzeit deaktiviert.</p>
-          <button
-            onClick={() => navigate('/')}
-            className="px-6 py-3 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
-          >
-            Zurück zur Startseite
-          </button>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
   const hasCategoryHero = sections.some(s => (s.section_type || s.type) === 'category_hero');
 
   return (
     <>
-      <SEOHead
-        metadata={{
-          title: page.title,
-          metaTitle: page.metaTitle,
-          metaDescription: page.metaDescription,
-          canonicalUrl: page.canonicalUrl || (slug === '/' ? 'https://coratiert.de/' : `https://coratiert.de/${slug}`),
-          ogTitle: page.ogTitle,
-          ogDescription: page.ogDescription,
-          ogImage: page.ogImage,
-          keywords: page.keywords,
-          noIndex: page.noIndex,
-          noFollow: page.noFollow
-        }}
-      />
-      
-      <WebPageSchema
-        name={page.metaTitle || page.title}
-        description={page.metaDescription || page.description}
-        url={page.canonicalUrl || (slug === '/' ? 'https://coratiert.de/' : `https://coratiert.de/${slug}`)}
-        breadcrumbs={[
-          { name: 'Home', url: 'https://coratiert.de' },
-          { name: page.name, url: page.canonicalUrl || (slug === '/' ? 'https://coratiert.de/' : `https://coratiert.de/${slug}`) }
-        ]}
-      />
-      
-      <BreadcrumbSchema
-        items={[
-          { name: 'Home', url: 'https://coratiert.de' },
-          { name: page.name, url: page.canonicalUrl || (slug === '/' ? 'https://coratiert.de/' : `https://coratiert.de/${slug}`) }
-        ]}
-      />
+      {page && (
+        <>
+          <SEOHead
+            metadata={{
+              title: page.title,
+              metaTitle: page.metaTitle,
+              metaDescription: page.metaDescription,
+              canonicalUrl: page.canonicalUrl || (slug === '/' ? 'https://coratiert.de/' : `https://coratiert.de/${slug}`),
+              ogTitle: page.ogTitle,
+              ogDescription: page.ogDescription,
+              ogImage: page.ogImage,
+              keywords: page.keywords,
+              noIndex: page.noIndex,
+              noFollow: page.noFollow
+            }}
+          />
+          <WebPageSchema
+            name={page.metaTitle || page.title}
+            description={page.metaDescription || page.description}
+            url={page.canonicalUrl || (slug === '/' ? 'https://coratiert.de/' : `https://coratiert.de/${slug}`)}
+            breadcrumbs={[
+              { name: 'Home', url: 'https://coratiert.de' },
+              { name: page.name, url: page.canonicalUrl || (slug === '/' ? 'https://coratiert.de/' : `https://coratiert.de/${slug}`) }
+            ]}
+          />
+          <BreadcrumbSchema
+            items={[
+              { name: 'Home', url: 'https://coratiert.de' },
+              { name: page.name, url: page.canonicalUrl || (slug === '/' ? 'https://coratiert.de/' : `https://coratiert.de/${slug}`) }
+            ]}
+          />
+        </>
+      )}
 
       <InfoBar />
       <Header isHomePage={false} />
       
       <main id="main-content" className="min-h-screen">
-        {!hasCategoryHero && (
-          <div className="container mx-auto px-4 py-12">
-            <div className="max-w-4xl mx-auto text-center mb-12">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6" style={{ color: 'var(--charcoal, #2a2a2a)' }}>{page.title}</h1>
-              {page.description && (
-                <p className="text-xl" style={{ color: 'var(--color-text-secondary)' }}>{page.description}</p>
-              )}
+        {loading ? (
+          <div className="animate-in fade-in duration-200">
+            <div className="w-full h-[280px] md:h-[340px] bg-gradient-to-b from-muted/60 to-transparent animate-pulse" />
+            <div className="max-w-7xl mx-auto px-4 mt-8 space-y-6">
+              <div className="h-7 w-48 bg-muted/40 rounded animate-pulse" />
+              <div className="flex gap-4 overflow-hidden">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 w-[140px] space-y-2">
+                    <div className="w-[140px] h-[210px] bg-muted/30 rounded-lg animate-pulse" />
+                    <div className="h-3 w-24 bg-muted/20 rounded animate-pulse" />
+                    <div className="h-3 w-16 bg-muted/20 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        )}
+        ) : (
+          <>
+            {!hasCategoryHero && page && (
+              <div className="container mx-auto px-4 py-12">
+                <div className="max-w-4xl mx-auto text-center mb-12">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6" style={{ color: 'var(--charcoal, #2a2a2a)' }}>{page.title}</h1>
+                  {page.description && (
+                    <p className="text-xl" style={{ color: 'var(--color-text-secondary)' }}>{page.description}</p>
+                  )}
+                </div>
+              </div>
+            )}
 
-        <div className="pb-12">
-          {(() => {
-            const zonePriority: Record<string, number> = { above_fold: 0, main: 1 };
-            const sortedSections = [...sections].sort((a, b) => {
-              const zoneA = zonePriority[a.zone] ?? 99;
-              const zoneB = zonePriority[b.zone] ?? 99;
-              if (zoneA !== zoneB) return zoneA - zoneB;
-              return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
-            });
+            <div className="pb-12">
+              {(() => {
+                const zonePriority: Record<string, number> = { above_fold: 0, main: 1 };
+                const sortedSections = [...sections].sort((a, b) => {
+                  const zoneA = zonePriority[a.zone] ?? 99;
+                  const zoneB = zonePriority[b.zone] ?? 99;
+                  if (zoneA !== zoneB) return zoneA - zoneB;
+                  return (a.sortOrder ?? 0) - (b.sortOrder ?? 0);
+                });
 
-            const booksById: Record<number, any> = {};
-            books.forEach((b: any) => { booksById[b.id] = b; });
+                const booksById: Record<number, any> = {};
+                books.forEach((b: any) => { booksById[b.id] = b; });
 
-            return sortedSections.length > 0 ? (
-              sortedSections.map((section, idx) => {
-                const sectionType = section.section_type || section.type;
+                return sortedSections.length > 0 ? (
+                  sortedSections.map((section, idx) => {
+                    const sectionType = section.section_type || section.type;
 
-                if (hasCategoryHero && sectionType !== 'category_hero' && !isSectionVisibleForFilter(sectionType, activeFilter, tabs)) {
-                  return null;
-                }
+                    if (hasCategoryHero && sectionType !== 'category_hero' && !isSectionVisibleForFilter(sectionType, activeFilter, tabs)) {
+                      return null;
+                    }
 
-                const pinnedBooks = (section.items || [])
-                  .filter((item: any) => item.book_id)
-                  .map((item: any) => booksById[item.book_id])
-                  .filter(Boolean);
+                    const pinnedBooks = (section.items || [])
+                      .filter((item: any) => item.book_id)
+                      .map((item: any) => booksById[item.book_id])
+                      .filter(Boolean);
 
-                const pinnedIds = new Set(pinnedBooks.map((b: any) => b.id));
-                const queryBooks = ((section as any)._queryBookIds || [])
-                  .map((id: number) => booksById[id])
-                  .filter((b: any) => b && !pinnedIds.has(b.id));
+                    const pinnedIds = new Set(pinnedBooks.map((b: any) => b.id));
+                    const queryBooks = ((section as any)._queryBookIds || [])
+                      .map((id: number) => booksById[id])
+                      .filter((b: any) => b && !pinnedIds.has(b.id));
 
-                const sectionBooks = [...pinnedBooks, ...queryBooks];
+                    const sectionBooks = [...pinnedBooks, ...queryBooks];
 
-                if (section.config?.hide_when_empty === true && sectionBooks.length === 0) {
-                  return null;
-                }
+                    if (section.config?.hide_when_empty === true && sectionBooks.length === 0) {
+                      return null;
+                    }
 
-                const isAboveFold = idx === 0 || section.zone === 'above_fold' || sectionType === 'category_hero';
+                    const isAboveFold = idx === 0 || section.zone === 'above_fold' || sectionType === 'category_hero';
 
-                const content = (
-                  <div key={section.id} className="mb-section-gap">
-                    <UniversalSectionRenderer section={section} books={sectionBooks} categoryId={page?.category_id} />
+                    const content = (
+                      <div key={section.id} className="mb-section-gap">
+                        <UniversalSectionRenderer section={section} books={sectionBooks} categoryId={page?.category_id} />
+                      </div>
+                    );
+
+                    if (isAboveFold) return content;
+
+                    return (
+                      <LazySection key={section.id}>
+                        {content}
+                      </LazySection>
+                    );
+                  })
+                ) : page?.content ? (
+                  <div className="max-w-4xl mx-auto prose px-4">
+                    <DynamicPageContentRenderer content={page.content} />
+                  </div>
+                ) : (
+                  <div className="text-center" style={{ color: 'var(--color-text-muted)' }}>
+                    <p>Inhalt wird bald hinzugefügt.</p>
                   </div>
                 );
+              })()}
+            </div>
 
-                if (isAboveFold) return content;
-
-                return (
-                  <LazySection key={section.id}>
-                    {content}
-                  </LazySection>
-                );
-              })
-            ) : page.content ? (
-              <div className="max-w-4xl mx-auto prose px-4">
-                <DynamicPageContentRenderer content={page.content} />
-              </div>
-            ) : (
-              <div className="text-center" style={{ color: 'var(--color-text-muted)' }}>
-                <p>Inhalt wird bald hinzugefügt.</p>
-              </div>
-            );
-          })()}
-        </div>
-
-        <PageNavigationBadge pageId={page.id} />
+            {page && <PageNavigationBadge pageId={page.id} />}
+          </>
+        )}
       </main>
 
       <Footer />

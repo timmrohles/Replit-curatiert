@@ -110,20 +110,7 @@ export function CMSHomepage() {
     fetchHomepage();
   }, []);
 
-  if (loading) {
-    return (
-      <>
-        <InfoBar />
-        <Header isHomePage={true} />
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-foreground"></div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
-  if (error || !page) {
+  if (error && !page) {
     return (
       <>
         <InfoBar />
@@ -140,75 +127,74 @@ export function CMSHomepage() {
     );
   }
 
-  if (!page.enabled) {
-    return (
-      <>
-        <InfoBar />
-        <Header isHomePage={true} />
-        <div className="min-h-screen flex flex-col items-center justify-center px-4">
-          <h1 className="text-4xl mb-4">{t('cms.homepageDisabledTitle')}</h1>
-          <p className="text-xl mb-8">{t('cms.homepageDisabled')}</p>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
   return (
     <>
-      {/* SEO Meta Tags */}
-      <SEOHead
-        metadata={{
-          title: page.title,
-          metaTitle: page.metaTitle,
-          metaDescription: page.metaDescription,
-          canonicalUrl: page.canonicalUrl || 'https://coratiert.de/',
-          ogTitle: page.ogTitle,
-          ogDescription: page.ogDescription,
-          ogImage: page.ogImage,
-          keywords: page.keywords,
-          noIndex: page.noIndex,
-          noFollow: page.noFollow
-        }}
-      />
+      {page && (
+        <>
+          <SEOHead
+            metadata={{
+              title: page.title,
+              metaTitle: page.metaTitle,
+              metaDescription: page.metaDescription,
+              canonicalUrl: page.canonicalUrl || 'https://coratiert.de/',
+              ogTitle: page.ogTitle,
+              ogDescription: page.ogDescription,
+              ogImage: page.ogImage,
+              keywords: page.keywords,
+              noIndex: page.noIndex,
+              noFollow: page.noFollow
+            }}
+          />
+          <WebPageSchema
+            name={page.metaTitle || page.title}
+            description={page.metaDescription || page.description}
+            url="https://coratiert.de/"
+            breadcrumbs={[
+              { name: 'Home', url: 'https://coratiert.de' }
+            ]}
+          />
+          <BreadcrumbSchema
+            items={[
+              { name: 'Home', url: 'https://coratiert.de' }
+            ]}
+          />
+        </>
+      )}
 
-      {/* Structured Data - WebPage */}
-      <WebPageSchema
-        name={page.metaTitle || page.title}
-        description={page.metaDescription || page.description}
-        url="https://coratiert.de/"
-        breadcrumbs={[
-          { name: 'Home', url: 'https://coratiert.de' }
-        ]}
-      />
-
-      {/* Breadcrumb Schema */}
-      <BreadcrumbSchema
-        items={[
-          { name: 'Home', url: 'https://coratiert.de' }
-        ]}
-      />
-
-      {/* Layout */}
       <InfoBar />
       <Header isHomePage={true} />
 
-      {/* Main Content */}
       <main id="main-content" className="min-h-screen relative z-0">
-        {/* Page Title - hidden for homepage (slug "/") */}
-        {page.title && page.title !== '/' && page.slug !== '/' && (
-          <div className="container mx-auto px-4 py-12">
-            <div className="max-w-4xl mx-auto text-center mb-12">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6">{page.title}</h1>
-              {page.description && (
-                <p className="text-xl text-muted-foreground">{page.description}</p>
-              )}
+        {loading ? (
+          <div className="animate-in fade-in duration-200">
+            <div className="w-full h-[400px] md:h-[500px] bg-gradient-to-b from-muted/60 to-transparent animate-pulse" />
+            <div className="max-w-7xl mx-auto px-4 mt-8 space-y-6">
+              <div className="h-7 w-56 bg-muted/40 rounded animate-pulse" />
+              <div className="flex gap-4 overflow-hidden">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 w-[140px] space-y-2">
+                    <div className="w-[140px] h-[210px] bg-muted/30 rounded-lg animate-pulse" />
+                    <div className="h-3 w-24 bg-muted/20 rounded animate-pulse" />
+                    <div className="h-3 w-16 bg-muted/20 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        )}
+        ) : (
+          <>
+            {page && page.title && page.title !== '/' && page.slug !== '/' && (
+              <div className="container mx-auto px-4 py-12">
+                <div className="max-w-4xl mx-auto text-center mb-12">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6">{page.title}</h1>
+                  {page.description && (
+                    <p className="text-xl text-muted-foreground">{page.description}</p>
+                  )}
+                </div>
+              </div>
+            )}
 
-        {/* Sections - sorted by zone (above_fold first, then main) */}
-        <div className="pb-12">
+            <div className="pb-12">
           {(() => {
             const zonePriority: Record<string, number> = { above_fold: 0, main: 1 };
             const sortedSections = [...sections].sort((a, b) => {
@@ -259,7 +245,7 @@ export function CMSHomepage() {
                   </LazySection>
                 );
               })
-            ) : page.content ? (
+            ) : page?.content ? (
               <div className="max-w-4xl mx-auto prose px-4">
                 <DynamicPageContentRenderer content={page.content} />
               </div>
@@ -269,10 +255,11 @@ export function CMSHomepage() {
               </div>
             );
           })()}
-        </div>
+            </div>
 
-        {/* Navigation Badge - only visible in preview mode */}
-        <PageNavigationBadge pageId={page.id} />
+            {page && <PageNavigationBadge pageId={page.id} />}
+          </>
+        )}
       </main>
 
       <BottomBanner />
