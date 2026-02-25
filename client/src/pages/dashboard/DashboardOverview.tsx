@@ -5,7 +5,7 @@ import { useSafeNavigate } from '../../utils/routing';
 import { useAuth } from '../../hooks/use-auth';
 import {
   Star, MessageSquare, Heart, Store, BookOpen,
-  ArrowRight, User, Calendar, Rss, Users
+  ArrowRight, User, Calendar, Rss, Users, ExternalLink
 } from 'lucide-react';
 import type { DashboardOutletContext } from '../../components/dashboard/DashboardLayout';
 
@@ -14,6 +14,8 @@ interface DashboardKpis {
   events: number;
   contentSources: number;
   hasStorefront: boolean;
+  isPublished: boolean;
+  curatorSlug: string | null;
 }
 
 interface NextAction {
@@ -50,6 +52,8 @@ export function DashboardOverview() {
     events: 0,
     contentSources: 0,
     hasStorefront: false,
+    isPublished: false,
+    curatorSlug: null,
   };
 
   const profileSteps = [
@@ -114,6 +118,17 @@ export function DashboardOverview() {
       icon: User,
       path: '/dashboard/profil',
       priority: 5,
+    });
+  }
+
+  if (kpis.isPublished && kpis.curatorSlug) {
+    nextActions.push({
+      id: 'view-public-profile',
+      title: t('dashboardOverview.viewProfile', 'Zum öffentlichen Profil'),
+      description: t('dashboardOverview.viewProfileDesc', 'Dein Profil ist veröffentlicht — sieh dir an, wie es für andere aussieht.'),
+      icon: ExternalLink,
+      path: `/${kpis.curatorSlug}`,
+      priority: 0,
     });
   }
 
@@ -206,6 +221,32 @@ export function DashboardOverview() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {sortedActions.map(action => {
               const Icon = action.icon;
+              const isExternal = action.id === 'view-public-profile';
+              if (isExternal) {
+                return (
+                  <a
+                    key={action.id}
+                    href={action.path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-4 rounded-lg border bg-card text-left hover:border-[#247ba0]/30 transition-colors group no-underline"
+                    data-testid={`action-${action.id}`}
+                  >
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#247ba0]/10 dark:bg-[#247ba0]/20">
+                      <Icon className="w-5 h-5 text-[#247ba0]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium mb-0.5 text-gray-800 dark:text-gray-100">
+                        {action.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {action.description}
+                      </p>
+                    </div>
+                    <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-[#247ba0] transition-colors flex-shrink-0 mt-1" />
+                  </a>
+                );
+              }
               return (
                 <button
                   key={action.id}

@@ -7631,10 +7631,19 @@ export async function registerRoutes(
       ]);
 
       const curatorRow = await queryDB(
-        `SELECT id FROM curators WHERE user_id = $1::text LIMIT 1`, [userId]
+        `SELECT id, slug FROM curators WHERE user_id = $1::text LIMIT 1`, [userId]
       ).catch(() => ({ rows: [] }));
 
       const hasStorefront = curatorRow.rows.length > 0;
+      const curatorSlug = curatorRow.rows[0]?.slug || null;
+
+      let isPublished = false;
+      if (hasStorefront) {
+        const bsRow = await queryDB(
+          `SELECT is_published FROM bookstore_profiles WHERE user_id = $1 LIMIT 1`, [userId]
+        ).catch(() => ({ rows: [] }));
+        isPublished = bsRow.rows[0]?.is_published === true;
+      }
 
       return res.json({
         ok: true,
@@ -7643,6 +7652,8 @@ export async function registerRoutes(
           events: parseInt(eventsResult.rows[0]?.count || '0', 10),
           contentSources: parseInt(contentSourcesResult.rows[0]?.count || '0', 10),
           hasStorefront,
+          isPublished,
+          curatorSlug,
         }
       });
     } catch (error) {
