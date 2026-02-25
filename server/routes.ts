@@ -5834,28 +5834,18 @@ export async function registerRoutes(
 
       const slug = path === '/' ? '/' : path.substring(1);
 
-      const statusFilter = includeDraft ? '' : `AND status = 'published' AND visibility = 'visible'`;
+      const statusFilter = includeDraft ? '' : `AND p.status = 'published' AND p.visibility = 'visible'`;
 
-      const pageResult = await queryDB(
-        `SELECT * FROM pages WHERE slug = $1 ${statusFilter} LIMIT 1`,
-        [slug]
-      );
-
-      if (!pageResult.rows || pageResult.rows.length === 0) {
-        return res.status(404).json({
-          ok: false,
-          path,
-          error: {
-            code: 'PAGE_NOT_FOUND',
-            message: `Page not found for path: ${path}`,
-          },
-        });
-      }
-
-      const page = pageResult.rows[0];
-
-      const sectionsResult = await queryDB(
-        `SELECT ps.*,
+      const combinedResult = await queryDB(
+        `SELECT
+          p.id AS page_id, p.slug, p.type, p.template_key, p.status AS page_status,
+          p.visibility AS page_visibility, p.seo_title, p.seo_description,
+          p.canonical_url, p.robots, p.og_image_asset_id, p.page_type, p.category_id,
+          p.created_at AS page_created_at, p.updated_at AS page_updated_at,
+          ps.id AS section_id, ps.zone, ps.sort_order, ps.section_type, ps.config AS section_config,
+          ps.status AS section_status, ps.visibility AS section_visibility,
+          ps.publish_at, ps.unpublish_at, ps.max_views, ps.max_clicks,
+          ps.current_views, ps.current_clicks,
           COALESCE(
             (SELECT json_agg(
               json_build_object(
@@ -5881,17 +5871,65 @@ export async function registerRoutes(
               AND ($2::boolean = true OR si.status = 'published')
             ), '[]'::json
           ) as items
-         FROM public.page_sections ps
-         WHERE ps.page_id = $1::bigint
+         FROM public.pages p
+         LEFT JOIN public.page_sections ps ON ps.page_id = p.id
            AND ($2::boolean = true OR ps.status = 'published')
            AND ($2::boolean = true OR COALESCE(ps.visibility, 'visible') = 'visible')
            AND ($2::boolean = true OR ps.publish_at IS NULL OR ps.publish_at <= NOW())
            AND ($2::boolean = true OR ps.unpublish_at IS NULL OR ps.unpublish_at > NOW())
            AND ($2::boolean = true OR ps.max_views IS NULL OR COALESCE(ps.current_views, 0) < ps.max_views)
            AND ($2::boolean = true OR ps.max_clicks IS NULL OR COALESCE(ps.current_clicks, 0) < ps.max_clicks)
+         WHERE p.slug = $1 ${statusFilter}
          ORDER BY ps.sort_order ASC`,
-        [page.id, includeDraft]
+        [slug, includeDraft]
       );
+
+      if (!combinedResult.rows || combinedResult.rows.length === 0) {
+        return res.status(404).json({
+          ok: false,
+          path,
+          error: {
+            code: 'PAGE_NOT_FOUND',
+            message: `Page not found for path: ${path}`,
+          },
+        });
+      }
+
+      const firstRow = combinedResult.rows[0];
+      const page = {
+        id: firstRow.page_id,
+        slug: firstRow.slug,
+        type: firstRow.type,
+        template_key: firstRow.template_key,
+        status: firstRow.page_status,
+        visibility: firstRow.page_visibility,
+        seo_title: firstRow.seo_title,
+        seo_description: firstRow.seo_description,
+        canonical_url: firstRow.canonical_url,
+        robots: firstRow.robots,
+        og_image_asset_id: firstRow.og_image_asset_id,
+        page_type: firstRow.page_type,
+        category_id: firstRow.category_id,
+        created_at: firstRow.page_created_at,
+        updated_at: firstRow.page_updated_at,
+      };
+
+      const sectionsResult = { rows: combinedResult.rows.filter((r: any) => r.section_id != null).map((r: any) => ({
+        id: r.section_id,
+        zone: r.zone,
+        sort_order: r.sort_order,
+        section_type: r.section_type,
+        config: r.section_config,
+        status: r.section_status,
+        visibility: r.section_visibility,
+        publish_at: r.publish_at,
+        unpublish_at: r.unpublish_at,
+        max_views: r.max_views,
+        max_clicks: r.max_clicks,
+        current_views: r.current_views,
+        current_clicks: r.current_clicks,
+        items: r.items,
+      })) };
 
       const sections = sectionsResult.rows || [];
 
@@ -5906,6 +5944,7 @@ export async function registerRoutes(
 
       const pageCategoryId = page.page_type === 'category' && page.category_id ? Number(page.category_id) : null;
 
+      const sectionQueryPromises: Array<{ section: any; promise: Promise<any> }> = [];
       for (const section of sections) {
         const cfg = section.section_config || section.config || {};
         const sType = section.section_type;
@@ -5970,71 +6009,113 @@ export async function registerRoutes(
               : query.sort === 'hidden_gems' ? 'ORDER BY b.is_hidden_gem DESC NULLS LAST, b.total_score DESC NULLS LAST'
               : 'ORDER BY b.created_at DESC';
 
-            try {
-              const queryBooks = await queryDB(
+            sectionQueryPromises.push({
+              section,
+              promise: queryDB(
                 `SELECT b.* FROM books b WHERE b.deleted_at IS NULL AND (${whereClause}) ${sortClause} LIMIT $${paramIdx}`,
                 [...params, limit]
-              );
-              const fetchedBooks = queryBooks.rows || [];
-              fetchedBooks.forEach((b: any) => bookIds.add(b.id));
-
-              if (!section._queryBooks) section._queryBooks = [];
-              section._queryBooks = fetchedBooks.map((b: any) => b.id);
-            } catch (qErr) {
-              log.warn(`Query-based book fetch failed for section ${section.id}:`, qErr);
-            }
+              ).catch(qErr => { log.warn(`Query-based book fetch failed for section ${section.id}:`, qErr); return { rows: [] }; })
+            });
           }
         }
       }
 
+      const sectionQueryResults = await Promise.all(sectionQueryPromises.map(sq => sq.promise));
+      sectionQueryPromises.forEach((sq, idx) => {
+        const fetchedBooks = sectionQueryResults[idx].rows || [];
+        fetchedBooks.forEach((b: any) => bookIds.add(b.id));
+        sq.section._queryBooks = fetchedBooks.map((b: any) => b.id);
+      });
+
       let books: any[] = [];
+      const curatorIds = new Set<string>();
+      sections.forEach((s: any) => {
+        const cfg = s.section_config || s.config;
+        if (cfg?.curatorId) curatorIds.add(String(cfg.curatorId));
+      });
+
+      let curatorsMap: Record<string, any> = {};
+
       if (bookIds.size > 0) {
         const bookIdsArray = Array.from(bookIds);
         const placeholders = bookIdsArray.map((_, i) => `$${i + 1}`).join(',');
-        const booksResult = await queryDB(
-          `SELECT * FROM books WHERE id IN (${placeholders})`,
-          bookIdsArray
-        );
+
+        const curatorIdsArray = Array.from(curatorIds);
+        const cPlaceholders = curatorIdsArray.map((_, i) => `$${i + 1}`).join(',');
+
+        const [booksResult, indieRes, spRes, awardRes, tagRes, curatorsResult] = await Promise.all([
+          queryDB(`SELECT * FROM books WHERE id IN (${placeholders})`, bookIdsArray),
+          queryDB('SELECT name FROM indie_publishers').catch(() => ({ rows: [] })),
+          queryDB('SELECT pattern, match_type FROM selfpublisher_patterns').catch(() => ({ rows: [] })),
+          queryDB(
+            `SELECT ar.book_id, ao.result_status, ao.outcome_type, a.name AS award_name, ae.year AS award_year
+             FROM award_recipients ar
+             JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
+             JOIN award_editions ae ON ao.award_edition_id = ae.id
+             JOIN awards a ON ae.award_id = a.id
+             WHERE ar.book_id IN (${placeholders})`,
+            bookIdsArray
+          ).catch(() => ({ rows: [] })),
+          queryDB(
+            `SELECT bt.book_id, t.id AS tag_id, t.name, t.slug, t.tag_type, t.color, t.visible
+             FROM book_tags bt
+             JOIN tags t ON bt.tag_id = t.id
+             WHERE bt.book_id IN (${placeholders}) AND t.deleted_at IS NULL
+             UNION
+             SELECT bot.book_id, t.id AS tag_id, t.name, t.slug, t.tag_type, t.color, t.visible
+             FROM book_onix_tags bot
+             JOIN tags t ON bot.tag_id = t.id
+             WHERE bot.book_id IN (${placeholders}) AND t.deleted_at IS NULL`,
+            bookIdsArray
+          ).catch(() => ({ rows: [] })),
+          curatorIdsArray.length > 0
+            ? queryDB(
+                `SELECT id, name, bio, avatar_url, focus, visible FROM curators WHERE id IN (${cPlaceholders}) AND deleted_at IS NULL`,
+                curatorIdsArray.map(Number)
+              )
+            : Promise.resolve({ rows: [] }),
+        ]);
+
         books = booksResult.rows || [];
 
+        for (const c of curatorsResult.rows || []) {
+          curatorsMap[String(c.id)] = c;
+        }
+
         try {
-          const indieRes = await queryDB('SELECT name FROM indie_publishers');
           const indieNames = (indieRes.rows || []).map((r: any) => r.name.toLowerCase());
-          const spRes = await queryDB('SELECT pattern, match_type FROM selfpublisher_patterns');
           const spPatterns = spRes.rows || [];
 
           let awardMap: Record<number, { wins: number; nominations: number; details: Array<{ name: string; year?: number; outcome: string }> }> = {};
-          try {
-            const awardRes = await queryDB(
-              `SELECT ar.book_id,
-                ao.result_status,
-                ao.outcome_type,
-                a.name AS award_name,
-                ae.year AS award_year
-               FROM award_recipients ar
-               JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
-               JOIN award_editions ae ON ao.award_edition_id = ae.id
-               JOIN awards a ON ae.award_id = a.id
-               WHERE ar.book_id IN (${placeholders})`,
-              bookIdsArray
-            );
-            for (const row of awardRes.rows || []) {
-              if (!row.book_id) continue;
-              if (!awardMap[row.book_id]) awardMap[row.book_id] = { wins: 0, nominations: 0, details: [] };
-              const status = (row.result_status || '').toLowerCase();
-              const outcomeType = row.outcome_type || 'nominee';
-              if (status === 'winner' || status === 'gewinner') {
-                awardMap[row.book_id].wins++;
-              } else {
-                awardMap[row.book_id].nominations++;
-              }
-              awardMap[row.book_id].details.push({
-                name: row.award_name || 'Literaturpreis',
-                year: row.award_year || undefined,
-                outcome: outcomeType,
-              });
+          for (const row of awardRes.rows || []) {
+            if (!row.book_id) continue;
+            if (!awardMap[row.book_id]) awardMap[row.book_id] = { wins: 0, nominations: 0, details: [] };
+            const status = (row.result_status || '').toLowerCase();
+            const outcomeType = row.outcome_type || 'nominee';
+            if (status === 'winner' || status === 'gewinner') {
+              awardMap[row.book_id].wins++;
+            } else {
+              awardMap[row.book_id].nominations++;
             }
-          } catch { /* award_recipients may not exist yet */ }
+            awardMap[row.book_id].details.push({
+              name: row.award_name || 'Literaturpreis',
+              year: row.award_year || undefined,
+              outcome: outcomeType,
+            });
+          }
+
+          const MOCK_REVIEWS: Record<number, Array<{ source: string; quote: string }>> = {
+            75474: [{ source: 'Die Zeit', quote: 'In nur scheinbar sinnlosen und oft so wunderbar poetischen Sätzen entdeckt Geiger die Würde des Vaters.' }],
+            75729: [{ source: 'Frankfurter Allgemeine', quote: 'Ein kraftvoller, virtuoser Roman über eine deutsch-türkische Familie.' }],
+            80190: [{ source: 'Frankfurter Allgemeine', quote: 'Schonungslos und eindrücklich. Ein kluger Roman über subtile Gewalt.' }],
+            75384: [{ source: 'Alena Schröder', quote: 'So mitreißend, feinsinnig und schonungslos, dass es mich einfach nicht loslässt.' }],
+            75320: [{ source: 'Gert Scobel, 3sat', quote: 'Unbedingt lesen. Wirklich unbedingt lesen.' }],
+            75298: [{ source: 'Süddeutsche Zeitung', quote: 'Thomas Hettche erzählt die Kulturgeschichte der Augsburger Puppenkiste als großen Roman.' }],
+            120569: [{ source: 'Die Jury des Deutschen Buchpreises', quote: 'Anne Weber erzählt das unwahrscheinliche Leben in einem brillanten Heldinnenepos.' }],
+            158054: [{ source: 'NZZ', quote: 'Christine Wunnicke schreibt so verwegen und schön wie keine andere.' }],
+            176370: [{ source: 'Caroline Wahl', quote: 'Das Traurigste, Lustigste und Beste, was ich seit langem gelesen habe.' }],
+            60826: [{ source: 'New York Times', quote: 'Attica Locke hat einen Pageturner geschrieben, der zugleich ein soziales Porträt Amerikas ist.' }],
+          };
 
           books = books.map((book: any) => {
             const publisherLower = (book.publisher || '').toLowerCase();
@@ -6054,39 +6135,6 @@ export async function registerRoutes(
             const awards = awardMap[book.id] || { wins: 0, nominations: 0 };
             const isHiddenGem = awards.nominations > 0 && awards.wins === 0;
 
-            const MOCK_REVIEWS: Record<number, Array<{ source: string; quote: string }>> = {
-              75474: [
-                { source: 'Die Zeit', quote: 'In nur scheinbar sinnlosen und oft so wunderbar poetischen Sätzen entdeckt Geiger die Würde des Vaters.' }
-              ],
-              75729: [
-                { source: 'Frankfurter Allgemeine', quote: 'Ein kraftvoller, virtuoser Roman über eine deutsch-türkische Familie.' }
-              ],
-              80190: [
-                { source: 'Frankfurter Allgemeine', quote: 'Schonungslos und eindrücklich. Ein kluger Roman über subtile Gewalt.' }
-              ],
-              75384: [
-                { source: 'Alena Schröder', quote: 'So mitreißend, feinsinnig und schonungslos, dass es mich einfach nicht loslässt.' }
-              ],
-              75320: [
-                { source: 'Gert Scobel, 3sat', quote: 'Unbedingt lesen. Wirklich unbedingt lesen.' }
-              ],
-              75298: [
-                { source: 'Süddeutsche Zeitung', quote: 'Thomas Hettche erzählt die Kulturgeschichte der Augsburger Puppenkiste als großen Roman.' }
-              ],
-              120569: [
-                { source: 'Die Jury des Deutschen Buchpreises', quote: 'Anne Weber erzählt das unwahrscheinliche Leben in einem brillanten Heldinnenepos.' }
-              ],
-              158054: [
-                { source: 'NZZ', quote: 'Christine Wunnicke schreibt so verwegen und schön wie keine andere.' }
-              ],
-              176370: [
-                { source: 'Caroline Wahl', quote: 'Das Traurigste, Lustigste und Beste, was ich seit langem gelesen habe.' }
-              ],
-              60826: [
-                { source: 'New York Times', quote: 'Attica Locke hat einen Pageturner geschrieben, der zugleich ein soziales Porträt Amerikas ist.' }
-              ],
-            };
-
             return {
               ...book,
               is_indie: isIndieVerlag || isSelfPublisher || isAuthorPublisher,
@@ -6102,49 +6150,24 @@ export async function registerRoutes(
           log.warn('Book enrichment error (non-fatal):', enrichErr);
         }
 
-        try {
-          const tagRes = await queryDB(
-            `SELECT bt.book_id, t.id AS tag_id, t.name, t.slug, t.tag_type, t.color, t.visible
-             FROM book_tags bt
-             JOIN tags t ON bt.tag_id = t.id
-             WHERE bt.book_id IN (${placeholders}) AND t.deleted_at IS NULL
-             UNION
-             SELECT bot.book_id, t.id AS tag_id, t.name, t.slug, t.tag_type, t.color, t.visible
-             FROM book_onix_tags bot
-             JOIN tags t ON bot.tag_id = t.id
-             WHERE bot.book_id IN (${placeholders}) AND t.deleted_at IS NULL`,
-            bookIdsArray
-          );
-          const tagMap: Record<number, Array<{ id: number; name: string; slug: string; tagType: string; color: string }>> = {};
-          for (const row of tagRes.rows || []) {
-            if (!tagMap[row.book_id]) tagMap[row.book_id] = [];
-            if (!tagMap[row.book_id].some(t => t.id === row.tag_id)) {
-              tagMap[row.book_id].push({
-                id: row.tag_id,
-                name: row.name,
-                slug: row.slug,
-                tagType: row.tag_type,
-                color: row.color,
-              });
-            }
+        const tagMap: Record<number, Array<{ id: number; name: string; slug: string; tagType: string; color: string }>> = {};
+        for (const row of tagRes.rows || []) {
+          if (!tagMap[row.book_id]) tagMap[row.book_id] = [];
+          if (!tagMap[row.book_id].some(t => t.id === row.tag_id)) {
+            tagMap[row.book_id].push({
+              id: row.tag_id,
+              name: row.name,
+              slug: row.slug,
+              tagType: row.tag_type,
+              color: row.color,
+            });
           }
-          books = books.map((book: any) => ({
-            ...book,
-            tags: tagMap[book.id] || [],
-          }));
-        } catch (tagErr) {
-          log.warn('Tag enrichment error (non-fatal):', tagErr);
         }
-      }
-
-      const curatorIds = new Set<string>();
-      sections.forEach((s: any) => {
-        const cfg = s.section_config || s.config;
-        if (cfg?.curatorId) curatorIds.add(String(cfg.curatorId));
-      });
-
-      let curatorsMap: Record<string, any> = {};
-      if (curatorIds.size > 0) {
+        books = books.map((book: any) => ({
+          ...book,
+          tags: tagMap[book.id] || [],
+        }));
+      } else if (curatorIds.size > 0) {
         const curatorIdsArray = Array.from(curatorIds);
         const cPlaceholders = curatorIdsArray.map((_, i) => `$${i + 1}`).join(',');
         const curatorsResult = await queryDB(
