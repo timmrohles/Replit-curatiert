@@ -132,6 +132,27 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
   const [curatorSearch, setCuratorSearch] = useState('');
   const [allOnixTags, setAllOnixTags] = useState<any[]>([]);
 
+  // Category Hero Unsplash search state
+  const [heroUnsplashQuery, setHeroUnsplashQuery] = useState('');
+  const [heroUnsplashResults, setHeroUnsplashResults] = useState<Array<{ id: string; url: string; thumb: string; alt: string; author: string; authorUrl: string }>>([]);
+  const [heroUnsplashLoading, setHeroUnsplashLoading] = useState(false);
+
+  const searchHeroUnsplash = useCallback(async (query: string) => {
+    if (!query.trim()) return;
+    setHeroUnsplashLoading(true);
+    try {
+      const res = await fetch(`/api/unsplash/search?query=${encodeURIComponent(query)}`, { credentials: 'include' });
+      const data = await res.json();
+      if (data.success) {
+        setHeroUnsplashResults(data.data || []);
+      }
+    } catch {
+      setHeroUnsplashResults([]);
+    } finally {
+      setHeroUnsplashLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetch('/api/onix-tags?limit=500')
       .then(r => r.json())
@@ -1191,6 +1212,112 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                       <p className="text-xs text-gray-500 mt-1">💡 Template Picker kommt in Phase 2</p>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {editingSection.type === 'category_hero' && (
+              <div className="space-y-4 pt-4 border-t">
+                <Heading variant="h5" className="text-sm font-semibold">Kategorie-Hero Konfiguration</Heading>
+                
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Titel <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="z.B. Belletristik"
+                    value={editingSection.config?.title || ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, title: e.target.value }
+                    })}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">SEO-Text / Beschreibung</label>
+                  <textarea
+                    placeholder="z.B. Entdecke die besten Romane, Erzählungen und literarische Highlights..."
+                    value={editingSection.config?.subtitle || ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, subtitle: e.target.value }
+                    })}
+                    rows={3}
+                    className="w-full px-3 py-2 border rounded text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Hintergrundbild-URL</label>
+                  <Input
+                    type="url"
+                    placeholder="https://images.unsplash.com/..."
+                    value={editingSection.config?.backgroundImage || ''}
+                    onChange={(e) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, backgroundImage: e.target.value }
+                    })}
+                  />
+                  {editingSection.config?.backgroundImage && (
+                    <img 
+                      src={editingSection.config.backgroundImage} 
+                      alt="Hero-Vorschau" 
+                      className="mt-2 h-32 w-full rounded object-cover border"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  )}
+                </div>
+
+                <Separator />
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Unsplash-Bildersuche</label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="z.B. books, library, reading..."
+                      value={heroUnsplashQuery}
+                      onChange={(e) => setHeroUnsplashQuery(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') searchHeroUnsplash(heroUnsplashQuery); }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => searchHeroUnsplash(heroUnsplashQuery)}
+                      disabled={heroUnsplashLoading || !heroUnsplashQuery.trim()}
+                    >
+                      {heroUnsplashLoading ? '...' : <Search className="h-4 w-4" />}
+                    </Button>
+                  </div>
+
+                  {heroUnsplashResults.length > 0 && (
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {heroUnsplashResults.map((img) => (
+                        <button
+                          key={img.id}
+                          type="button"
+                          onClick={() => {
+                            setEditingSection({
+                              ...editingSection,
+                              config: { ...editingSection.config, backgroundImage: img.url }
+                            });
+                            setHeroUnsplashResults([]);
+                            setHeroUnsplashQuery('');
+                          }}
+                          className="relative aspect-video rounded overflow-hidden border-2 border-transparent hover:border-blue-500 transition-colors group"
+                        >
+                          <img src={img.thumb} alt={img.alt} className="w-full h-full object-cover" />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[10px] px-1 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity truncate">
+                            Foto: {img.author}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">Bilder von Unsplash (Querformat, ideal für Hero-Banner)</p>
                 </div>
               </div>
             )}
