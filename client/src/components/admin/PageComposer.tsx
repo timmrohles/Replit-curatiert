@@ -37,7 +37,9 @@ import {
   Image as ImageIcon,
   BadgeCheck,
   Search,
-  User
+  User,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -643,7 +645,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {zoneSections.map(section => (
+                    {zoneSections.map((section, idx) => (
                       <SectionCard
                         key={section.id}
                         section={section}
@@ -653,6 +655,10 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                         onDelete={() => handleDeleteSection(section.id)}
                         onDuplicate={() => handleDuplicateSection(section)}
                         onMove={(draggedId, targetId) => handleMoveSection(draggedId, targetId, zone.key)}
+                        isFirst={idx === 0}
+                        isLast={idx === zoneSections.length - 1}
+                        onMoveUp={() => idx > 0 && handleMoveSection(section.id, zoneSections[idx - 1].id, zone.key)}
+                        onMoveDown={() => idx < zoneSections.length - 1 && handleMoveSection(section.id, zoneSections[idx + 1].id, zone.key)}
                       />
                     ))}
                   </div>
@@ -2109,6 +2115,10 @@ interface SectionCardProps {
   onDelete: () => void;
   onDuplicate: () => void;
   onMove: (draggedId: number, targetId: number) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }
 
 function SectionCard({ 
@@ -2118,7 +2128,11 @@ function SectionCard({
   onEdit, 
   onDelete, 
   onDuplicate,
-  onMove
+  onMove,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast
 }: SectionCardProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -2145,7 +2159,26 @@ function SectionCard({
       {/* Section Header */}
       <div className="p-4 flex items-center justify-between hover:bg-gray-50">
         <div className="flex items-center gap-3 flex-1">
-          <GripVertical className="w-4 h-4 text-gray-400 cursor-move" />
+          <div className="flex flex-col gap-0.5">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onMoveUp?.(); }}
+              disabled={isFirst}
+              className="p-0.5 rounded hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+              title="Nach oben verschieben"
+            >
+              <ArrowUp className="w-3.5 h-3.5 text-gray-500" />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onMoveDown?.(); }}
+              disabled={isLast}
+              className="p-0.5 rounded hover:bg-gray-200 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
+              title="Nach unten verschieben"
+            >
+              <ArrowDown className="w-3.5 h-3.5 text-gray-500" />
+            </button>
+          </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-medium text-sm">
