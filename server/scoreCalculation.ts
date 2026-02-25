@@ -119,7 +119,7 @@ async function updateBookScore(bookId: number, scores: ReturnType<typeof calcula
      WHERE id = $12`,
     [scores.awardScore, scores.mediaScore, scores.curationScore, scores.structureBonus,
      scores.baseScore, scores.totalScore, scores.awardCount, scores.nominationCount,
-     scores.isIndie, scores.indieType, scores.isHiddenGem, bookId]
+     Boolean(scores.isIndie), scores.indieType || null, Boolean(scores.isHiddenGem), bookId]
   );
 }
 

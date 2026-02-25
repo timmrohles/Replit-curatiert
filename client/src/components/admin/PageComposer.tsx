@@ -636,7 +636,42 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
               </label>
               <Select
                 value={editingSection.type || 'category_grid'}
-                onValueChange={(value) => setEditingSection({ ...editingSection, type: value })}
+                onValueChange={async (value) => {
+                  const needsId = ['book_carousel', 'book_grid_filtered'].includes(value);
+                  if (needsId && !editingSection.id) {
+                    try {
+                      const payload = {
+                        page_id: page.id,
+                        zone: editingSection.zone || 'main',
+                        sort_order: editingSection.sort_order || (allSections.length + 1) * 10,
+                        section_type: value,
+                        config: editingSection.config || {},
+                        status: editingSection.status || 'published',
+                        visibility: editingSection.visibility || 'visible',
+                      };
+                      const response = await fetch(`${API_BASE_URL}/admin/pages/${page.id}/sections`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                      });
+                      if (response.ok) {
+                        const result = await response.json();
+                        const newSection = result.data || result;
+                        await loadSections();
+                        setEditingSection({
+                          ...newSection,
+                          type: newSection.section_type || value,
+                          config: newSection.config || {},
+                        });
+                        return;
+                      }
+                    } catch (err) {
+                      console.error('Auto-save for new section failed:', err);
+                    }
+                  }
+                  setEditingSection({ ...editingSection, type: value });
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Typ wählen" />
