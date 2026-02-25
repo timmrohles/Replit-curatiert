@@ -121,17 +121,6 @@ export function DashboardOverview() {
     });
   }
 
-  if (kpis.isPublished && kpis.curatorSlug) {
-    nextActions.push({
-      id: 'view-public-profile',
-      title: t('dashboardOverview.viewProfile', 'Zum öffentlichen Profil'),
-      description: t('dashboardOverview.viewProfileDesc', 'Dein Profil ist veröffentlicht — sieh dir an, wie es für andere aussieht.'),
-      icon: ExternalLink,
-      path: `/${kpis.curatorSlug}`,
-      priority: 0,
-    });
-  }
-
   const sortedActions = nextActions.sort((a, b) => a.priority - b.priority).slice(0, 3);
 
   const kpiCards = [
@@ -269,6 +258,27 @@ export function DashboardOverview() {
                 </button>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {kpis.isPublished && kpis.curatorSlug && (
+        <section>
+          <h2 className="text-lg mb-3 text-gray-800 dark:text-gray-100" style={{ fontFamily: 'Fjalla One' }}>
+            {t('dashboardOverview.quicklinks', 'Quicklinks')}
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href={`/${kpis.curatorSlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 hover:shadow-md no-underline"
+              style={{ backgroundColor: '#247ba0', color: '#FFFFFF' }}
+              data-testid="quicklink-public-profile"
+            >
+              <ExternalLink className="w-4 h-4" />
+              {t('dashboardOverview.viewProfile', 'Zum öffentlichen Profil')}
+            </a>
           </div>
         </section>
       )}
