@@ -75,6 +75,7 @@ export function CreatorCarouselSection({ section, books = [], className = '', ca
     <section className={className}>
       <div className="max-w-7xl mx-auto">
         <CuratedBookSection
+          curationId={config.curationId || section.curation_id || undefined}
           curator={{
             avatar: curatorAvatar,
             name: curatorName,

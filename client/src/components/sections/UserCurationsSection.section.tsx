@@ -5,6 +5,7 @@ import { Heading, Text } from '../ui/typography';
 import { useSafeNavigate } from '../../utils/routing';
 import { useLocale } from '../../utils/LocaleContext';
 import { ChevronRight, BookOpen } from 'lucide-react';
+import { CurationActionBar } from '../curation/CurationActionBar';
 
 interface UserCurationsSectionProps {
   section: any;
@@ -86,45 +87,47 @@ export function UserCurationsSection({ section, categoryId, className = '' }: Us
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {curations.map((curation) => (
-              <button
-                key={curation.id}
-                onClick={() => navigate(`${localePrefix}/kurationen/${curation.id}`)}
-                className="group text-left rounded-xl border border-border bg-card p-5 transition-all hover:shadow-md hover:border-foreground/20"
-                data-testid={`curation-card-${curation.id}`}
-              >
-                <div className="flex items-start gap-3 mb-3">
-                  {curation.user_avatar ? (
-                    <img
-                      src={curation.user_avatar}
-                      alt={curation.user_name}
-                      className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      <BookOpen className="w-4 h-4 text-muted-foreground" />
+              <div key={curation.id} className="flex flex-col">
+                <button
+                  onClick={() => navigate(`${localePrefix}/kurationen/${curation.id}`)}
+                  className="group text-left rounded-xl border border-border bg-card p-5 transition-all hover:shadow-md hover:border-foreground/20 flex-1"
+                  data-testid={`curation-card-${curation.id}`}
+                >
+                  <div className="flex items-start gap-3 mb-3">
+                    {curation.user_avatar ? (
+                      <img
+                        src={curation.user_avatar}
+                        alt={curation.user_name}
+                        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <BookOpen className="w-4 h-4 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <Text variant="small" className="text-foreground/50 truncate">
+                        {curation.user_name}
+                      </Text>
                     </div>
+                  </div>
+                  <Heading as="h3" variant="h5" className="mb-2 group-hover:opacity-70 transition-opacity line-clamp-2">
+                    {curation.title}
+                  </Heading>
+                  {curation.description && (
+                    <Text variant="small" className="text-foreground/60 line-clamp-2 mb-3">
+                      {curation.description}
+                    </Text>
                   )}
-                  <div className="min-w-0">
-                    <Text variant="small" className="text-foreground/50 truncate">
-                      {curation.user_name}
+                  <div className="flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5 text-foreground/40" />
+                    <Text variant="xs" className="text-foreground/40">
+                      {curation.book_count} {curation.book_count === 1 ? 'Buch' : 'Bücher'}
                     </Text>
                   </div>
-                </div>
-                <Heading as="h3" variant="h5" className="mb-2 group-hover:opacity-70 transition-opacity line-clamp-2">
-                  {curation.title}
-                </Heading>
-                {curation.description && (
-                  <Text variant="small" className="text-foreground/60 line-clamp-2 mb-3">
-                    {curation.description}
-                  </Text>
-                )}
-                <div className="flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-foreground/40" />
-                  <Text variant="xs" className="text-foreground/40">
-                    {curation.book_count} {curation.book_count === 1 ? 'Buch' : 'Bücher'}
-                  </Text>
-                </div>
-              </button>
+                </button>
+                <CurationActionBar curationId={curation.id} className="pt-2" />
+              </div>
             ))}
           </div>
         )}
