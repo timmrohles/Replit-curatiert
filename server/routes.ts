@@ -6101,6 +6101,40 @@ export async function registerRoutes(
         } catch (enrichErr) {
           log.warn('Book enrichment error (non-fatal):', enrichErr);
         }
+
+        try {
+          const tagRes = await queryDB(
+            `SELECT bt.book_id, t.id AS tag_id, t.name, t.slug, t.tag_type, t.color, t.visible
+             FROM book_tags bt
+             JOIN tags t ON bt.tag_id = t.id
+             WHERE bt.book_id IN (${placeholders}) AND t.deleted_at IS NULL
+             UNION
+             SELECT bot.book_id, t.id AS tag_id, t.name, t.slug, t.tag_type, t.color, t.visible
+             FROM book_onix_tags bot
+             JOIN tags t ON bot.tag_id = t.id
+             WHERE bot.book_id IN (${placeholders}) AND t.deleted_at IS NULL`,
+            bookIdsArray
+          );
+          const tagMap: Record<number, Array<{ id: number; name: string; slug: string; tagType: string; color: string }>> = {};
+          for (const row of tagRes.rows || []) {
+            if (!tagMap[row.book_id]) tagMap[row.book_id] = [];
+            if (!tagMap[row.book_id].some(t => t.id === row.tag_id)) {
+              tagMap[row.book_id].push({
+                id: row.tag_id,
+                name: row.name,
+                slug: row.slug,
+                tagType: row.tag_type,
+                color: row.color,
+              });
+            }
+          }
+          books = books.map((book: any) => ({
+            ...book,
+            tags: tagMap[book.id] || [],
+          }));
+        } catch (tagErr) {
+          log.warn('Tag enrichment error (non-fatal):', tagErr);
+        }
       }
 
       const curatorIds = new Set<string>();
