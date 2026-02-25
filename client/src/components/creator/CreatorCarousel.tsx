@@ -515,7 +515,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
               )}
 
               {/* Book Items */}
-              {sortedBooks.map((book) => {
+              {sortedBooks.map((book, idx) => {
                 // Prepare book data for both card types
                 const commonBookData = {
                   id: book.id.toString(),
@@ -564,7 +564,7 @@ export const CreatorCarousel = memo(function CreatorCarousel({
                   
                   return (
                     <div key={book.id} className="flex-[0_0_50%] md:flex-[0_0_25%] min-w-0 pl-4">
-                      <BookCarouselItem book={standardData} size="md" onBookClick={handleBookClick} />
+                      <BookCarouselItem book={standardData} size="md" onBookClick={handleBookClick} priority={isLCP && idx < 4} />
                     </div>
                   );
                 }

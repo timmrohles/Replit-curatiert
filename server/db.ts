@@ -18,9 +18,14 @@ pool.on("error", (err) => {
 export const db = drizzle(pool, { schema });
 
 export async function queryDB(text: string, params: unknown[] = []) {
+  const start = performance.now();
   const client = await pool.connect();
   try {
     const result = await client.query(text, params);
+    const duration = performance.now() - start;
+    if (duration > 300) {
+      console.warn(`[SLOW QUERY] ${duration.toFixed(0)}ms | ${text.substring(0, 120)}`);
+    }
     const sanitizedRows = result.rows.map((row: any) => {
       const sanitized: any = {};
       for (const [key, value] of Object.entries(row)) {
@@ -28,9 +33,10 @@ export async function queryDB(text: string, params: unknown[] = []) {
       }
       return sanitized;
     });
-    return { rows: sanitizedRows, rowCount: result.rowCount };
+    return { rows: sanitizedRows, rowCount: result.rowCount, _durationMs: duration };
   } catch (error: any) {
-    console.error("[DB] Query error:", error.message, "Query:", text.substring(0, 200));
+    const duration = performance.now() - start;
+    console.error("[DB] Query error:", error.message, `(${duration.toFixed(0)}ms)`, "Query:", text.substring(0, 200));
     throw error;
   } finally {
     client.release();

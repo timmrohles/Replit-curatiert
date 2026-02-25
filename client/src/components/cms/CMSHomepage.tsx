@@ -233,6 +233,7 @@ export function CMSHomepage() {
                     <UniversalSectionRenderer
                       section={section}
                       books={sectionBooks}
+                      isFirstSection={isAboveFold}
                     />
                   </div>
                 );

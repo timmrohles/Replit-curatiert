@@ -323,7 +323,7 @@ function DynamicPageInner() {
 
                     const content = (
                       <div key={section.id} className="mb-section-gap">
-                        <UniversalSectionRenderer section={section} books={sectionBooks} categoryId={page?.category_id} />
+                        <UniversalSectionRenderer section={section} books={sectionBooks} categoryId={page?.category_id} isFirstSection={isAboveFold} />
                       </div>
                     );
 

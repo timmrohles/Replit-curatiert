@@ -17,6 +17,13 @@ const log = {
   error: (...args: unknown[]) => console.error('[ERROR]', ...args),
 };
 
+const BOOK_LIST_COLUMNS = `b.id, b.title, b.author, b.publisher, b.cover_url, b.isbn, b.isbn13,
+  b.price, b.availability, b.language, b.created_at, b.status, b.visibility, b.display_order,
+  b.award_score, b.media_score, b.curation_score, b.structure_bonus, b.base_score, b.user_score, b.total_score,
+  b.award_count, b.nomination_count, b.is_indie, b.indie_type, b.is_hidden_gem`;
+
+const BOOK_SEARCH_COLUMNS = `id, title, author, cover_url, isbn, isbn13, publisher, price, availability`;
+
 const trackingRateCache = new Map<string, { count: number; windowStart: number }>();
 
 let cachedTrackingSettings: {
@@ -1282,6 +1289,19 @@ async function ensureSchemaReady() {
     await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_total_score ON books(total_score DESC NULLS LAST)`);
     await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_award_score ON books(award_score DESC NULLS LAST)`);
     await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_user_score ON books(user_score DESC NULLS LAST)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_created_at ON books(created_at DESC)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_is_indie ON books(is_indie) WHERE is_indie = true`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_book_tags_tag_book ON book_tags(tag_id, book_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_user_reading_list_user ON user_reading_list(user_id)`);
+    await queryDB(`CREATE INDEX IF NOT EXISTS idx_award_outcome_recipients_book ON award_outcome_recipients(book_id)`);
+    try {
+      await queryDB(`CREATE EXTENSION IF NOT EXISTS pg_trgm`);
+      await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_title_trgm ON books USING GIN (title gin_trgm_ops)`);
+      await queryDB(`CREATE INDEX IF NOT EXISTS idx_books_author_trgm ON books USING GIN (author gin_trgm_ops)`);
+      log.info('Trigram indexes created');
+    } catch (trgmErr) {
+      log.warn('Could not create trigram indexes (pg_trgm may not be available):', trgmErr);
+    }
     log.info('Book score columns and indexes verified');
   } catch (err) {
     log.warn('Could not add book score columns:', err);
@@ -1411,6 +1431,17 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  app.use('/api', (req, res, next) => {
+    const start = performance.now();
+    const originalJson = res.json.bind(res);
+    res.json = function (body: any) {
+      const total = performance.now() - start;
+      res.setHeader('Server-Timing', `total;dur=${total.toFixed(0)}`);
+      return originalJson(body);
+    };
+    next();
+  });
 
   getSchemaInit();
 
@@ -3119,7 +3150,7 @@ export async function registerRoutes(
       const podcasts = req.query.podcasts ? (req.query.podcasts as string).split(',') : [];
       const pubTypes = req.query.pubTypes ? (req.query.pubTypes as string).split(',') : [];
 
-      let query = 'SELECT DISTINCT b.* FROM books b';
+      let query = `SELECT DISTINCT ${BOOK_LIST_COLUMNS} FROM books b`;
       const joins: string[] = [];
       const conditions: string[] = ['b.deleted_at IS NULL'];
       const params: any[] = [];
@@ -3289,7 +3320,7 @@ export async function registerRoutes(
 
       const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(' AND ')}` : '';
 
-      query = `SELECT DISTINCT b.* FROM books b` + joins.join(' ') + whereClause + ` ${orderClause} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+      query = `SELECT DISTINCT ${BOOK_LIST_COLUMNS} FROM books b` + joins.join(' ') + whereClause + ` ${orderClause} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
       params.push(limit, offset);
 
       const result = await queryDB(query, params);
@@ -3316,7 +3347,7 @@ export async function registerRoutes(
       const category = req.query.category as string;
       const limit = Math.min(parseInt((req.query.limit as string) || '50'), 200);
 
-      let query = 'SELECT * FROM books WHERE deleted_at IS NULL';
+      let query = `SELECT ${BOOK_SEARCH_COLUMNS} FROM books WHERE deleted_at IS NULL`;
       const params: any[] = [];
       let paramIndex = 1;
 
@@ -6058,7 +6089,7 @@ export async function registerRoutes(
         const cPlaceholders = curatorIdsArray.map((_, i) => `$${i + 1}`).join(',');
 
         const [booksResult, indieRows, spRows, awardRes, tagRes, curatorsResult] = await Promise.all([
-          queryDB(`SELECT * FROM books WHERE id IN (${placeholders})`, bookIdsArray),
+          queryDB(`SELECT ${BOOK_LIST_COLUMNS} FROM books b WHERE b.id IN (${placeholders})`, bookIdsArray),
           cachedQuery('indie_publishers', () => queryDB('SELECT name FROM indie_publishers'), 300000),
           cachedQuery('selfpublisher_patterns', () => queryDB('SELECT pattern, match_type FROM selfpublisher_patterns'), 300000),
           queryDB(

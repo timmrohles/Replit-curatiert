@@ -7,6 +7,7 @@ interface CreatorCarouselSectionProps {
   books?: any[];
   className?: string;
   categoryId?: number | null;
+  isFirstSection?: boolean;
 }
 
 function mapBookForCarousel(book: any) {
@@ -35,7 +36,7 @@ function mapBookForCarousel(book: any) {
   };
 }
 
-export function CreatorCarouselSection({ section, books = [], className = '', categoryId }: CreatorCarouselSectionProps) {
+export function CreatorCarouselSection({ section, books = [], className = '', categoryId, isFirstSection = false }: CreatorCarouselSectionProps) {
   const config = section.config || {};
   const title = section.title || config.title || '';
   const description = section.content?.description || config.description || '';
@@ -95,6 +96,7 @@ export function CreatorCarouselSection({ section, books = [], className = '', ca
           videoUrl={config.videoUrl}
           videoTitle={config.videoTitle}
           videoThumbnail={config.videoThumbnail}
+          isLCP={isFirstSection}
           backgroundColor="white"
           sectionBackgroundColor="transparent"
           bookCardBgColor="beige"

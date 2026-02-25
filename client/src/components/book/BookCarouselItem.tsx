@@ -103,6 +103,7 @@ interface BookCarouselItemProps {
   /** Optional: Size variant - controls width and height */
   size?: "sm" | "md" | "lg";
   onBookClick?: (bookId: string, isbn?: string) => void;
+  priority?: boolean;
 }
 
 /**
@@ -115,7 +116,7 @@ interface BookCarouselItemProps {
  * - Affiliate buttons (bücher.de, geniallokal)
  * - PERFORMANCE OPTIMIZED: Memoized component with useCallback handlers
  */
-const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarouselItemProps) => {
+const BookCarouselItemComponent = ({ book, size = 'md', onBookClick, priority = false }: BookCarouselItemProps) => {
   const navigate = useSafeNavigate();
   const { resolvedTheme } = useTheme();
   const [onixTags, setOnixTags] = useState<ONIXTag[]>([]);
@@ -282,6 +283,9 @@ const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarou
               alt={book.coverImageAlt || `Buchcover: ${book.title} von ${book.author}`}
               className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
               title={book.coverImageCaption}
+              priority={priority}
+              width={240}
+              height={360}
             />
             
             {/* Match Badge - unten links */}
