@@ -656,7 +656,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
               </Select>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -681,6 +681,21 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   <span className="text-sm">Veröffentlicht</span>
                   <Badge variant="default" className="text-[10px] py-0">Live</Badge>
                 </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="section-visibility"
+                  checked={editingSection.visibility === 'hidden'}
+                  onCheckedChange={(checked) => setEditingSection({
+                    ...editingSection,
+                    visibility: checked ? 'hidden' : 'visible'
+                  })}
+                />
+                <Label htmlFor="section-visibility" className="text-sm cursor-pointer flex items-center gap-1.5">
+                  <EyeOff className="w-3.5 h-3.5" />
+                  Versteckt
+                </Label>
               </div>
             </div>
 
