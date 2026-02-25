@@ -51,14 +51,20 @@ function apiBookToCarouselItem(book: APIBook): BookCarouselItemData {
   };
 }
 
-export function BookGridFilteredSection({ section, categoryId, className = '' }: BookGridFilteredSectionProps) {
+export function BookGridFilteredSection({ section, books: prefetchedBooks, categoryId, className = '' }: BookGridFilteredSectionProps) {
   const config = section.config || {};
   const title = section.title || config.title || '';
   const description = config.description || '';
   const filterPreset = config.filterPreset || 'relevance';
   const limit = config.limit || 12;
   const showMoreLink = config.showMoreLink !== false;
-  const categoryFilter = config.categoryId || categoryId || null;
+  const booksQuery = config.books?.query;
+  const hasSectionFilter = booksQuery && (
+    (booksQuery.include?.categoryIds?.length > 0) ||
+    (booksQuery.include?.tagIds?.length > 0) ||
+    (booksQuery.include?.awardDefinitionIds?.length > 0)
+  );
+  const categoryFilter = hasSectionFilter ? null : (config.categoryId || categoryId || null);
 
   const [books, setBooks] = useState<APIBook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,34 +74,50 @@ export function BookGridFilteredSection({ section, categoryId, className = '' }:
   const { locale } = useLocale();
   const localePrefix = `/${locale}`;
 
-  const fetchBooks = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.set('limit', String(limit));
-      params.set('offset', '0');
-      params.set('sort', filterPreset);
-
-      if (categoryFilter) {
-        params.set('categories', String(categoryFilter));
-      }
-
-      const res = await fetch(`/api/books?${params.toString()}`);
-      const data = await res.json();
-      if (data.ok) {
-        setBooks(data.data || []);
-        setTotalCount(data.total ?? (data.data || []).length);
-      }
-    } catch (err) {
-      console.error('BookGridFiltered fetch error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filterPreset, limit, categoryFilter]);
-
   useEffect(() => {
+    if (prefetchedBooks && prefetchedBooks.length > 0) {
+      setBooks(prefetchedBooks);
+      setTotalCount(prefetchedBooks.length);
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchBooks = async () => {
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.set('limit', String(limit));
+        params.set('offset', '0');
+        params.set('sort', filterPreset);
+
+        if (categoryFilter) {
+          params.set('categories', String(categoryFilter));
+        }
+
+        if (hasSectionFilter && booksQuery.include) {
+          if (booksQuery.include.tagIds?.length > 0) {
+            params.set('themes', booksQuery.include.tagIds.join(','));
+          }
+          if (booksQuery.include.awardDefinitionIds?.length > 0) {
+            params.set('awards', booksQuery.include.awardDefinitionIds.join(','));
+          }
+        }
+
+        const res = await fetch(`/api/books?${params.toString()}`);
+        const data = await res.json();
+        if (data.ok) {
+          setBooks(data.data || []);
+          setTotalCount(data.total ?? (data.data || []).length);
+        }
+      } catch (err) {
+        console.error('BookGridFiltered fetch error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchBooks();
-  }, [fetchBooks]);
+  }, [filterPreset, limit, categoryFilter, hasSectionFilter, booksQuery, prefetchedBooks]);
 
   const handleBookClick = (bookId: string, isbn?: string) => {
     const path = isbn ? `${localePrefix}/book/${isbn}` : `${localePrefix}/book/${bookId}`;

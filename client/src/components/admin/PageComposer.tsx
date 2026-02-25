@@ -1546,9 +1546,28 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   </Select>
                 </div>
 
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
-                  <strong>💡 Hinweis:</strong> Auf Kategorie-Seiten wird automatisch nach der Seitenkategorie gefiltert.
-                  Die Sortierung bestimmt zusätzlich die Reihenfolge der Bücher.
+                <Separator />
+
+                {editingSection.id && (
+                  <BookSourceBuilder
+                    sectionId={editingSection.id}
+                    config={editingSection.config?.books || { mode: 'query' }}
+                    onChange={(booksConfig) => setEditingSection({
+                      ...editingSection,
+                      config: { ...editingSection.config, books: booksConfig }
+                    })}
+                  />
+                )}
+
+                {!editingSection.id && (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-900">
+                    Speichere die Sektion zuerst, um den Inhaltsfilter zu nutzen.
+                  </div>
+                )}
+
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
+                  Wenn du oben Kategorien, Tags oder Auszeichnungen auswählst, überschreiben diese die automatische Seitenkategorie.
+                  Ohne eigene Filter wird die Seitenkategorie verwendet.
                 </div>
               </div>
             )}

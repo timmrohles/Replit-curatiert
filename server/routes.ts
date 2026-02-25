@@ -5909,7 +5909,7 @@ export async function registerRoutes(
       for (const section of sections) {
         const cfg = section.section_config || section.config || {};
         const sType = section.section_type;
-        if ((sType === 'book_carousel' || sType === 'horizontal_row') && (cfg.books?.query || pageCategoryId)) {
+        if ((sType === 'book_carousel' || sType === 'horizontal_row' || sType === 'book_grid_filtered') && (cfg.books?.query || pageCategoryId)) {
           const query = cfg.books?.query || {};
           const include = query.include || {};
           const limit = Math.min(query.limit || 20, 50);
