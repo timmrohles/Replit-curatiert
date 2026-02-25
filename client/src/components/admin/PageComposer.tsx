@@ -438,35 +438,23 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
 
   const handleMoveSection = async (draggedId: number, targetId: number, zone: string) => {
     try {
-      const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
-      
-      // Find dragged and target sections
       const zoneSections = getSectionsByZone(zone);
       const draggedIndex = zoneSections.findIndex(s => s.id === draggedId);
       const targetIndex = zoneSections.findIndex(s => s.id === targetId);
       
       if (draggedIndex === -1 || targetIndex === -1) return;
       
-      // Calculate new sort orders
-      const updates: Array<{ id: number; sort_order: number }> = [];
       const newOrder = [...zoneSections];
       const [removed] = newOrder.splice(draggedIndex, 1);
       newOrder.splice(targetIndex, 0, removed);
       
-      // Assign new sort_orders (10, 20, 30, ...)
-      newOrder.forEach((section, index) => {
-        const newSortOrder = (index + 1) * 10;
-        if (section.sort_order !== newSortOrder) {
-          updates.push({ id: section.id, sort_order: newSortOrder });
-        }
-      });
+      const sectionIds = newOrder.map(s => s.id);
       
-      // Batch update via reorder endpoint
       const response = await fetch(`${API_BASE_URL}/admin/pages/${page.id}/sections/reorder`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sectionOrders: updates }),
+        body: JSON.stringify({ zone, sectionIds }),
       });
       
       if (!response.ok) {
