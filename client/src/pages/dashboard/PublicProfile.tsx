@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Save, Globe, Instagram, Podcast, Check, Plus, Search, X, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon, MapPin, Loader2 } from 'lucide-react';
+import { User, Save, Globe, Instagram, Podcast, Check, Plus, Search, X, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon, MapPin, Loader2, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
@@ -63,6 +63,7 @@ export function PublicProfile() {
   const [heroSearchResults, setHeroSearchResults] = useState<any[]>([]);
   const [heroSearching, setHeroSearching] = useState(false);
   const [heroManualUrl, setHeroManualUrl] = useState('');
+  const [showHideModal, setShowHideModal] = useState(false);
 
   const searchHeroImages = async () => {
     if (!heroSearch.trim()) return;
@@ -187,7 +188,7 @@ export function PublicProfile() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (overrides?: { isPublished?: boolean }) => {
     setSaving(true);
     setSaveMessage(null);
     try {
@@ -218,6 +219,7 @@ export function PublicProfile() {
           setBookstoreSlug(json.data.slug);
         }
 
+        const publishState = overrides?.isPublished ?? bookstoreProfile.isPublished;
         await fetch('/api/bookstore/profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -231,11 +233,16 @@ export function PublicProfile() {
             heroImageUrl: bookstoreProfile.heroImageUrl,
             isPhysicalStore: bookstoreProfile.isPhysicalStore,
             address: bookstoreProfile.address,
-            isPublished: bookstoreProfile.isPublished,
+            isPublished: publishState,
           }),
         });
 
-        setSaveMessage({ type: 'success', text: 'Öffentliches Profil erfolgreich gespeichert!' });
+        const msg = overrides?.isPublished === true
+          ? 'Profil veröffentlicht!'
+          : overrides?.isPublished === false
+            ? 'Profil verborgen.'
+            : 'Öffentliches Profil erfolgreich gespeichert!';
+        setSaveMessage({ type: 'success', text: msg });
         setTimeout(() => setSaveMessage(null), 3000);
       } else {
         setSaveMessage({ type: 'error', text: json.error || 'Fehler beim Speichern' });
@@ -699,7 +706,31 @@ export function PublicProfile() {
         </div>
       )}
 
-      <div className="flex justify-end pt-4">
+      <div className="flex items-center justify-between pt-4 gap-4">
+        <button
+          onClick={() => {
+            if (bookstoreProfile.isPublished) {
+              setShowHideModal(true);
+            } else {
+              setBookstoreProfile(prev => ({ ...prev, isPublished: true }));
+              handleSave({ isPublished: true });
+            }
+          }}
+          data-testid="button-toggle-publish"
+          className="flex items-center gap-2 px-5 py-3 rounded-lg font-medium text-sm transition-all duration-200 border"
+          style={{
+            borderColor: bookstoreProfile.isPublished ? '#FCA5A5' : '#86EFAC',
+            backgroundColor: bookstoreProfile.isPublished ? '#FEF2F2' : '#F0FDF4',
+            color: bookstoreProfile.isPublished ? '#991B1B' : '#166534',
+          }}
+        >
+          {bookstoreProfile.isPublished ? (
+            <><EyeOff className="w-4 h-4" />Profil verbergen</>
+          ) : (
+            <><Eye className="w-4 h-4" />Profil veröffentlichen</>
+          )}
+        </button>
+
         <button onClick={handleSave} disabled={saving} data-testid="button-save-public-profile"
           className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium shadow-sm transition-all duration-200 hover:shadow-md"
           style={{ backgroundColor: saving ? '#9CA3AF' : '#247ba0', color: '#FFFFFF' }}>
@@ -710,6 +741,52 @@ export function PublicProfile() {
           )}
         </button>
       </div>
+
+      {showHideModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" data-testid="modal-hide-profile">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setShowHideModal(false)} />
+          <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-md w-full mx-4 p-6" style={{ zIndex: 51 }}>
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#FEF2F2' }}>
+                <AlertTriangle className="w-5 h-5" style={{ color: '#DC2626' }} />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-1" style={{ color: '#1F2937', fontFamily: 'Fjalla One' }}>
+                  Profil verbergen?
+                </h3>
+                <p className="text-sm leading-relaxed" style={{ color: '#6B7280' }}>
+                  Wenn du dein Profil verbirgst, werden auch alle deine öffentlichen Inhalte — Kurationen, Rezensionen, Bewertungen, Veranstaltungen und Buchclub-Beiträge — nicht mehr für andere sichtbar sein.
+                </p>
+                <p className="text-sm mt-2" style={{ color: '#6B7280' }}>
+                  Du kannst dein Profil jederzeit wieder veröffentlichen.
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowHideModal(false)}
+                className="px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors"
+                style={{ borderColor: '#D1D5DB', color: '#374151' }}
+                data-testid="button-cancel-hide"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={() => {
+                  setBookstoreProfile(prev => ({ ...prev, isPublished: false }));
+                  setShowHideModal(false);
+                  handleSave({ isPublished: false });
+                }}
+                className="px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors"
+                style={{ backgroundColor: '#DC2626' }}
+                data-testid="button-confirm-hide"
+              >
+                Profil verbergen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
