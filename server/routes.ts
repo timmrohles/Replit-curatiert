@@ -1836,6 +1836,7 @@ export async function registerRoutes(
   // ==================================================================
   app.get('/api/unsplash/search', async (req: Request, res: Response) => {
     try {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
       const query = req.query.query as string;
       if (!query?.trim()) return res.json({ success: true, data: [] });
 
