@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Save, ExternalLink, Globe, Instagram, Podcast, Check, Plus, Search, X, Store, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon, MapPin, Loader2 } from 'lucide-react';
+import { User, Save, Globe, Instagram, Podcast, Check, Plus, Search, X, Store, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon, MapPin, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserBookstore } from './UserBookstore';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
@@ -262,84 +262,6 @@ export function PublicProfile() {
         title={t('dashboardPages.publicProfileTitle', 'Öffentliches Profil')}
         description={t('dashboardPages.publicProfileDesc', 'So sehen andere dein Profil auf der Plattform.')}
       />
-
-      <section className="rounded-xl overflow-hidden relative" data-testid="hero-profile-card">
-        <div
-          className="absolute inset-0 w-full h-full"
-          style={{
-            backgroundColor: bookstoreProfile.heroImageUrl ? undefined : '#1a1a2e',
-            backgroundImage: bookstoreProfile.heroImageUrl ? `url(${bookstoreProfile.heroImageUrl})` : undefined,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-          data-testid="preview-hero-bg"
-        />
-        <div
-          className="absolute inset-0 w-full h-full"
-          style={{
-            background: bookstoreProfile.heroImageUrl
-              ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0.6) 70%, rgba(0,0,0,0.75) 100%)'
-              : 'linear-gradient(180deg, rgba(26,26,46,0.85) 0%, rgba(26,26,46,0.95) 100%)',
-          }}
-        />
-
-        <div className="relative z-10 py-10 md:py-14 px-5 md:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-            <div className="flex items-center gap-5 md:gap-6">
-              <div className="flex-shrink-0">
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden ring-2 ring-offset-2 ring-offset-transparent shadow-[0_4px_20px_rgba(0,0,0,0.3)]" style={{ '--tw-ring-color': '#247ba0' } as React.CSSProperties}>
-                  {curatorProfile.avatarUrl ? (
-                    <img src={curatorProfile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" data-testid="avatar-user-image" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} data-testid="avatar-user">
-                      <span className="text-5xl md:text-6xl text-white" style={{ fontFamily: 'Fjalla One' }}>
-                        {displayName.charAt(0)?.toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div>
-                <h2 className="text-2xl md:text-3xl mb-1 text-white" style={{ fontFamily: 'Fjalla One', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }} data-testid="text-username">
-                  {curatorProfile.publicName || displayName}
-                </h2>
-                {curatorProfile.focus && (
-                  <p className="text-base font-semibold text-white/80" data-testid="text-curator-focus">{curatorProfile.focus}</p>
-                )}
-                {bookstoreProfile.isPhysicalStore && bookstoreProfile.address && (
-                  <div className="flex items-center gap-2 text-white/70 mt-2">
-                    <MapPin className="w-5 h-5" />
-                    <span className="text-base">{bookstoreProfile.address}</span>
-                  </div>
-                )}
-                {(curatorProfile.socials.website || curatorProfile.socials.instagram || curatorProfile.socials.youtube || curatorProfile.socials.tiktok || curatorProfile.socials.podcast) && (
-                  <div className="flex items-center gap-3 flex-wrap mt-3" data-testid="social-links-preview">
-                    {curatorProfile.socials.website && <span className="text-white/70"><Globe className="w-6 h-6" /></span>}
-                    {curatorProfile.socials.instagram && <span className="text-white/70"><Instagram className="w-6 h-6" /></span>}
-                    {curatorProfile.socials.youtube && <span className="text-white/70"><SiYoutube className="w-6 h-6" /></span>}
-                    {curatorProfile.socials.tiktok && <span className="text-white/70"><SiTiktok className="w-6 h-6" /></span>}
-                    {curatorProfile.socials.podcast && <span className="text-white/70"><Podcast className="w-6 h-6" /></span>}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-col">
-              {curatorProfile.bio && (
-                <p className="text-base text-white/90 leading-relaxed" data-testid="text-curator-bio-preview">{curatorProfile.bio}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {bookstoreSlug && (
-          <div className="relative z-10 pb-4 px-5 md:px-8 flex justify-center">
-            <a href={`/${bookstoreSlug}`} data-testid="button-open-profile" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all border border-white/30 text-white bg-white/10 backdrop-blur-sm hover:bg-white/20">
-              <ExternalLink className="w-4 h-4" />
-              Öffentliches Profil ansehen
-            </a>
-          </div>
-        )}
-      </section>
 
       <div className="p-6">
         <h2 className="text-lg md:text-xl mb-3" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
@@ -673,6 +595,114 @@ export function PublicProfile() {
           </div>
         </div>
         <UserBookstore />
+      </div>
+
+      <div className="p-6">
+        <h2 className="text-lg md:text-xl mb-3" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
+          Vorschau
+        </h2>
+        <p className="text-xs mb-4" style={{ color: '#6B7280' }}>
+          So sieht dein öffentliches Profil für andere aus.
+        </p>
+        <section className="rounded-xl overflow-hidden relative" data-testid="hero-profile-card">
+          <div
+            className="absolute inset-0 w-full h-full"
+            style={{
+              backgroundColor: bookstoreProfile.heroImageUrl ? undefined : '#1a1a2e',
+              backgroundImage: bookstoreProfile.heroImageUrl ? `url(${bookstoreProfile.heroImageUrl})` : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+            data-testid="preview-hero-bg"
+          />
+          <div
+            className="absolute inset-0 w-full h-full"
+            style={{
+              background: bookstoreProfile.heroImageUrl
+                ? 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0.6) 70%, rgba(0,0,0,0.75) 100%)'
+                : 'linear-gradient(180deg, rgba(26,26,46,0.85) 0%, rgba(26,26,46,0.95) 100%)',
+            }}
+          />
+
+          <div className="relative z-10 py-10 md:py-14 px-5 md:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+              <div className="flex items-center gap-5 md:gap-6">
+                <div className="flex-shrink-0">
+                  <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden ring-2 ring-offset-2 ring-offset-transparent shadow-[0_4px_20px_rgba(0,0,0,0.3)]" style={{ '--tw-ring-color': '#247ba0' } as React.CSSProperties}>
+                    {curatorProfile.avatarUrl ? (
+                      <img src={curatorProfile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" data-testid="avatar-user-image" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} data-testid="avatar-user">
+                        <span className="text-5xl md:text-6xl text-white" style={{ fontFamily: 'Fjalla One' }}>
+                          {displayName.charAt(0)?.toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-2xl md:text-3xl mb-1 text-white" style={{ fontFamily: 'Fjalla One', textShadow: '0 2px 8px rgba(0,0,0,0.3)' }} data-testid="text-username">
+                    {curatorProfile.publicName || displayName}
+                  </h2>
+                  {curatorProfile.focus && (
+                    <p className="text-base font-semibold text-white/80" data-testid="text-curator-focus">{curatorProfile.focus}</p>
+                  )}
+                  {bookstoreProfile.isPhysicalStore && bookstoreProfile.address && (
+                    <div className="flex items-center gap-2 text-white/70 mt-2">
+                      <MapPin className="w-5 h-5" />
+                      <span className="text-base">{bookstoreProfile.address}</span>
+                    </div>
+                  )}
+                  {(curatorProfile.socials.website || curatorProfile.socials.instagram || curatorProfile.socials.youtube || curatorProfile.socials.tiktok || curatorProfile.socials.podcast) && (
+                    <div className="flex items-center gap-3 flex-wrap mt-3" data-testid="social-links-preview">
+                      {curatorProfile.socials.website && <span className="text-white/70"><Globe className="w-6 h-6" /></span>}
+                      {curatorProfile.socials.instagram && <span className="text-white/70"><Instagram className="w-6 h-6" /></span>}
+                      {curatorProfile.socials.youtube && <span className="text-white/70"><SiYoutube className="w-6 h-6" /></span>}
+                      {curatorProfile.socials.tiktok && <span className="text-white/70"><SiTiktok className="w-6 h-6" /></span>}
+                      {curatorProfile.socials.podcast && <span className="text-white/70"><Podcast className="w-6 h-6" /></span>}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col">
+                {curatorProfile.bio && (
+                  <p className="text-base text-white/90 leading-relaxed" data-testid="text-curator-bio-preview">{curatorProfile.bio}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {tabOrder.some(key => (visibleTabs as any)[key]) && (
+            <div className="relative z-10 px-5 md:px-8 pb-0">
+              <div className="flex gap-1 overflow-x-auto" data-testid="preview-tabs">
+                {tabOrder.filter(key => (visibleTabs as any)[key]).map((key) => {
+                  const TAB_LABELS: Record<string, string> = {
+                    kurationen: 'Kurationen',
+                    buchbesprechung: 'Shownotes',
+                    rezensionen: 'Rezensionen',
+                    bewertungen: 'Bewertungen',
+                    veranstaltungen: 'Veranstaltungen',
+                    buchclub: 'Buchclub',
+                    leseliste: 'Leseliste',
+                  };
+                  return (
+                    <span
+                      key={key}
+                      className="px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-t-lg"
+                      style={{
+                        color: 'rgba(255,255,255,0.75)',
+                        backgroundColor: 'rgba(255,255,255,0.08)',
+                      }}
+                      data-testid={`preview-tab-${key}`}
+                    >
+                      {TAB_LABELS[key] || key}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
       </div>
 
       {saveMessage && (
