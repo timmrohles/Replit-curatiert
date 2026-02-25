@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Save, ExternalLink, Globe, Instagram, Podcast, Check, Plus, Search, X, Store, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import { User, Save, ExternalLink, Globe, Instagram, Podcast, Check, Plus, Search, X, Store, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon, MapPin, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UserBookstore } from './UserBookstore';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
@@ -56,6 +56,44 @@ export function PublicProfile() {
   const [tabOrder, setTabOrder] = useState<string[]>(DEFAULT_TAB_ORDER);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
 
+  const [bookstoreProfile, setBookstoreProfile] = useState({
+    heroImageUrl: '',
+    isPhysicalStore: false,
+    address: '',
+    isPublished: false,
+  });
+  const [heroSearch, setHeroSearch] = useState('');
+  const [heroSearchResults, setHeroSearchResults] = useState<any[]>([]);
+  const [heroSearching, setHeroSearching] = useState(false);
+  const [heroManualUrl, setHeroManualUrl] = useState('');
+
+  const searchHeroImages = async () => {
+    if (!heroSearch.trim()) return;
+    setHeroSearching(true);
+    try {
+      const res = await fetch(`/api/unsplash/search?query=${encodeURIComponent(heroSearch)}`);
+      const data = await res.json();
+      if (data.success) setHeroSearchResults(data.data || []);
+    } catch {
+      setHeroSearchResults([]);
+    } finally {
+      setHeroSearching(false);
+    }
+  };
+
+  const selectHeroImage = (url: string) => {
+    setBookstoreProfile(prev => ({ ...prev, heroImageUrl: url }));
+    setHeroSearchResults([]);
+    setHeroSearch('');
+  };
+
+  const applyManualHeroUrl = () => {
+    if (heroManualUrl.trim()) {
+      setBookstoreProfile(prev => ({ ...prev, heroImageUrl: heroManualUrl.trim() }));
+      setHeroManualUrl('');
+    }
+  };
+
   const loadCuratorProfile = useCallback(async () => {
     try {
       if (!curatorId) {
@@ -102,12 +140,24 @@ export function PublicProfile() {
           }
         }
       }
+
+      const bsRes = await fetch(`/api/bookstore/profile?userId=${encodeURIComponent(userId)}`);
+      const bsJson = await bsRes.json();
+      if (bsJson.ok && bsJson.data) {
+        const bs = bsJson.data;
+        setBookstoreProfile({
+          heroImageUrl: bs.heroImageUrl || bs.hero_image_url || '',
+          isPhysicalStore: bs.isPhysicalStore ?? bs.is_physical_store ?? false,
+          address: bs.address || '',
+          isPublished: bs.isPublished ?? bs.is_published ?? false,
+        });
+      }
     } catch (err) {
       console.error('Failed to load curator profile:', err);
     } finally {
       setLoading(false);
     }
-  }, [curatorId]);
+  }, [curatorId, userId]);
 
   useEffect(() => {
     loadCuratorProfile();
@@ -170,6 +220,24 @@ export function PublicProfile() {
         if (json.data?.slug) {
           setBookstoreSlug(json.data.slug);
         }
+
+        await fetch('/api/bookstore/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            displayName: publicName,
+            slug: json.data?.slug || bookstoreSlug || '',
+            tagline: '',
+            description: '',
+            socialLinks: curatorProfile.socials,
+            heroImageUrl: bookstoreProfile.heroImageUrl,
+            isPhysicalStore: bookstoreProfile.isPhysicalStore,
+            address: bookstoreProfile.address,
+            isPublished: bookstoreProfile.isPublished,
+          }),
+        });
+
         setSaveMessage({ type: 'success', text: 'Öffentliches Profil erfolgreich gespeichert!' });
         setTimeout(() => setSaveMessage(null), 3000);
       } else {
@@ -428,6 +496,150 @@ export function PublicProfile() {
               </div>
             </div>
           </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2" style={{ color: '#1F2937' }}>
+              <ImageIcon className="w-4 h-4 inline-block mr-1.5 -mt-0.5" style={{ color: '#247ba0' }} />
+              Hintergrundbild
+            </label>
+            <p className="text-xs mb-3" style={{ color: '#6B7280' }}>
+              Wähle ein Hintergrundbild für deinen Bookstore-Header. Das Bild wird über die gesamte Breite angezeigt.
+            </p>
+
+            {bookstoreProfile.heroImageUrl && (
+              <div className="relative mb-3 rounded-lg overflow-hidden" style={{ height: '140px' }}>
+                <img
+                  src={bookstoreProfile.heroImageUrl}
+                  alt="Hintergrundbild-Vorschau"
+                  className="w-full h-full object-cover"
+                  data-testid="img-hero-preview"
+                />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)' }} />
+                <button
+                  type="button"
+                  onClick={() => setBookstoreProfile(prev => ({ ...prev, heroImageUrl: '' }))}
+                  className="absolute top-2 right-2 p-1 rounded-full"
+                  style={{ backgroundColor: 'rgba(0,0,0,0.5)', color: '#FFFFFF' }}
+                  data-testid="button-remove-hero"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                <span className="absolute bottom-2 left-3 text-xs text-white font-medium" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                  Aktuelle Vorschau
+                </span>
+              </div>
+            )}
+
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={heroSearch}
+                onChange={e => setHeroSearch(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && searchHeroImages()}
+                className="flex-1 p-2.5 rounded-lg border text-sm"
+                style={{ borderColor: '#D1D5DB', color: '#1F2937' }}
+                placeholder="Unsplash-Bilder suchen..."
+                data-testid="input-hero-search"
+              />
+              <button
+                type="button"
+                onClick={searchHeroImages}
+                disabled={heroSearching}
+                className="px-3 py-2.5 rounded-lg text-white text-sm font-medium"
+                style={{ backgroundColor: '#247ba0' }}
+                data-testid="button-hero-search"
+              >
+                {heroSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {heroSearchResults.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3 max-h-48 overflow-y-auto rounded-lg border p-2" style={{ borderColor: '#D1D5DB' }}>
+                {heroSearchResults.map((img: any) => (
+                  <button
+                    key={img.id}
+                    type="button"
+                    onClick={() => selectHeroImage(img.url)}
+                    className="relative aspect-video rounded-md overflow-hidden border-2 transition-colors"
+                    style={{ borderColor: 'transparent' }}
+                    data-testid={`hero-img-${img.id}`}
+                  >
+                    <img
+                      src={img.thumb}
+                      alt={img.alt}
+                      className="w-full h-full object-cover"
+                    />
+                    {img.author && (
+                      <span className="absolute bottom-0 left-0 right-0 text-[10px] text-white px-1 py-0.5 truncate" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                        {img.author}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={heroManualUrl}
+                onChange={e => setHeroManualUrl(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && applyManualHeroUrl()}
+                className="flex-1 p-2.5 rounded-lg border text-sm"
+                style={{ borderColor: '#D1D5DB', color: '#1F2937' }}
+                placeholder="Oder Bild-URL direkt eingeben..."
+                data-testid="input-hero-manual-url"
+              />
+              <button
+                type="button"
+                onClick={applyManualHeroUrl}
+                disabled={!heroManualUrl.trim()}
+                className="px-3 py-2.5 rounded-lg text-sm font-medium border"
+                style={{ borderColor: '#D1D5DB', color: heroManualUrl.trim() ? '#247ba0' : '#9CA3AF' }}
+                data-testid="button-hero-apply-url"
+              >
+                Übernehmen
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer" data-testid="toggle-physical-store">
+              <input
+                type="checkbox"
+                checked={bookstoreProfile.isPhysicalStore}
+                onChange={e => setBookstoreProfile(prev => ({ ...prev, isPhysicalStore: e.target.checked, address: e.target.checked ? prev.address : '' }))}
+                className="sr-only peer"
+                data-testid="input-physical-store"
+              />
+              <div
+                className="relative w-11 h-6 rounded-full peer-focus:ring-2 peer-focus:ring-offset-1 transition-colors duration-200 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"
+                style={{ backgroundColor: bookstoreProfile.isPhysicalStore ? '#247ba0' : '#D1D5DB' }}
+              />
+              <span className="text-sm font-medium" style={{ color: '#1F2937' }}>
+                <MapPin className="w-4 h-4 inline-block mr-1 -mt-0.5" style={{ color: '#247ba0' }} />
+                Physische Buchhandlung
+              </span>
+            </label>
+          </div>
+
+          {bookstoreProfile.isPhysicalStore && (
+            <div>
+              <label htmlFor="address" className="block text-sm font-medium mb-2" style={{ color: '#1F2937' }}>
+                Adresse
+              </label>
+              <input
+                id="address"
+                type="text"
+                value={bookstoreProfile.address}
+                onChange={e => setBookstoreProfile(prev => ({ ...prev, address: e.target.value }))}
+                className="w-full px-4 py-2 rounded-lg border transition-colors"
+                style={{ borderColor: '#D1D5DB', color: '#1F2937' }}
+                placeholder="Straße, PLZ Ort"
+                data-testid="input-address"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -440,7 +652,7 @@ export function PublicProfile() {
             <h2 className="text-lg md:text-xl" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
               Mein Bookstore
             </h2>
-            <p className="text-xs" style={{ color: '#6B7280' }}>Dein öffentlicher Bookstore & Einstellungen</p>
+            <p className="text-xs" style={{ color: '#6B7280' }}>Kurationen auswählen und anordnen</p>
           </div>
         </div>
         <UserBookstore />
