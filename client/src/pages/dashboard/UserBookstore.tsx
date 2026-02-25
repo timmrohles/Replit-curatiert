@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Store, Save, Eye, GripVertical, Globe, ExternalLink,
+  Store, Save, Eye, GripVertical, ExternalLink,
   Instagram, Twitter, Youtube, MapPin, BookOpen, AlertTriangle, User,
-  ImageIcon, Search, X, Loader2, Lock
+  ImageIcon, Search, X, Loader2
 } from 'lucide-react';
-import { useDashboardFeed } from './DashboardFeedContext';
 import { Text } from '../../components/ui/typography';
 import { useAuth } from '../../hooks/use-auth';
 
@@ -733,90 +732,6 @@ export function UserBookstore() {
         )}
       </div>
 
-      <FeedSectionsInProfile />
-    </div>
-  );
-}
-
-function FeedSectionsInProfile() {
-  const { sections, togglePublic, setAllPublic } = useDashboardFeed();
-  const publicCount = sections.filter(s => s.isPublic).length;
-  const allPublic = publicCount === sections.length;
-  const nonePublic = publicCount === 0;
-
-  return (
-    <div className="mt-8 p-4 rounded-lg border" style={{ borderColor: '#E5E7EB', backgroundColor: '#FFFFFF' }} data-testid="feed-sections-in-profile">
-      <div className="flex items-center gap-2 mb-1">
-        <Globe className="w-5 h-5" style={{ color: '#247ba0' }} />
-        <h3 className="text-base font-semibold" style={{ color: '#3A3A3A', fontFamily: 'Fjalla One' }}>
-          Feed-Sektionen im öffentlichen Profil
-        </h3>
-      </div>
-      <Text as="p" variant="small" className="mb-4" style={{ color: '#6B7280' }}>
-        Wähle aus, welche Sektionen deines Feeds auf deinem öffentlichen Bookstore-Profil sichtbar sein sollen.
-      </Text>
-
-      <div className="flex items-center gap-2 mb-3 pb-3 border-b" style={{ borderColor: '#E5E7EB' }}>
-        <button
-          onClick={() => setAllPublic(true)}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
-          style={{
-            color: allPublic ? '#ffffff' : '#247ba0',
-            backgroundColor: allPublic ? '#247ba0' : 'transparent',
-            borderColor: '#247ba0',
-          }}
-          data-testid="button-profile-public-all"
-        >
-          Alle veröffentlichen
-        </button>
-        <button
-          onClick={() => setAllPublic(false)}
-          className="px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors"
-          style={{
-            color: nonePublic ? '#ffffff' : '#6B7280',
-            backgroundColor: nonePublic ? '#6B7280' : 'transparent',
-            borderColor: '#9CA3AF',
-          }}
-          data-testid="button-profile-public-none"
-        >
-          Alle ausblenden
-        </button>
-        <Text as="span" variant="small" className="ml-auto" style={{ color: '#9CA3AF' }}>
-          {publicCount} / {sections.length} sichtbar
-        </Text>
-      </div>
-
-      <div className="space-y-0.5">
-        {sections.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => togglePublic(s.id)}
-            className="w-full px-3 py-2.5 text-left text-sm flex items-center justify-between gap-3 rounded-lg transition-colors"
-            style={{ color: s.isPublic ? '#3A3A3A' : '#9CA3AF' }}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.03)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-            data-testid={`profile-public-toggle-${s.id}`}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div
-                className="w-8 h-5 rounded-full relative flex-shrink-0 transition-colors"
-                style={{ backgroundColor: s.isPublic ? '#247ba0' : '#D1D5DB' }}
-              >
-                <div
-                  className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform"
-                  style={{ left: s.isPublic ? '14px' : '2px' }}
-                />
-              </div>
-              <span className="truncate">{s.label}</span>
-            </div>
-            {s.isPublic ? (
-              <Globe className="w-4 h-4 flex-shrink-0" style={{ color: '#247ba0' }} />
-            ) : (
-              <Lock className="w-4 h-4 flex-shrink-0" style={{ color: '#9CA3AF' }} />
-            )}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }
