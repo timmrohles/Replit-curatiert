@@ -8238,6 +8238,24 @@ export async function registerRoutes(
           return res.status(404).json({ ok: false, error: 'Profile not found' });
         }
         const curator = curatorResult.rows[0];
+
+        let bsHeroUrl = '';
+        let bsIsPublished = true;
+        let bsIsPhysicalStore = false;
+        let bsAddress = '';
+        if (curator.user_id) {
+          const bsResult = await queryDB(
+            `SELECT hero_image_url, is_published, is_physical_store, address FROM bookstore_profiles WHERE user_id = $1 LIMIT 1`,
+            [curator.user_id]
+          );
+          if (bsResult.rows.length > 0) {
+            bsHeroUrl = bsResult.rows[0].hero_image_url || '';
+            bsIsPublished = bsResult.rows[0].is_published ?? true;
+            bsIsPhysicalStore = bsResult.rows[0].is_physical_store ?? false;
+            bsAddress = bsResult.rows[0].address || '';
+          }
+        }
+
         profile = {
           id: curator.id,
           user_id: curator.user_id || null,
@@ -8247,6 +8265,7 @@ export async function registerRoutes(
           description: curator.bio || '',
           bio: curator.bio || '',
           avatar_url: curator.avatar_url || '',
+          hero_image_url: bsHeroUrl,
           social_links: {
             website: curator.website_url || '',
             instagram: curator.instagram_url || '',
@@ -8254,8 +8273,9 @@ export async function registerRoutes(
             tiktok: curator.tiktok_url || '',
           },
           visible_tabs: curator.visible_tabs || {},
-          is_published: true,
-          is_physical_store: false,
+          is_published: bsIsPublished,
+          is_physical_store: bsIsPhysicalStore,
+          address: bsAddress,
         };
       }
 
