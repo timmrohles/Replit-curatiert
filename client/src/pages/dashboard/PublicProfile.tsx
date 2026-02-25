@@ -706,7 +706,17 @@ export function PublicProfile() {
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-4 gap-4">
+      <div className="flex items-center justify-end pt-4 gap-3">
+        <button onClick={handleSave} disabled={saving} data-testid="button-save-public-profile"
+          className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-sm shadow-sm transition-all duration-200 hover:shadow-md"
+          style={{ backgroundColor: saving ? '#9CA3AF' : '#247ba0', color: '#FFFFFF' }}>
+          {saving ? (
+            <><div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: '#FFFFFF40', borderTopColor: '#FFFFFF' }} />Wird gespeichert...</>
+          ) : (
+            <><Save className="w-4 h-4" />Änderungen speichern</>
+          )}
+        </button>
+
         <button
           onClick={() => {
             if (bookstoreProfile.isPublished) {
@@ -717,7 +727,7 @@ export function PublicProfile() {
             }
           }}
           data-testid="button-toggle-publish"
-          className="flex items-center gap-2 px-5 py-3 rounded-lg font-medium text-sm transition-all duration-200 border"
+          className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-sm transition-all duration-200 border"
           style={{
             borderColor: bookstoreProfile.isPublished ? '#FCA5A5' : '#86EFAC',
             backgroundColor: bookstoreProfile.isPublished ? '#FEF2F2' : '#F0FDF4',
@@ -728,16 +738,6 @@ export function PublicProfile() {
             <><EyeOff className="w-4 h-4" />Profil verbergen</>
           ) : (
             <><Eye className="w-4 h-4" />Profil veröffentlichen</>
-          )}
-        </button>
-
-        <button onClick={handleSave} disabled={saving} data-testid="button-save-public-profile"
-          className="flex items-center gap-2 px-6 py-3 rounded-lg font-medium shadow-sm transition-all duration-200 hover:shadow-md"
-          style={{ backgroundColor: saving ? '#9CA3AF' : '#247ba0', color: '#FFFFFF' }}>
-          {saving ? (
-            <><div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: '#FFFFFF40', borderTopColor: '#FFFFFF' }} />Wird gespeichert...</>
-          ) : (
-            <><Save className="w-5 h-5" />Änderungen speichern</>
           )}
         </button>
       </div>
