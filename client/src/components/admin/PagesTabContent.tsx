@@ -117,30 +117,41 @@ export function PagesTabContent({
   };
 
   const handleSaveWithNavigation = async () => {
-    // First save the page
     await handleSavePage();
 
-    // If navigation integration is active and we have a page ID
-    if (showInNavigation && selectedParentMenuId && editingPage?.id) {
+    if (!editingPage?.id) return;
+
+    if (showInNavigation && selectedParentMenuId) {
       try {
-        // Use session-based auth via credentials: 'include'
-        const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
+        const alreadyLinked = existingLinks.some(l => l.id === selectedParentMenuId);
+        if (alreadyLinked) {
+          await loadExistingLinks(editingPage.id);
+          return;
+        }
+
+        const staleLinks = existingLinks.filter(l => l.id !== selectedParentMenuId);
+        for (const link of staleLinks) {
+          try {
+            await fetch(`${API_BASE_URL}/admin/menu-items/${link.id}/unlink-page`, {
+              method: 'DELETE',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+            });
+          } catch (err) {
+            console.error(`Failed to unlink old menu item ${link.id}:`, err);
+          }
+        }
+
         const response = await fetch(`${API_BASE_URL}/admin/menu-items/${selectedParentMenuId}/link-page`, {
           method: 'POST',
           credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            pageId: editingPage.id,
-          }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pageId: editingPage.id }),
         });
 
         if (response.ok) {
           alert('✅ Seite gespeichert und mit Navigation verknüpft!');
-          
-          // ✅ RELOAD: Refresh existing links to show the connection
-          if (editingPage.id) {
-            await loadExistingLinks(editingPage.id);
-          }
+          await loadExistingLinks(editingPage.id);
         } else {
           const errorData = await response.json().catch(() => ({}));
           console.error('Failed to link page to navigation:', response.status, errorData);
@@ -150,11 +161,21 @@ export function PagesTabContent({
         console.error('Error linking page to navigation:', error);
         alert('⚠️ Seite gespeichert, aber Verknüpfung mit Navigation fehlgeschlagen.');
       }
-    } else {
-      // ✅ Even if no new link was created, reload to show current state
-      if (editingPage?.id) {
-        await loadExistingLinks(editingPage.id);
+    } else if (!showInNavigation && existingLinks.length > 0) {
+      for (const link of existingLinks) {
+        try {
+          await fetch(`${API_BASE_URL}/admin/menu-items/${link.id}/unlink-page`, {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+          });
+        } catch (err) {
+          console.error(`Failed to unlink menu item ${link.id}:`, err);
+        }
       }
+      await loadExistingLinks(editingPage.id);
+    } else {
+      await loadExistingLinks(editingPage.id);
     }
   };
 
