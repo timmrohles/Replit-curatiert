@@ -52,17 +52,23 @@ export function ReadingListProvider({ children }: { children: ReactNode }) {
     syncingRef.current = true;
 
     (async () => {
+      let syncSuccess = false;
       try {
         const localEntries = loadFromStorage();
         if (localEntries.length > 0) {
-          await Promise.all(localEntries.map(entry =>
+          const results = await Promise.all(localEntries.map(entry =>
             fetch('/api/reading-list', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
               body: JSON.stringify({ bookId: entry.bookId, status: entry.status }),
-            }).catch(() => {})
+            }).then(r => r.ok).catch(() => false)
           ));
+          const allFailed = results.every(r => !r);
+          if (allFailed && localEntries.length > 0) {
+            syncingRef.current = false;
+            return;
+          }
         }
 
         const res = await fetch('/api/reading-list', { credentials: 'include' });
@@ -71,11 +77,14 @@ export function ReadingListProvider({ children }: { children: ReactNode }) {
           if (data.ok && Array.isArray(data.entries)) {
             setEntries(data.entries);
             saveToStorage(data.entries);
+            syncSuccess = true;
           }
         }
       } catch {
       } finally {
-        hasSyncedRef.current = true;
+        if (syncSuccess || loadFromStorage().length === 0) {
+          hasSyncedRef.current = true;
+        }
         syncingRef.current = false;
       }
     })();
