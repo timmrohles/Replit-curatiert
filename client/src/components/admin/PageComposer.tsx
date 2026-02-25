@@ -92,7 +92,7 @@ export interface Page {
 export interface PageSection {
   id: number;
   page_id: number;
-  zone: 'header' | 'aboveFold' | 'main' | 'footer';
+  zone: 'header' | 'above_fold' | 'main' | 'footer';
   type: string;
   sort_order: number;
   status: 'draft' | 'published';
@@ -122,7 +122,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set(['aboveFold', 'main']));
+  const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set(['above_fold', 'main']));
   const [editingSection, setEditingSection] = useState<Partial<PageSection> | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   
@@ -223,7 +223,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
         ...section,
         type: section.section_type || 'category_grid',
         config: section.config || {},
-        zone: section.zone === 'above_fold' ? 'aboveFold' : section.zone, // Convert snake_case to camelCase
+        zone: section.zone,
       }));
       
       setSections(sectionsWithType);
@@ -324,8 +324,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
       // ✅ FIX: section_type is a separate column, NOT part of config
       const sectionType = editingSection.type || 'category_grid';
 
-      // ✅ Convert camelCase zone to snake_case for database
-      const zoneForDB = editingSection.zone === 'aboveFold' ? 'above_fold' : editingSection.zone || 'main';
+      const zoneForDB = editingSection.zone || 'main';
       
       const payload = {
         page_id: page.id,
@@ -405,7 +404,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
     try {
       const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       
-      const zoneForDB = section.zone === 'aboveFold' ? 'above_fold' : section.zone;
+      const zoneForDB = section.zone;
 
       const payload = {
         page_id: page.id,
@@ -473,7 +472,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
   // ============================================================================
 
   const zones = [
-    { key: 'aboveFold', label: 'Oberer Bereich (Above the Fold)', icon: Layout, isGlobal: false },
+    { key: 'above_fold', label: 'Oberer Bereich (Above the Fold)', icon: Layout, isGlobal: false },
     { key: 'main', label: 'Hauptinhalt', icon: Layout, isGlobal: false },
   ];
 
