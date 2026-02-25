@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { CreatorCarousel } from '../creator/CreatorCarousel';
+import { CurationActionBar } from '../curation/CurationActionBar';
 
 /**
  * 📚 CuratedBookSection - Single Source of Truth
@@ -218,6 +219,9 @@ export function CuratedBookSection({
           curationId={curationId}
           curationOwnerCreatorId={curationOwnerCreatorId}
         />
+        {curationId && (
+          <CurationActionBar curationId={curationId} />
+        )}
       </div>
     </section>
   );

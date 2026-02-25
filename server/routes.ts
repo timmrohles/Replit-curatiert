@@ -798,6 +798,30 @@ async function ensureSchemaReady() {
 
   try {
     await queryDB(`
+      CREATE TABLE IF NOT EXISTS curation_likes (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        curation_id INTEGER NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, curation_id)
+      )
+    `);
+    await queryDB(`
+      CREATE TABLE IF NOT EXISTS curation_bookmarks (
+        id SERIAL PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        curation_id INTEGER NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(user_id, curation_id)
+      )
+    `);
+    log.info('curation_likes and curation_bookmarks tables verified');
+  } catch (err) {
+    log.warn('Could not create curation interaction tables:', err);
+  }
+
+  try {
+    await queryDB(`
       CREATE TABLE IF NOT EXISTS author_profiles (
         id SERIAL PRIMARY KEY,
         user_id TEXT UNIQUE,
@@ -8236,6 +8260,126 @@ export async function registerRoutes(
       return res.json({ ok: true, data: { profile, curations } });
     } catch (error) {
       log.error('Get bookstore by slug error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // CURATION INTERACTIONS (Like, Bookmark)
+  // ==================================================================
+
+  app.get('/api/curations/:id/interactions', async (req: Request, res: Response) => {
+    try {
+      const curationId = parseInt(req.params.id);
+      if (isNaN(curationId)) return res.status(400).json({ ok: false, error: 'Invalid curation ID' });
+
+      const userId = (req.user as any)?.claims?.sub || null;
+
+      const likesResult = await queryDB(
+        'SELECT COUNT(*)::int AS count FROM curation_likes WHERE curation_id = $1',
+        [curationId]
+      );
+      const bookmarksResult = await queryDB(
+        'SELECT COUNT(*)::int AS count FROM curation_bookmarks WHERE curation_id = $1',
+        [curationId]
+      );
+
+      let userLiked = false;
+      let userBookmarked = false;
+      if (userId) {
+        const likeCheck = await queryDB(
+          'SELECT id FROM curation_likes WHERE curation_id = $1 AND user_id = $2',
+          [curationId, userId]
+        );
+        const bookmarkCheck = await queryDB(
+          'SELECT id FROM curation_bookmarks WHERE curation_id = $1 AND user_id = $2',
+          [curationId, userId]
+        );
+        userLiked = likeCheck.rows.length > 0;
+        userBookmarked = bookmarkCheck.rows.length > 0;
+      }
+
+      return res.json({
+        ok: true,
+        likes: likesResult.rows[0]?.count || 0,
+        bookmarks: bookmarksResult.rows[0]?.count || 0,
+        userLiked,
+        userBookmarked,
+      });
+    } catch (error) {
+      log.error('Get curation interactions error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/curations/:id/like', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ ok: false, error: 'Login required' });
+      }
+      const userId = (req.user as any)?.claims?.sub;
+      const curationId = parseInt(req.params.id);
+      if (isNaN(curationId)) return res.status(400).json({ ok: false, error: 'Invalid curation ID' });
+
+      const existing = await queryDB(
+        'SELECT id FROM curation_likes WHERE curation_id = $1 AND user_id = $2',
+        [curationId, userId]
+      );
+
+      if (existing.rows.length > 0) {
+        await queryDB('DELETE FROM curation_likes WHERE curation_id = $1 AND user_id = $2', [curationId, userId]);
+      } else {
+        await queryDB('INSERT INTO curation_likes (curation_id, user_id) VALUES ($1, $2)', [curationId, userId]);
+      }
+
+      const countResult = await queryDB(
+        'SELECT COUNT(*)::int AS count FROM curation_likes WHERE curation_id = $1',
+        [curationId]
+      );
+
+      return res.json({
+        ok: true,
+        liked: existing.rows.length === 0,
+        likes: countResult.rows[0]?.count || 0,
+      });
+    } catch (error) {
+      log.error('Toggle curation like error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  app.post('/api/curations/:id/bookmark', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ ok: false, error: 'Login required' });
+      }
+      const userId = (req.user as any)?.claims?.sub;
+      const curationId = parseInt(req.params.id);
+      if (isNaN(curationId)) return res.status(400).json({ ok: false, error: 'Invalid curation ID' });
+
+      const existing = await queryDB(
+        'SELECT id FROM curation_bookmarks WHERE curation_id = $1 AND user_id = $2',
+        [curationId, userId]
+      );
+
+      if (existing.rows.length > 0) {
+        await queryDB('DELETE FROM curation_bookmarks WHERE curation_id = $1 AND user_id = $2', [curationId, userId]);
+      } else {
+        await queryDB('INSERT INTO curation_bookmarks (curation_id, user_id) VALUES ($1, $2)', [curationId, userId]);
+      }
+
+      const countResult = await queryDB(
+        'SELECT COUNT(*)::int AS count FROM curation_bookmarks WHERE curation_id = $1',
+        [curationId]
+      );
+
+      return res.json({
+        ok: true,
+        bookmarked: existing.rows.length === 0,
+        bookmarks: countResult.rows[0]?.count || 0,
+      });
+    } catch (error) {
+      log.error('Toggle curation bookmark error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
     }
   });

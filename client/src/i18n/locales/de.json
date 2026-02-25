@@ -467,6 +467,25 @@
       "discard": "Möchtest du die Änderungen wirklich verwerfen? Nicht gespeicherte Daten gehen verloren."
     }
   },
+  "curationActions": {
+    "like": "Gefällt mir",
+    "bookmark": "Merken",
+    "report": "Melden",
+    "reported": "Gemeldet",
+    "reportTitle": "Kuration melden",
+    "reportReasonLabel": "Grund",
+    "selectReason": "Grund auswählen...",
+    "reportDetails": "Details (optional)",
+    "reportDetailsPlaceholder": "Beschreibe das Problem genauer...",
+    "submitReport": "Melden",
+    "reportReasons": {
+      "inappropriate": "Unangemessener Inhalt",
+      "spam": "Spam",
+      "copyright": "Urheberrechtsverletzung",
+      "misleading": "Irreführend",
+      "other": "Sonstiges"
+    }
+  },
   "bookComponents": {
     "similarBooks": "Ähnliche Bücher",
     "moreSimilarBooks": "Mehr ähnliche Bücher entdecken →",

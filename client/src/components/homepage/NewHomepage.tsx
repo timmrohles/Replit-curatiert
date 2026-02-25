@@ -624,6 +624,7 @@ export function Homepage() {
 
           {/* Video Book Carousel - Entdecke unsere Auswahl mit Video */}
           <CuratedBookSection
+            curationId={3}
             curator={{
               avatar: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=400",
               name: "coratiert Redaktion",
@@ -645,6 +646,7 @@ export function Homepage() {
 
           {/* Selfpublishing-Buchpreis - TODO: Add complete book data */}
           <CuratedBookSection
+            curationId={1}
             curator={{
               avatar: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=400",
               name: "coratiert Redaktion",

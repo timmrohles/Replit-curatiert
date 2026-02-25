@@ -467,6 +467,25 @@
       "discard": "Are you sure you want to discard your changes? Unsaved data will be lost."
     }
   },
+  "curationActions": {
+    "like": "Like",
+    "bookmark": "Save",
+    "report": "Report",
+    "reported": "Reported",
+    "reportTitle": "Report curation",
+    "reportReasonLabel": "Reason",
+    "selectReason": "Select a reason...",
+    "reportDetails": "Details (optional)",
+    "reportDetailsPlaceholder": "Describe the issue in more detail...",
+    "submitReport": "Report",
+    "reportReasons": {
+      "inappropriate": "Inappropriate content",
+      "spam": "Spam",
+      "copyright": "Copyright violation",
+      "misleading": "Misleading",
+      "other": "Other"
+    }
+  },
   "bookComponents": {
     "similarBooks": "Similar Books",
     "moreSimilarBooks": "Discover more similar books →",
