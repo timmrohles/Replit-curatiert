@@ -6712,11 +6712,17 @@ export async function registerRoutes(
     try {
       const body = req.body;
       const { zone, sectionIds } = body;
-      if (!zone || !Array.isArray(sectionIds)) return res.status(400).json({ ok: false, success: false, error: { code: 'INVALID_INPUT' } });
-      for (let i = 0; i < sectionIds.length; i++) {
-        await queryDB(`UPDATE public.page_sections SET sort_order = $1, updated_at = NOW() WHERE id = $2 AND page_id = $3 AND zone = $4`, [i, sectionIds[i], pageId, zone]);
+      if (!Array.isArray(sectionIds)) return res.status(400).json({ ok: false, success: false, error: { code: 'INVALID_INPUT' } });
+      if (zone) {
+        for (let i = 0; i < sectionIds.length; i++) {
+          await queryDB(`UPDATE public.page_sections SET sort_order = $1, updated_at = NOW() WHERE id = $2 AND page_id = $3 AND zone = $4`, [i * 10, sectionIds[i], pageId, zone]);
+        }
+      } else {
+        for (let i = 0; i < sectionIds.length; i++) {
+          await queryDB(`UPDATE public.page_sections SET sort_order = $1, updated_at = NOW() WHERE id = $2 AND page_id = $3`, [i * 10, sectionIds[i], pageId]);
+        }
       }
-      return res.json({ ok: true, success: true, data: { pageId, zone, reorderedCount: sectionIds.length } });
+      return res.json({ ok: true, success: true, data: { pageId, zone: zone || 'all', reorderedCount: sectionIds.length } });
     } catch (error) {
       log.error(`Error reordering sections for page ${pageId}:`, error);
       return res.status(500).json({ ok: false, success: false, error: { code: 'REORDER_FAILED', message: String(error) } });

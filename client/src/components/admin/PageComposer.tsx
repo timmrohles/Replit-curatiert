@@ -58,7 +58,7 @@ import { SectionItemsManager } from './SectionItemsManager';
 import { BookSourceBuilder, type BookSourceConfig } from './BookSourceBuilder';
 // ❌ BUILD-BLOCKER REMOVED: react-dnd prevents Figma Make publishing
 // import { useDrag, useDrop } from 'react-dnd';
-import { SECTION_TYPES, getSectionTypesForZone, isQueryOnlySection } from '../sections/sectionRegistry';
+import { SECTION_TYPES, isQueryOnlySection } from '../sections/sectionRegistry';
 
 function toLocalDatetimeString(isoString: string): string {
   const d = new Date(isoString);
@@ -122,7 +122,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  const [expandedZones, setExpandedZones] = useState<Set<string>>(new Set(['above_fold', 'main']));
+  // expandedZones removed — flat list now, no zone toggling needed
   const [editingSection, setEditingSection] = useState<Partial<PageSection> | null>(null);
   const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   
@@ -435,15 +435,15 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
     }
   };
 
-  const handleMoveSection = async (draggedId: number, targetId: number, zone: string) => {
+  const handleMoveSection = async (draggedId: number, targetId: number, _zone?: string) => {
     try {
-      const zoneSections = getSectionsByZone(zone);
-      const draggedIndex = zoneSections.findIndex(s => s.id === draggedId);
-      const targetIndex = zoneSections.findIndex(s => s.id === targetId);
+      const sorted = [...sections].sort((a, b) => a.sort_order - b.sort_order);
+      const draggedIndex = sorted.findIndex(s => s.id === draggedId);
+      const targetIndex = sorted.findIndex(s => s.id === targetId);
       
       if (draggedIndex === -1 || targetIndex === -1) return;
       
-      const newOrder = [...zoneSections];
+      const newOrder = [...sorted];
       const [removed] = newOrder.splice(draggedIndex, 1);
       newOrder.splice(targetIndex, 0, removed);
       
@@ -453,7 +453,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ zone, sectionIds }),
+        body: JSON.stringify({ sectionIds }),
       });
       
       if (!response.ok) {
@@ -475,26 +475,9 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
     .filter(s => includeDraft || s.status === 'published')
     .sort((a, b) => a.sort_order - b.sort_order);
 
-  const getSectionsByZone = (zone: string) => {
-    return sections
-      .filter(s => s.zone === zone)
-      .filter(s => includeDraft || s.status === 'published')
-      .sort((a, b) => a.sort_order - b.sort_order);
-  };
-
   const getSectionLabel = (type: string) => {
     const def = SECTION_TYPES.find(t => t.value === type);
     return def?.label || type;
-  };
-
-  const toggleZone = (zone: string) => {
-    const newExpanded = new Set(expandedZones);
-    if (newExpanded.has(zone)) {
-      newExpanded.delete(zone);
-    } else {
-      newExpanded.add(zone);
-    }
-    setExpandedZones(newExpanded);
   };
 
   const toggleSectionItems = (sectionId: number) => {
@@ -511,12 +494,6 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
   // SECTION TYPE OPTIONS - From Central Registry
   // ============================================================================
   
-  // ✅ REMOVED: Local sectionTypes array - now using SECTION_TYPES from sectionRegistry.tsx
-  // ✅ Filter section types based on current zone
-  const getAvailableSectionTypes = (zone?: string) => {
-    return getSectionTypesForZone(zone);
-  };
-
   // ============================================================================
   // RENDER
   // ============================================================================
@@ -632,11 +609,11 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   onEdit={() => setEditingSection(section)}
                   onDelete={() => handleDeleteSection(section.id)}
                   onDuplicate={() => handleDuplicateSection(section)}
-                  onMove={(draggedId, targetId) => handleMoveSection(draggedId, targetId, section.zone)}
+                  onMove={(draggedId, targetId) => handleMoveSection(draggedId, targetId)}
                   isFirst={idx === 0}
                   isLast={idx === allSections.length - 1}
-                  onMoveUp={() => idx > 0 && handleMoveSection(section.id, allSections[idx - 1].id, section.zone)}
-                  onMoveDown={() => idx < allSections.length - 1 && handleMoveSection(section.id, allSections[idx + 1].id, section.zone)}
+                  onMoveUp={() => idx > 0 && handleMoveSection(section.id, allSections[idx - 1].id)}
+                  onMoveDown={() => idx < allSections.length - 1 && handleMoveSection(section.id, allSections[idx + 1].id)}
                 />
               ))}
             </div>
@@ -1715,6 +1692,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
 
 interface SectionCardProps {
   section: PageSection;
+  sectionLabel?: string;
   isExpanded: boolean;
   onToggleItems: () => void;
   onEdit: () => void;
@@ -1729,6 +1707,7 @@ interface SectionCardProps {
 
 function SectionCard({ 
   section, 
+  sectionLabel,
   isExpanded, 
   onToggleItems, 
   onEdit, 
@@ -1788,10 +1767,10 @@ function SectionCard({
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-medium text-sm">
-                {section.config?.title || section.type}
+                {section.config?.title || sectionLabel || section.type}
               </span>
               <Badge variant="outline" className="text-xs">
-                {section.type}
+                {sectionLabel || section.type}
               </Badge>
               <Badge variant={section.status === 'published' ? 'default' : 'secondary'} className="text-xs">
                 {section.status === 'published' ? 'Live' : 'Entwurf'}
