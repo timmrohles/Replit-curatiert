@@ -5884,6 +5884,7 @@ export async function registerRoutes(
          FROM public.page_sections ps
          WHERE ps.page_id = $1::bigint
            AND ($2::boolean = true OR ps.status = 'published')
+           AND ($2::boolean = true OR COALESCE(ps.visibility, 'visible') = 'visible')
            AND ($2::boolean = true OR ps.publish_at IS NULL OR ps.publish_at <= NOW())
            AND ($2::boolean = true OR ps.unpublish_at IS NULL OR ps.unpublish_at > NOW())
            AND ($2::boolean = true OR ps.max_views IS NULL OR COALESCE(ps.current_views, 0) < ps.max_views)
