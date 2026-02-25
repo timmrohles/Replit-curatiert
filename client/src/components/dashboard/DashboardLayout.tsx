@@ -23,6 +23,7 @@ export function DashboardLayout() {
   const [userModules, setUserModules] = useState<UserModule[]>([]);
   const [loadingModules, setLoadingModules] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
 
   useEffect(() => {
     loadUserModules();
@@ -86,34 +87,37 @@ export function DashboardLayout() {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
-      <div className="flex-1 flex">
-        <DashboardSidebar
-          hasModule={hasModule}
-          hasAnyAuthorModule={hasAnyAuthorModule}
-          mobileOpen={mobileMenuOpen}
-          onMobileClose={() => setMobileMenuOpen(false)}
-        />
+      <DashboardSidebar
+        hasModule={hasModule}
+        hasAnyAuthorModule={hasAnyAuthorModule}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
+        desktopOpen={desktopSidebarOpen}
+        onDesktopToggle={() => setDesktopSidebarOpen(prev => !prev)}
+      />
 
-        <main className="flex-1 min-w-0 pb-20 lg:pb-0">
-          <div className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border">
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="p-2 -ml-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-              data-testid="sidebar-toggle"
-            >
-              <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
-            </button>
-            <DashboardBreadcrumbs />
-          </div>
+      <main className="flex-1 min-w-0 pb-20 lg:pb-0">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+          <button
+            onClick={() => {
+              if (window.innerWidth >= 1024) {
+                setDesktopSidebarOpen(true);
+              } else {
+                setMobileMenuOpen(true);
+              }
+            }}
+            className="p-2 -ml-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+            data-testid="sidebar-toggle"
+          >
+            <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          </button>
+          <DashboardBreadcrumbs />
+        </div>
 
-          <div className="max-w-[1200px] mx-auto px-4 md:px-8 pt-6 pb-6 md:pt-10 md:pb-8">
-            <div className="hidden lg:block mb-6">
-              <DashboardBreadcrumbs />
-            </div>
-            <Outlet context={{ hasModule, hasAnyAuthorModule, userId }} />
-          </div>
-        </main>
-      </div>
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8 pt-6 pb-6 md:pt-10 md:pb-8">
+          <Outlet context={{ hasModule, hasAnyAuthorModule, userId }} />
+        </div>
+      </main>
 
       <Footer />
     </div>
