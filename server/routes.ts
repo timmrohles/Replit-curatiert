@@ -894,7 +894,8 @@ async function ensureSchemaReady() {
     await queryDB(`CREATE INDEX IF NOT EXISTS idx_curators_user_id ON curators(user_id)`);
     try {
       await queryDB(`ALTER TABLE curators ADD COLUMN IF NOT EXISTS podcast_url TEXT DEFAULT ''`);
-      await queryDB(`ALTER TABLE curators ADD COLUMN IF NOT EXISTS user_id UUID`);
+      await queryDB(`ALTER TABLE curators ADD COLUMN IF NOT EXISTS user_id TEXT`);
+      await queryDB(`ALTER TABLE curators ALTER COLUMN user_id TYPE TEXT`).catch(() => {});
       await queryDB(`ALTER TABLE curators ADD COLUMN IF NOT EXISTS email VARCHAR(255) DEFAULT ''`);
     } catch (alterErr) {
       log.warn('Could not alter curators table:', alterErr);
@@ -1570,14 +1571,17 @@ export async function registerRoutes(
            SET name = $1, slug = $2, bio = $3, avatar_url = $4,
                instagram_url = $5, youtube_url = $6, tiktok_url = $7,
                podcast_url = $8, website_url = $9, focus = $10,
-               email = $11, visible_tabs = $12::jsonb, updated_at = NOW()
+               email = $11, visible_tabs = $12::jsonb,
+               user_id = COALESCE($14, user_id),
+               updated_at = NOW()
            WHERE id = $13 AND deleted_at IS NULL
            RETURNING *`,
           [
             name.trim(), slug, bioValue, avatarValue,
             instagramValue, youtubeValue, tiktokValue,
             podcastValue, websiteValue, focusValue,
-            emailValue, visibleTabsValue, id
+            emailValue, visibleTabsValue, id,
+            userId || null
           ]
         );
         if (result.rows.length === 0) {
@@ -8175,16 +8179,27 @@ export async function registerRoutes(
       let profile: any = null;
       let curations: any[] = [];
 
-      const profileResult = await queryDB(
-        `SELECT * FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
+      const curatorBySlug = await queryDB(
+        `SELECT id, user_id, avatar_url, website_url, instagram_url, tiktok_url, youtube_url, podcast_url, focus, bio, visible_tabs, name, slug FROM curators WHERE slug = $1 AND deleted_at IS NULL ORDER BY id DESC LIMIT 1`,
         [slug]
       );
-      if (profileResult.rows.length > 0) {
-        profile = profileResult.rows[0];
-        const curatorBySlug = await queryDB(
-          `SELECT avatar_url, website_url, instagram_url, tiktok_url, youtube_url, podcast_url, focus, bio, visible_tabs FROM curators WHERE slug = $1 AND deleted_at IS NULL LIMIT 1`,
+
+      let profileResult;
+      if (curatorBySlug.rows.length > 0 && curatorBySlug.rows[0].user_id) {
+        profileResult = await queryDB(
+          `SELECT * FROM bookstore_profiles WHERE user_id = $1 LIMIT 1`,
+          [curatorBySlug.rows[0].user_id]
+        );
+      }
+      if (!profileResult || profileResult.rows.length === 0) {
+        profileResult = await queryDB(
+          `SELECT * FROM bookstore_profiles WHERE slug = $1 LIMIT 1`,
           [slug]
         );
+      }
+
+      if (profileResult.rows.length > 0) {
+        profile = profileResult.rows[0];
         if (curatorBySlug.rows.length > 0) {
           const curator = curatorBySlug.rows[0];
           if (!profile.avatar_url && curator.avatar_url) {
@@ -8230,31 +8245,10 @@ export async function registerRoutes(
           });
         }
       } else {
-        const curatorResult = await queryDB(
-          `SELECT * FROM curators WHERE slug = $1 AND deleted_at IS NULL LIMIT 1`,
-          [slug]
-        );
-        if (curatorResult.rows.length === 0) {
+        if (curatorBySlug.rows.length === 0) {
           return res.status(404).json({ ok: false, error: 'Profile not found' });
         }
-        const curator = curatorResult.rows[0];
-
-        let bsHeroUrl = '';
-        let bsIsPublished = true;
-        let bsIsPhysicalStore = false;
-        let bsAddress = '';
-        if (curator.user_id) {
-          const bsResult = await queryDB(
-            `SELECT hero_image_url, is_published, is_physical_store, address FROM bookstore_profiles WHERE user_id = $1 LIMIT 1`,
-            [curator.user_id]
-          );
-          if (bsResult.rows.length > 0) {
-            bsHeroUrl = bsResult.rows[0].hero_image_url || '';
-            bsIsPublished = bsResult.rows[0].is_published ?? true;
-            bsIsPhysicalStore = bsResult.rows[0].is_physical_store ?? false;
-            bsAddress = bsResult.rows[0].address || '';
-          }
-        }
+        const curator = curatorBySlug.rows[0];
 
         profile = {
           id: curator.id,
@@ -8265,7 +8259,7 @@ export async function registerRoutes(
           description: curator.bio || '',
           bio: curator.bio || '',
           avatar_url: curator.avatar_url || '',
-          hero_image_url: bsHeroUrl,
+          hero_image_url: '',
           social_links: {
             website: curator.website_url || '',
             instagram: curator.instagram_url || '',
@@ -8273,9 +8267,8 @@ export async function registerRoutes(
             tiktok: curator.tiktok_url || '',
           },
           visible_tabs: curator.visible_tabs || {},
-          is_published: bsIsPublished,
-          is_physical_store: bsIsPhysicalStore,
-          address: bsAddress,
+          is_published: true,
+          is_physical_store: false,
         };
       }
 
