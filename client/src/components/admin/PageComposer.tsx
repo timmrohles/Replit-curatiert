@@ -567,7 +567,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
             </div>
             <div className="flex items-center gap-4">
               <a
-                href={`/${page.slug === '/' ? '' : page.slug}`}
+                href={`/de-de/${page.slug === '/' ? '' : page.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md border transition-colors hover:bg-gray-50"
