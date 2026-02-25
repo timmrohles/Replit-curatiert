@@ -263,69 +263,6 @@ export function PublicProfile() {
       />
 
       <div className="p-6">
-        <h2 className="text-lg md:text-xl mb-3" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
-          Sichtbare Tabs im öffentlichen Profil
-        </h2>
-        <p className="text-xs mb-4" style={{ color: '#6B7280' }}>
-          Wähle aus, welche Tabs angezeigt werden sollen. Verschiebe sie per Drag & Drop oder mit den Pfeilen, um die Reihenfolge zu ändern.
-        </p>
-        <div className="flex flex-col gap-2 max-w-lg">
-          {(() => {
-            const TAB_LABELS: Record<string, string> = {
-              kurationen: 'Kurationen',
-              buchbesprechung: 'Shownotes',
-              rezensionen: 'Rezensionen',
-              bewertungen: 'Bewertungen',
-              veranstaltungen: 'Veranstaltungen',
-              buchclub: 'Buchclub',
-              leseliste: 'Leseliste',
-            };
-            const moveTab = (fromIdx: number, toIdx: number) => {
-              setTabOrder(prev => {
-                const next = [...prev];
-                const [item] = next.splice(fromIdx, 1);
-                next.splice(toIdx, 0, item);
-                return next;
-              });
-            };
-            return tabOrder.map((key, idx) => (
-              <div
-                key={key}
-                className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors select-none"
-                style={{
-                  borderColor: (visibleTabs as any)[key] ? '#247ba0' : '#D1D5DB',
-                  backgroundColor: dragIdx === idx ? 'rgba(36, 123, 160, 0.12)' : (visibleTabs as any)[key] ? 'rgba(36, 123, 160, 0.05)' : '#FFFFFF',
-                }}
-                onDragOver={(e) => { e.preventDefault(); }}
-                onDrop={() => { if (dragIdx !== null && dragIdx !== idx) moveTab(dragIdx, idx); setDragIdx(null); }}
-                data-testid={`tab-order-item-${key}`}
-              >
-                <span draggable onDragStart={() => setDragIdx(idx)} onDragEnd={() => setDragIdx(null)} className="cursor-grab active:cursor-grabbing flex-shrink-0" data-testid={`drag-handle-${key}`}>
-                  <GripVertical className="w-4 h-4" style={{ color: '#9CA3AF' }} />
-                </span>
-                <div
-                  className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer"
-                  style={{ borderColor: (visibleTabs as any)[key] ? '#247ba0' : '#D1D5DB', backgroundColor: (visibleTabs as any)[key] ? '#247ba0' : 'transparent' }}
-                  onClick={(e) => { e.stopPropagation(); setVisibleTabs(prev => ({ ...prev, [key]: !(prev as any)[key] })); }}
-                  data-testid={`checkbox-tab-${key}`}
-                >
-                  {(visibleTabs as any)[key] && <Check className="w-3.5 h-3.5 text-white" />}
-                </div>
-                <span className="text-sm flex-1" style={{ color: '#1F2937' }}>{TAB_LABELS[key] || key}</span>
-                <span className="text-xs text-muted-foreground mr-1">{idx + 1}</span>
-                <Button variant="ghost" size="icon" disabled={idx === 0} onClick={(e) => { e.stopPropagation(); moveTab(idx, idx - 1); }} data-testid={`button-tab-up-${key}`}>
-                  <ChevronUp className="w-4 h-4" />
-                </Button>
-                <Button variant="ghost" size="icon" disabled={idx === tabOrder.length - 1} onClick={(e) => { e.stopPropagation(); moveTab(idx, idx + 1); }} data-testid={`button-tab-down-${key}`}>
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </div>
-            ));
-          })()}
-        </div>
-      </div>
-
-      <div className="p-6">
         <h2 className="text-lg md:text-xl mb-4" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
           Kurator:in-Profil
         </h2>
@@ -578,6 +515,69 @@ export function PublicProfile() {
               />
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="p-6">
+        <h2 className="text-lg md:text-xl mb-3" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
+          Sichtbare Tabs im öffentlichen Profil
+        </h2>
+        <p className="text-xs mb-4" style={{ color: '#6B7280' }}>
+          Wähle aus, welche Tabs angezeigt werden sollen. Verschiebe sie per Drag & Drop oder mit den Pfeilen, um die Reihenfolge zu ändern.
+        </p>
+        <div className="flex flex-col gap-2 max-w-lg">
+          {(() => {
+            const TAB_LABELS: Record<string, string> = {
+              kurationen: 'Kurationen',
+              buchbesprechung: 'Shownotes',
+              rezensionen: 'Rezensionen',
+              bewertungen: 'Bewertungen',
+              veranstaltungen: 'Veranstaltungen',
+              buchclub: 'Buchclub',
+              leseliste: 'Leseliste',
+            };
+            const moveTab = (fromIdx: number, toIdx: number) => {
+              setTabOrder(prev => {
+                const next = [...prev];
+                const [item] = next.splice(fromIdx, 1);
+                next.splice(toIdx, 0, item);
+                return next;
+              });
+            };
+            return tabOrder.map((key, idx) => (
+              <div
+                key={key}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg border transition-colors select-none"
+                style={{
+                  borderColor: (visibleTabs as any)[key] ? '#247ba0' : '#D1D5DB',
+                  backgroundColor: dragIdx === idx ? 'rgba(36, 123, 160, 0.12)' : (visibleTabs as any)[key] ? 'rgba(36, 123, 160, 0.05)' : '#FFFFFF',
+                }}
+                onDragOver={(e) => { e.preventDefault(); }}
+                onDrop={() => { if (dragIdx !== null && dragIdx !== idx) moveTab(dragIdx, idx); setDragIdx(null); }}
+                data-testid={`tab-order-item-${key}`}
+              >
+                <span draggable onDragStart={() => setDragIdx(idx)} onDragEnd={() => setDragIdx(null)} className="cursor-grab active:cursor-grabbing flex-shrink-0" data-testid={`drag-handle-${key}`}>
+                  <GripVertical className="w-4 h-4" style={{ color: '#9CA3AF' }} />
+                </span>
+                <div
+                  className="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors cursor-pointer"
+                  style={{ borderColor: (visibleTabs as any)[key] ? '#247ba0' : '#D1D5DB', backgroundColor: (visibleTabs as any)[key] ? '#247ba0' : 'transparent' }}
+                  onClick={(e) => { e.stopPropagation(); setVisibleTabs(prev => ({ ...prev, [key]: !(prev as any)[key] })); }}
+                  data-testid={`checkbox-tab-${key}`}
+                >
+                  {(visibleTabs as any)[key] && <Check className="w-3.5 h-3.5 text-white" />}
+                </div>
+                <span className="text-sm flex-1" style={{ color: '#1F2937' }}>{TAB_LABELS[key] || key}</span>
+                <span className="text-xs text-muted-foreground mr-1">{idx + 1}</span>
+                <Button variant="ghost" size="icon" disabled={idx === 0} onClick={(e) => { e.stopPropagation(); moveTab(idx, idx - 1); }} data-testid={`button-tab-up-${key}`}>
+                  <ChevronUp className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" disabled={idx === tabOrder.length - 1} onClick={(e) => { e.stopPropagation(); moveTab(idx, idx + 1); }} data-testid={`button-tab-down-${key}`}>
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </div>
+            ));
+          })()}
         </div>
       </div>
 
