@@ -1,0 +1,205 @@
+Übernimm die Rolle eines Staff Frontend Engineer (Next.js) + Performance Engineer + Postgres/Neon Specialist. Ziel: Unsere Next.js App maximal schnell machen (Core Web Vitals, TTFB, LCP, INP) und das Zusammenspiel mit Neon Postgres so optimieren, dass Listenseiten/Discovery/Detailseiten auch unter Last schnell bleiben.
+
+Kontext / Annahmen
+
+Next.js (App Router) mit Server Components ist möglich; falls wir noch Pages Router nutzen, migriere schrittweise.
+
+Daten kommen aus Neon Postgres.
+
+Es gibt stark frequentierte Seiten: Startseite, Kategorien/Discovery (Suche/Filter/Sort), Buch-/Autor-/Verlags-Detail.
+
+Wir haben dynamische Filter & Sortierungen (Relevanzscore etc.).
+
+1) Performance-Ziele (messbar)
+
+Implementiere und dokumentiere Zielwerte:
+
+TTFB: < 200–400ms (EU)
+
+LCP: < 2.5s
+
+INP: < 200ms
+
+CLS: < 0.1
+
+RSC/SSR Payload minimieren
+
+Füge ein kleines „Performance Checklist“ Doc hinzu + wie wir messen (Lighthouse, WebPageTest optional).
+
+2) Next.js: Architektur-Optimierungen
+2.1 App Router + RSC Best Practices
+
+Nutze Server Components standardmäßig, Client Components nur wo nötig.
+
+Verschiebe Datenfetching in Server Components / route handlers.
+
+Entferne unnötige useEffect-Fetches im Client.
+
+2.2 Caching & Revalidation (entscheidend)
+
+Implementiere für alle relevanten Seiten eine klare Cache-Strategie:
+
+Statische/halb-statische Seiten: revalidate (ISR) sinnvoll setzen (z. B. 5–30 min)
+
+Dynamische user-spezifische Inhalte: no-store
+
+Discovery/Filter: cache mit unstable_cache oder route-level caching (wo korrekt)
+
+Definiere je Seitentyp:
+
+Startseite: ISR (z. B. 10 min)
+
+Preis-/Themen-Landing: ISR (30–60 min)
+
+Discovery gefiltert: kurz-cached (1–5 min) ODER no-cache, aber DB performant
+
+Detailseiten: ISR (6–24h) + on-demand revalidate bei Updates
+
+Nutze Tags (revalidateTag) für gezieltes Invalidieren bei Datenänderungen (z. B. book:{id}, award:{id}, topic:{slug}).
+
+2.3 Streaming & Suspense richtig einsetzen
+
+Für Discovery-Seiten: Server-side Streaming (Skeleton) + Ergebnisliste als Suspense-Block.
+
+Vermeide große „blocking“ Queries vor dem ersten Byte.
+
+2.4 Bundling & Client JS reduzieren
+
+Identifiziere große Client Bundles (Next bundle analyzer).
+
+Entferne/verschiebe schwere Libraries.
+
+Nur notwendige Components als use client.
+
+Lazy-load nicht-kritische UI (Modals, Charts, Editor).
+
+2.5 Images & Fonts (LCP killers)
+
+Nutze next/image überall für Cover/Avatare.
+
+Richtig dimensionieren (sizes, priority für above-the-fold).
+
+Placeholders (blur) für Covers.
+
+Fonts: self-hosted, preload nur 1–2 Schnitte, variable font bevorzugt.
+
+CLS vermeiden (feste Boxgrößen für Cover).
+
+2.6 Routing/Prefetch
+
+Nutze <Link prefetch> sinnvoll für häufige Pfade (Detailseiten).
+
+Preload critical data optional per route segment caching.
+
+3) Neon/Postgres: Datenbank-Performance (State of the Art)
+3.1 Connection Handling (Neon-specific)
+
+Nutze Neon Pooler / pooled connection string für Serverless.
+
+Stelle sicher, dass wir nicht pro Request neue Verbindungen „hart“ öffnen.
+
+Setze DB client so auf, dass er in Next.js Server runtime effizient reused.
+
+3.2 Query-Design
+
+Für Discovery/Filter:
+
+Verwende keyset pagination statt offset, wenn große Datenmengen.
+
+Vermeide SELECT * – nur benötigte Spalten.
+
+Nutze vorberechnete Scores (materialisierte Spalten) statt komplexe Joins pro Request (wo möglich).
+
+Eine Query pro Seite: erst IDs + sort, dann Details per WHERE id IN (...) (oder join mit subquery) – aber achte auf Plan.
+
+3.3 Indizes & Constraints
+
+Erstelle/prüfe Indizes für:
+
+books(base_score), books(total_score), books(award_score), books(publication_date)
+
+häufige Filterkombinationen: z. B. (category_id, base_score DESC), (language, base_score DESC)
+
+Textsuche: GIN index für tsvector (Titel/Autor) oder trigram (pg_trgm) für fuzzy search
+
+Foreign keys: Index auf FK-Spalten
+
+3.4 Materialized Views / Denormalization
+
+Für häufige Aggregationen:
+
+Materialized View für „Startseite Highlights“
+
+Materialisierte Tabellen für counts (award_count, media_count, curation_count)
+
+Refresh-Strategie (cron / trigger / nightly + incremental wenn möglich)
+
+3.5 Explain Analyze
+
+Füge ein kleines Script hinzu, das für Top-Queries EXPLAIN (ANALYZE, BUFFERS) ausführt (in dev/staging) und die langsamsten identifiziert.
+
+4) Suche & Filter (UX + Performance)
+
+Implementiere serverseitige Suche mit Postgres Full Text Search.
+
+Debounce im Client nur für Eingaben, aber Query im Server.
+
+Für Facetten (counts): caching oder materialized counts, nicht live counts auf jeder Anfrage.
+
+5) Observability & Regression-Schutz
+
+Implementiere Server-Timings: Server-Timing Header (db, render, cache hit/miss)
+
+Logging für Slow Queries > 300ms (staging)
+
+Performance Budget:
+
+max JS shipped initial
+
+max image bytes above fold
+
+Optional: simple „perf dashboard“ page (internal only) mit letzten Messwerten.
+
+6) Deliverables (konkret)
+
+Code-Änderungen im Next.js Projekt:
+
+caching/revalidate tags
+
+RSC refactor wo nötig
+
+image/font optimizations
+
+bundle optimizations
+
+Neon DB Migrationen:
+
+Indizes
+
+materialized columns/views für scores/aggregates
+
+Refactor der Discovery Query Pipeline:
+
+stabile Pagination
+
+schnelle Sorts
+
+Dokumentation:
+
+„Performance Playbook“
+
+Liste der Seiten mit Cache-Policy
+
+Messanleitung & Zielwerte
+
+7) Wichtig: Keine Big Bang Migration
+
+Arbeite iterativ:
+
+Phase 1: Quick wins (Images, caching, indexes, query cleanup)
+
+Phase 2: RSC/Streaming + keyset pagination
+
+Phase 3: Materialized views + tagged revalidation
+
+Wenn etwas unklar ist, triff sinnvolle Annahmen und markiere sie. Ziel ist, dass am Ende reale Messwerte besser sind und die App spürbar schneller lädt – besonders bei Discovery/Filter/Sort und Detailseiten
