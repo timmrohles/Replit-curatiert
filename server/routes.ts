@@ -8166,6 +8166,7 @@ export async function registerRoutes(
   // Public bookstore page by slug (must be AFTER /sections, /profile routes)
   app.get('/api/bookstore/:slug', async (req: Request, res: Response) => {
     try {
+      res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
       const { slug } = req.params;
       if (!slug) {
         return res.status(400).json({ ok: false, error: 'Slug is required' });
