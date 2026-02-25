@@ -5984,9 +5984,6 @@ export async function registerRoutes(
           const effectiveCategoryId = pageCategoryId || (cfg.categoryId ? Number(cfg.categoryId) : null);
 
           const hasUserContext = !!(query.userContext?.followedBy || (query.userContext?.readingStatus?.length > 0) || query.userContext?.inMedia?.enabled);
-          if (conditions.length === 0 && hasUserContext) {
-            conditions.push('TRUE');
-          }
 
           if (query.userContext?.inMedia?.enabled) {
             const period = query.userContext.inMedia.period || 'all';
