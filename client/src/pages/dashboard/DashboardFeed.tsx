@@ -184,9 +184,13 @@ export function DashboardFeed() {
               onAction={() => navigate('/buecher')}
             >
               <CarouselContainer>
-                {latestBooks.slice(0, 8).map(book => (
-                  <BookCarouselItem key={book.id} book={book} />
-                ))}
+                <div className="flex gap-4">
+                  {latestBooks.slice(0, 8).map(book => (
+                    <div key={book.id} className="flex-shrink-0 w-[220px]">
+                      <BookCarouselItem book={book} />
+                    </div>
+                  ))}
+                </div>
               </CarouselContainer>
             </FeedSection>
           )}
