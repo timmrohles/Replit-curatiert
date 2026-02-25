@@ -27,7 +27,7 @@ async function loadScoreContext(): Promise<ScoreContext> {
   let awardMap: Record<number, AwardCounts> = {};
   try {
     const awardRes = await queryDB(
-      `SELECT ar.book_id, ao.result_status, ao.name AS outcome_name
+      `SELECT ar.book_id, ao.result_status, ao.title AS outcome_name
        FROM award_recipients ar
        JOIN award_outcomes ao ON ar.award_outcome_id = ao.id
        WHERE ar.book_id IS NOT NULL`
@@ -45,10 +45,10 @@ async function loadScoreContext(): Promise<ScoreContext> {
   let mediaMap: Record<number, number> = {};
   try {
     const mediaRes = await queryDB(
-      `SELECT COALESCE(eb.matched_book_id, eb.book_id) AS book_id, COUNT(DISTINCT eb.episode_id) AS mention_count
+      `SELECT eb.matched_book_id AS book_id, COUNT(DISTINCT eb.episode_id) AS mention_count
        FROM extracted_books eb
-       WHERE COALESCE(eb.matched_book_id, eb.book_id) IS NOT NULL AND eb.is_verified = true
-       GROUP BY COALESCE(eb.matched_book_id, eb.book_id)`
+       WHERE eb.matched_book_id IS NOT NULL AND eb.is_verified = true
+       GROUP BY eb.matched_book_id`
     );
     for (const row of mediaRes.rows || []) {
       mediaMap[row.book_id] = parseInt(row.mention_count) || 0;

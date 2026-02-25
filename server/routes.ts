@@ -5943,39 +5943,25 @@ export async function registerRoutes(
           }
 
           const effectiveCategoryId = pageCategoryId || (cfg.categoryId ? Number(cfg.categoryId) : null);
-          if (effectiveCategoryId) {
-            const catPh1 = `$${paramIdx++}`;
-            const catPh2 = `$${paramIdx++}`;
-            conditions.push(`(b.id IN (SELECT bt.book_id FROM book_tags bt WHERE bt.tag_id = ${catPh1}) OR b.id IN (SELECT bot.book_id FROM book_onix_tags bot WHERE bot.tag_id = ${catPh2}))`);
-            params.push(effectiveCategoryId, effectiveCategoryId);
-          }
 
           const hasUserContext = !!(query.userContext?.followedBy || (query.userContext?.readingStatus?.length > 0) || query.userContext?.inMedia?.enabled);
           if (conditions.length === 0 && hasUserContext) {
             conditions.push('TRUE');
           }
 
-          if (conditions.length > 0) {
-            const categoryConditionIdx = effectiveCategoryId ? conditions.length - 1 : -1;
-            let whereClause: string;
-            if (categoryConditionIdx >= 0 && conditions.length > 1) {
-              const categoryCondition = conditions.pop()!;
-              const joiner = operator === 'all' ? ' AND ' : ' OR ';
-              whereClause = `(${conditions.join(joiner)}) AND ${categoryCondition}`;
-            } else {
-              const joiner = operator === 'all' ? ' AND ' : ' OR ';
-              whereClause = conditions.join(joiner);
-            }
+          if (query.userContext?.inMedia?.enabled) {
+            const period = query.userContext.inMedia.period || 'all';
+            let dateCond = '';
+            if (period === 'week') dateCond = `AND ce.published_at >= NOW() - INTERVAL '7 days'`;
+            else if (period === 'month') dateCond = `AND ce.published_at >= NOW() - INTERVAL '30 days'`;
+            else if (period === 'quarter') dateCond = `AND ce.published_at >= NOW() - INTERVAL '90 days'`;
+            else if (period === 'year') dateCond = `AND ce.published_at >= NOW() - INTERVAL '365 days'`;
+            conditions.push(`b.id IN (SELECT eb.matched_book_id FROM extracted_books eb JOIN content_episodes ce ON eb.episode_id = ce.id WHERE eb.is_verified = true ${dateCond} AND eb.matched_book_id IS NOT NULL)`);
+          }
 
-            if (query.userContext?.inMedia?.enabled) {
-              const period = query.userContext.inMedia.period || 'all';
-              let dateCond = '';
-              if (period === 'week') dateCond = `AND ce.published_at >= NOW() - INTERVAL '7 days'`;
-              else if (period === 'month') dateCond = `AND ce.published_at >= NOW() - INTERVAL '30 days'`;
-              else if (period === 'quarter') dateCond = `AND ce.published_at >= NOW() - INTERVAL '90 days'`;
-              else if (period === 'year') dateCond = `AND ce.published_at >= NOW() - INTERVAL '365 days'`;
-              conditions.push(`b.id IN (SELECT COALESCE(eb.matched_book_id, eb.book_id) FROM extracted_books eb JOIN content_episodes ce ON eb.episode_id = ce.id WHERE eb.is_verified = true ${dateCond} AND COALESCE(eb.matched_book_id, eb.book_id) IS NOT NULL)`);
-            }
+          if (conditions.length > 0) {
+            const joiner = operator === 'all' ? ' AND ' : ' OR ';
+            const whereClause = conditions.join(joiner);
 
             const sortClause = query.sort === 'newest' ? 'ORDER BY b.created_at DESC'
               : query.sort === 'awarded' ? 'ORDER BY b.award_count DESC NULLS LAST'
@@ -5985,12 +5971,8 @@ export async function registerRoutes(
               : 'ORDER BY b.created_at DESC';
 
             try {
-              const finalWhere = conditions.length > 1 && conditions[conditions.length - 1].startsWith('b.id IN (SELECT COALESCE')
-                ? `(${whereClause}) AND ${conditions[conditions.length - 1]}`
-                : whereClause;
-
               const queryBooks = await queryDB(
-                `SELECT b.* FROM books b WHERE b.deleted_at IS NULL AND (${finalWhere}) ${sortClause} LIMIT $${paramIdx}`,
+                `SELECT b.* FROM books b WHERE b.deleted_at IS NULL AND (${whereClause}) ${sortClause} LIMIT $${paramIdx}`,
                 [...params, limit]
               );
               const fetchedBooks = queryBooks.rows || [];
