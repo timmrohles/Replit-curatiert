@@ -1543,6 +1543,34 @@ export async function registerRoutes(
     }
   });
 
+  app.get('/api/user/tab-content-counts/:userId', async (req: Request, res: Response) => {
+    try {
+      const { userId } = req.params;
+      if (!userId) return res.status(400).json({ ok: false, error: 'Missing userId' });
+
+      const [curationsRes, eventsRes] = await Promise.all([
+        queryDB(`SELECT COUNT(*) as count FROM user_curations WHERE user_id = $1`, [userId]).catch(() => ({ rows: [{ count: 0 }] })),
+        queryDB(`SELECT COUNT(*) as count FROM user_events WHERE user_id = $1`, [userId]).catch(() => ({ rows: [{ count: 0 }] })),
+      ]);
+
+      return res.json({
+        ok: true,
+        data: {
+          kurationen: parseInt(curationsRes.rows[0]?.count || '0', 10) > 0,
+          buchbesprechung: false,
+          rezensionen: false,
+          bewertungen: false,
+          veranstaltungen: parseInt(eventsRes.rows[0]?.count || '0', 10) > 0,
+          buchclub: false,
+          leseliste: false,
+        }
+      });
+    } catch (error) {
+      log.error('Error checking tab content counts:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
   app.post('/api/user/curator-profile', async (req: Request, res: Response) => {
     try {
       const { curatorId, name, email, bio, focus, avatar_url, socials, userId, visible_tabs } = req.body;

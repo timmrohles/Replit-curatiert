@@ -42,16 +42,17 @@ export function PublicProfile() {
   const [bookstoreSlug, setBookstoreSlug] = useState<string | null>(null);
   const DEFAULT_TAB_ORDER = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub', 'leseliste'];
   const [visibleTabs, setVisibleTabs] = useState({
-    kurationen: true,
-    buchbesprechung: true,
-    rezensionen: true,
-    bewertungen: true,
-    veranstaltungen: true,
+    kurationen: false,
+    buchbesprechung: false,
+    rezensionen: false,
+    bewertungen: false,
+    veranstaltungen: false,
     buchclub: false,
     leseliste: false,
   });
   const [tabOrder, setTabOrder] = useState<string[]>(DEFAULT_TAB_ORDER);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [tabHasContent, setTabHasContent] = useState<Record<string, boolean>>({});
 
   const [bookstoreProfile, setBookstoreProfile] = useState({
     heroImageUrl: '',
@@ -127,7 +128,18 @@ export function PublicProfile() {
         if (d.slug) {
           setBookstoreSlug(d.slug);
         }
-        if (d.visible_tabs && typeof d.visible_tabs === 'object') {
+        let contentFlags: Record<string, boolean> = {};
+        try {
+          const countsRes = await fetch(`/api/user/tab-content-counts/${encodeURIComponent(userId)}`);
+          const countsJson = await countsRes.json();
+          if (countsJson.ok && countsJson.data) {
+            contentFlags = countsJson.data;
+            setTabHasContent(contentFlags);
+          }
+        } catch {}
+
+        const hasSavedTabs = d.visible_tabs && typeof d.visible_tabs === 'object' && Object.keys(d.visible_tabs).some(k => k !== '_order');
+        if (hasSavedTabs) {
           const { _order, ...tabFlags } = d.visible_tabs;
           setVisibleTabs(prev => ({ ...prev, ...tabFlags }));
           if (Array.isArray(_order) && _order.length > 0) {
@@ -136,6 +148,8 @@ export function PublicProfile() {
             const missing = allKeys.filter(k => !validOrder.includes(k));
             setTabOrder([...validOrder, ...missing]);
           }
+        } else {
+          setVisibleTabs(prev => ({ ...prev, ...contentFlags }));
         }
       }
 
@@ -530,7 +544,7 @@ export function PublicProfile() {
           Sichtbare Tabs im öffentlichen Profil
         </h2>
         <p className="text-xs mb-4" style={{ color: '#6B7280' }}>
-          Wähle aus, welche Tabs angezeigt werden sollen. Verschiebe sie per Drag & Drop oder mit den Pfeilen, um die Reihenfolge zu ändern.
+          Tabs werden automatisch aktiviert, sobald Inhalte vorhanden sind. Du kannst sie manuell ein- oder ausblenden und per Drag & Drop oder mit den Pfeilen die Reihenfolge ändern.
         </p>
         <div className="flex flex-col gap-2 max-w-lg">
           {(() => {
@@ -574,7 +588,15 @@ export function PublicProfile() {
                 >
                   {(visibleTabs as any)[key] && <Check className="w-3.5 h-3.5 text-white" />}
                 </div>
-                <span className="text-sm flex-1" style={{ color: '#1F2937' }}>{TAB_LABELS[key] || key}</span>
+                <span className="text-sm flex-1" style={{ color: '#1F2937' }}>
+                  {TAB_LABELS[key] || key}
+                  {tabHasContent[key] === false && (
+                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: '#F3F4F6', color: '#9CA3AF' }}>Keine Inhalte</span>
+                  )}
+                  {tabHasContent[key] === true && (
+                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: '#ECFDF5', color: '#059669' }}>Inhalte vorhanden</span>
+                  )}
+                </span>
                 <span className="text-xs text-muted-foreground mr-1">{idx + 1}</span>
                 <Button variant="ghost" size="icon" disabled={idx === 0} onClick={(e) => { e.stopPropagation(); moveTab(idx, idx - 1); }} data-testid={`button-tab-up-${key}`}>
                   <ChevronUp className="w-4 h-4" />
