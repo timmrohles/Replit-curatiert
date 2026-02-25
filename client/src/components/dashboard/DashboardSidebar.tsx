@@ -200,23 +200,24 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
     </nav>
   );
 
-  const isOpen = mobileOpen || desktopOpen;
-  const handleClose = () => {
-    onMobileClose?.();
-    if (desktopOpen) onDesktopToggle?.();
-  };
-
   return (
     <>
-      {isOpen && (
+      <aside
+        className="hidden lg:block w-56 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 sticky top-0 overflow-y-auto self-start"
+        style={{ height: '100vh' }}
+      >
+        {sidebarContent}
+      </aside>
+
+      {mobileOpen && (
         <>
-          <div className="fixed inset-0 bg-black/30 z-40" onClick={handleClose} />
-          <aside className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-900 z-50 overflow-y-auto shadow-2xl transition-transform duration-200">
+          <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={onMobileClose} />
+          <aside className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-900 z-50 lg:hidden overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
               <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                 Dashboard
               </span>
-              <button onClick={handleClose} className="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-colors" data-testid="sidebar-close">
+              <button onClick={onMobileClose} className="p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/10 transition-colors" data-testid="sidebar-close">
                 <X className="w-4 h-4 text-gray-700 dark:text-gray-300" />
               </button>
             </div>
