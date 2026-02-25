@@ -27,7 +27,8 @@ coratiert.de is a curated book recommendation platform for personalized book dis
 ## Core Features
 
 - **CMS & Dynamic Pages**: `UniversalSectionRenderer` + `sectionRegistry` for section rendering. `CMSHomepage` and `DynamicPage` handle CMS content. Category pages (`page_type='category'`) auto-filter sections by `category_id`.
-- **Book Scoring**: Automated `award_score`, `media_score`, `curation_score`, `total_score`, `is_indie`, `is_hidden_gem` via cron + event triggers. Indie auto-tag: `is_indie=true` → Tag "Indie-Perlen" (id 38) auto-linked in `book_onix_tags`.
+- **Book Scoring**: Automated `award_score`, `media_score`, `curation_score`, `total_score`, `is_indie`, `is_hidden_gem` via cron + event triggers. Indie auto-tag: `is_indie=true` → Tag "Indie-Perlen" (id 38) auto-linked in `book_tags`.
+- **Reading List**: `ReadingListContext` manages reading list state (localStorage + server sync). `bookId` format: always `String(book.id)` (numeric string, never prefixed). Status values in UI: `'gelesen'`, `'lese_ich'`, `'möchte_lesen'`; in DB: `'read'`, `'reading'`, `'want_to_read'` (conversion in API routes). `user_reading_list` table: `user_id TEXT`, `book_id INTEGER`. Sync: always saves to localStorage as backup, logs POST errors, doesn't overwrite local data with empty server responses on failed sync.
 - **Book Enrichment & Badges**: Unified badge system (awards, indie, reviews) via `BookEnrichmentBadges`, sourced from `enrichBooksWithAwards()` and `book_onix_tags`.
 - **Sorting**: `relevance`, `newest`, `most-awarded`, `popular`, `manual`, `hidden-gems`.
 - **Dashboard** ✅: Restructured with sidebar navigation, real routes under `/dashboard/*`, merged pages, `DashboardOverview` with KPIs + next-best-actions, 3 earnings sub-pages, full i18n (de + en).

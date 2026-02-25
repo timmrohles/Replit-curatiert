@@ -53,6 +53,8 @@ export function ReadingListProvider({ children }: { children: ReactNode }) {
     const doSync = async (attempt = 1) => {
       try {
         const localEntries = loadFromStorage();
+        let allPostsOk = true;
+
         if (localEntries.length > 0) {
           const results = await Promise.all(localEntries.map(entry =>
             fetch('/api/reading-list', {
@@ -60,9 +62,12 @@ export function ReadingListProvider({ children }: { children: ReactNode }) {
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
               body: JSON.stringify({ bookId: entry.bookId, status: entry.status }),
-            }).then(r => r.ok).catch(() => false)
+            }).then(r => {
+              if (!r.ok) console.warn('[ReadingList] Sync POST failed for book', entry.bookId, r.status);
+              return r.ok;
+            }).catch(() => false)
           ));
-
+          allPostsOk = results.every(r => r);
           if (results.every(r => !r)) {
             throw new Error('All POSTs failed');
           }
@@ -73,13 +78,16 @@ export function ReadingListProvider({ children }: { children: ReactNode }) {
 
         const data = await res.json();
         if (data.ok && Array.isArray(data.entries)) {
-          setEntries(data.entries);
-          saveToStorage(data.entries);
+          if (data.entries.length > 0 || allPostsOk) {
+            setEntries(data.entries);
+            saveToStorage(data.entries);
+          }
           hasSyncedRef.current = true;
           return;
         }
         throw new Error('Invalid response');
-      } catch {
+      } catch (err) {
+        console.warn('[ReadingList] Sync attempt', attempt, 'failed:', err);
         if (attempt < 4) {
           const delay = 2000 * attempt;
           retryTimerRef.current = setTimeout(() => doSync(attempt + 1), delay);
@@ -98,10 +106,8 @@ export function ReadingListProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    if (!user) {
-      saveToStorage(entries);
-    }
-  }, [entries, user]);
+    saveToStorage(entries);
+  }, [entries]);
 
   const getStatus = useCallback((bookId: string): ReadingListEntry | null => {
     return entries.find(e => e.bookId === bookId) || null;
@@ -135,28 +141,19 @@ export function ReadingListProvider({ children }: { children: ReactNode }) {
         fetch(`/api/reading-list/${bookId}`, {
           method: 'DELETE',
           credentials: 'include',
-        }).catch(() => {});
+        }).catch(err => console.warn('[ReadingList] DELETE failed:', err));
       } else {
         fetch('/api/reading-list', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ bookId, status }),
-        }).catch(() => {});
+        }).then(r => {
+          if (!r.ok) console.warn('[ReadingList] POST failed:', r.status, 'bookId:', bookId);
+        }).catch(err => console.warn('[ReadingList] POST error:', err));
       }
-    } else {
-      const updated = status === null
-        ? entries.filter(e => e.bookId !== bookId)
-        : (() => {
-            const existing = entries.find(e => e.bookId === bookId);
-            if (existing) {
-              return entries.map(e => e.bookId === bookId ? { ...e, status, addedAt: new Date().toISOString() } : e);
-            }
-            return [...entries, { bookId, status, title: bookData.title, author: bookData.author, coverImage: bookData.coverImage, addedAt: new Date().toISOString() }];
-          })();
-      saveToStorage(updated);
     }
-  }, [user, entries]);
+  }, [user]);
 
   const getEntriesByStatus = useCallback((status: ReadingListStatus): ReadingListEntry[] => {
     return entries.filter(e => e.status === status);

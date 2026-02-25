@@ -498,7 +498,7 @@ const BookCarouselItemComponent = ({ book, size = 'md', onBookClick }: BookCarou
             />
             
             <ReadingListButton
-              bookId={`book-${book.id}`}
+              bookId={String(book.id)}
               bookTitle={book.title}
               bookAuthor={book.author}
               bookCover={book.coverImage}

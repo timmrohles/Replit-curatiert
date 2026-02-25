@@ -136,7 +136,7 @@ export const BookCard = memo(function BookCard({
     };
   }, []);
   
-  const bookId = book?.id || `book-${title.toLowerCase().replace(/\s+/g, '-')}`;
+  const bookId = book?.id ? String(book.id) : `book-${title.toLowerCase().replace(/\s+/g, '-').slice(0, 40)}`;
   
   const bgColor = cardBackgroundColor === 'white' ? 'bg-white dark:bg-card' : cardBackgroundColor === 'beige' ? 'bg-beige dark:bg-card' : 'bg-transparent';
 
