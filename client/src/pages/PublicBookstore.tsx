@@ -19,7 +19,7 @@ import { Text } from '@/components/ui/typography';
 import { LikeButton } from '../components/favorites/LikeButton';
 import { useAuth } from '../hooks/use-auth';
 
-type ProfileTab = 'kurationen' | 'rezensionen' | 'bewertungen' | 'veranstaltungen' | 'buchclub' | 'buchbesprechung' | 'gelesen' | 'lese_ich' | 'möchte_lesen';
+type ProfileTab = 'kurationen' | 'rezensionen' | 'bewertungen' | 'veranstaltungen' | 'buchclub' | 'buchbesprechung' | 'leseliste';
 
 interface BookstoreProfile {
   id: number;
@@ -555,23 +555,22 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
 
   useEffect(() => {
     if (!profile || !contentBooksFetched || initialTabSet) return;
-    const defaultOrder = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub', 'gelesen', 'lese_ich', 'möchte_lesen'];
+    const defaultOrder = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub', 'leseliste'];
     const vt = profile.visible_tabs;
     const savedOrder = vt?._order;
     const order = Array.isArray(savedOrder) && savedOrder.length > 0
       ? [...savedOrder.filter((k: string) => defaultOrder.includes(k)), ...defaultOrder.filter(k => !savedOrder.includes(k))]
       : defaultOrder;
-    const readingListTabs = ['gelesen', 'lese_ich', 'möchte_lesen'];
     const visibleTabIds = order.filter(id => {
       if (id === 'buchbesprechung' && !hasContentBooks) return false;
       if (!vt || Object.keys(vt).filter(k => k !== '_order').length === 0) {
         if (id === 'buchclub') return profile.is_author && profile.show_buchclub;
-        if (readingListTabs.includes(id)) return false;
+        if (id === 'leseliste') return false;
         return true;
       }
       if (!(id in vt)) {
         if (id === 'buchclub') return profile.is_author && profile.show_buchclub;
-        if (readingListTabs.includes(id)) return false;
+        if (id === 'leseliste') return false;
         return true;
       }
       return vt[id] === true;
@@ -793,11 +792,9 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                       bewertungen: 'Bewertungen',
                       veranstaltungen: 'Veranstaltungen',
                       buchclub: 'Buchclub',
-                      gelesen: 'Gelesen',
-                      lese_ich: 'Lese ich',
-                      möchte_lesen: 'Leseliste',
+                      leseliste: 'Leseliste',
                     };
-                    const defaultOrder = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub', 'gelesen', 'lese_ich', 'möchte_lesen'];
+                    const defaultOrder = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub', 'leseliste'];
                     const vt = profile.visible_tabs;
                     const savedOrder = vt?._order;
                     const order = Array.isArray(savedOrder) && savedOrder.length > 0
@@ -807,16 +804,15 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                     return order
                       .map(id => ({ id: id as ProfileTab, label: TAB_LABELS[id] || id }))
                       .filter(tab => {
-                        const readingListTabs = ['gelesen', 'lese_ich', 'möchte_lesen'];
                         if (tab.id === 'buchbesprechung' && (!hasContentBooks || !contentBooksFetched)) return false;
                         if (!vt || Object.keys(vt).filter(k => k !== '_order').length === 0) {
                           if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
-                          if (readingListTabs.includes(tab.id)) return false;
+                          if (tab.id === 'leseliste') return false;
                           return true;
                         }
                         if (!(tab.id in vt)) {
                           if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
-                          if (readingListTabs.includes(tab.id)) return false;
+                          if (tab.id === 'leseliste') return false;
                           return true;
                         }
                         return vt[tab.id] === true;
@@ -972,15 +968,12 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
                 { id: 'bewertungen' as ProfileTab, label: 'Bewertungen' },
                 { id: 'veranstaltungen' as ProfileTab, label: 'Veranstaltungen' },
                 { id: 'buchclub' as ProfileTab, label: 'Buchclub' },
-                { id: 'gelesen' as ProfileTab, label: 'Gelesen' },
-                { id: 'lese_ich' as ProfileTab, label: 'Lese ich' },
-                { id: 'möchte_lesen' as ProfileTab, label: 'Leseliste' },
+                { id: 'leseliste' as ProfileTab, label: 'Leseliste' },
               ]).filter((tab) => {
-                const readingListTabs = ['gelesen', 'lese_ich', 'möchte_lesen'];
                 const vt = profile.visible_tabs;
                 if (!vt || Object.keys(vt).length === 0) {
                   if (tab.id === 'buchclub') return profile.is_author && profile.show_buchclub;
-                  if (readingListTabs.includes(tab.id)) return false;
+                  if (tab.id === 'leseliste') return false;
                   if (tab.id === 'veranstaltungen') return true;
                   return true;
                 }
@@ -1128,15 +1121,28 @@ export function PublicBookstore({ overrideSlug }: { overrideSlug?: string } = {}
           </section>
         )}
 
-        {(activeTab === 'gelesen' || activeTab === 'lese_ich' || activeTab === 'möchte_lesen') && (
-          <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-4" data-testid={`reading-list-${activeTab}-section`}>
-            <div className="text-center py-16">
-              <BookOpen className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
-              <Text as="p" variant="base" className="text-muted-foreground">
-                {activeTab === 'gelesen' && 'Keine gelesenen Bücher geteilt.'}
-                {activeTab === 'lese_ich' && 'Keine aktuell gelesenen Bücher geteilt.'}
-                {activeTab === 'möchte_lesen' && 'Keine Bücher auf der Leseliste geteilt.'}
-              </Text>
+        {activeTab === 'leseliste' && (
+          <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 space-y-8" data-testid="reading-list-section">
+            <div>
+              <h3 className="text-lg font-semibold mb-3" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>Lese ich zurzeit</h3>
+              <div className="text-center py-10 rounded-lg" style={{ backgroundColor: '#F9FAFB' }}>
+                <BookOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                <Text as="p" variant="small" className="text-muted-foreground">Keine aktuell gelesenen Bücher geteilt.</Text>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-3" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>Habe ich gelesen</h3>
+              <div className="text-center py-10 rounded-lg" style={{ backgroundColor: '#F9FAFB' }}>
+                <BookOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                <Text as="p" variant="small" className="text-muted-foreground">Keine gelesenen Bücher geteilt.</Text>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-3" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>Möchte ich lesen</h3>
+              <div className="text-center py-10 rounded-lg" style={{ backgroundColor: '#F9FAFB' }}>
+                <BookOpen className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
+                <Text as="p" variant="small" className="text-muted-foreground">Keine Bücher auf der Leseliste geteilt.</Text>
+              </div>
             </div>
           </section>
         )}

@@ -41,7 +41,7 @@ export function PublicProfile() {
   });
 
   const [bookstoreSlug, setBookstoreSlug] = useState<string | null>(null);
-  const DEFAULT_TAB_ORDER = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub', 'gelesen', 'lese_ich', 'möchte_lesen'];
+  const DEFAULT_TAB_ORDER = ['kurationen', 'buchbesprechung', 'rezensionen', 'bewertungen', 'veranstaltungen', 'buchclub', 'leseliste'];
   const [visibleTabs, setVisibleTabs] = useState({
     kurationen: true,
     buchbesprechung: true,
@@ -49,9 +49,7 @@ export function PublicProfile() {
     bewertungen: true,
     veranstaltungen: true,
     buchclub: false,
-    gelesen: false,
-    lese_ich: false,
-    möchte_lesen: false,
+    leseliste: false,
   });
   const [tabOrder, setTabOrder] = useState<string[]>(DEFAULT_TAB_ORDER);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -338,9 +336,7 @@ export function PublicProfile() {
               bewertungen: 'Bewertungen',
               veranstaltungen: 'Veranstaltungen',
               buchclub: 'Buchclub',
-              gelesen: 'Habe ich gelesen',
-              lese_ich: 'Lese ich zurzeit',
-              möchte_lesen: 'Möchte ich lesen',
+              leseliste: 'Leseliste',
             };
             const moveTab = (fromIdx: number, toIdx: number) => {
               setTabOrder(prev => {
