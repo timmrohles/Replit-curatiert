@@ -1150,6 +1150,26 @@ async function ensureSchemaReady() {
     log.warn('Could not create category_cards table:', err);
   }
 
+  try {
+    const heroExists = await queryDB(
+      `SELECT id FROM page_sections WHERE page_id = 26 AND section_type = 'category_hero' LIMIT 1`
+    );
+    if (heroExists.rows.length === 0) {
+      await queryDB(
+        `INSERT INTO page_sections (page_id, zone, sort_order, section_type, config, status, visibility, current_views, current_clicks, created_at, updated_at)
+         VALUES (26, 'above_fold', 0, 'category_hero', $1, 'published', 'visible', 0, 0, NOW(), NOW())`,
+        [JSON.stringify({
+          title: 'Belletristik',
+          subtitle: 'Die besten Romane, Erzählungen und literarischen Entdeckungen — kuratiert von unserer Community und Redaktion. Entdecke preisgekrönte Werke, Debüts und verborgene Perlen der deutschsprachigen und internationalen Literatur.',
+          backgroundImage: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&q=80'
+        })]
+      );
+      log.info('category_hero section seeded for Belletristik page');
+    }
+  } catch (err) {
+    log.warn('Could not seed category_hero section:', err);
+  }
+
   // ==================================================================
   // AWARDS TABLES
   // ==================================================================

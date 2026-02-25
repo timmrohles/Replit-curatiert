@@ -13,6 +13,7 @@ import { PageNavigationBadge } from './PageNavigationBadge';
 import { Header } from '../layout/Header';
 import { Footer } from '../layout/Footer';
 import { InfoBar } from '../layout/InfoBar';
+import { CategoryFilterProvider, useCategoryFilter, isSectionVisibleForFilter } from '../sections/CategoryFilterContext';
 import type { PageSection } from '../../types/page-resolve';
 
 // Reserved routes that should NOT be handled by DynamicPage
@@ -103,7 +104,7 @@ interface Book {
   description?: string;
 }
 
-export function DynamicPage() {
+function DynamicPageInner() {
   const { slug, subslug } = useParams<{ slug: string; subslug?: string }>();
   const navigate = useSafeNavigate();
   const [page, setPage] = useState<Page | null>(null);
@@ -231,9 +232,11 @@ export function DynamicPage() {
     );
   }
 
+  const hasCategoryHero = sections.some(s => (s.section_type || s.type) === 'category_hero');
+  const { activeFilter } = useCategoryFilter();
+
   return (
     <>
-      {/* SEO Meta Tags */}
       <SEOHead
         metadata={{
           title: page.title,
@@ -249,7 +252,6 @@ export function DynamicPage() {
         }}
       />
       
-      {/* Structured Data - WebPage */}
       <WebPageSchema
         name={page.metaTitle || page.title}
         description={page.metaDescription || page.description}
@@ -260,7 +262,6 @@ export function DynamicPage() {
         ]}
       />
       
-      {/* Breadcrumb Schema */}
       <BreadcrumbSchema
         items={[
           { name: 'Home', url: 'https://coratiert.de' },
@@ -268,23 +269,21 @@ export function DynamicPage() {
         ]}
       />
 
-      {/* Layout */}
       <InfoBar />
       <Header isHomePage={false} />
       
-      {/* Main Content */}
       <main id="main-content" className="min-h-screen">
-        {/* Hero Section */}
-        <div className="container mx-auto px-4 py-12">
-          <div className="max-w-4xl mx-auto text-center mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6" style={{ color: 'var(--charcoal, #2a2a2a)' }}>{page.title}</h1>
-            {page.description && (
-              <p className="text-xl" style={{ color: 'var(--color-text-secondary)' }}>{page.description}</p>
-            )}
+        {!hasCategoryHero && (
+          <div className="container mx-auto px-4 py-12">
+            <div className="max-w-4xl mx-auto text-center mb-12">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl mb-6" style={{ color: 'var(--charcoal, #2a2a2a)' }}>{page.title}</h1>
+              {page.description && (
+                <p className="text-xl" style={{ color: 'var(--color-text-secondary)' }}>{page.description}</p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Sections - sorted by zone */}
         <div className="pb-12">
           {(() => {
             const zonePriority: Record<string, number> = { above_fold: 0, main: 1 };
@@ -300,6 +299,12 @@ export function DynamicPage() {
 
             return sortedSections.length > 0 ? (
               sortedSections.map((section) => {
+                const sectionType = section.section_type || section.type;
+
+                if (hasCategoryHero && sectionType !== 'category_hero' && !isSectionVisibleForFilter(sectionType, activeFilter)) {
+                  return null;
+                }
+
                 const pinnedBooks = (section.items || [])
                   .filter((item: any) => item.book_id)
                   .map((item: any) => booksById[item.book_id])
@@ -334,11 +339,18 @@ export function DynamicPage() {
           })()}
         </div>
 
-        {/* Navigation Badge - only visible in preview mode */}
         <PageNavigationBadge pageId={page.id} />
       </main>
 
       <Footer />
     </>
+  );
+}
+
+export function DynamicPage() {
+  return (
+    <CategoryFilterProvider>
+      <DynamicPageInner />
+    </CategoryFilterProvider>
   );
 }

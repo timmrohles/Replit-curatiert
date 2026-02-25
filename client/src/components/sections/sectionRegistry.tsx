@@ -21,6 +21,7 @@ import { SupportersSection } from './SupportersSection.section';
 import { GenreCategoriesSection } from '../tags/GenreCategoriesSection';
 import { BookGridFilteredSection } from './BookGridFiltered.section';
 import { UserCurationsSection } from './UserCurationsSection.section';
+import { CategoryHeroSection } from './CategoryHeroSection.section';
 import type { PageSection } from '../../types/page-resolve';
 import { normalizeType } from '../../types/normalize';
 
@@ -103,6 +104,12 @@ export const SECTION_TYPES: SectionTypeDefinition[] = [
     allowedZones: ['main'],
     description: 'Kurationen von Nutzer:innen, optional nach Kategorie gefiltert'
   },
+  { 
+    value: 'category_hero', 
+    label: 'Kategorie-Hero', 
+    allowedZones: ['aboveFold'],
+    description: 'Hero-Banner für Kategorie-Seiten mit Hintergrundbild, H1, SEO-Text und Filter-Tabs'
+  },
 ];
 
 /**
@@ -116,6 +123,7 @@ export const QUERY_ONLY_SECTION_TYPES = [
   'events',
   'supporters',
   'genre_categories',
+  'category_hero',
 ];
 
 export function isQueryOnlySection(sectionType?: string): boolean {
@@ -173,6 +181,7 @@ export const SECTION_COMPONENTS: Record<string, React.FC<SectionComponentProps>>
   supporters: SupportersSection as any,
   book_grid_filtered: BookGridFilteredSection as any,
   user_curations: UserCurationsSection as any,
+  category_hero: CategoryHeroSection as any,
 };
 
 // ============================================================================
