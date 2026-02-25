@@ -22,6 +22,8 @@ import {
   GripVertical,
   Trash2,
   Check,
+  Mic,
+  Radio,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -56,8 +58,9 @@ export interface BookSourceConfig {
     userContext?: {
       followedBy?: 'any_user' | 'specific_users';
       followTargetType?: 'curator' | 'author' | 'user';
-      readingStatus?: 'reading' | 'read' | 'want_to_read';
+      readingStatus?: ('reading' | 'read' | 'want_to_read')[];
       readingStatusMode?: 'popular' | 'trending';
+      inMedia?: { enabled: boolean; period?: 'week' | 'month' | 'quarter' | 'year' | 'all' };
     };
     operator?: 'any' | 'all';
     sort?: 'newest' | 'award_date' | 'popularity' | 'relevance' | 'hidden_gems';
@@ -153,7 +156,10 @@ export function BookSourceBuilder({ sectionId, config, onChange }: BookSourceBui
     + (config.query?.filters?.languageCodes?.length || 0)
     + (config.query?.filters?.publisherIds?.length || 0);
 
-  const userContextActive = !!(config.query?.userContext?.followedBy || config.query?.userContext?.readingStatus);
+  const userContextCount = (config.query?.userContext?.followedBy ? 1 : 0)
+    + (config.query?.userContext?.readingStatus?.length || 0)
+    + (config.query?.userContext?.inMedia?.enabled ? 1 : 0);
+  const userContextActive = userContextCount > 0;
 
   return (
     <div className="space-y-4">
@@ -212,7 +218,7 @@ export function BookSourceBuilder({ sectionId, config, onChange }: BookSourceBui
             <FiltersEditor config={config} onChange={onChange} />
           </CollapsibleSection>
 
-          <CollapsibleSection title="User-Merkmale" icon={Users} count={userContextActive ? 1 : 0} accentColor="purple">
+          <CollapsibleSection title="User-Merkmale" icon={Users} count={userContextCount} accentColor="purple">
             <UserContextEditor config={config} onChange={onChange} />
           </CollapsibleSection>
 
@@ -701,34 +707,47 @@ function UserContextEditor({ config, onChange }: { config: BookSourceConfig; onC
           <span className="text-sm font-medium text-gray-800">Lesestatus</span>
         </div>
         <p className="text-xs text-gray-500">
-          Bücher, die viele Nutzer:innen auf einer bestimmten Leseliste haben.
+          Bücher, die viele Nutzer:innen auf einer bestimmten Leseliste haben. Mehrfachauswahl möglich.
         </p>
 
         <div>
-          <label className="text-xs font-medium mb-1 block text-gray-600">Status</label>
-          <Select
-            value={uc.readingStatus || 'none'}
-            onValueChange={(v) => {
-              if (v === 'none') {
-                updateUC({ readingStatus: undefined, readingStatusMode: undefined });
-              } else {
-                updateUC({ readingStatus: v as any, readingStatusMode: uc.readingStatusMode || 'popular' });
-              }
-            }}
-          >
-            <SelectTrigger className="h-9 text-sm bg-white">
-              <SelectValue placeholder="Nicht aktiv" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">Nicht aktiv</SelectItem>
-              <SelectItem value="reading">Lese ich gerade</SelectItem>
-              <SelectItem value="read">Habe ich gelesen</SelectItem>
-              <SelectItem value="want_to_read">Werde ich lesen</SelectItem>
-            </SelectContent>
-          </Select>
+          <label className="text-xs font-medium mb-1.5 block text-gray-600">Status (Mehrfachauswahl)</label>
+          <div className="grid grid-cols-3 gap-2">
+            {([
+              { value: 'reading', label: 'Lese ich', icon: BookOpen },
+              { value: 'read', label: 'Gelesen', icon: Check },
+              { value: 'want_to_read', label: 'Werde lesen', icon: BookMarked },
+            ] as const).map((opt) => {
+              const selected = (uc.readingStatus || []).includes(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    const current = uc.readingStatus || [];
+                    const next = selected
+                      ? current.filter(s => s !== opt.value)
+                      : [...current, opt.value];
+                    updateUC({
+                      readingStatus: next.length > 0 ? next : undefined,
+                      readingStatusMode: next.length > 0 ? (uc.readingStatusMode || 'popular') : undefined,
+                    });
+                  }}
+                  className={`flex flex-col items-center gap-1 p-2.5 rounded-md border text-xs font-medium transition-all ${
+                    selected
+                      ? 'bg-sky-100 border-sky-400 text-sky-800'
+                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <opt.icon className="w-4 h-4" />
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {uc.readingStatus && (
+        {(uc.readingStatus?.length || 0) > 0 && (
           <div>
             <label className="text-xs font-medium mb-1 block text-gray-600">Modus</label>
             <div className="grid grid-cols-2 gap-2">
@@ -755,7 +774,60 @@ function UserContextEditor({ config, onChange }: { config: BookSourceConfig; onC
         )}
       </div>
 
-      {(uc.followedBy || uc.readingStatus) && (
+      <div className="rounded-lg border p-4 space-y-3 bg-emerald-50/40">
+        <div className="flex items-center gap-2">
+          <Radio className="w-4 h-4 text-emerald-600" />
+          <span className="text-sm font-medium text-gray-800">In den Medien / Podcasts</span>
+        </div>
+        <p className="text-xs text-gray-500">
+          Bücher, die in Podcasts oder Medien erwähnt wurden.
+        </p>
+
+        <label className="flex items-center gap-2.5 cursor-pointer">
+          <Checkbox
+            checked={uc.inMedia?.enabled || false}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                updateUC({ inMedia: { enabled: true, period: 'all' } });
+              } else {
+                updateUC({ inMedia: undefined });
+              }
+            }}
+          />
+          <span className="text-sm">Nur Bücher mit Medien-Erwähnungen</span>
+        </label>
+
+        {uc.inMedia?.enabled && (
+          <div>
+            <label className="text-xs font-medium mb-1.5 block text-gray-600">Zeitraum</label>
+            <div className="grid grid-cols-5 gap-1.5">
+              {([
+                { value: 'week', label: 'Woche' },
+                { value: 'month', label: 'Monat' },
+                { value: 'quarter', label: 'Quartal' },
+                { value: 'year', label: 'Jahr' },
+                { value: 'all', label: 'Gesamt' },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => updateUC({ inMedia: { enabled: true, period: opt.value } })}
+                  className={`p-2 rounded-md border text-xs font-medium text-center transition-all ${
+                    (uc.inMedia?.period || 'all') === opt.value
+                      ? 'bg-emerald-100 border-emerald-400 text-emerald-800'
+                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1.5">Filtert nach Veröffentlichungsdatum der Podcast-Episode</p>
+          </div>
+        )}
+      </div>
+
+      {(uc.followedBy || (uc.readingStatus?.length || 0) > 0 || uc.inMedia?.enabled) && (
         <button
           type="button"
           onClick={clearUC}

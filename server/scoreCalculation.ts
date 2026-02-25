@@ -111,6 +111,8 @@ function calculateBookScores(book: { id: number; author: string; publisher: stri
   };
 }
 
+const INDIE_TAG_ID = 38;
+
 async function updateBookScore(bookId: number, scores: ReturnType<typeof calculateBookScores>) {
   await queryDB(
     `UPDATE books SET award_score = $1, media_score = $2, curation_score = $3,
@@ -121,6 +123,20 @@ async function updateBookScore(bookId: number, scores: ReturnType<typeof calcula
      scores.baseScore, scores.totalScore, scores.awardCount, scores.nominationCount,
      Boolean(scores.isIndie), scores.indieType || null, Boolean(scores.isHiddenGem), bookId]
   );
+
+  try {
+    if (scores.isIndie) {
+      await queryDB(
+        `INSERT INTO book_onix_tags (book_id, tag_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+        [bookId, INDIE_TAG_ID]
+      );
+    } else {
+      await queryDB(
+        `DELETE FROM book_onix_tags WHERE book_id = $1 AND tag_id = $2`,
+        [bookId, INDIE_TAG_ID]
+      );
+    }
+  } catch { /* book_onix_tags table may not exist yet */ }
 }
 
 export async function recalculateAllScores(): Promise<number> {
