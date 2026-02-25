@@ -13,7 +13,7 @@ import { PageNavigationBadge } from './PageNavigationBadge';
 import { Header } from '../layout/Header';
 import { Footer } from '../layout/Footer';
 import { InfoBar } from '../layout/InfoBar';
-import { CategoryFilterProvider, useCategoryFilter, isSectionVisibleForFilter } from '../sections/CategoryFilterContext';
+import { CategoryFilterProvider, useCategoryFilter, isSectionVisibleForFilter, type CategoryTab } from '../sections/CategoryFilterContext';
 import type { PageSection } from '../../types/page-resolve';
 
 // Reserved routes that should NOT be handled by DynamicPage
@@ -233,7 +233,17 @@ function DynamicPageInner() {
   }
 
   const hasCategoryHero = sections.some(s => (s.section_type || s.type) === 'category_hero');
-  const { activeFilter } = useCategoryFilter();
+  const { activeFilter, tabs, setTabs } = useCategoryFilter();
+
+  const categoryHeroSection = sections.find(s => (s.section_type || s.type) === 'category_hero');
+  const configTabs = categoryHeroSection?.config?.tabs as CategoryTab[] | undefined;
+  const configTabsKey = JSON.stringify(configTabs || []);
+  
+  useEffect(() => {
+    if (configTabs && configTabs.length > 0) {
+      setTabs(configTabs);
+    }
+  }, [configTabsKey, setTabs]);
 
   return (
     <>
@@ -301,7 +311,7 @@ function DynamicPageInner() {
               sortedSections.map((section) => {
                 const sectionType = section.section_type || section.type;
 
-                if (hasCategoryHero && sectionType !== 'category_hero' && !isSectionVisibleForFilter(sectionType, activeFilter)) {
+                if (hasCategoryHero && sectionType !== 'category_hero' && !isSectionVisibleForFilter(sectionType, activeFilter, tabs)) {
                   return null;
                 }
 

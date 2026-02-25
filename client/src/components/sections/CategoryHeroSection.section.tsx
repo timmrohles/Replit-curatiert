@@ -1,4 +1,4 @@
-import { useCategoryFilter, type CategoryFilterMode } from './CategoryFilterContext';
+import { useCategoryFilter, DEFAULT_TABS, type CategoryTab } from './CategoryFilterContext';
 import type { PageSection } from '../../types/page-resolve';
 
 interface CategoryHeroSectionProps {
@@ -9,22 +9,22 @@ interface CategoryHeroSectionProps {
 }
 
 export function CategoryHeroSection({ section }: CategoryHeroSectionProps) {
-  const { activeFilter, setActiveFilter } = useCategoryFilter();
+  const { activeFilter, setActiveFilter, tabs } = useCategoryFilter();
 
   const title = section.config?.title || 'Kategorie';
   const subtitle = section.config?.subtitle || '';
   const backgroundImage = section.config?.backgroundImage || section.config?.background_image || '';
 
-  const handleTabClick = (tab: 'empfehlungen' | 'redaktion') => {
-    if (activeFilter === tab) {
+  const handleTabClick = (tabId: string) => {
+    if (activeFilter === tabId) {
       setActiveFilter('all');
     } else {
-      setActiveFilter(tab);
+      setActiveFilter(tabId);
     }
   };
 
-  const isTabActive = (tab: 'empfehlungen' | 'redaktion') => {
-    return activeFilter === 'all' || activeFilter === tab;
+  const isTabActive = (tabId: string) => {
+    return activeFilter === 'all' || activeFilter === tabId;
   };
 
   return (
@@ -68,34 +68,27 @@ export function CategoryHeroSection({ section }: CategoryHeroSectionProps) {
           )}
         </div>
 
-        <div className="max-w-4xl mx-auto mt-10">
-          <div className="flex gap-1 justify-center" data-testid="category-hero-tabs">
-            <button
-              onClick={() => handleTabClick('empfehlungen')}
-              className="px-6 py-3 text-sm font-medium whitespace-nowrap rounded-t-lg transition-all duration-200"
-              style={{
-                color: isTabActive('empfehlungen') ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
-                backgroundColor: isTabActive('empfehlungen') ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
-                borderBottom: isTabActive('empfehlungen') ? '2px solid #FFFFFF' : '2px solid transparent',
-              }}
-              data-testid="category-tab-empfehlungen"
-            >
-              Empfehlungen
-            </button>
-            <button
-              onClick={() => handleTabClick('redaktion')}
-              className="px-6 py-3 text-sm font-medium whitespace-nowrap rounded-t-lg transition-all duration-200"
-              style={{
-                color: isTabActive('redaktion') ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
-                backgroundColor: isTabActive('redaktion') ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
-                borderBottom: isTabActive('redaktion') ? '2px solid #FFFFFF' : '2px solid transparent',
-              }}
-              data-testid="category-tab-redaktion"
-            >
-              Redaktion
-            </button>
-          </div>
-        </div>
+        {tabs.length > 0 && (
+          <nav className="max-w-4xl mx-auto mt-10" data-testid="category-hero-tabs" style={{ borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+            <div className="flex gap-2 flex-wrap justify-center">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabClick(tab.id)}
+                  className={`relative px-5 md:px-8 py-3.5 text-base font-medium whitespace-nowrap transition-colors ${
+                    isTabActive(tab.id) ? 'text-white' : 'text-white/60'
+                  }`}
+                  data-testid={`category-tab-${tab.id}`}
+                >
+                  {tab.label}
+                  {isTabActive(tab.id) && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-white" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </nav>
+        )}
       </div>
     </section>
   );

@@ -1325,6 +1325,95 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   )}
                   <p className="text-xs text-gray-400 mt-1">Bilder von Unsplash (Querformat, ideal für Hero-Banner)</p>
                 </div>
+
+                <Separator />
+
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Filter-Tabs</label>
+                  <p className="text-xs text-gray-500 mb-3">Tabs filtern die darunter liegenden Sections nach Typ. Ohne Tabs werden alle Sections angezeigt.</p>
+                  
+                  {(editingSection.config?.tabs || []).map((tab: any, idx: number) => (
+                    <div key={idx} className="flex items-start gap-2 mb-3 p-3 bg-gray-50 rounded-lg border">
+                      <div className="flex-1 space-y-2">
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder="Tab-ID (z.B. empfehlungen)"
+                            value={tab.id || ''}
+                            onChange={(e) => {
+                              const tabs = [...(editingSection.config?.tabs || [])];
+                              tabs[idx] = { ...tabs[idx], id: e.target.value };
+                              setEditingSection({ ...editingSection, config: { ...editingSection.config, tabs } });
+                            }}
+                            className="flex-1"
+                          />
+                          <Input
+                            type="text"
+                            placeholder="Anzeigename"
+                            value={tab.label || ''}
+                            onChange={(e) => {
+                              const tabs = [...(editingSection.config?.tabs || [])];
+                              tabs[idx] = { ...tabs[idx], label: e.target.value };
+                              setEditingSection({ ...editingSection, config: { ...editingSection.config, tabs } });
+                            }}
+                            className="flex-1"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 mb-1 block">Sichtbare Section-Typen (kommagetrennt)</label>
+                          <Input
+                            type="text"
+                            placeholder="z.B. user_curations, book_carousel"
+                            value={(tab.sectionTypes || []).join(', ')}
+                            onChange={(e) => {
+                              const tabs = [...(editingSection.config?.tabs || [])];
+                              tabs[idx] = { ...tabs[idx], sectionTypes: e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean) };
+                              setEditingSection({ ...editingSection, config: { ...editingSection.config, tabs } });
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const tabs = [...(editingSection.config?.tabs || [])];
+                          tabs.splice(idx, 1);
+                          setEditingSection({ ...editingSection, config: { ...editingSection.config, tabs } });
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
+                  ))}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const tabs = [...(editingSection.config?.tabs || [])];
+                      tabs.push({ id: '', label: '', sectionTypes: [] });
+                      setEditingSection({ ...editingSection, config: { ...editingSection.config, tabs } });
+                    }}
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> Tab hinzufügen
+                  </Button>
+
+                  {(!editingSection.config?.tabs || editingSection.config.tabs.length === 0) && (
+                    <div className="mt-2 p-2 bg-amber-50 rounded text-xs text-amber-700">
+                      Keine Tabs konfiguriert — Standard-Tabs werden verwendet (Empfehlungen + Redaktion)
+                    </div>
+                  )}
+
+                  <details className="mt-2">
+                    <summary className="text-xs text-gray-400 cursor-pointer">Verfügbare Section-Typen</summary>
+                    <p className="text-xs text-gray-400 mt-1 font-mono leading-relaxed">
+                      user_curations, book_carousel, book_grid_filtered, category_grid, recipient_category_grid, creator_carousel, hero, horizontal_row
+                    </p>
+                  </details>
+                </div>
               </div>
             )}
 
