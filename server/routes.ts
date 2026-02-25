@@ -8385,6 +8385,50 @@ export async function registerRoutes(
   });
 
   // ==================================================================
+  // USER'S LIKED & BOOKMARKED CURATIONS
+  // ==================================================================
+
+  app.get('/api/me/saved-curations', async (req: Request, res: Response) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated() || !req.user) {
+        return res.status(401).json({ ok: false, error: 'Login required' });
+      }
+      const userId = (req.user as any)?.claims?.sub;
+
+      const liked = await queryDB(
+        `SELECT c.id, c.title, c.rationale as description, c.created_at,
+                cl.created_at as liked_at,
+                'liked' as interaction_type
+         FROM curation_likes cl
+         JOIN curations c ON c.id = cl.curation_id
+         WHERE cl.user_id = $1 AND c.deleted_at IS NULL
+         ORDER BY cl.created_at DESC`,
+        [userId]
+      );
+
+      const bookmarked = await queryDB(
+        `SELECT c.id, c.title, c.rationale as description, c.created_at,
+                cb.created_at as bookmarked_at,
+                'bookmarked' as interaction_type
+         FROM curation_bookmarks cb
+         JOIN curations c ON c.id = cb.curation_id
+         WHERE cb.user_id = $1 AND c.deleted_at IS NULL
+         ORDER BY cb.created_at DESC`,
+        [userId]
+      );
+
+      return res.json({
+        ok: true,
+        liked: liked.rows,
+        bookmarked: bookmarked.rows,
+      });
+    } catch (error) {
+      log.error('Get saved curations error:', error);
+      return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
   // CONTENT REPORTS
   // ==================================================================
   app.post('/api/content-reports', async (req: Request, res: Response) => {

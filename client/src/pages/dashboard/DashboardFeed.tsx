@@ -12,6 +12,7 @@ import {
   Loader2,
   BookOpen,
   Heart,
+  Bookmark,
   Calendar,
   MapPin,
   Users,
@@ -29,6 +30,16 @@ interface UserCuration {
   description: string | null;
   is_published: boolean;
   created_at: string;
+}
+
+interface SavedCuration {
+  id: number;
+  title: string;
+  description: string | null;
+  created_at: string;
+  liked_at?: string;
+  bookmarked_at?: string;
+  interaction_type: 'liked' | 'bookmarked';
 }
 
 interface UserEvent {
@@ -91,6 +102,8 @@ export function DashboardFeed() {
   const [curations, setCurations] = useState<UserCuration[]>([]);
   const [events, setEvents] = useState<UserEvent[]>([]);
   const [latestBooks, setLatestBooks] = useState<BookCarouselItemData[]>([]);
+  const [likedCurations, setLikedCurations] = useState<SavedCuration[]>([]);
+  const [bookmarkedCurations, setBookmarkedCurations] = useState<SavedCuration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadFeedData = useCallback(async () => {
@@ -100,14 +113,19 @@ export function DashboardFeed() {
     }
     setIsLoading(true);
     try {
-      const [curationsRes, eventsRes, booksRes] = await Promise.all([
+      const [curationsRes, eventsRes, booksRes, savedRes] = await Promise.all([
         fetch(`${API_BASE}/user-curations?userId=${encodeURIComponent(userId)}`).then(r => r.json()).catch(() => ({ ok: false })),
         fetch(`${API_BASE}/user-events?userId=${encodeURIComponent(userId)}`).then(r => r.json()).catch(() => ({ ok: false })),
         fetch(`${API_BASE}/books?limit=12&sort=newest`).then(r => r.json()).catch(() => ({ ok: false })),
+        fetch(`${API_BASE}/me/saved-curations`, { credentials: 'include' }).then(r => r.json()).catch(() => ({ ok: false })),
       ]);
       if (curationsRes.ok) setCurations(curationsRes.data || []);
       if (eventsRes.ok) setEvents(eventsRes.data || []);
       if (booksRes.ok) setLatestBooks(booksRes.data || []);
+      if (savedRes.ok) {
+        setLikedCurations(savedRes.liked || []);
+        setBookmarkedCurations(savedRes.bookmarked || []);
+      }
     } catch {
       // silent
     } finally {
@@ -123,7 +141,7 @@ export function DashboardFeed() {
   const upcomingEvents = events.filter(e => new Date(e.event_date) >= new Date());
   const publishedCurations = curations.filter(c => c.is_published);
 
-  const hasContent = bookFavorites.length > 0 || publishedCurations.length > 0 || upcomingEvents.length > 0 || latestBooks.length > 0;
+  const hasContent = bookFavorites.length > 0 || publishedCurations.length > 0 || upcomingEvents.length > 0 || latestBooks.length > 0 || likedCurations.length > 0 || bookmarkedCurations.length > 0;
 
   if (isLoading || favsLoading) {
     return (
