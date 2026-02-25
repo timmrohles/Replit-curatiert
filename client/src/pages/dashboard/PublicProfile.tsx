@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { User, Save, Globe, Instagram, Podcast, Check, Plus, Search, X, Store, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon, MapPin, Loader2 } from 'lucide-react';
+import { User, Save, Globe, Instagram, Podcast, Check, Plus, Search, X, GripVertical, ChevronUp, ChevronDown, Image as ImageIcon, MapPin, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { UserBookstore } from './UserBookstore';
 import { SiYoutube, SiTiktok } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../../hooks/use-auth';
@@ -580,21 +579,6 @@ export function PublicProfile() {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(36, 123, 160, 0.1)' }}>
-            <Store className="w-5 h-5" style={{ color: '#247ba0' }} />
-          </div>
-          <div>
-            <h2 className="text-lg md:text-xl" style={{ fontFamily: 'Fjalla One', color: '#1F2937' }}>
-              Mein Bookstore
-            </h2>
-            <p className="text-xs" style={{ color: '#6B7280' }}>Kurationen auswählen und anordnen</p>
-          </div>
-        </div>
-        <UserBookstore />
       </div>
 
       <div className="p-6">
