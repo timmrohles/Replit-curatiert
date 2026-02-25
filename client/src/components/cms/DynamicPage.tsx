@@ -112,8 +112,19 @@ function DynamicPageInner() {
   const [books, setBooks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { activeFilter, tabs, setTabs } = useCategoryFilter();
 
   const fullSlug = subslug ? `${slug}/${subslug}` : slug;
+
+  const heroSection = sections.find(s => (s.section_type || s.type) === 'category_hero');
+  const heroConfigTabs = heroSection?.config?.tabs as CategoryTab[] | undefined;
+  const heroConfigTabsKey = JSON.stringify(heroConfigTabs || []);
+
+  useEffect(() => {
+    if (heroConfigTabs && heroConfigTabs.length > 0) {
+      setTabs(heroConfigTabs);
+    }
+  }, [heroConfigTabsKey, setTabs]);
 
   useEffect(() => {
     const fetchPage = async () => {
@@ -233,17 +244,6 @@ function DynamicPageInner() {
   }
 
   const hasCategoryHero = sections.some(s => (s.section_type || s.type) === 'category_hero');
-  const { activeFilter, tabs, setTabs } = useCategoryFilter();
-
-  const categoryHeroSection = sections.find(s => (s.section_type || s.type) === 'category_hero');
-  const configTabs = categoryHeroSection?.config?.tabs as CategoryTab[] | undefined;
-  const configTabsKey = JSON.stringify(configTabs || []);
-  
-  useEffect(() => {
-    if (configTabs && configTabs.length > 0) {
-      setTabs(configTabs);
-    }
-  }, [configTabsKey, setTabs]);
 
   return (
     <>
