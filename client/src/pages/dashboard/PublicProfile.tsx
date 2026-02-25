@@ -742,7 +742,7 @@ export function PublicProfile() {
         </button>
 
         <a
-          href={bookstoreSlug ? `/de-de/bookstore/${bookstoreSlug}` : '#'}
+          href={bookstoreSlug ? `/${bookstoreSlug}` : '#'}
           target="_blank"
           rel="noopener noreferrer"
           data-testid="link-public-profile"
