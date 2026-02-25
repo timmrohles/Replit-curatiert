@@ -1,44 +1,35 @@
-/**
- * ==================================================================
- * BOOK SOURCE BUILDER - Hybrid Manual + Query Builder
- * ==================================================================
- * 
- * Für Book Sections: book_carousel, book_grid, book_list_row, book_featured
- * 
- * Modi:
- * - Manual: Nur manuell gepinnte Bücher
- * - Query: Nur dynamische Buchabfrage
- * - Hybrid: Kombination (Manual first, dann Query, de-duped)
- * 
- * ==================================================================
- */
-
-import { useState, useEffect } from 'react';
-import { 
-  Plus, 
-  Search, 
-  X, 
-  ChevronUp, 
-  ChevronDown, 
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Plus,
+  Search,
+  X,
+  ChevronUp,
+  ChevronDown,
+  ChevronRight,
   AlertCircle,
   BookOpen,
   Filter,
   Target,
   Ban,
   Eye,
-  EyeOff
+  EyeOff,
+  SlidersHorizontal,
+  ArrowUpDown,
+  Users,
+  Heart,
+  BookMarked,
+  Sparkles,
+  GripVertical,
+  Trash2,
+  Check,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { Separator } from '../ui/separator';
-import { Heading } from '../ui/typography';
-import { Card } from '../ui/card';
 import { Checkbox } from '../ui/checkbox';
-import { API_BASE_URL } from '../../config/apiClient';  // ✅ FIXED: Use canonical import
-// TYPES
-// ============================================================================
+import { API_BASE_URL } from '../../config/apiClient';
 
 export interface BookSourceConfig {
   mode: 'manual' | 'query' | 'hybrid';
@@ -62,8 +53,14 @@ export interface BookSourceConfig {
       languageCodes?: string[];
       publisherIds?: number[];
     };
+    userContext?: {
+      followedBy?: 'any_user' | 'specific_users';
+      followTargetType?: 'curator' | 'author' | 'user';
+      readingStatus?: 'reading' | 'read' | 'want_to_read';
+      readingStatusMode?: 'popular' | 'trending';
+    };
     operator?: 'any' | 'all';
-    sort?: 'newest' | 'award_date' | 'popularity';
+    sort?: 'newest' | 'award_date' | 'popularity' | 'relevance' | 'hidden_gems';
     limit?: number;
   };
 }
@@ -74,157 +71,186 @@ interface BookSourceBuilderProps {
   onChange: (config: BookSourceConfig) => void;
 }
 
-// ============================================================================
-// COMPONENT
-// ============================================================================
+const MODE_OPTIONS = [
+  { value: 'manual', label: 'Manuell', desc: 'Nur handverlesene Bücher', icon: BookMarked, color: 'bg-amber-50 border-amber-200 text-amber-800' },
+  { value: 'query', label: 'Dynamisch', desc: 'Automatisch nach Regeln', icon: Sparkles, color: 'bg-violet-50 border-violet-200 text-violet-800' },
+  { value: 'hybrid', label: 'Hybrid', desc: 'Manuell + dynamisch ergänzt', icon: SlidersHorizontal, color: 'bg-sky-50 border-sky-200 text-sky-800' },
+] as const;
 
-export function BookSourceBuilder({ sectionId, config, onChange }: BookSourceBuilderProps) {
-  const [activeTab, setActiveTab] = useState<'include' | 'exclude' | 'filter' | 'sort'>('include');
-
-  // ============================================================================
-  // MODE SWITCH
-  // ============================================================================
-
-  const handleModeChange = (mode: 'manual' | 'query' | 'hybrid') => {
-    onChange({
-      ...config,
-      mode,
-      // Initialize query if switching to query/hybrid
-      query: (mode === 'query' || mode === 'hybrid') && !config.query
-        ? {
-            operator: 'any',
-            sort: 'newest',
-            limit: 20,
-          }
-        : config.query,
-    });
-  };
-
-  // ============================================================================
-  // RENDER
-  // ============================================================================
-
-  const showManualSection = config.mode === 'manual' || config.mode === 'hybrid';
-  const showQuerySection = config.mode === 'query' || config.mode === 'hybrid';
-
+function SectionCount({ count }: { count: number }) {
+  if (count === 0) return null;
   return (
-    <div className="space-y-6">
-      {/* ========================================== */}
-      {/* MODE SELECTOR (Always Visible) */}
-      {/* ========================================== */}
-      
-      <Card className="p-4 bg-blue-50 border-blue-200">
-        <Heading variant="h5" className="mb-3 text-sm font-semibold flex items-center gap-2">
-          <Target className="w-4 h-4" />
-          Book Source Mode
-        </Heading>
-        
-        <Select value={config.mode} onValueChange={handleModeChange}>
-          <SelectTrigger className="bg-white">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="manual">
-              <div className="flex flex-col items-start">
-                <span className="font-medium">Manual</span>
-                <span className="text-xs text-gray-500">Nur manuell gepinnte Bücher</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="query">
-              <div className="flex flex-col items-start">
-                <span className="font-medium">Query</span>
-                <span className="text-xs text-gray-500">Nur dynamische Buchabfrage</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="hybrid">
-              <div className="flex flex-col items-start">
-                <span className="font-medium">Hybrid</span>
-                <span className="text-xs text-gray-500">Manual first, dann Query (de-duped)</span>
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
+    <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-semibold bg-blue-600 text-white">
+      {count}
+    </span>
+  );
+}
 
-        <div className="mt-3 p-3 bg-white rounded text-xs text-gray-600 border">
-          💡 <strong>Info:</strong> Diese Section zeigt Bücher dynamisch basierend auf den ausgewählten Regeln.
-          Manuell gepinnte Bücher werden – je nach Modus – ergänzt oder priorisiert.
-        </div>
-      </Card>
-
-      {/* ========================================== */}
-      {/* MANUAL BOOKS SECTION */}
-      {/* ========================================== */}
-      
-      {showManualSection && (
-        <ManualBooksEditor sectionId={sectionId} />
-      )}
-
-      {/* ========================================== */}
-      {/* QUERY BUILDER SECTION */}
-      {/* ========================================== */}
-      
-      {showQuerySection && (
-        <QueryBuilderEditor
-          config={config}
-          onChange={onChange}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
-      )}
-
-      {/* ========================================== */}
-      {/* VALIDATION WARNINGS */}
-      {/* ========================================== */}
-      
-      {showQuerySection && (!config.query?.include || Object.keys(config.query.include).length === 0) && (
-        <div className="p-3 rounded flex items-center gap-2 text-sm" style={{ backgroundColor: '#FFB70020', color: '#FFB700' }}>
-          <AlertCircle className="w-4 h-4" />
-          <span>⚠️ Query-Modus erfordert mindestens eine Include-Quelle</span>
-        </div>
-      )}
-
-      {config.query?.filters?.yearFrom && config.query?.filters?.yearTo && 
-       config.query.filters.yearFrom > config.query.filters.yearTo && (
-        <div className="p-3 rounded flex items-center gap-2 text-sm" style={{ backgroundColor: '#FF000020', color: '#FF0000' }}>
-          <AlertCircle className="w-4 h-4" />
-          <span>❌ yearFrom muss kleiner oder gleich yearTo sein</span>
+function CollapsibleSection({
+  title,
+  icon: Icon,
+  defaultOpen = false,
+  count = 0,
+  accentColor = 'blue',
+  children,
+}: {
+  title: string;
+  icon: React.ElementType;
+  defaultOpen?: boolean;
+  count?: number;
+  accentColor?: string;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-lg border bg-white overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-gray-50/80 transition-colors"
+      >
+        <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${open ? 'rotate-90' : ''}`} />
+        <Icon className={`w-4 h-4 text-${accentColor}-600`} />
+        <span className="text-sm font-medium flex-1">{title}</span>
+        <SectionCount count={count} />
+      </button>
+      {open && (
+        <div className="px-4 pb-4 border-t bg-gray-50/30">
+          {children}
         </div>
       )}
     </div>
   );
 }
 
-// ============================================================================
-// MANUAL BOOKS EDITOR (Separate Component)
-// ============================================================================
+export function BookSourceBuilder({ sectionId, config, onChange }: BookSourceBuilderProps) {
+  const handleModeChange = (mode: 'manual' | 'query' | 'hybrid') => {
+    onChange({
+      ...config,
+      mode,
+      query: (mode === 'query' || mode === 'hybrid') && !config.query
+        ? { operator: 'any', sort: 'newest', limit: 20 }
+        : config.query,
+    });
+  };
 
-interface ManualBooksEditorProps {
-  sectionId: number;
+  const showManualSection = config.mode === 'manual' || config.mode === 'hybrid';
+  const showQuerySection = config.mode === 'query' || config.mode === 'hybrid';
+
+  const includeCount = (config.query?.include?.categoryIds?.length || 0)
+    + (config.query?.include?.tagIds?.length || 0)
+    + (config.query?.include?.awardDefinitionIds?.length || 0)
+    + (config.query?.include?.awardInstanceIds?.length || 0);
+
+  const excludeCount = (config.query?.exclude?.categoryIds?.length || 0)
+    + (config.query?.exclude?.tagIds?.length || 0)
+    + (config.query?.exclude?.awardDefinitionIds?.length || 0)
+    + (config.query?.exclude?.awardInstanceIds?.length || 0)
+    + (config.query?.exclude?.bookIds?.length || 0);
+
+  const filterCount = (config.query?.filters?.yearFrom ? 1 : 0)
+    + (config.query?.filters?.yearTo ? 1 : 0)
+    + (config.query?.filters?.languageCodes?.length || 0)
+    + (config.query?.filters?.publisherIds?.length || 0);
+
+  const userContextActive = !!(config.query?.userContext?.followedBy || config.query?.userContext?.readingStatus);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-1">
+        <SlidersHorizontal className="w-4 h-4 text-gray-500" />
+        <span className="text-sm font-semibold text-gray-700">Inhaltsquelle</span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {MODE_OPTIONS.map((opt) => {
+          const isActive = config.mode === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => handleModeChange(opt.value as any)}
+              className={`relative flex flex-col items-center gap-1 p-3 rounded-lg border-2 text-center transition-all ${
+                isActive
+                  ? opt.color + ' ring-2 ring-offset-1 ring-blue-400'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              <opt.icon className="w-5 h-5" />
+              <span className="text-xs font-semibold">{opt.label}</span>
+              <span className="text-[10px] opacity-70 leading-tight">{opt.desc}</span>
+              {isActive && (
+                <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center">
+                  <Check className="w-3 h-3" />
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {showManualSection && (
+        <ManualBooksEditor sectionId={sectionId} />
+      )}
+
+      {showQuerySection && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 pt-2">
+            <Filter className="w-4 h-4 text-violet-600" />
+            <span className="text-sm font-semibold text-gray-700">Dynamische Regeln</span>
+          </div>
+
+          <CollapsibleSection title="Quellen einschließen" icon={Target} defaultOpen={true} count={includeCount} accentColor="green">
+            <IncludeSourcesEditor config={config} onChange={onChange} />
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Ausschließen" icon={Ban} count={excludeCount} accentColor="red">
+            <ExcludeSourcesEditor config={config} onChange={onChange} />
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Erweiterte Filter" icon={Filter} count={filterCount} accentColor="blue">
+            <FiltersEditor config={config} onChange={onChange} />
+          </CollapsibleSection>
+
+          <CollapsibleSection title="User-Merkmale" icon={Users} count={userContextActive ? 1 : 0} accentColor="purple">
+            <UserContextEditor config={config} onChange={onChange} />
+          </CollapsibleSection>
+
+          <CollapsibleSection title="Sortierung & Limit" icon={ArrowUpDown} accentColor="gray">
+            <SortAndLimitEditor config={config} onChange={onChange} />
+          </CollapsibleSection>
+        </div>
+      )}
+
+      {showQuerySection && includeCount === 0 && !userContextActive && (
+        <div className="flex items-center gap-2 text-sm px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
+          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <span>Mindestens eine Quelle oder ein User-Merkmal muss definiert sein.</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
-function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
+function ManualBooksEditor({ sectionId }: { sectionId: number }) {
   const [manualBooks, setManualBooks] = useState<any[]>([]);
   const [searchMode, setSearchMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load manual books from section_items
   useEffect(() => {
     loadManualBooks();
   }, [sectionId]);
 
   const loadManualBooks = async () => {
     try {
-      const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/sections/${sectionId}/items`, {
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
-      
       if (response.ok) {
         const result = await response.json();
-        // Filter nur book items
         const bookItems = (result.data || []).filter((item: any) => item.item_type === 'book');
         setManualBooks(bookItems);
       }
@@ -235,34 +261,19 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/books/search?q=${encodeURIComponent(searchQuery)}&limit=10`, {
-            credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
-      
       if (response.ok) {
         const result = await response.json();
-        // Server returns { ok: true, data: [...] } format
-        const books = result.data || [];
-        setSearchResults(books);
-        if (books.length === 0) {
-          console.warn('⚠️ Search returned 0 results for query:', searchQuery);
-        }
+        setSearchResults(result.data || []);
       } else {
-        console.error('❌ Book Search Error:', {
-          status: response.status,
-          statusText: response.statusText,
-          url: response.url,
-        });
         setSearchResults([]);
       }
-    } catch (err) {
-      console.error('❌ Error searching books:', err);
+    } catch {
       setSearchResults([]);
     } finally {
       setLoading(false);
@@ -270,1304 +281,920 @@ function ManualBooksEditor({ sectionId }: ManualBooksEditorProps) {
   };
 
   const handleAddBook = async (bookId: number) => {
+    if (manualBooks.some(item => item.target_book_id === bookId)) {
+      alert('Dieses Buch ist bereits hinzugefügt.');
+      return;
+    }
+    const maxSortOrder = manualBooks.reduce((max, item) => Math.max(max, item.sort_order || 0), 0);
     try {
-      const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
-      
-      // Check for duplicates
-      if (manualBooks.some(item => item.target_book_id === bookId)) {
-        alert('❌ Dieses Buch ist bereits in der Section');
-        return;
-      }
-      
-      // Determine next sort_order
-      const maxSortOrder = manualBooks.reduce((max, item) => Math.max(max, item.sort_order || 0), 0);
-      
-      const payload = {
-        page_section_id: sectionId,
-        item_type: 'book',
-        target_type: 'book',
-        target_book_id: bookId,
-        sort_order: maxSortOrder + 10,
-        status: 'draft',
-        visibility: 'visible',
-      };
-      
       const response = await fetch(`${API_BASE_URL}/admin/sections/${sectionId}/items`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          page_section_id: sectionId,
+          item_type: 'book',
+          target_type: 'book',
+          target_book_id: bookId,
+          sort_order: maxSortOrder + 10,
+          status: 'draft',
+          visibility: 'visible',
+        }),
       });
-      
       if (response.ok) {
         setSearchMode(false);
         setSearchQuery('');
         setSearchResults([]);
         await loadManualBooks();
-      } else {
-        alert('❌ Fehler beim Hinzufügen des Buchs');
       }
-    } catch (err) {
-      console.error('Error adding book:', err);
-      alert('❌ Fehler beim Hinzufügen des Buchs');
+    } catch {
+      alert('Fehler beim Hinzufügen.');
     }
   };
 
   const handleRemoveBook = async (itemId: number) => {
     if (!confirm('Buch wirklich entfernen?')) return;
-    
     try {
-      const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
       const response = await fetch(`${API_BASE_URL}/admin/items/${itemId}`, {
         method: 'DELETE',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
       });
-      
-      if (response.ok) {
-        await loadManualBooks();
-      } else {
-        alert('❌ Fehler beim Löschen');
-      }
-    } catch (err) {
-      console.error('Error removing book:', err);
-      alert('❌ Fehler beim Löschen');
+      if (response.ok) await loadManualBooks();
+    } catch {
+      alert('Fehler beim Entfernen.');
     }
   };
 
   const handleReorder = async (itemId: number, direction: 'up' | 'down') => {
-    const currentIndex = manualBooks.findIndex(item => item.id === itemId);
-    if (currentIndex === -1) return;
-    
-    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    if (targetIndex < 0 || targetIndex >= manualBooks.length) return;
-    
+    const idx = manualBooks.findIndex(item => item.id === itemId);
+    if (idx === -1) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= manualBooks.length) return;
     try {
-      const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
-      
-      // Swap sort_orders
-      const currentItem = manualBooks[currentIndex];
-      const targetItem = manualBooks[targetIndex];
-      
-      await fetch(`${API_BASE_URL}/admin/items/${currentItem.id}`, {
-        method: 'PATCH',
-        credentials: 'include',
+      const cur = manualBooks[idx];
+      const tgt = manualBooks[targetIdx];
+      await fetch(`${API_BASE_URL}/admin/items/${cur.id}`, {
+        method: 'PATCH', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sort_order: targetItem.sort_order }),
+        body: JSON.stringify({ sort_order: tgt.sort_order }),
       });
-      
-      await fetch(`${API_BASE_URL}/admin/items/${targetItem.id}`, {
-        method: 'PATCH',
-        credentials: 'include',
+      await fetch(`${API_BASE_URL}/admin/items/${tgt.id}`, {
+        method: 'PATCH', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sort_order: currentItem.sort_order }),
+        body: JSON.stringify({ sort_order: cur.sort_order }),
       });
-      
       await loadManualBooks();
-    } catch (err) {
-      console.error('Error reordering:', err);
-      alert('❌ Fehler beim Umsortieren');
+    } catch {
+      alert('Fehler beim Umsortieren.');
     }
   };
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <Heading variant="h5" className="text-sm font-semibold flex items-center gap-2">
-          <BookOpen className="w-4 h-4" />
-          Manual Books (Pinned)
-        </Heading>
-        <Button 
-          size="sm" 
-          variant="outline"
+    <div className="rounded-lg border bg-white overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-amber-50/60 border-b">
+        <div className="flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-amber-700" />
+          <span className="text-sm font-semibold text-amber-900">Manuell gepinnte Bücher</span>
+          <SectionCount count={manualBooks.length} />
+        </div>
+        <Button
+          size="sm"
+          variant={searchMode ? 'secondary' : 'outline'}
+          className="h-7 text-xs"
           onClick={() => setSearchMode(!searchMode)}
         >
-          {searchMode ? (
-            <>
-              <X className="w-4 h-4 mr-2" />
-              Cancel
-            </>
-          ) : (
-            <>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Book
-            </>
-          )}
+          {searchMode ? <><X className="w-3 h-3 mr-1" /> Schließen</> : <><Plus className="w-3 h-3 mr-1" /> Buch hinzufügen</>}
         </Button>
       </div>
 
-      {/* Search UI */}
       {searchMode && (
-        <div className="mb-4 p-3 bg-gray-50 rounded border">
+        <div className="p-3 border-b bg-gray-50/80">
           <div className="flex gap-2">
             <Input
-              placeholder="Suche nach Titel, Autor oder ISBN..."
+              placeholder="Titel, Autor oder ISBN suchen..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              className="h-9 text-sm"
             />
-            <Button onClick={handleSearch} disabled={loading}>
+            <Button onClick={handleSearch} disabled={loading} size="sm" className="h-9 px-3">
               <Search className="w-4 h-4" />
             </Button>
           </div>
-
-          {/* Search Results */}
           {searchResults.length > 0 && (
-            <div className="mt-3 space-y-2">
+            <div className="mt-2 space-y-1 max-h-60 overflow-y-auto">
               {searchResults.map((book) => (
                 <div
                   key={book.id}
-                  className="p-2 bg-white rounded border flex items-center justify-between hover:bg-gray-50"
+                  className="flex items-center gap-3 p-2 rounded-md bg-white border hover:bg-blue-50 cursor-pointer transition-colors"
+                  onClick={() => handleAddBook(book.id)}
                 >
-                  <div>
-                    <div className="font-medium text-sm">{book.title}</div>
-                    <div className="text-xs text-gray-500">
-                      {book.author} • ISBN: {book.isbn13}
-                    </div>
+                  {book.cover_url && (
+                    <img src={book.cover_url} alt="" className="w-8 h-12 rounded object-cover flex-shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{book.title}</div>
+                    <div className="text-xs text-gray-500 truncate">{book.author}</div>
                   </div>
-                  <Button size="sm" onClick={() => handleAddBook(book.id)}>
-                    Add
-                  </Button>
+                  <Plus className="w-4 h-4 text-blue-500 flex-shrink-0" />
                 </div>
               ))}
             </div>
           )}
-
           {searchResults.length === 0 && searchQuery && !loading && (
-            <div className="mt-3 text-center text-sm text-gray-500 py-4 border-2 border-dashed rounded">
-              <p className="font-medium mb-1">Keine Ergebnisse gefunden</p>
-              <p className="text-xs">Suchbegriff: "{searchQuery}"</p>
-              <p className="text-xs text-gray-400 mt-2">
-                💡 Tipp: Öffne die Browser-Console für Details
-              </p>
-            </div>
+            <p className="text-xs text-gray-500 text-center py-3">Keine Ergebnisse für "{searchQuery}"</p>
           )}
         </div>
       )}
 
-      {/* Manual Books List */}
       {manualBooks.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 text-sm">
-          Keine manuell gepinnten Bücher.
-          <br />
-          Klicke auf "Add Book" um Bücher hinzuzufügen.
+        <div className="text-center py-6 text-gray-400 text-sm">
+          <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-40" />
+          Noch keine Bücher gepinnt.
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="divide-y">
           {manualBooks.map((item, index) => (
-            <div
-              key={item.id}
-              className="p-3 bg-gray-50 rounded border flex items-center justify-between"
-            >
-              <div className="flex-1">
-                <div className="font-medium text-sm">{item.book?.title || 'Unknown'}</div>
-                <div className="text-xs text-gray-500">
-                  {item.book?.author} • ISBN: {item.book?.isbn13}
-                </div>
+            <div key={item.id} className="flex items-center gap-2 px-3 py-2 hover:bg-gray-50/60 group">
+              <GripVertical className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" />
+              {item.book?.cover_url && (
+                <img src={item.book.cover_url} alt="" className="w-7 h-10 rounded object-cover flex-shrink-0" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{item.book?.title || 'Unbekannt'}</div>
+                <div className="text-xs text-gray-500 truncate">{item.book?.author}</div>
               </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleReorder(item.id, 'up')}
-                  disabled={index === 0}
-                >
-                  <ChevronUp className="w-4 h-4" />
+              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleReorder(item.id, 'up')} disabled={index === 0}>
+                  <ChevronUp className="w-3.5 h-3.5" />
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleReorder(item.id, 'down')}
-                  disabled={index === manualBooks.length - 1}
-                >
-                  <ChevronDown className="w-4 h-4" />
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleReorder(item.id, 'down')} disabled={index === manualBooks.length - 1}>
+                  <ChevronDown className="w-3.5 h-3.5" />
                 </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleRemoveBook(item.id)}
-                >
-                  <X className="w-4 h-4 text-red-600" />
+                <Button size="icon" variant="ghost" className="h-7 w-7 text-red-500 hover:text-red-700" onClick={() => handleRemoveBook(item.id)}>
+                  <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               </div>
             </div>
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }
-
-// ============================================================================
-// QUERY BUILDER EDITOR (Separate Component)
-// ============================================================================
-
-interface QueryBuilderEditorProps {
-  config: BookSourceConfig;
-  onChange: (config: BookSourceConfig) => void;
-  activeTab: 'include' | 'exclude' | 'filter' | 'sort';
-  onTabChange: (tab: 'include' | 'exclude' | 'filter' | 'sort') => void;
-}
-
-function QueryBuilderEditor({ config, onChange, activeTab, onTabChange }: QueryBuilderEditorProps) {
-  return (
-    <Card className="p-4">
-      <Heading variant="h5" className="mb-4 text-sm font-semibold flex items-center gap-2">
-        <Filter className="w-4 h-4" />
-        Query Builder
-      </Heading>
-
-      {/* Tab Navigation */}
-      <div className="flex gap-2 mb-4 border-b">
-        {[
-          { key: 'include', label: 'Include', icon: Target },
-          { key: 'exclude', label: 'Exclude', icon: Ban },
-          { key: 'filter', label: 'Filter', icon: Filter },
-          { key: 'sort', label: 'Sort & Limit', icon: Filter },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => onTabChange(tab.key as any)}
-            className={`px-4 py-2 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors ${
-              activeTab === tab.key
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <div className="min-h-[200px]">
-        {activeTab === 'include' && (
-          <IncludeSourcesEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === 'exclude' && (
-          <ExcludeSourcesEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === 'filter' && (
-          <FiltersEditor config={config} onChange={onChange} />
-        )}
-        {activeTab === 'sort' && (
-          <SortAndLimitEditor config={config} onChange={onChange} />
-        )}
-      </div>
-    </Card>
-  );
-}
-
-// ============================================================================
-// INCLUDE SOURCES EDITOR
-// ============================================================================
 
 function IncludeSourcesEditor({ config, onChange }: { config: BookSourceConfig; onChange: (config: BookSourceConfig) => void }) {
   return (
-    <div className="space-y-4">
-      <div className="p-3 bg-blue-50 rounded text-sm text-blue-900">
-        💡 Bücher, die <strong>mindestens eine</strong> der ausgewählten Quellen erfüllen (je nach Operator)
-      </div>
+    <div className="space-y-4 pt-3">
+      <p className="text-xs text-gray-500">Bücher, die mindestens eine der Quellen erfüllen, werden eingeschlossen.</p>
 
-      {/* Categories */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">Kategorien</label>
+      <FilterGroup label="Kategorien">
         <MultiSelectCategories
           selectedIds={config.query?.include?.categoryIds || []}
           onChange={(ids) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              include: {
-                ...config.query?.include,
-                categoryIds: ids,
-              },
-            },
+            query: { ...config.query, include: { ...config.query?.include, categoryIds: ids } },
           })}
         />
-      </div>
+      </FilterGroup>
 
-      {/* Themen */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">Themen</label>
+      <FilterGroup label="Themen / Tags">
         <MultiSelectTags
           selectedIds={config.query?.include?.tagIds || []}
           onChange={(ids) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              include: {
-                ...config.query?.include,
-                tagIds: ids,
-              },
-            },
+            query: { ...config.query, include: { ...config.query?.include, tagIds: ids } },
           })}
         />
-      </div>
+      </FilterGroup>
 
-      <Separator />
-
-      {/* Award Definitions */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">
-          Auszeichnungen (Definitions)
-        </label>
-        <p className="text-xs text-gray-500 mb-2">
-          Preis allgemein (z.B. "Deutscher Buchpreis")
-        </p>
+      <FilterGroup label="Auszeichnungen (Preise)">
         <MultiSelectAwardDefinitions
           selectedIds={config.query?.include?.awardDefinitionIds || []}
           onChange={(ids) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              include: {
-                ...config.query?.include,
-                awardDefinitionIds: ids,
-              },
-            },
+            query: { ...config.query, include: { ...config.query?.include, awardDefinitionIds: ids } },
           })}
         />
-      </div>
+      </FilterGroup>
 
-      {/* Award Instances */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">
-          Auszeichnungen (Jahrgänge)
-        </label>
-        <p className="text-xs text-gray-500 mb-1">Konkrete Preis-Jahrgänge, z.B. "Deutscher Buchpreis 2024"</p>
+      <FilterGroup label="Auszeichnungen (Jahrgänge)" hint="z.B. Deutscher Buchpreis 2025">
         <MultiSelectAwardInstances
           selectedIds={config.query?.include?.awardInstanceIds || []}
           onChange={(ids) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              include: {
-                ...config.query?.include,
-                awardInstanceIds: ids,
-              },
-            },
+            query: { ...config.query, include: { ...config.query?.include, awardInstanceIds: ids } },
           })}
         />
-      </div>
+      </FilterGroup>
     </div>
   );
 }
 
-// ============================================================================
-// EXCLUDE SOURCES EDITOR
-// ============================================================================
-
 function ExcludeSourcesEditor({ config, onChange }: { config: BookSourceConfig; onChange: (config: BookSourceConfig) => void }) {
   return (
-    <div className="space-y-4">
-      <div className="p-3 bg-red-50 rounded text-sm text-red-900">
-        🚫 Bücher, die diese Kriterien erfüllen, werden <strong>ausgeschlossen</strong>
-      </div>
+    <div className="space-y-4 pt-3">
+      <p className="text-xs text-gray-500">Bücher mit diesen Merkmalen werden ausgeschlossen.</p>
 
-      {/* Categories */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">Kategorien</label>
+      <FilterGroup label="Kategorien">
         <MultiSelectCategories
           selectedIds={config.query?.exclude?.categoryIds || []}
           onChange={(ids) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              exclude: {
-                ...config.query?.exclude,
-                categoryIds: ids,
-              },
-            },
+            query: { ...config.query, exclude: { ...config.query?.exclude, categoryIds: ids } },
           })}
         />
-      </div>
+      </FilterGroup>
 
-      {/* Themen */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">Themen</label>
+      <FilterGroup label="Themen / Tags">
         <MultiSelectTags
           selectedIds={config.query?.exclude?.tagIds || []}
           onChange={(ids) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              exclude: {
-                ...config.query?.exclude,
-                tagIds: ids,
-              },
-            },
+            query: { ...config.query, exclude: { ...config.query?.exclude, tagIds: ids } },
           })}
         />
-      </div>
+      </FilterGroup>
 
-      <Separator />
-
-      {/* Award Definitions */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">
-          Auszeichnungen (Definitions)
-        </label>
+      <FilterGroup label="Auszeichnungen (Preise)">
         <MultiSelectAwardDefinitions
           selectedIds={config.query?.exclude?.awardDefinitionIds || []}
           onChange={(ids) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              exclude: {
-                ...config.query?.exclude,
-                awardDefinitionIds: ids,
-              },
-            },
+            query: { ...config.query, exclude: { ...config.query?.exclude, awardDefinitionIds: ids } },
           })}
         />
-      </div>
+      </FilterGroup>
 
-      {/* Award Instances */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">
-          Auszeichnungen (Jahrgänge)
-        </label>
+      <FilterGroup label="Auszeichnungen (Jahrgänge)">
         <MultiSelectAwardInstances
           selectedIds={config.query?.exclude?.awardInstanceIds || []}
           onChange={(ids) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              exclude: {
-                ...config.query?.exclude,
-                awardInstanceIds: ids,
-              },
-            },
+            query: { ...config.query, exclude: { ...config.query?.exclude, awardInstanceIds: ids } },
           })}
         />
-      </div>
+      </FilterGroup>
 
-      <Separator />
-
-      {/* Exclude Specific Books */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">
-          Spezifische Bücher ausschließen
-        </label>
-        <p className="text-xs text-gray-500 mb-2">
-          Suche nach Titel, Autor oder ISBN
-        </p>
+      <FilterGroup label="Einzelne Bücher">
         <ExcludeBooksPicker
           selectedIds={config.query?.exclude?.bookIds || []}
           onChange={(ids) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              exclude: {
-                ...config.query?.exclude,
-                bookIds: ids,
-              },
-            },
+            query: { ...config.query, exclude: { ...config.query?.exclude, bookIds: ids } },
           })}
         />
-      </div>
+      </FilterGroup>
     </div>
   );
 }
 
-// ============================================================================
-// FILTERS EDITOR
-// ============================================================================
-
 function FiltersEditor({ config, onChange }: { config: BookSourceConfig; onChange: (config: BookSourceConfig) => void }) {
   return (
-    <div className="space-y-4">
-      <div className="p-3 bg-gray-50 rounded text-sm text-gray-900">
-        🔍 Weitere Filter für die Ergebnisse
-      </div>
+    <div className="space-y-4 pt-3">
+      <p className="text-xs text-gray-500">Zusätzliche Einschränkungen auf die Ergebnisse.</p>
 
-      {/* Year Range */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-sm font-medium mb-2 block">Erscheinungsjahr (von)</label>
+          <label className="text-xs font-medium mb-1 block text-gray-600">Erscheinungsjahr ab</label>
           <Input
             type="number"
             placeholder="z.B. 2020"
             value={config.query?.filters?.yearFrom || ''}
             onChange={(e) => onChange({
               ...config,
-              query: {
-                ...config.query,
-                filters: {
-                  ...config.query?.filters,
-                  yearFrom: e.target.value ? parseInt(e.target.value) : undefined,
-                },
-              },
+              query: { ...config.query, filters: { ...config.query?.filters, yearFrom: e.target.value ? parseInt(e.target.value) : undefined } },
             })}
+            className="h-9 text-sm"
           />
         </div>
         <div>
-          <label className="text-sm font-medium mb-2 block">Erscheinungsjahr (bis)</label>
+          <label className="text-xs font-medium mb-1 block text-gray-600">Erscheinungsjahr bis</label>
           <Input
             type="number"
-            placeholder="z.B. 2024"
+            placeholder="z.B. 2025"
             value={config.query?.filters?.yearTo || ''}
             onChange={(e) => onChange({
               ...config,
-              query: {
-                ...config.query,
-                filters: {
-                  ...config.query?.filters,
-                  yearTo: e.target.value ? parseInt(e.target.value) : undefined,
-                },
-              },
+              query: { ...config.query, filters: { ...config.query?.filters, yearTo: e.target.value ? parseInt(e.target.value) : undefined } },
             })}
+            className="h-9 text-sm"
           />
         </div>
       </div>
 
-      {/* Language */}
       <div>
-        <label className="text-sm font-medium mb-2 block">Sprache</label>
-        <p className="text-xs text-gray-500 mb-2">Multi-Select (z.B. de, en, fr)</p>
-        {/* TODO: Multi-Select for Languages */}
+        <label className="text-xs font-medium mb-1 block text-gray-600">Sprache (kommagetrennt)</label>
         <Input
-          placeholder="Komma-getrennt: de,en,fr"
-          value={config.query?.filters?.languageCodes?.join(',') || ''}
+          placeholder="de, en, fr"
+          value={config.query?.filters?.languageCodes?.join(', ') || ''}
           onChange={(e) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              filters: {
-                ...config.query?.filters,
-                languageCodes: e.target.value ? e.target.value.split(',').map(s => s.trim()) : undefined,
-              },
-            },
+            query: { ...config.query, filters: { ...config.query?.filters, languageCodes: e.target.value ? e.target.value.split(',').map(s => s.trim()).filter(Boolean) : undefined } },
           })}
+          className="h-9 text-sm"
         />
       </div>
 
-      {/* Publisher */}
-      <div>
-        <label className="text-sm font-medium mb-2 block">Verlag</label>
-        <p className="text-xs text-gray-500 mb-2">Multi-Select</p>
+      <FilterGroup label="Verlag">
         <MultiSelectPublishers
           selectedIds={config.query?.filters?.publisherIds || []}
           onChange={(ids) => onChange({
             ...config,
-            query: {
-              ...config.query,
-              filters: {
-                ...config.query?.filters,
-                publisherIds: ids,
-              },
-            },
+            query: { ...config.query, filters: { ...config.query?.filters, publisherIds: ids } },
           })}
         />
-      </div>
+      </FilterGroup>
     </div>
   );
 }
 
-// ============================================================================
-// SORT AND LIMIT EDITOR
-// ============================================================================
+function UserContextEditor({ config, onChange }: { config: BookSourceConfig; onChange: (config: BookSourceConfig) => void }) {
+  const uc = config.query?.userContext || {};
+
+  const updateUC = (patch: Partial<BookSourceConfig['query']['userContext']>) => {
+    onChange({
+      ...config,
+      query: {
+        ...config.query,
+        userContext: { ...uc, ...patch },
+      },
+    });
+  };
+
+  const clearUC = () => {
+    const q = { ...config.query };
+    delete q.userContext;
+    onChange({ ...config, query: q });
+  };
+
+  return (
+    <div className="space-y-5 pt-3">
+      <p className="text-xs text-gray-500">
+        Zeige Bücher basierend auf dem Verhalten der Community: wem sie folgen und was sie lesen.
+      </p>
+
+      <div className="rounded-lg border p-4 space-y-3 bg-purple-50/40">
+        <div className="flex items-center gap-2">
+          <Heart className="w-4 h-4 text-purple-600" />
+          <span className="text-sm font-medium text-gray-800">Follows</span>
+        </div>
+        <p className="text-xs text-gray-500">
+          Bücher von Profilen, denen Nutzer:innen folgen.
+        </p>
+
+        <div>
+          <label className="text-xs font-medium mb-1 block text-gray-600">Follow-Quelle</label>
+          <Select
+            value={uc.followedBy || 'none'}
+            onValueChange={(v) => {
+              if (v === 'none') {
+                updateUC({ followedBy: undefined, followTargetType: undefined });
+              } else {
+                updateUC({ followedBy: v as any });
+              }
+            }}
+          >
+            <SelectTrigger className="h-9 text-sm bg-white">
+              <SelectValue placeholder="Nicht aktiv" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Nicht aktiv</SelectItem>
+              <SelectItem value="any_user">Alle Nutzer:innen (beliebteste)</SelectItem>
+              <SelectItem value="specific_users">Aktuelle:r Nutzer:in (personalisiert)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {uc.followedBy && (
+          <div>
+            <label className="text-xs font-medium mb-1 block text-gray-600">Profil-Typ</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { value: 'curator', label: 'Kurator:innen', icon: Users },
+                { value: 'author', label: 'Autor:innen', icon: BookOpen },
+                { value: 'user', label: 'Nutzer:innen', icon: Users },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => updateUC({ followTargetType: opt.value as any })}
+                  className={`flex flex-col items-center gap-1 p-2.5 rounded-md border text-xs font-medium transition-all ${
+                    uc.followTargetType === opt.value
+                      ? 'bg-purple-100 border-purple-400 text-purple-800'
+                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <opt.icon className="w-4 h-4" />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-lg border p-4 space-y-3 bg-sky-50/40">
+        <div className="flex items-center gap-2">
+          <BookMarked className="w-4 h-4 text-sky-600" />
+          <span className="text-sm font-medium text-gray-800">Lesestatus</span>
+        </div>
+        <p className="text-xs text-gray-500">
+          Bücher, die viele Nutzer:innen auf einer bestimmten Leseliste haben.
+        </p>
+
+        <div>
+          <label className="text-xs font-medium mb-1 block text-gray-600">Status</label>
+          <Select
+            value={uc.readingStatus || 'none'}
+            onValueChange={(v) => {
+              if (v === 'none') {
+                updateUC({ readingStatus: undefined, readingStatusMode: undefined });
+              } else {
+                updateUC({ readingStatus: v as any, readingStatusMode: uc.readingStatusMode || 'popular' });
+              }
+            }}
+          >
+            <SelectTrigger className="h-9 text-sm bg-white">
+              <SelectValue placeholder="Nicht aktiv" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Nicht aktiv</SelectItem>
+              <SelectItem value="reading">Lese ich gerade</SelectItem>
+              <SelectItem value="read">Habe ich gelesen</SelectItem>
+              <SelectItem value="want_to_read">Werde ich lesen</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {uc.readingStatus && (
+          <div>
+            <label className="text-xs font-medium mb-1 block text-gray-600">Modus</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 'popular', label: 'Beliebteste', desc: 'Am häufigsten gelistet' },
+                { value: 'trending', label: 'Trending', desc: 'Kürzlich hinzugefügt' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => updateUC({ readingStatusMode: opt.value as any })}
+                  className={`flex flex-col items-start p-2.5 rounded-md border text-xs transition-all ${
+                    uc.readingStatusMode === opt.value
+                      ? 'bg-sky-100 border-sky-400 text-sky-800'
+                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="font-medium">{opt.label}</span>
+                  <span className="opacity-70 text-[10px]">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {(uc.followedBy || uc.readingStatus) && (
+        <button
+          type="button"
+          onClick={clearUC}
+          className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
+        >
+          <X className="w-3 h-3" />
+          User-Merkmale zurücksetzen
+        </button>
+      )}
+    </div>
+  );
+}
 
 function SortAndLimitEditor({ config, onChange }: { config: BookSourceConfig; onChange: (config: BookSourceConfig) => void }) {
   return (
-    <div className="space-y-4">
-      {/* Operator */}
+    <div className="space-y-4 pt-3">
       <div>
-        <label className="text-sm font-medium mb-2 block">Operator (Include-Logik)</label>
-        <Select
-          value={config.query?.operator || 'any'}
-          onValueChange={(value) => onChange({
-            ...config,
-            query: {
-              ...config.query,
-              operator: value as 'any' | 'all',
-            },
-          })}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="any">
-              <div className="flex flex-col items-start">
-                <span className="font-medium">ANY (ODER)</span>
-                <span className="text-xs text-gray-500">Mindestens eine Bedingung muss erfüllt sein</span>
-              </div>
-            </SelectItem>
-            <SelectItem value="all">
-              <div className="flex flex-col items-start">
-                <span className="font-medium">ALL (UND)</span>
-                <span className="text-xs text-gray-500">Alle Bedingungen müssen erfüllt sein</span>
-              </div>
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <label className="text-xs font-medium mb-1.5 block text-gray-600">Verknüpfungslogik (Include)</label>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { value: 'any', label: 'ODER', desc: 'Mindestens eine Bedingung' },
+            { value: 'all', label: 'UND', desc: 'Alle Bedingungen' },
+          ].map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onChange({ ...config, query: { ...config.query, operator: opt.value as any } })}
+              className={`flex flex-col items-start p-2.5 rounded-md border text-xs transition-all ${
+                (config.query?.operator || 'any') === opt.value
+                  ? 'bg-blue-50 border-blue-400 text-blue-800'
+                  : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+              }`}
+            >
+              <span className="font-bold">{opt.label}</span>
+              <span className="opacity-70 text-[10px]">{opt.desc}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <Separator />
-
-      {/* Sort */}
       <div>
-        <label className="text-sm font-medium mb-2 block">Sortierung</label>
+        <label className="text-xs font-medium mb-1.5 block text-gray-600">Sortierung</label>
         <Select
           value={config.query?.sort || 'newest'}
-          onValueChange={(value) => onChange({
-            ...config,
-            query: {
-              ...config.query,
-              sort: value as 'newest' | 'award_date' | 'popularity',
-            },
-          })}
+          onValueChange={(value) => onChange({ ...config, query: { ...config.query, sort: value as any } })}
         >
-          <SelectTrigger>
+          <SelectTrigger className="h-9 text-sm">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="newest">Neueste zuerst</SelectItem>
             <SelectItem value="award_date">Nach Auszeichnungsdatum</SelectItem>
             <SelectItem value="popularity">Nach Popularität</SelectItem>
+            <SelectItem value="relevance">Relevanz (Score)</SelectItem>
+            <SelectItem value="hidden_gems">Hidden Gems</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Limit */}
       <div>
-        <label className="text-sm font-medium mb-2 block">Limit (Anzahl Bücher)</label>
+        <label className="text-xs font-medium mb-1.5 block text-gray-600">Maximale Anzahl</label>
         <Input
           type="number"
           placeholder="20"
           value={config.query?.limit || 20}
-          onChange={(e) => onChange({
-            ...config,
-            query: {
-              ...config.query,
-              limit: e.target.value ? parseInt(e.target.value) : 20,
-            },
-          })}
+          onChange={(e) => onChange({ ...config, query: { ...config.query, limit: e.target.value ? parseInt(e.target.value) : 20 } })}
+          className="h-9 text-sm"
         />
-        <p className="text-xs text-gray-500 mt-1">Standard: 20</p>
       </div>
     </div>
   );
 }
 
-// ============================================================================
-// MULTI-SELECT COMPONENTS (Placeholder - Implement proper pickers)
-// ============================================================================
+function FilterGroup({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-xs font-medium mb-1 block text-gray-600">
+        {label}
+        {hint && <span className="font-normal text-gray-400 ml-1">({hint})</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
 
-function MultiSelectCategories({ selectedIds, onChange }: { selectedIds: number[]; onChange: (ids: number[]) => void }) {
-  const [categories, setCategories] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+function PickerList({
+  items,
+  selectedIds,
+  onToggle,
+  searchPlaceholder,
+  emptyText,
+  renderItem,
+  extraAction,
+}: {
+  items: any[];
+  selectedIds: number[];
+  onToggle: (id: number) => void;
+  searchPlaceholder: string;
+  emptyText: string;
+  renderItem: (item: any) => React.ReactNode;
+  extraAction?: (item: any) => React.ReactNode;
+}) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = async () => {
-    try {
-      const token = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token');
-      const response = await fetch(`${API_BASE_URL}/admin/categories`, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const result = await response.json();
-      setCategories(result.data || []);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error loading categories:', err);
-      setLoading(false);
-    }
-  };
-
-  const handleToggle = (id: number) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter(i => i !== id));
-    } else {
-      onChange([...selectedIds, id]);
-    }
-  };
-
-  const filteredCategories = categories.filter(cat =>
-    cat.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  if (loading) {
-    return <div className="p-3 border rounded text-sm text-gray-500">Lade Kategorien...</div>;
-  }
+  const filtered = items.filter(item => {
+    const q = searchQuery.toLowerCase();
+    const name = (item.displayName || item.name || item.award_name || '').toLowerCase();
+    const extra = (item.description || item.year?.toString() || item.tag_type || '').toLowerCase();
+    return name.includes(q) || extra.includes(q);
+  });
 
   return (
-    <div className="border rounded">
-      <div className="p-2 border-b bg-gray-50">
-        <Input
-          placeholder="Kategorie suchen..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="text-sm"
-        />
+    <div className="rounded-md border overflow-hidden">
+      <div className="p-2 bg-gray-50/80">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+          <Input
+            placeholder={searchPlaceholder}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8 text-xs pl-8"
+          />
+        </div>
       </div>
-      <div className="max-h-48 overflow-y-auto">
-        {filteredCategories.length === 0 ? (
-          <div className="p-3 text-sm text-gray-500 text-center">
-            {categories.length === 0 ? 'Keine Kategorien verfügbar (API-Endpoint fehlt noch)' : 'Keine Ergebnisse'}
-          </div>
+      <div className="max-h-44 overflow-y-auto divide-y divide-gray-100">
+        {filtered.length === 0 ? (
+          <div className="px-3 py-4 text-xs text-gray-400 text-center">{items.length === 0 ? emptyText : 'Keine Treffer'}</div>
         ) : (
-          filteredCategories.map(cat => (
+          filtered.map(item => (
             <div
-              key={cat.id}
-              className="p-2 border-b hover:bg-gray-50 cursor-pointer flex items-center gap-2"
-              onClick={() => handleToggle(cat.id)}
+              key={item.id}
+              className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors text-sm ${
+                selectedIds.includes(item.id)
+                  ? 'bg-blue-50/70'
+                  : 'hover:bg-gray-50/80'
+              }`}
+              onClick={() => onToggle(item.id)}
             >
-              <Checkbox checked={selectedIds.includes(cat.id)} />
-              <span className="text-sm">{cat.name}</span>
+              <Checkbox checked={selectedIds.includes(item.id)} className="flex-shrink-0" />
+              <div className="flex-1 min-w-0">{renderItem(item)}</div>
+              {extraAction?.(item)}
             </div>
           ))
         )}
       </div>
       {selectedIds.length > 0 && (
-        <div className="p-2 border-t bg-blue-50 text-xs text-blue-900">
+        <div className="px-3 py-1.5 bg-blue-50 text-[11px] text-blue-700 font-medium border-t">
           {selectedIds.length} ausgewählt
         </div>
       )}
     </div>
+  );
+}
+
+function MultiSelectCategories({ selectedIds, onChange }: { selectedIds: number[]; onChange: (ids: number[]) => void }) {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/admin/categories`, { credentials: 'include', headers: { 'Content-Type': 'application/json' } })
+      .then(r => r.json())
+      .then(result => { setCategories(result.data || []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="p-3 border rounded text-xs text-gray-400 text-center">Lade Kategorien...</div>;
+
+  return (
+    <PickerList
+      items={categories}
+      selectedIds={selectedIds}
+      onToggle={(id) => onChange(selectedIds.includes(id) ? selectedIds.filter(i => i !== id) : [...selectedIds, id])}
+      searchPlaceholder="Kategorie suchen..."
+      emptyText="Keine Kategorien vorhanden"
+      renderItem={(cat) => <span className="text-sm">{cat.name}</span>}
+    />
   );
 }
 
 function MultiSelectTags({ selectedIds, onChange }: { selectedIds: number[]; onChange: (ids: number[]) => void }) {
   const [tags, setTags] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
   useEffect(() => {
-    loadTags();
+    fetch(`${API_BASE_URL}/onix-tags`, { credentials: 'include', headers: { 'Content-Type': 'application/json' } })
+      .then(r => r.json())
+      .then(result => { setTags(result.data || []); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
-
-  const loadTags = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/onix-tags`, {
-            credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const result = await response.json();
-      setTags(result.data || []);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error loading tags:', err);
-      setLoading(false);
-    }
-  };
-
-  const handleToggle = (id: number) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter(i => i !== id));
-    } else {
-      onChange([...selectedIds, id]);
-    }
-  };
 
   const handleVisibilityToggle = async (e: React.MouseEvent, tag: any) => {
     e.stopPropagation();
     setTogglingId(tag.id);
     try {
-      const adminToken = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '';
-      const newVisible = !tag.visible;
       const resp = await fetch(`${API_BASE_URL}/onix-tags/${tag.id}/visibility`, {
-        method: 'PATCH',
-        credentials: 'include',
+        method: 'PATCH', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visible: newVisible }),
+        body: JSON.stringify({ visible: !tag.visible }),
       });
-      if (resp.ok) {
-        setTags(prev => prev.map(t => t.id === tag.id ? { ...t, visible: newVisible } : t));
-      } else {
-        console.error('Tag visibility toggle failed:', resp.status);
-      }
-    } catch (err) {
-      console.error('Error toggling tag visibility:', err);
-    } finally {
-      setTogglingId(null);
-    }
+      if (resp.ok) setTags(prev => prev.map(t => t.id === tag.id ? { ...t, visible: !tag.visible } : t));
+    } catch {} finally { setTogglingId(null); }
   };
 
-  const filteredTags = tags.filter(tag =>
-    tag.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  if (loading) {
-    return <div className="p-3 border rounded text-sm text-gray-500">Lade Tags...</div>;
-  }
+  if (loading) return <div className="p-3 border rounded text-xs text-gray-400 text-center">Lade Tags...</div>;
 
   return (
-    <div className="border rounded">
-      <div className="p-2 border-b bg-gray-50">
-        <Input
-          placeholder="Tag suchen..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="text-sm"
-        />
-      </div>
-      <div className="max-h-48 overflow-y-auto">
-        {filteredTags.length === 0 ? (
-          <div className="p-3 text-sm text-gray-500 text-center">
-            {tags.length === 0 ? 'Keine Tags verfügbar' : 'Keine Ergebnisse'}
+    <PickerList
+      items={tags}
+      selectedIds={selectedIds}
+      onToggle={(id) => onChange(selectedIds.includes(id) ? selectedIds.filter(i => i !== id) : [...selectedIds, id])}
+      searchPlaceholder="Tag suchen..."
+      emptyText="Keine Tags vorhanden"
+      renderItem={(tag) => (
+        <div className="min-w-0">
+          <div className={`text-sm font-medium truncate ${tag.visible === false ? 'line-through text-gray-400' : ''}`}>
+            {tag.displayName || tag.name}
           </div>
-        ) : (
-          filteredTags.map(tag => (
-            <div
-              key={tag.id}
-              className={`p-2 border-b cursor-pointer flex items-center gap-2 ${
-                tag.visible === false ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => handleToggle(tag.id)}
-            >
-              <Checkbox checked={selectedIds.includes(tag.id)} />
-              <div className="flex-1 min-w-0">
-                <div className={`text-sm font-medium ${tag.visible === false ? 'line-through text-gray-400' : ''}`}>
-                  {tag.displayName || tag.name}
-                </div>
-                <div className="text-xs text-gray-500 flex items-center gap-1">
-                  {tag.type || tag.tag_type || ''}
-                  {tag.visible === false && (
-                    <span className="text-red-400 font-medium ml-1">versteckt</span>
-                  )}
-                </div>
-              </div>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className={tag.visible === false ? 'text-red-400' : 'text-green-600'}
-                onClick={(e) => handleVisibilityToggle(e, tag)}
-                disabled={togglingId === tag.id}
-                title={tag.visible === false ? 'Tag sichtbar machen' : 'Tag verstecken'}
-              >
-                {togglingId === tag.id ? (
-                  <span className="w-4 h-4 block animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
-                ) : tag.visible === false ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </Button>
-            </div>
-          ))
-        )}
-      </div>
-      {selectedIds.length > 0 && (
-        <div className="p-2 border-t bg-blue-50 text-xs text-blue-900">
-          {selectedIds.length} ausgewählt
+          <div className="text-[10px] text-gray-400 flex items-center gap-1 truncate">
+            {tag.type || tag.tag_type || ''}
+            {tag.visible === false && <span className="text-red-400 font-medium">versteckt</span>}
+          </div>
         </div>
       )}
-    </div>
+      extraAction={(tag) => (
+        <Button
+          type="button" size="icon" variant="ghost"
+          className={`h-6 w-6 flex-shrink-0 ${tag.visible === false ? 'text-red-400' : 'text-green-600'}`}
+          onClick={(e) => handleVisibilityToggle(e, tag)}
+          disabled={togglingId === tag.id}
+        >
+          {togglingId === tag.id ? (
+            <span className="w-3.5 h-3.5 block animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+          ) : tag.visible === false ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+        </Button>
+      )}
+    />
   );
 }
 
 function MultiSelectAwardDefinitions({ selectedIds, onChange }: { selectedIds: number[]; onChange: (ids: number[]) => void }) {
   const [definitions, setDefinitions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
   useEffect(() => {
-    loadDefinitions();
+    fetch(`${API_BASE_URL}/awards`, { credentials: 'include', headers: { 'Content-Type': 'application/json' } })
+      .then(r => r.json())
+      .then(result => { setDefinitions(result.data || []); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
-
-  const loadDefinitions = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/awards`, {
-            credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const result = await response.json();
-      setDefinitions(result.data || []);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error loading award definitions:', err);
-      setLoading(false);
-    }
-  };
-
-  const handleToggle = (id: number) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter(i => i !== id));
-    } else {
-      onChange([...selectedIds, id]);
-    }
-  };
 
   const handleVisibilityToggle = async (e: React.MouseEvent, def: any) => {
     e.stopPropagation();
     setTogglingId(def.id);
     try {
-      const adminToken = localStorage.getItem('admin_neon_token') || localStorage.getItem('admin_token') || '';
-      const newVisible = !def.visible;
       const resp = await fetch(`${API_BASE_URL}/awards/${def.id}/visibility`, {
-        method: 'PATCH',
-        credentials: 'include',
+        method: 'PATCH', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visible: newVisible }),
+        body: JSON.stringify({ visible: !def.visible }),
       });
-      if (resp.ok) {
-        setDefinitions(prev => prev.map(d => d.id === def.id ? { ...d, visible: newVisible } : d));
-      } else {
-        console.error('Award visibility toggle failed:', resp.status);
-      }
-    } catch (err) {
-      console.error('Error toggling award visibility:', err);
-    } finally {
-      setTogglingId(null);
-    }
+      if (resp.ok) setDefinitions(prev => prev.map(d => d.id === def.id ? { ...d, visible: !def.visible } : d));
+    } catch {} finally { setTogglingId(null); }
   };
 
-  const filteredDefinitions = definitions.filter(def =>
-    def.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  if (loading) {
-    return <div className="p-3 border rounded text-sm text-gray-500">Lade Auszeichnungen...</div>;
-  }
+  if (loading) return <div className="p-3 border rounded text-xs text-gray-400 text-center">Lade Auszeichnungen...</div>;
 
   return (
-    <div className="border rounded">
-      <div className="p-2 border-b bg-gray-50">
-        <Input
-          placeholder="Award suchen..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="text-sm"
-        />
-      </div>
-      <div className="max-h-48 overflow-y-auto">
-        {filteredDefinitions.length === 0 ? (
-          <div className="p-3 text-sm text-gray-500 text-center">
-            {definitions.length === 0 ? 'Keine Auszeichnungen verfügbar' : 'Keine Ergebnisse'}
+    <PickerList
+      items={definitions}
+      selectedIds={selectedIds}
+      onToggle={(id) => onChange(selectedIds.includes(id) ? selectedIds.filter(i => i !== id) : [...selectedIds, id])}
+      searchPlaceholder="Auszeichnung suchen..."
+      emptyText="Keine Auszeichnungen vorhanden"
+      renderItem={(def) => (
+        <div className="min-w-0">
+          <div className={`text-sm font-medium truncate ${def.visible === false ? 'line-through text-gray-400' : ''}`}>
+            {def.name}
           </div>
-        ) : (
-          filteredDefinitions.map(def => (
-            <div
-              key={def.id}
-              className={`p-2 border-b cursor-pointer flex items-center gap-2 ${
-                def.visible === false ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'
-              }`}
-              onClick={() => handleToggle(def.id)}
-            >
-              <Checkbox checked={selectedIds.includes(def.id)} />
-              <div className="flex-1 min-w-0">
-                <div className={`text-sm font-medium ${def.visible === false ? 'line-through text-gray-400' : ''}`}>
-                  {def.name}
-                </div>
-                <div className="text-xs text-gray-500 flex items-center gap-1">
-                  {def.description && <span className="truncate">{def.description}</span>}
-                  {def.visible === false && (
-                    <span className="text-red-400 font-medium ml-1">versteckt</span>
-                  )}
-                </div>
-              </div>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className={def.visible === false ? 'text-red-400' : 'text-green-600'}
-                onClick={(e) => handleVisibilityToggle(e, def)}
-                disabled={togglingId === def.id}
-                title={def.visible === false ? 'Auszeichnung sichtbar machen' : 'Auszeichnung verstecken'}
-              >
-                {togglingId === def.id ? (
-                  <span className="w-4 h-4 block animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
-                ) : def.visible === false ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </Button>
+          {(def.description || def.visible === false) && (
+            <div className="text-[10px] text-gray-400 flex items-center gap-1 truncate">
+              {def.description && <span className="truncate">{def.description}</span>}
+              {def.visible === false && <span className="text-red-400 font-medium">versteckt</span>}
             </div>
-          ))
-        )}
-      </div>
-      {selectedIds.length > 0 && (
-        <div className="p-2 border-t bg-blue-50 text-xs text-blue-900">
-          {selectedIds.length} ausgewählt
+          )}
         </div>
       )}
-    </div>
+      extraAction={(def) => (
+        <Button
+          type="button" size="icon" variant="ghost"
+          className={`h-6 w-6 flex-shrink-0 ${def.visible === false ? 'text-red-400' : 'text-green-600'}`}
+          onClick={(e) => handleVisibilityToggle(e, def)}
+          disabled={togglingId === def.id}
+        >
+          {togglingId === def.id ? (
+            <span className="w-3.5 h-3.5 block animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+          ) : def.visible === false ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+        </Button>
+      )}
+    />
   );
 }
 
 function MultiSelectAwardInstances({ selectedIds, onChange }: { selectedIds: number[]; onChange: (ids: number[]) => void }) {
   const [instances, setInstances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    loadInstances();
+    fetch(`${API_BASE_URL}/award_editions`, { credentials: 'include', headers: { 'Content-Type': 'application/json' } })
+      .then(r => r.json())
+      .then(result => { setInstances(result.data || []); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
-  const loadInstances = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/award_editions`, {
-            credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const result = await response.json();
-      if (result.success === false) {
-        console.error('Award editions API error:', result.error);
-      }
-      setInstances(result.data || []);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error loading award instances:', err);
-      setLoading(false);
-    }
-  };
-
-  const handleToggle = (id: number) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter(i => i !== id));
-    } else {
-      onChange([...selectedIds, id]);
-    }
-  };
-
-  const filteredInstances = instances.filter(inst =>
-    `${inst.award_name} ${inst.year} ${inst.status}`.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  if (loading) {
-    return <div className="p-3 border rounded text-sm text-gray-500">Lade Award Instances...</div>;
-  }
+  if (loading) return <div className="p-3 border rounded text-xs text-gray-400 text-center">Lade Jahrgänge...</div>;
 
   return (
-    <div className="border rounded">
-      <div className="p-2 border-b bg-gray-50">
-        <Input
-          placeholder="Award Instance suchen..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="text-sm"
-        />
-      </div>
-      <div className="max-h-48 overflow-y-auto">
-        {filteredInstances.length === 0 ? (
-          <div className="p-3 text-sm text-gray-500 text-center">
-            {instances.length === 0 ? 'Noch keine Auszeichnungs-Jahrgänge angelegt. Erstelle sie unter Auszeichnungen → Editionen.' : 'Keine Ergebnisse'}
-          </div>
-        ) : (
-          filteredInstances.map(inst => (
-            <div
-              key={inst.id}
-              className="p-2 border-b hover:bg-gray-50 cursor-pointer flex items-center gap-2"
-              onClick={() => handleToggle(inst.id)}
-            >
-              <Checkbox checked={selectedIds.includes(inst.id)} />
-              <div className="flex-1">
-                <div className="text-sm font-medium">
-                  {inst.award_name} {inst.year}
-                </div>
-                <div className="text-xs text-gray-500">{inst.status}</div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-      {selectedIds.length > 0 && (
-        <div className="p-2 border-t bg-blue-50 text-xs text-blue-900">
-          {selectedIds.length} ausgewählt
+    <PickerList
+      items={instances}
+      selectedIds={selectedIds}
+      onToggle={(id) => onChange(selectedIds.includes(id) ? selectedIds.filter(i => i !== id) : [...selectedIds, id])}
+      searchPlaceholder="Jahrgang suchen..."
+      emptyText="Noch keine Jahrgänge angelegt"
+      renderItem={(inst) => (
+        <div className="min-w-0">
+          <div className="text-sm font-medium truncate">{inst.award_name} {inst.year}</div>
+          <div className="text-[10px] text-gray-400">{inst.status}</div>
         </div>
       )}
-    </div>
+    />
   );
 }
 
 function MultiSelectPublishers({ selectedIds, onChange }: { selectedIds: number[]; onChange: (ids: number[]) => void }) {
   const [publishers, setPublishers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    loadPublishers();
+    fetch(`${API_BASE_URL}/publishers`, { credentials: 'include', headers: { 'Content-Type': 'application/json' } })
+      .then(r => r.json())
+      .then(result => { setPublishers(result.data || []); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
-  const loadPublishers = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/publishers`, {
-            credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      const result = await response.json();
-      setPublishers(result.data || []);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error loading publishers:', err);
-      setLoading(false);
-    }
-  };
-
-  const handleToggle = (id: number) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter(i => i !== id));
-    } else {
-      onChange([...selectedIds, id]);
-    }
-  };
-
-  const filteredPublishers = publishers.filter(pub =>
-    pub.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  if (loading) {
-    return <div className="p-3 border rounded text-sm text-gray-500">Lade Verlage...</div>;
-  }
+  if (loading) return <div className="p-3 border rounded text-xs text-gray-400 text-center">Lade Verlage...</div>;
 
   return (
-    <div className="border rounded">
-      <div className="p-2 border-b bg-gray-50">
-        <Input
-          placeholder="Verlag suchen..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="text-sm"
-        />
-      </div>
-      <div className="max-h-48 overflow-y-auto">
-        {filteredPublishers.length === 0 ? (
-          <div className="p-3 text-sm text-gray-500 text-center">
-            {publishers.length === 0 ? 'Keine Verlage verfügbar' : 'Keine Ergebnisse'}
-          </div>
-        ) : (
-          filteredPublishers.map(pub => (
-            <div
-              key={pub.id}
-              className="p-2 border-b hover:bg-gray-50 cursor-pointer flex items-center gap-2"
-              onClick={() => handleToggle(pub.id)}
-            >
-              <Checkbox checked={selectedIds.includes(pub.id)} />
-              <div className="flex-1">
-                <div className="text-sm font-medium">{pub.name}</div>
-                {pub.description && (
-                  <div className="text-xs text-gray-500 truncate">{pub.description}</div>
-                )}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-      {selectedIds.length > 0 && (
-        <div className="p-2 border-t bg-blue-50 text-xs text-blue-900">
-          {selectedIds.length} ausgewählt
+    <PickerList
+      items={publishers}
+      selectedIds={selectedIds}
+      onToggle={(id) => onChange(selectedIds.includes(id) ? selectedIds.filter(i => i !== id) : [...selectedIds, id])}
+      searchPlaceholder="Verlag suchen..."
+      emptyText="Keine Verlage vorhanden"
+      renderItem={(pub) => (
+        <div className="min-w-0">
+          <div className="text-sm font-medium truncate">{pub.name}</div>
+          {pub.description && <div className="text-[10px] text-gray-400 truncate">{pub.description}</div>}
         </div>
       )}
-    </div>
+    />
   );
 }
 
-// ============================================================================
-// EXCLUDE BOOKS PICKER
-// ============================================================================
-
-interface ExcludeBooksPickerProps {
-  selectedIds: number[];
-  onChange: (ids: number[]) => void;
-}
-
-function ExcludeBooksPicker({ selectedIds, onChange }: ExcludeBooksPickerProps) {
+function ExcludeBooksPicker({ selectedIds, onChange }: { selectedIds: number[]; onChange: (ids: number[]) => void }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
-    
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/books/search?q=${encodeURIComponent(searchQuery)}&limit=10`, {
-            credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
       });
-      
       if (response.ok) {
         const result = await response.json();
         setSearchResults(result.data || []);
       }
-    } catch (err) {
-      console.error('Error searching books:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAddBook = (bookId: number) => {
-    if (selectedIds.includes(bookId)) {
-      alert('❌ Dieses Buch ist bereits ausgeschlossen');
-      return;
-    }
-    onChange([...selectedIds, bookId]);
-  };
-
-  const handleRemoveBook = (bookId: number) => {
-    onChange(selectedIds.filter(id => id !== bookId));
+    } catch {} finally { setLoading(false); }
   };
 
   return (
-    <div className="border rounded">
-      <div className="p-2 border-b bg-gray-50">
-        <Input
-          placeholder="Buch suchen..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          className="text-sm"
-        />
-      </div>
-      <div className="max-h-48 overflow-y-auto">
-        {loading ? (
-          <div className="p-3 text-sm text-gray-500 text-center">
-            Lade Bücher...
+    <div className="rounded-md border overflow-hidden">
+      <div className="p-2 bg-gray-50/80">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <Input
+              placeholder="Buch suchen..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              className="h-8 text-xs pl-8"
+            />
           </div>
-        ) : (
-          <>
-            {searchResults.length > 0 ? (
-              searchResults.map(book => (
-                <div
-                  key={book.id}
-                  className="p-2 border-b hover:bg-gray-50 cursor-pointer flex items-center gap-2"
-                >
-                  <Checkbox checked={selectedIds.includes(book.id)} />
-                  <div className="flex-1">
-                    <div className="text-sm font-medium">{book.title}</div>
-                    <div className="text-xs text-gray-500">
-                      {book.author} • ISBN: {book.isbn13}
-                    </div>
-                  </div>
-                  <Button size="sm" onClick={() => handleAddBook(book.id)}>
-                    Add
-                  </Button>
-                </div>
-              ))
-            ) : (
-              <div className="p-3 text-sm text-gray-500 text-center">
-                {searchQuery ? 'Keine Ergebnisse' : 'Suche nach Titel, Autor oder ISBN'}
+          <Button size="sm" className="h-8 px-2" onClick={handleSearch} disabled={loading}>
+            <Search className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      </div>
+      <div className="max-h-44 overflow-y-auto divide-y divide-gray-100">
+        {loading ? (
+          <div className="px-3 py-4 text-xs text-gray-400 text-center">Suche...</div>
+        ) : searchResults.length > 0 ? (
+          searchResults.map(book => (
+            <div
+              key={book.id}
+              className={`flex items-center gap-2 px-3 py-2 cursor-pointer transition-colors text-sm ${
+                selectedIds.includes(book.id) ? 'bg-red-50/70' : 'hover:bg-gray-50/80'
+              }`}
+              onClick={() => {
+                if (selectedIds.includes(book.id)) {
+                  onChange(selectedIds.filter(id => id !== book.id));
+                } else {
+                  onChange([...selectedIds, book.id]);
+                }
+              }}
+            >
+              <Checkbox checked={selectedIds.includes(book.id)} className="flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{book.title}</div>
+                <div className="text-[10px] text-gray-400 truncate">{book.author}</div>
               </div>
-            )}
-          </>
+            </div>
+          ))
+        ) : (
+          <div className="px-3 py-4 text-xs text-gray-400 text-center">
+            {searchQuery ? 'Keine Treffer' : 'Titel oder ISBN eingeben'}
+          </div>
         )}
       </div>
       {selectedIds.length > 0 && (
-        <div className="p-2 border-t bg-blue-50 text-xs text-blue-900">
-          {selectedIds.length} ausgewählt
+        <div className="px-3 py-1.5 bg-red-50 text-[11px] text-red-700 font-medium border-t flex items-center justify-between">
+          <span>{selectedIds.length} ausgeschlossen</span>
+          <button type="button" onClick={() => onChange([])} className="text-red-500 hover:text-red-700">
+            <X className="w-3 h-3" />
+          </button>
         </div>
       )}
     </div>
