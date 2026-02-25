@@ -7825,7 +7825,7 @@ export async function registerRoutes(
          JOIN books b ON b.id = rl.book_id
          WHERE rl.user_id = $1
          ORDER BY rl.updated_at DESC`,
-        [user.id]
+        [String(user.id)]
       );
       res.json({ ok: true, entries: (result.rows || []).map((r: any) => ({
         bookId: String(r.book_id),
@@ -7857,11 +7857,14 @@ export async function registerRoutes(
         return res.status(400).json({ ok: false, error: 'Invalid status' });
       }
 
+      const numericBookId = parseInt(String(bookId), 10);
+      if (isNaN(numericBookId)) return res.status(400).json({ ok: false, error: 'Invalid bookId' });
+
       await queryDB(
         `INSERT INTO user_reading_list (user_id, book_id, status, updated_at)
          VALUES ($1, $2, $3, NOW())
          ON CONFLICT (user_id, book_id) DO UPDATE SET status = $3, updated_at = NOW()`,
-        [user.id, Number(bookId), dbStatus]
+        [String(user.id), numericBookId, dbStatus]
       );
 
       res.json({ ok: true });
@@ -7877,7 +7880,7 @@ export async function registerRoutes(
       if (!user) return res.status(401).json({ ok: false, error: 'Not authenticated' });
       await queryDB(
         `DELETE FROM user_reading_list WHERE user_id = $1 AND book_id = $2`,
-        [user.id, Number(req.params.bookId)]
+        [String(user.id), parseInt(req.params.bookId, 10)]
       );
       res.json({ ok: true });
     } catch (err: any) {
