@@ -32,83 +32,82 @@ import { normalizeType } from '../../types/normalize';
 export interface SectionTypeDefinition {
   value: string;
   label: string;
-  allowedZones: ('aboveFold' | 'main')[];
+  allowedZones: string[];
   description?: string;
 }
 
-/**
- * SINGLE SOURCE OF TRUTH für alle Section Types
- * Diese Liste wird sowohl im Admin UI als auch für Rendering verwendet
- *
- * Above the Fold: hero, category_grid
- * Main Content: book_carousel, recipient_category_grid, storefronts, events, genre_categories, supporters
- */
 export const SECTION_TYPES: SectionTypeDefinition[] = [
   { 
-    value: 'hero', 
-    label: 'Hero-Banner', 
-    allowedZones: ['aboveFold'],
-    description: 'Hero-Banner mit Bild und Call-to-Action'
+    value: 'category_hero', 
+    label: 'Kategorie-Hero', 
+    allowedZones: ['above_fold', 'main'],
+    description: 'Hero-Banner für Kategorie-Seiten mit Hintergrundbild, Titel und Filter-Tabs'
   },
   { 
-    value: 'category_grid', 
-    label: 'Kategorie-Raster', 
-    allowedZones: ['aboveFold', 'main'],
-    description: 'Raster mit Kategorien und Bildern'
+    value: 'hero', 
+    label: 'Hero-Banner (Startseite)', 
+    allowedZones: ['above_fold', 'main'],
+    description: 'Großes Hero-Banner mit Bild und Call-to-Action'
   },
   { 
     value: 'book_carousel', 
     label: 'Buch-Karussell', 
-    allowedZones: ['main'],
-    description: 'Karussell mit Kurator:in und Büchern'
+    allowedZones: ['above_fold', 'main'],
+    description: 'Horizontales Karussell mit Büchern und Kurator:in'
+  },
+  { 
+    value: 'book_grid_filtered', 
+    label: 'Buch-Grid (gefiltert)', 
+    allowedZones: ['above_fold', 'main'],
+    description: 'Bücher-Raster mit Sortierung (z.B. Neueste, Hidden Gems)'
+  },
+  { 
+    value: 'user_curations', 
+    label: 'Kurationen', 
+    allowedZones: ['above_fold', 'main'],
+    description: 'Kuratierte Buchlisten aus der Community'
+  },
+  { 
+    value: 'category_grid', 
+    label: 'Kategorie-Kacheln', 
+    allowedZones: ['above_fold', 'main'],
+    description: 'Kachel-Raster mit Kategorien und Bildern'
   },
   { 
     value: 'recipient_category_grid', 
-    label: 'Empfänger-Raster', 
-    allowedZones: ['main'],
-    description: 'Raster mit Empfänger-Kategorien (Geschenke für...)'
+    label: 'Empfänger-Kacheln', 
+    allowedZones: ['above_fold', 'main'],
+    description: 'Kacheln für Geschenke-Empfänger (Geschenke für...)'
+  },
+  { 
+    value: 'creator_carousel', 
+    label: 'Kurator:innen-Karussell', 
+    allowedZones: ['above_fold', 'main'],
+    description: 'Karussell mit Kurator:innen-Profilen'
   },
   { 
     value: 'storefronts', 
-    label: 'Bookstores', 
-    allowedZones: ['main'],
+    label: 'Buchläden', 
+    allowedZones: ['above_fold', 'main'],
     description: 'Kuratierte Buchläden von Expert:innen'
   },
   { 
     value: 'events', 
-    label: 'Events', 
-    allowedZones: ['main'],
+    label: 'Veranstaltungen', 
+    allowedZones: ['above_fold', 'main'],
     description: 'Literarische Veranstaltungen und Lesungen'
   },
   { 
     value: 'genre_categories', 
     label: 'Medien & Buch', 
-    allowedZones: ['main'],
-    description: 'Podcasts und Media-Einbettungen mit Buchempfehlungen'
+    allowedZones: ['above_fold', 'main'],
+    description: 'Podcasts und Media mit Buchempfehlungen'
   },
   { 
     value: 'supporters', 
     label: 'Unterstützer:innen', 
-    allowedZones: ['main'],
+    allowedZones: ['above_fold', 'main'],
     description: 'Partner und Unterstützer der Plattform'
-  },
-  { 
-    value: 'book_grid_filtered', 
-    label: 'Buch-Grid (gefiltert)', 
-    allowedZones: ['main'],
-    description: 'Buchgrid mit vordefiniertem Filter (z.B. Debüts, Indie, Ausgezeichnet)'
-  },
-  { 
-    value: 'user_curations', 
-    label: 'Nutzer-Kurationen', 
-    allowedZones: ['main'],
-    description: 'Kurationen von Nutzer:innen, optional nach Kategorie gefiltert'
-  },
-  { 
-    value: 'category_hero', 
-    label: 'Kategorie-Hero', 
-    allowedZones: ['aboveFold'],
-    description: 'Hero-Banner für Kategorie-Seiten mit Hintergrundbild, H1, SEO-Text und Filter-Tabs'
   },
 ];
 

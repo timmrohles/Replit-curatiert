@@ -471,16 +471,20 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
   // ZONE MANAGEMENT
   // ============================================================================
 
-  const zones = [
-    { key: 'above_fold', label: 'Oberer Bereich (Above the Fold)', icon: Layout, isGlobal: false },
-    { key: 'main', label: 'Hauptinhalt', icon: Layout, isGlobal: false },
-  ];
+  const allSections = sections
+    .filter(s => includeDraft || s.status === 'published')
+    .sort((a, b) => a.sort_order - b.sort_order);
 
   const getSectionsByZone = (zone: string) => {
     return sections
       .filter(s => s.zone === zone)
       .filter(s => includeDraft || s.status === 'published')
       .sort((a, b) => a.sort_order - b.sort_order);
+  };
+
+  const getSectionLabel = (type: string) => {
+    const def = SECTION_TYPES.find(t => t.value === type);
+    return def?.label || type;
   };
 
   const toggleZone = (zone: string) => {
@@ -585,90 +589,62 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
         </Alert>
       )}
 
-      {/* Zone Cards */}
-      {zones.map(zone => {
-        const zoneSections = getSectionsByZone(zone.key);
-        const isExpanded = expandedZones.has(zone.key);
+      {/* Sections List */}
+      <Card className="border-2">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Layout className="w-5 h-5 text-gray-600" />
+              <Heading variant="h4">Seiteninhalt</Heading>
+              <Badge variant="outline">{allSections.length} {allSections.length === 1 ? 'Sektion' : 'Sektionen'}</Badge>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setEditingSection({ 
+                  zone: 'main' as any, 
+                  sort_order: (allSections.length + 1) * 10,
+                  status: 'published',
+                  visibility: 'visible'
+                });
+              }}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Sektion hinzufügen
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4">
+          {allSections.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 text-sm">
+              Noch keine Sektionen. Füge eine neue Sektion hinzu, um Inhalte zu gestalten.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {allSections.map((section, idx) => (
+                <SectionCard
+                  key={section.id}
+                  section={section}
+                  sectionLabel={getSectionLabel(section.type)}
+                  isExpanded={expandedSections.has(section.id)}
+                  onToggleItems={() => toggleSectionItems(section.id)}
+                  onEdit={() => setEditingSection(section)}
+                  onDelete={() => handleDeleteSection(section.id)}
+                  onDuplicate={() => handleDuplicateSection(section)}
+                  onMove={(draggedId, targetId) => handleMoveSection(draggedId, targetId, section.zone)}
+                  isFirst={idx === 0}
+                  isLast={idx === allSections.length - 1}
+                  onMoveUp={() => idx > 0 && handleMoveSection(section.id, allSections[idx - 1].id, section.zone)}
+                  onMoveDown={() => idx < allSections.length - 1 && handleMoveSection(section.id, allSections[idx + 1].id, section.zone)}
+                />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
-        return (
-          <Card key={zone.key} className="border-2">
-            <CardHeader className="cursor-pointer hover:bg-gray-50" onClick={() => toggleZone(zone.key)}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <zone.icon className="w-5 h-5 text-gray-600" />
-                  <Heading variant="h4">{zone.label}</Heading>
-                  {zone.isGlobal && (
-                    <Badge variant="secondary">Global (Navigation V2)</Badge>
-                  )}
-                  {!zone.isGlobal && (
-                    <Badge variant="outline">{zoneSections.length} Sections</Badge>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {!zone.isGlobal && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingSection({ 
-                          zone: zone.key as any, 
-                          sort_order: (zoneSections.length + 1) * 10,
-                          status: 'published',
-                          visibility: 'visible'
-                        });
-                      }}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Sektion hinzufügen
-                    </Button>
-                  )}
-                  {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                </div>
-              </div>
-            </CardHeader>
-
-            {isExpanded && (
-              <CardContent className="pt-4">
-                {zone.isGlobal ? (
-                  <div className="text-center py-8 text-gray-600 bg-gray-50 rounded-lg border-2 border-dashed">
-                    <zone.icon className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                    <p className="font-medium mb-1">Global {zone.label}</p>
-                    <p className="text-sm text-gray-500">
-                      Managed via Navigation V2
-                    </p>
-                  </div>
-                ) : zoneSections.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500 text-sm">
-                    Noch keine Sektionen in diesem Bereich
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {zoneSections.map((section, idx) => (
-                      <SectionCard
-                        key={section.id}
-                        section={section}
-                        isExpanded={expandedSections.has(section.id)}
-                        onToggleItems={() => toggleSectionItems(section.id)}
-                        onEdit={() => setEditingSection(section)}
-                        onDelete={() => handleDeleteSection(section.id)}
-                        onDuplicate={() => handleDuplicateSection(section)}
-                        onMove={(draggedId, targetId) => handleMoveSection(draggedId, targetId, zone.key)}
-                        isFirst={idx === 0}
-                        isLast={idx === zoneSections.length - 1}
-                        onMoveUp={() => idx > 0 && handleMoveSection(section.id, zoneSections[idx - 1].id, zone.key)}
-                        onMoveDown={() => idx < zoneSections.length - 1 && handleMoveSection(section.id, zoneSections[idx + 1].id, zone.key)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            )}
-          </Card>
-        );
-      })}
-
-      {/* Section Editor Dialog (simplified for now) */}
+      {/* Section Editor Dialog */}
       {editingSection && (
         <Card className="fixed inset-4 z-50 overflow-auto shadow-2xl">
           <CardHeader>
@@ -678,26 +654,9 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium mb-2 block">Zone</label>
-              <Select
-                value={editingSection.zone || 'main'}
-                onValueChange={(value) => setEditingSection({ ...editingSection, zone: value as any })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {zones.filter(z => !z.isGlobal).map(zone => (
-                    <SelectItem key={zone.key} value={zone.key}>
-                      {zone.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Sektionstyp</label>
+              <label className="text-sm font-medium mb-2 block">
+                Sektionstyp <span className="text-red-500">*</span>
+              </label>
               <Select
                 value={editingSection.type || 'category_grid'}
                 onValueChange={(value) => setEditingSection({ ...editingSection, type: value })}
@@ -706,17 +665,21 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   <SelectValue placeholder="Typ wählen" />
                 </SelectTrigger>
                 <SelectContent>
-                  {getAvailableSectionTypes(editingSection.zone as string).map(type => (
+                  {SECTION_TYPES.map(type => (
                     <SelectItem key={type.value} value={type.value}>
-                      {type.label}
+                      <div>
+                        <span>{type.label}</span>
+                        {type.description && (
+                          <span className="ml-2 text-xs text-muted-foreground">— {type.description}</span>
+                        )}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div>
-              <label className="text-sm font-medium mb-2 block">Status</label>
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -724,11 +687,10 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                     name="section-status"
                     value="draft"
                     checked={editingSection.status === 'draft'}
-                    onChange={(e) => setEditingSection({ ...editingSection, status: 'draft' })}
+                    onChange={() => setEditingSection({ ...editingSection, status: 'draft' })}
                     className="w-4 h-4"
                   />
                   <span className="text-sm">Entwurf</span>
-                  <Badge variant="secondary">Entwurf</Badge>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -736,189 +698,12 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                     name="section-status"
                     value="published"
                     checked={editingSection.status === 'published'}
-                    onChange={(e) => setEditingSection({ ...editingSection, status: 'published' })}
+                    onChange={() => setEditingSection({ ...editingSection, status: 'published' })}
                     className="w-4 h-4"
                   />
                   <span className="text-sm">Veröffentlicht</span>
-                  <Badge variant="default">Live</Badge>
+                  <Badge variant="default" className="text-[10px] py-0">Live</Badge>
                 </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Sichtbarkeit</label>
-              <Select
-                value={editingSection.visibility || 'visible'}
-                onValueChange={(value) => setEditingSection({ ...editingSection, visibility: value as any })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="visible">Sichtbar</SelectItem>
-                  <SelectItem value="hidden">Versteckt</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/50">
-              <Switch
-                id="hide-when-empty"
-                checked={editingSection.config?.hide_when_empty === true}
-                onCheckedChange={(checked) => setEditingSection({
-                  ...editingSection,
-                  config: { ...(editingSection.config || {}), hide_when_empty: checked }
-                })}
-              />
-              <div>
-                <Label htmlFor="hide-when-empty" className="text-sm font-medium cursor-pointer">Ausblenden wenn leer</Label>
-                <p className="text-xs text-muted-foreground">Sektion wird auf der Website nicht angezeigt, wenn keine Bücher vorhanden sind.</p>
-              </div>
-            </div>
-
-            {/* ============================================================================ */}
-            {/* SCHEDULING & TRACKING */}
-            {/* ============================================================================ */}
-            <div className="space-y-4 pt-2">
-              <Heading variant="h5" className="text-sm font-semibold flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Zeitplanung & Tracking
-              </Heading>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Veröffentlichen ab</label>
-                  <Input
-                    type="datetime-local"
-                    value={editingSection.publish_at ? toLocalDatetimeString(editingSection.publish_at) : ''}
-                    onChange={(e) => setEditingSection({
-                      ...editingSection,
-                      publish_at: e.target.value ? new Date(e.target.value).toISOString() : null
-                    })}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Leer = sofort sichtbar</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Ausblenden ab</label>
-                  <Input
-                    type="datetime-local"
-                    value={editingSection.unpublish_at ? toLocalDatetimeString(editingSection.unpublish_at) : ''}
-                    onChange={(e) => setEditingSection({
-                      ...editingSection,
-                      unpublish_at: e.target.value ? new Date(e.target.value).toISOString() : null
-                    })}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Leer = bleibt sichtbar</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium mb-2 block">Schnell-Perioden</label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { label: '1 Woche', days: 7 },
-                    { label: '2 Wochen', days: 14 },
-                    { label: '1 Monat', days: 30 },
-                    { label: '3 Monate', days: 90 },
-                    { label: '6 Monate', days: 180 },
-                  ].map(preset => (
-                    <Button
-                      key={preset.days}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const now = new Date();
-                        const end = new Date(now.getTime() + preset.days * 24 * 60 * 60 * 1000);
-                        setEditingSection({
-                          ...editingSection,
-                          publish_at: now.toISOString(),
-                          unpublish_at: end.toISOString(),
-                        });
-                      }}
-                    >
-                      {preset.label}
-                    </Button>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditingSection({
-                      ...editingSection,
-                      publish_at: null,
-                      unpublish_at: null,
-                    })}
-                  >
-                    Zurücksetzen
-                  </Button>
-                </div>
-              </div>
-
-              {(editingSection.publish_at || editingSection.unpublish_at) && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
-                  {editingSection.publish_at && (
-                    <p>Sichtbar ab: <strong>{new Date(editingSection.publish_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong></p>
-                  )}
-                  {editingSection.unpublish_at && (
-                    <p>Ausgeblendet ab: <strong>{new Date(editingSection.unpublish_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</strong></p>
-                  )}
-                  {editingSection.publish_at && editingSection.unpublish_at && (() => {
-                    const start = new Date(editingSection.publish_at!);
-                    const end = new Date(editingSection.unpublish_at!);
-                    const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                    return <p className="mt-1 text-xs">Dauer: {days} Tage</p>;
-                  })()}
-                </div>
-              )}
-
-              <Separator />
-
-              <Heading variant="h5" className="text-sm font-semibold flex items-center gap-2">
-                <Eye className="w-4 h-4" />
-                Reichweiten-Limits (Anzeigen)
-              </Heading>
-              <p className="text-xs text-muted-foreground -mt-2">Für bezahlte Karusselle: Sektion wird nach Erreichen der Limits automatisch ausgeblendet.</p>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Max. Aufrufe (Views)</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="Unbegrenzt"
-                    value={editingSection.max_views ?? ''}
-                    onChange={(e) => setEditingSection({
-                      ...editingSection,
-                      max_views: e.target.value ? parseInt(e.target.value) : null
-                    })}
-                  />
-                  {editingSection.id && editingSection.current_views !== undefined && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Aktuell: {editingSection.current_views} Views
-                      {editingSection.max_views && ` / ${editingSection.max_views}`}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Max. Klicks</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    placeholder="Unbegrenzt"
-                    value={editingSection.max_clicks ?? ''}
-                    onChange={(e) => setEditingSection({
-                      ...editingSection,
-                      max_clicks: e.target.value ? parseInt(e.target.value) : null
-                    })}
-                  />
-                  {editingSection.id && editingSection.current_clicks !== undefined && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Aktuell: {editingSection.current_clicks} Klicks
-                      {editingSection.max_clicks && ` / ${editingSection.max_clicks}`}
-                    </p>
-                  )}
-                </div>
               </div>
             </div>
 
@@ -937,22 +722,19 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
               editingSection.type === 'topic_tags_grid') && (
               <div className="space-y-4 pt-4 border-t">
                 <Heading variant="h5" className="text-sm font-semibold">
-                  {editingSection.type === 'category_grid' && 'Category Grid Configuration'}
-                  {editingSection.type === 'recipient_category_grid' && 'Recipient Category Grid Configuration'}
-                  {editingSection.type === 'topic_tags_grid' && 'Topic Tags Grid Configuration'}
+                  {getSectionLabel(editingSection.type || '')}
                 </Heading>
                 
-                {/* Title (Required) */}
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    Title <span className="text-red-500">*</span>
+                    Titel <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="text"
                     placeholder={
-                      editingSection.type === 'category_grid' ? 'e.g., Stöbern nach Kategorie' :
-                      editingSection.type === 'recipient_category_grid' ? 'e.g., Geschenke nach Empfänger' :
-                      'e.g., Beliebte Themen'
+                      editingSection.type === 'category_grid' ? 'z.B. Stöbern nach Kategorie' :
+                      editingSection.type === 'recipient_category_grid' ? 'z.B. Geschenke nach Empfänger' :
+                      'z.B. Beliebte Themen'
                     }
                     value={editingSection.config?.title || ''}
                     onChange={(e) => setEditingSection({
@@ -962,28 +744,26 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   />
                 </div>
 
-                {/* Description */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Description (optional)</label>
+                  <label className="text-sm font-medium mb-2 block">Beschreibung</label>
                   <textarea
                     placeholder={
-                      editingSection.type === 'category_grid' ? 'e.g., Entdecke Bücher nach Themengebiet...' :
-                      editingSection.type === 'recipient_category_grid' ? 'e.g., Finde das perfekte Geschenk...' :
-                      'e.g., Tauche ein in beliebte Buchthemen...'
+                      editingSection.type === 'category_grid' ? 'z.B. Entdecke Bücher nach Themengebiet...' :
+                      editingSection.type === 'recipient_category_grid' ? 'z.B. Finde das perfekte Geschenk...' :
+                      'z.B. Tauche ein in beliebte Buchthemen...'
                     }
                     value={editingSection.config?.description || ''}
                     onChange={(e) => setEditingSection({
                       ...editingSection,
                       config: { ...editingSection.config, description: e.target.value }
                     })}
-                    rows={3}
+                    rows={2}
                     className="w-full px-3 py-2 border rounded text-sm"
                   />
                 </div>
 
-                {/* Columns (optional) */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Columns per Row (optional)</label>
+                  <label className="text-sm font-medium mb-2 block">Spalten pro Zeile</label>
                   <Select
                     value={String(editingSection.config?.columns || 4)}
                     onValueChange={(value) => setEditingSection({
@@ -1002,26 +782,13 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                       <SelectItem value="6">6 Spalten</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500 mt-1">Standard: 4 Spalten</p>
                 </div>
 
-                <Separator />
-
-                {/* Info Box */}
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
-                  <strong className="block mb-2">💡 Nächste Schritte:</strong>
-                  <ol className="list-decimal list-inside space-y-1 text-xs">
-                    <li>Speichere diese Section</li>
-                    <li>Klicke auf den Chevron-Button, um die Section zu öffnen</li>
-                    <li>Füge Items hinzu mit dem Section Items Manager</li>
-                    <li>Jedes Item kann ein
-                      {editingSection.type === 'category_grid' && ' Category Target'}
-                      {editingSection.type === 'recipient_category_grid' && ' Category Target'}
-                      {editingSection.type === 'topic_tags_grid' && ' Tag Target'}
-                      {' '}haben
-                    </li>
-                  </ol>
-                </div>
+                {!editingSection.id && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-900">
+                    Speichere zuerst, dann kannst du Kacheln hinzufügen.
+                  </div>
+                )}
               </div>
             )}
             
@@ -1031,16 +798,15 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
             
             {editingSection.type === 'hero' && (
               <div className="space-y-4 pt-4 border-t">
-                <Heading variant="h5" className="text-sm font-semibold">Hero Section Configuration</Heading>
+                <Heading variant="h5" className="text-sm font-semibold">Hero-Banner (Startseite)</Heading>
                 
-                {/* Title (Required) */}
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    Title <span className="text-red-500">*</span>
+                    Titel <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="text"
-                    placeholder="e.g., Willkommen bei coratiert.de"
+                    placeholder="z.B. Willkommen bei coratiert.de"
                     value={editingSection.config?.title || ''}
                     onChange={(e) => setEditingSection({
                       ...editingSection,
@@ -1049,24 +815,22 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   />
                 </div>
 
-                {/* Description */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Description</label>
+                  <label className="text-sm font-medium mb-2 block">Beschreibung</label>
                   <textarea
-                    placeholder="e.g., Entdecke handverlesene Buchempfehlungen..."
+                    placeholder="z.B. Entdecke handverlesene Buchempfehlungen..."
                     value={editingSection.config?.description || ''}
                     onChange={(e) => setEditingSection({
                       ...editingSection,
                       config: { ...editingSection.config, description: e.target.value }
                     })}
-                    rows={4}
+                    rows={3}
                     className="w-full px-3 py-2 border rounded text-sm"
                   />
                 </div>
 
-                {/* Image URL */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Image URL</label>
+                  <label className="text-sm font-medium mb-2 block">Bild-URL</label>
                   <Input
                     type="url"
                     placeholder="https://..."
@@ -1079,7 +843,7 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   {editingSection.config?.image_url && (
                     <img 
                       src={editingSection.config.image_url} 
-                      alt="Hero Preview" 
+                      alt="Vorschau" 
                       className="mt-2 h-32 rounded object-cover border"
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
@@ -1088,16 +852,14 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
 
                 <Separator />
 
-                {/* CTA Configuration */}
                 <div className="space-y-4 pt-2">
-                  <Heading variant="h6" className="text-sm font-medium">Call-to-Action</Heading>
+                  <Heading variant="h6" className="text-sm font-medium">Button (Call-to-Action)</Heading>
                   
-                  {/* CTA Text */}
                   <div>
-                    <label className="text-sm font-medium mb-2 block">CTA Text</label>
+                    <label className="text-sm font-medium mb-2 block">Button-Text</label>
                     <Input
                       type="text"
-                      placeholder="e.g., Jetzt entdecken"
+                      placeholder="z.B. Jetzt entdecken"
                       value={editingSection.config?.cta_text || ''}
                       onChange={(e) => setEditingSection({
                         ...editingSection,
@@ -1106,9 +868,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                     />
                   </div>
 
-                  {/* CTA Target Type */}
                   <div>
-                    <label className="text-sm font-medium mb-2 block">CTA Target Type</label>
+                    <label className="text-sm font-medium mb-2 block">Ziel-Typ</label>
                     <Select
                       value={editingSection.config?.cta_target_type || 'url'}
                       onValueChange={(value) => setEditingSection({
@@ -1116,7 +877,6 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                         config: { 
                           ...editingSection.config, 
                           cta_target_type: value,
-                          // Clear other target fields when switching type
                           cta_target_page_id: undefined,
                           cta_target_category_id: undefined,
                           cta_target_tag_id: undefined,
@@ -1129,16 +889,13 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="page">Page</SelectItem>
-                        <SelectItem value="category">Category</SelectItem>
-                        <SelectItem value="tag">Tag</SelectItem>
-                        <SelectItem value="template">Template</SelectItem>
-                        <SelectItem value="url">External URL</SelectItem>
+                        <SelectItem value="url">Externe URL</SelectItem>
+                        <SelectItem value="page">Seite (ID)</SelectItem>
+                        <SelectItem value="category">Kategorie (ID)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {/* CTA Target Fields (conditional) */}
                   {editingSection.config?.cta_target_type === 'url' && (
                     <div>
                       <label className="text-sm font-medium mb-2 block">URL</label>
@@ -1156,65 +913,31 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
 
                   {editingSection.config?.cta_target_type === 'page' && (
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Page ID</label>
+                      <label className="text-sm font-medium mb-2 block">Seiten-ID</label>
                       <Input
                         type="number"
-                        placeholder="Page ID"
+                        placeholder="z.B. 26"
                         value={editingSection.config?.cta_target_page_id || ''}
                         onChange={(e) => setEditingSection({
                           ...editingSection,
                           config: { ...editingSection.config, cta_target_page_id: e.target.value ? parseInt(e.target.value) : undefined }
                         })}
                       />
-                      <p className="text-xs text-gray-500 mt-1">💡 Page Picker kommt in Phase 2</p>
                     </div>
                   )}
 
                   {editingSection.config?.cta_target_type === 'category' && (
                     <div>
-                      <label className="text-sm font-medium mb-2 block">Category ID</label>
+                      <label className="text-sm font-medium mb-2 block">Kategorie-ID</label>
                       <Input
                         type="number"
-                        placeholder="Category ID"
+                        placeholder="z.B. 1"
                         value={editingSection.config?.cta_target_category_id || ''}
                         onChange={(e) => setEditingSection({
                           ...editingSection,
                           config: { ...editingSection.config, cta_target_category_id: e.target.value ? parseInt(e.target.value) : undefined }
                         })}
                       />
-                      <p className="text-xs text-gray-500 mt-1">💡 Category Picker kommt in Phase 2</p>
-                    </div>
-                  )}
-
-                  {editingSection.config?.cta_target_type === 'tag' && (
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Tag ID</label>
-                      <Input
-                        type="number"
-                        placeholder="Tag ID"
-                        value={editingSection.config?.cta_target_tag_id || ''}
-                        onChange={(e) => setEditingSection({
-                          ...editingSection,
-                          config: { ...editingSection.config, cta_target_tag_id: e.target.value ? parseInt(e.target.value) : undefined }
-                        })}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">💡 Tag Picker kommt in Phase 2</p>
-                    </div>
-                  )}
-
-                  {editingSection.config?.cta_target_type === 'template' && (
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Template Key</label>
-                      <Input
-                        type="text"
-                        placeholder="e.g., book-details"
-                        value={editingSection.config?.cta_target_template_key || ''}
-                        onChange={(e) => setEditingSection({
-                          ...editingSection,
-                          config: { ...editingSection.config, cta_target_template_key: e.target.value }
-                        })}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">💡 Template Picker kommt in Phase 2</p>
                     </div>
                   )}
                 </div>
@@ -1418,12 +1141,11 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
 
             {editingSection.type === 'creator_carousel' && (
               <div className="space-y-4 pt-4 border-t">
-                <Heading variant="h5" className="text-sm font-semibold">Creator Carousel Configuration</Heading>
+                <Heading variant="h5" className="text-sm font-semibold">Kurator:innen-Karussell</Heading>
                 
-                {/* Title (Required) */}
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    Title <span className="text-red-500">*</span>
+                    Titel <span className="text-red-500">*</span>
                   </label>
                   <Input
                     type="text"
@@ -1436,9 +1158,8 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                   />
                 </div>
 
-                {/* Description */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Description</label>
+                  <label className="text-sm font-medium mb-2 block">Beschreibung</label>
                   <Input
                     type="text"
                     placeholder="z.B. Frisch erschienen und handverlesen"
@@ -1449,209 +1170,6 @@ export function PageComposer({ page, onPageUpdate }: PageComposerProps) {
                     })}
                   />
                 </div>
-
-                {/* Kurator:in auswählen */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Kurator:in <span className="text-red-500">*</span>
-                  </label>
-
-                  {editingSection.config?.curatorId && (() => {
-                    const selected = curators.find(c => String(c.id) === String(editingSection.config?.curatorId));
-                    const displayName = selected?.name || editingSection.config?.curatorName || '';
-                    const displayAvatar = selected?.avatar || editingSection.config?.curatorAvatar || '';
-                    const displayFocus = selected?.focus || editingSection.config?.curatorFocus || '';
-                    const displayVerified = selected?.verified ?? editingSection.config?.isVerified ?? false;
-                    if (!displayName) return null;
-                    return (
-                      <div className="flex items-center gap-3 p-3 rounded-lg border border-blue-200 bg-blue-50 mb-2">
-                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                          {displayAvatar ? (
-                            <img src={displayAvatar} alt={displayName} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center"><User className="w-5 h-5 text-gray-400" /></div>
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-sm truncate">{displayName}</span>
-                            {displayVerified && <BadgeCheck className="w-4 h-4 flex-shrink-0" style={{ color: '#247ba0' }} />}
-                          </div>
-                          {displayFocus && <span className="text-xs text-gray-500 truncate block">{displayFocus}</span>}
-                        </div>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => {
-                          setEditingSection({ ...editingSection, config: { ...editingSection.config, curatorId: null, curatorName: '', curatorAvatar: '', curatorFocus: '', curatorBio: '', isVerified: false } });
-                        }}>
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </div>
-                    );
-                  })()}
-
-                  {!editingSection.config?.curatorId && (
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          type="text"
-                          placeholder="Kurator:in suchen..."
-                          className="pl-9"
-                          value={curatorSearch}
-                          onChange={(e) => setCuratorSearch(e.target.value)}
-                          onFocus={() => loadCurators()}
-                        />
-                      </div>
-                      {curatorsLoading && <p className="text-xs text-gray-500 p-2">Lade Kurator:innen...</p>}
-                      {!curatorsLoading && curators.length > 0 && (
-                        <div className="max-h-48 overflow-y-auto border rounded-lg divide-y">
-                          {curators
-                            .filter(c => {
-                              if (!curatorSearch.trim()) return true;
-                              const q = curatorSearch.toLowerCase();
-                              return (c.name || '').toLowerCase().includes(q) || (c.focus || '').toLowerCase().includes(q);
-                            })
-                            .map(curator => (
-                              <button
-                                key={curator.id}
-                                type="button"
-                                className="w-full flex items-center gap-3 p-2.5 hover:bg-gray-50 transition-colors text-left"
-                                onClick={() => {
-                                  setEditingSection({
-                                    ...editingSection,
-                                    config: {
-                                      ...editingSection.config,
-                                      curatorId: String(curator.id),
-                                      curatorName: curator.name || '',
-                                      curatorAvatar: curator.avatar || '',
-                                      curatorFocus: curator.focus || '',
-                                      curatorBio: curator.bio || '',
-                                      isVerified: Boolean(curator.verified),
-                                    }
-                                  });
-                                  setCuratorSearch('');
-                                }}
-                              >
-                                <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
-                                  {curator.avatar ? (
-                                    <img src={curator.avatar} alt={curator.name} className="w-full h-full object-cover" />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center"><User className="w-4 h-4 text-gray-400" /></div>
-                                  )}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-sm font-medium truncate">{curator.name}</span>
-                                    {curator.verified && <BadgeCheck className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#247ba0' }} />}
-                                  </div>
-                                  {curator.focus && <span className="text-xs text-gray-500 truncate block">{curator.focus}</span>}
-                                </div>
-                              </button>
-                            ))}
-                        </div>
-                      )}
-                      {!curatorsLoading && curators.length === 0 && curatorSearch && (
-                        <p className="text-xs text-gray-500 p-2">Keine Kurator:innen gefunden</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Curator Reason */}
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Curator Reason
-                    <span className="text-xs text-gray-500 ml-2">(overrides Description)</span>
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="e.g., Diese Bücher bieten einen guten Einstieg..."
-                    value={editingSection.config?.curatorReason || ''}
-                    onChange={(e) => setEditingSection({
-                      ...editingSection,
-                      config: { ...editingSection.config, curatorReason: e.target.value }
-                    })}
-                  />
-                </div>
-
-                <Separator />
-
-                {/* Show Video Toggle */}
-                <div className="flex items-center gap-3">
-                  <Checkbox
-                    id="showVideo"
-                    checked={editingSection.config?.showVideo || false}
-                    onCheckedChange={(checked) => setEditingSection({
-                      ...editingSection,
-                      config: { ...editingSection.config, showVideo: !!checked }
-                    })}
-                  />
-                  <label htmlFor="showVideo" className="text-sm font-medium cursor-pointer flex items-center gap-2">
-                    <Video className="w-4 h-4" />
-                    Show Video in Carousel
-                  </label>
-                </div>
-
-                {/* Video Fields - only shown when showVideo is true */}
-                {editingSection.config?.showVideo && (
-                  <div className="space-y-4 pl-7 border-l-2 border-gray-200">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Video URL</label>
-                      <Input
-                        type="url"
-                        placeholder="https://youtube.com/watch?v=..."
-                        value={editingSection.config?.videoUrl || ''}
-                        onChange={(e) => setEditingSection({
-                          ...editingSection,
-                          config: { ...editingSection.config, videoUrl: e.target.value }
-                        })}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">YouTube, Vimeo, or direct MP4</p>
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Video Thumbnail URL</label>
-                      <Input
-                        type="url"
-                        placeholder="https://..."
-                        value={editingSection.config?.videoThumbnail || ''}
-                        onChange={(e) => setEditingSection({
-                          ...editingSection,
-                          config: { ...editingSection.config, videoThumbnail: e.target.value }
-                        })}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Video Title</label>
-                      <Input
-                        type="text"
-                        placeholder="Podcast Episode: ..."
-                        value={editingSection.config?.videoTitle || ''}
-                        onChange={(e) => setEditingSection({
-                          ...editingSection,
-                          config: { ...editingSection.config, videoTitle: e.target.value }
-                        })}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Video Card Background</label>
-                      <Input
-                        type="text"
-                        placeholder="#F5F5F5"
-                        value={editingSection.config?.videoCardBg || '#F5F5F5'}
-                        onChange={(e) => setEditingSection({
-                          ...editingSection,
-                          config: { ...editingSection.config, videoCardBg: e.target.value }
-                        })}
-                      />
-                      <div 
-                        className="mt-2 h-8 rounded border"
-                        style={{ backgroundColor: editingSection.config?.videoCardBg || '#F5F5F5' }}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
