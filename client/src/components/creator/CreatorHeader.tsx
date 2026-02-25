@@ -197,7 +197,7 @@ export const CreatorHeader = memo(function CreatorHeader({
         </h3>
       </div>
       {/* Tags and Category Section - ISOLATED from other sections */}
-      {(category || categories || (tags && tags.length > 0)) && (
+      {(name || category || categories || (tags && tags.length > 0)) && (
         <div className="w-full mt-4 mb-4">
           <div className="flex gap-2 flex-wrap items-start">
             {/* Author Badge - Saffron */}
