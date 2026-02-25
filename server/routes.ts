@@ -5998,6 +5998,23 @@ export async function registerRoutes(
             conditions.push(`b.id IN (SELECT eb.matched_book_id FROM extracted_books eb JOIN content_episodes ce ON eb.episode_id = ce.id WHERE eb.is_verified = true ${dateCond} AND eb.matched_book_id IS NOT NULL)`);
           }
 
+          if (query.userContext?.readingStatus?.length > 0) {
+            const statusMap: Record<string, string> = { reading: 'reading', read: 'read', want_to_read: 'want_to_read' };
+            const dbStatuses = query.userContext.readingStatus
+              .map((s: string) => statusMap[s] || s)
+              .filter((s: string) => ['reading', 'read', 'want_to_read'].includes(s));
+            if (dbStatuses.length > 0) {
+              const statusPlaceholders = dbStatuses.map(() => `$${paramIdx++}`).join(',');
+              const mode = query.userContext.readingStatusMode || 'popular';
+              if (mode === 'trending') {
+                conditions.push(`b.id IN (SELECT rl.book_id FROM user_reading_list rl WHERE rl.status IN (${statusPlaceholders}) AND rl.updated_at >= NOW() - INTERVAL '30 days' GROUP BY rl.book_id ORDER BY COUNT(*) DESC LIMIT 100)`);
+              } else {
+                conditions.push(`b.id IN (SELECT rl.book_id FROM user_reading_list rl WHERE rl.status IN (${statusPlaceholders}) GROUP BY rl.book_id ORDER BY COUNT(*) DESC LIMIT 100)`);
+              }
+              params.push(...dbStatuses);
+            }
+          }
+
           if (conditions.length > 0) {
             const joiner = operator === 'all' ? ' AND ' : ' OR ';
             const whereClause = conditions.join(joiner);
@@ -7790,6 +7807,82 @@ export async function registerRoutes(
     } catch (error) {
       log.error('Public curations error:', error);
       return res.status(500).json({ ok: false, error: String(error) });
+    }
+  });
+
+  // ==================================================================
+  // USER READING LIST
+  // ==================================================================
+
+  app.get('/api/reading-list', async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) return res.json({ ok: true, entries: [] });
+      const result = await queryDB(
+        `SELECT rl.book_id, rl.status, rl.created_at, rl.updated_at,
+                b.title, b.author, b.cover_url
+         FROM user_reading_list rl
+         JOIN books b ON b.id = rl.book_id
+         WHERE rl.user_id = $1
+         ORDER BY rl.updated_at DESC`,
+        [user.id]
+      );
+      res.json({ ok: true, entries: (result.rows || []).map((r: any) => ({
+        bookId: String(r.book_id),
+        status: r.status === 'want_to_read' ? 'möchte_lesen' : r.status === 'reading' ? 'lese_ich' : 'gelesen',
+        title: r.title || '',
+        author: r.author || '',
+        coverImage: r.cover_url || undefined,
+        addedAt: r.updated_at || r.created_at,
+      }))});
+    } catch (err: any) {
+      log.error('GET /api/reading-list error:', err);
+      res.status(500).json({ ok: false, error: 'Failed to fetch reading list' });
+    }
+  });
+
+  app.post('/api/reading-list', async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) return res.status(401).json({ ok: false, error: 'Not authenticated' });
+      const { bookId, status } = req.body;
+      if (!bookId) return res.status(400).json({ ok: false, error: 'bookId required' });
+
+      const dbStatus = status === 'möchte_lesen' ? 'want_to_read'
+        : status === 'lese_ich' ? 'reading'
+        : status === 'gelesen' ? 'read'
+        : status;
+
+      if (!['reading', 'read', 'want_to_read'].includes(dbStatus)) {
+        return res.status(400).json({ ok: false, error: 'Invalid status' });
+      }
+
+      await queryDB(
+        `INSERT INTO user_reading_list (user_id, book_id, status, updated_at)
+         VALUES ($1, $2, $3, NOW())
+         ON CONFLICT (user_id, book_id) DO UPDATE SET status = $3, updated_at = NOW()`,
+        [user.id, Number(bookId), dbStatus]
+      );
+
+      res.json({ ok: true });
+    } catch (err: any) {
+      log.error('POST /api/reading-list error:', err);
+      res.status(500).json({ ok: false, error: 'Failed to update reading list' });
+    }
+  });
+
+  app.delete('/api/reading-list/:bookId', async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) return res.status(401).json({ ok: false, error: 'Not authenticated' });
+      await queryDB(
+        `DELETE FROM user_reading_list WHERE user_id = $1 AND book_id = $2`,
+        [user.id, Number(req.params.bookId)]
+      );
+      res.json({ ok: true });
+    } catch (err: any) {
+      log.error('DELETE /api/reading-list error:', err);
+      res.status(500).json({ ok: false, error: 'Failed to remove from reading list' });
     }
   });
 
