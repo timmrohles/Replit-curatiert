@@ -49,6 +49,7 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
       defaultOpen: true,
       items: [
         { id: 'home', path: '/dashboard', label: t('dashboardNav.home', 'Start') },
+        { id: 'oeffentliches-profil', path: '/dashboard/oeffentliches-profil', label: t('dashboardNav.publicProfile', 'Öffentliches Profil') },
       ]
     },
     {
@@ -93,7 +94,6 @@ export function DashboardSidebar({ hasModule, hasAnyAuthorModule, mobileOpen, on
       defaultOpen: false,
       items: [
         { id: 'profil', path: '/dashboard/profil', label: t('dashboardNav.myData', 'Meine Daten') },
-        { id: 'oeffentliches-profil', path: '/dashboard/oeffentliches-profil', label: t('dashboardNav.publicProfile', 'Öffentliches Profil') },
         { id: 'benachrichtigungen', path: '/dashboard/benachrichtigungen', label: t('dashboardNav.notifications', 'Benachrichtigungen') },
         { id: 'datenschutz', path: '/dashboard/datenschutz', label: t('dashboardNav.privacy', 'Datenschutz') },
       ]
