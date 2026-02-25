@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { type Server } from "http";
-import { queryDB, testConnection } from "./db";
+import { queryDB, testConnection, cachedQuery } from "./db";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import multer from "multer";
@@ -6043,10 +6043,10 @@ export async function registerRoutes(
         const curatorIdsArray = Array.from(curatorIds);
         const cPlaceholders = curatorIdsArray.map((_, i) => `$${i + 1}`).join(',');
 
-        const [booksResult, indieRes, spRes, awardRes, tagRes, curatorsResult] = await Promise.all([
+        const [booksResult, indieRows, spRows, awardRes, tagRes, curatorsResult] = await Promise.all([
           queryDB(`SELECT * FROM books WHERE id IN (${placeholders})`, bookIdsArray),
-          queryDB('SELECT name FROM indie_publishers').catch(() => ({ rows: [] })),
-          queryDB('SELECT pattern, match_type FROM selfpublisher_patterns').catch(() => ({ rows: [] })),
+          cachedQuery('indie_publishers', () => queryDB('SELECT name FROM indie_publishers'), 300000),
+          cachedQuery('selfpublisher_patterns', () => queryDB('SELECT pattern, match_type FROM selfpublisher_patterns'), 300000),
           queryDB(
             `SELECT ar.book_id, ao.result_status, ao.outcome_type, a.name AS award_name, ae.year AS award_year
              FROM award_recipients ar
@@ -6083,8 +6083,8 @@ export async function registerRoutes(
         }
 
         try {
-          const indieNames = (indieRes.rows || []).map((r: any) => r.name.toLowerCase());
-          const spPatterns = spRes.rows || [];
+          const indieNames = (indieRows || []).map((r: any) => r.name.toLowerCase());
+          const spPatterns = spRows || [];
 
           let awardMap: Record<number, { wins: number; nominations: number; details: Array<{ name: string; year?: number; outcome: string }> }> = {};
           for (const row of awardRes.rows || []) {

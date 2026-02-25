@@ -9,6 +9,7 @@ import { SEOHead } from '../seo/SEOHead';
 import { BreadcrumbSchema, WebPageSchema } from '../seo/StructuredData';
 import { getBookUrl } from '../../utils/bookUrlHelper';
 import { UniversalSectionRenderer } from '../sections/UniversalSectionRenderer';
+import { LazySection } from '../sections/LazySection';
 import { PageNavigationBadge } from './PageNavigationBadge';
 import { Header } from '../layout/Header';
 import { Footer } from '../layout/Footer';
@@ -308,7 +309,7 @@ function DynamicPageInner() {
             books.forEach((b: any) => { booksById[b.id] = b; });
 
             return sortedSections.length > 0 ? (
-              sortedSections.map((section) => {
+              sortedSections.map((section, idx) => {
                 const sectionType = section.section_type || section.type;
 
                 if (hasCategoryHero && sectionType !== 'category_hero' && !isSectionVisibleForFilter(sectionType, activeFilter, tabs)) {
@@ -331,10 +332,20 @@ function DynamicPageInner() {
                   return null;
                 }
 
-                return (
+                const isAboveFold = idx === 0 || section.zone === 'above_fold' || sectionType === 'category_hero';
+
+                const content = (
                   <div key={section.id} className="mb-section-gap">
                     <UniversalSectionRenderer section={section} books={sectionBooks} categoryId={page?.category_id} />
                   </div>
+                );
+
+                if (isAboveFold) return content;
+
+                return (
+                  <LazySection key={section.id}>
+                    {content}
+                  </LazySection>
                 );
               })
             ) : page.content ? (

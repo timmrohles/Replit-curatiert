@@ -5,8 +5,9 @@ import * as schema from "@shared/schema";
 const pool = new Pool({
   connectionString: process.env.NEON_DATABASE_URL || process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  max: 10,
-  idleTimeoutMillis: 30000,
+  max: 20,
+  min: 4,
+  idleTimeoutMillis: 60000,
   connectionTimeoutMillis: 10000,
 });
 
@@ -44,6 +45,38 @@ export async function testConnection(): Promise<boolean> {
   } catch (error: any) {
     console.error("[DB] Connection test failed:", error.message);
     return false;
+  }
+}
+
+interface CacheEntry<T> {
+  data: T;
+  expiresAt: number;
+}
+
+const cache = new Map<string, CacheEntry<any>>();
+
+export async function cachedQuery<T = any>(
+  key: string,
+  queryFn: () => Promise<{ rows: T[] }>,
+  ttlMs: number = 300000
+): Promise<T[]> {
+  const entry = cache.get(key);
+  if (entry && entry.expiresAt > Date.now()) {
+    return entry.data;
+  }
+  const result = await queryFn();
+  const data = result.rows || [];
+  cache.set(key, { data, expiresAt: Date.now() + ttlMs });
+  return data;
+}
+
+export function invalidateCache(keyPrefix?: string) {
+  if (!keyPrefix) {
+    cache.clear();
+    return;
+  }
+  for (const key of cache.keys()) {
+    if (key.startsWith(keyPrefix)) cache.delete(key);
   }
 }
 

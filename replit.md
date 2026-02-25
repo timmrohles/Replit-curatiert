@@ -46,6 +46,12 @@ Helmet (CSP, HSTS), rate limiting, authenticated uploads, SQL injection preventi
 ## SEO
 Dynamic `robots.txt` (allows search engines, blocks admin + AI crawlers), dynamic XML sitemap for static/CMS/profile pages.
 
+## Performance Optimizations
+- **pages/resolve API**: Combined page+sections into single SQL query, parallelized section book queries and all enrichment queries (awards, tags, indie, curators) via `Promise.all`. Reduced from ~10s to ~2.5s.
+- **In-Memory Cache**: `cachedQuery()` in `server/db.ts` caches static data (indie_publishers, selfpublisher_patterns) for 5 minutes, avoiding redundant DB roundtrips.
+- **Connection Pool**: Neon pool tuned: `max=20`, `min=4`, `idleTimeoutMillis=60000` for better connection reuse.
+- **Lazy Section Rendering**: `LazySection` component uses `IntersectionObserver` (400px rootMargin) to defer rendering of below-fold sections. First section + hero/category_hero always render immediately. Applied in `DynamicPage.tsx` and `CMSHomepage.tsx`.
+
 ## External Dependencies
 - **Database**: Neon PostgreSQL
 - **File Storage**: Local filesystem (avatar uploads)

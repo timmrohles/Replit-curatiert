@@ -13,6 +13,7 @@ import { Footer } from '../layout/Footer';
 import { InfoBar } from '../layout/InfoBar';
 import { BottomBanner } from '../layout/BottomBanner';
 import { UniversalSectionRenderer } from '../sections/UniversalSectionRenderer';
+import { LazySection } from '../sections/LazySection';
 import { SEOHead } from '../seo/SEOHead';
 import { BreadcrumbSchema, WebPageSchema } from '../seo/StructuredData';
 import { DynamicPageContentRenderer } from './DynamicPageContentRenderer';
@@ -221,7 +222,8 @@ export function CMSHomepage() {
             books.forEach((b: any) => { booksById[b.id] = b; });
 
             return sortedSections.length > 0 ? (
-              sortedSections.map((section) => {
+              sortedSections.map((section, idx) => {
+                const sectionType = section.section_type || section.type;
                 const pinnedBooks = (section.items || [])
                   .filter((item: any) => item.book_id)
                   .map((item: any) => booksById[item.book_id])
@@ -238,13 +240,23 @@ export function CMSHomepage() {
                   return null;
                 }
 
-                return (
+                const isAboveFold = idx === 0 || section.zone === 'above_fold' || sectionType === 'hero' || sectionType === 'category_hero';
+
+                const content = (
                   <div key={section.id} className="mb-section-gap">
                     <UniversalSectionRenderer
                       section={section}
                       books={sectionBooks}
                     />
                   </div>
+                );
+
+                if (isAboveFold) return content;
+
+                return (
+                  <LazySection key={section.id}>
+                    {content}
+                  </LazySection>
                 );
               })
             ) : page.content ? (
