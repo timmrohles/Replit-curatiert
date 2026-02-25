@@ -45,14 +45,12 @@ export function ReadingListProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [entries, setEntries] = useState<ReadingListEntry[]>(() => loadFromStorage());
   const hasSyncedRef = useRef(false);
-  const syncingRef = useRef(false);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (!user || hasSyncedRef.current || syncingRef.current) return;
-    syncingRef.current = true;
+    if (!user || hasSyncedRef.current) return;
 
-    (async () => {
-      let syncSuccess = false;
+    const doSync = async (attempt = 1) => {
       try {
         const localEntries = loadFromStorage();
         if (localEntries.length > 0) {
@@ -64,30 +62,39 @@ export function ReadingListProvider({ children }: { children: ReactNode }) {
               body: JSON.stringify({ bookId: entry.bookId, status: entry.status }),
             }).then(r => r.ok).catch(() => false)
           ));
-          const allFailed = results.every(r => !r);
-          if (allFailed && localEntries.length > 0) {
-            syncingRef.current = false;
-            return;
+
+          if (results.every(r => !r)) {
+            throw new Error('All POSTs failed');
           }
         }
 
         const res = await fetch('/api/reading-list', { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.ok && Array.isArray(data.entries)) {
-            setEntries(data.entries);
-            saveToStorage(data.entries);
-            syncSuccess = true;
-          }
-        }
-      } catch {
-      } finally {
-        if (syncSuccess || loadFromStorage().length === 0) {
+        if (!res.ok) throw new Error('GET failed');
+
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.entries)) {
+          setEntries(data.entries);
+          saveToStorage(data.entries);
           hasSyncedRef.current = true;
+          return;
         }
-        syncingRef.current = false;
+        throw new Error('Invalid response');
+      } catch {
+        if (attempt < 4) {
+          const delay = 2000 * attempt;
+          retryTimerRef.current = setTimeout(() => doSync(attempt + 1), delay);
+        }
       }
-    })();
+    };
+
+    doSync();
+
+    return () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+    };
   }, [user]);
 
   useEffect(() => {
