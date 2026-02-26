@@ -1,1 +1,0 @@
-export { runAllTests } from '../performanceTest';
