@@ -9,6 +9,16 @@ import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
 import { queryDB } from "./db";
 
+process.on('uncaughtException', (err) => {
+  console.error('[CRASH] Uncaught exception:', err.stack || err.message);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[CRASH] Unhandled rejection:', reason);
+});
+process.on('SIGTERM', () => console.log('[SIGNAL] SIGTERM received'));
+process.on('SIGINT', () => console.log('[SIGNAL] SIGINT received'));
+process.on('exit', (code) => console.log(`[EXIT] Process exiting with code ${code}`));
+
 const app = express();
 app.set('trust proxy', 1);
 app.use(cookieParser());

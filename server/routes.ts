@@ -1313,9 +1313,11 @@ async function ensureSchemaReady() {
 let schemaInitPromise: Promise<void> | null = null;
 function getSchemaInit() {
   if (!schemaInitPromise) {
-    schemaInitPromise = ensureSchemaReady().catch(err => {
-      log.error('Schema initialization failed:', err);
-    });
+    schemaInitPromise = new Promise(resolve => setTimeout(resolve, 10000)).then(() =>
+      ensureSchemaReady().catch(err => {
+        log.error('Schema initialization failed:', err);
+      })
+    );
   }
   return schemaInitPromise;
 }

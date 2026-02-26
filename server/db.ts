@@ -5,10 +5,11 @@ import * as schema from "@shared/schema";
 const pool = new Pool({
   connectionString: process.env.NEON_DATABASE_URL || process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-  max: 20,
-  min: 4,
-  idleTimeoutMillis: 60000,
+  max: 3,
+  min: 0,
+  idleTimeoutMillis: 10000,
   connectionTimeoutMillis: 10000,
+  allowExitOnIdle: false,
 });
 
 pool.on("error", (err) => {

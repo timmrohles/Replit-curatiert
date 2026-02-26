@@ -146,7 +146,7 @@ export async function recalculateAllScores(): Promise<number> {
   if (books.length === 0) return 0;
 
   let updated = 0;
-  const BATCH_SIZE = 100;
+  const BATCH_SIZE = 10;
   for (let i = 0; i < books.length; i += BATCH_SIZE) {
     const batch = books.slice(i, i + BATCH_SIZE);
     await Promise.all(batch.map(async (book: any) => {
@@ -154,6 +154,9 @@ export async function recalculateAllScores(): Promise<number> {
       await updateBookScore(book.id, scores);
       updated++;
     }));
+    if (i + BATCH_SIZE < books.length) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
   }
 
   console.log(`[Scores] Recalculated scores for ${updated} books`);
@@ -178,14 +181,7 @@ export function startScoreCron(intervalMs: number = 24 * 60 * 60 * 1000) {
 
   console.log(`[Scores] Cron scheduled: full recalculation every ${Math.round(intervalMs / 3600000)}h`);
 
-  setTimeout(async () => {
-    try {
-      const count = await recalculateAllScores();
-      console.log(`[Scores] Initial recalculation complete: ${count} books updated`);
-    } catch (err) {
-      console.error('[Scores] Initial recalculation failed:', err);
-    }
-  }, 5000);
+  console.log(`[Scores] Skipping initial recalculation on startup to prevent overload`);
 
   cronInterval = setInterval(async () => {
     try {
